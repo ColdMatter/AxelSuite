@@ -198,7 +198,7 @@ namespace Axel_hub
             }
         }
         
-        // XPS log file reference 
+        // XPS log file reference .....
         public void DoRefFile(string FN, bool statFlag)
         {            
         }
