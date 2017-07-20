@@ -1,1 +1,0 @@
-git remote set-url origin https://www.github.com/teodor-krastev/AxelSuite.git
