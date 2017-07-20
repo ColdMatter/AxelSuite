@@ -301,9 +301,5 @@ namespace Axel_hub
                 rowLowerChart.Height = new GridLength(d-mh/2, GridUnitType.Star);                
             }
         }
-
-        private void btnSplit_Click(object sender, RoutedEventArgs e)
-        {
-        }
     }
 }
