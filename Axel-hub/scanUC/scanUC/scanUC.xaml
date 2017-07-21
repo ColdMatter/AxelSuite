@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Class="scanNS.scanClass" 
+             xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Class="scanHub.scanClass" 
              mc:Ignorable="d" Width="261.714" Height="270.285">
     <Grid HorizontalAlignment="Left" Width="259" Margin="6,0,-0.429,0.429">
         <Grid.RowDefinitions>

@@ -32,8 +32,8 @@ using System.Windows.Threading;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using scanNS;
-using AxelMemsNS;
+using scanHub;
+using AxelHMemsNS;
 using AxelChartNS;
 using UtilsNS;
 //using DS345NS;
@@ -47,9 +47,10 @@ namespace Axel_hub
     /// </summary>
     public partial class MainWindow : Window
     {
-        private int nSamples = 2000;
-        Stopwatch stopWatch;
-       
+        private bool EndlessMode = false;
+        int nSamples = 1500; 
+        private AxelMems axelMems = null;     
+
         public MainWindow()
         {
             InitializeComponent();
@@ -57,9 +58,8 @@ namespace Axel_hub
             ucScan1.Start += new scanClass.StartHandler(DoStart);
             ucScan1.Remote += new scanClass.RemoteHandler(DoRemote);
             ucScan1.FileRef += new scanClass.FileRefHandler(DoRefFile);
-
-            stopWatch = new Stopwatch();
-           // DoRefFile(@"e:\VSprojects\Axel-track\XPS\17-03-29_15-32-33.log"); // test 17-03-29_17-37-05.log
+            axelMems = new AxelMems();
+            axelMems.Acquire += new AxelMems.AcquireHandler(DoAcquire);
         }
 
         private void log(string txt) 
@@ -80,11 +80,12 @@ namespace Axel_hub
             ((DispatcherFrame)f).Continue = false;
             return null;
         }
-        private AxelMems axelMems = null;
 
         // main ADC call
         public void DoStart(bool down, double period, bool TimeMode, bool Endless, double Limit)
         {
+            EndlessMode = Endless;
+            
             if (!down) // user cancel
             {
                 AxelChart1.Running = false; 
@@ -106,96 +107,30 @@ namespace Axel_hub
             }
             AxelChart1.SamplingPeriod = period;
             AxelChart1.Running = true;
-            if (Utils.isNull(axelMems)) axelMems = new AxelMems();
-            axelMems.nSamples = nSamples;
-            axelMems.sampleRate = 1 / period; // in Hz
-            axelMems.configureVITask("cDAQ1Mod1/ai0", "chn0");
             AxelChart1.Clear();
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            TimeSpan tm = sw.Elapsed;
-            int j = 0; 
-            do
-            {
-                /*axelMems.readInVoltages();
-                do
-                {
-                    DoEvents();
-                } while (axelMems.running);
 
-                if (axelMems.rawData.Count != nSamples) new Exception("Wrong number of points in aquisition");*/
-                tm = sw.Elapsed;
-                double[,] rd = axelMems.readBurst(0);
-               
-                for (int i = 0; i < 1500; i++)
-                {
-                    AxelChart1.AddPoint(/*axelMems.rawData[i]*/ rd[0,i], tm.TotalSeconds + period * i);
-                }
-                AxelChart1.Refresh();
-            } while (Endless && ucScan1.Running);
-
-            AxelChart1.Running = false;
-            ucScan1.Running = false;
+            axelMems.StartAqcuisition(nSamples, 1 / period);
         }
 
-        private int TotalCycleCount = 0;
-        private double TotalCycleTime = 0;
-        // XPS remote ADC call
-        public void DoRemote(double SamplingPeriod, double CyclePeriod, double Pause, double Distance, double Accel, int CyclesLeft) // from TotalCount to 1
+        public void DoAcquire(List<Point> dt, out bool next)
         {
-            Random random = new Random();
-            
-            if (!AxelChart1.Running) // first call - only prepare
+            next = (EndlessMode && ucScan1.Running);
+            for (int i = 0; i < nSamples; i++)
             {
-                //AxelChart1.Clear();
-                Dictionary<string, double> RemoteArg = new Dictionary<string, double>();
-                RemoteArg.Add("SamplingPeriod", SamplingPeriod); RemoteArg.Add("CyclePeriod", CyclePeriod); RemoteArg.Add("Pause", Pause);
-                RemoteArg.Add("Distance", Distance); RemoteArg.Add("Accel", Accel); RemoteArg.Add("TotalCycleCount", CyclesLeft);
-                AxelChart1.SamplingPeriod = SamplingPeriod;
-                TotalCycleCount = CyclesLeft;
-                TotalCycleTime = TotalCycleCount * (CyclePeriod + 2 * Pause);
-                nSamples = (int)((CyclePeriod + 2 * Pause) / SamplingPeriod);
-                AxelChart1.Waveform.TimeMode = false;
-                AxelChart1.Waveform.SizeLimit = TotalCycleCount * nSamples;
-                AxelChart1.Running = true;
-                AxelChart1.remoteArg = JsonConvert.SerializeObject(RemoteArg);
-                            
-                // ADC
-                if (Utils.isNull(axelMems)) axelMems = new AxelMems();
-                axelMems.nSamples = nSamples;
-                axelMems.sampleRate = ucScan1.RealConvRate(1 / SamplingPeriod); // in Hz
-                axelMems.configureVITask("cDAQ1Mod1/ai0", "chn0");
-                log("> starting acquisition");
-                log("> " + SamplingPeriod.ToString("G3") + "; " + CyclePeriod.ToString("G5") + "; " + Pause.ToString("G4") + "; " + Distance.ToString("G3") +
-                    "; " + Accel.ToString("G3") + "; " + CyclesLeft.ToString());
-                return;
+                AxelChart1.Waveform.Add(dt[i]);
             }
-
-            if ((AxelChart1.Running) && (CyclesLeft == TotalCycleCount))// first real call
-            {
-                stopWatch.Restart();
-            }
-            double tm = stopWatch.Elapsed.TotalSeconds;
-            //log("time = " + tm.ToString("G4"));
-
-            axelMems.readInVoltages();
-            do
-            {   DoEvents();
-            } while (axelMems.running);
-
-            if (axelMems.rawData.Count != nSamples) throw new Exception("Wrong number of points in aquisition");
-            for (int i = 0; i < axelMems.rawData.Count; i++)
-            {
-                AxelChart1.AddPoint(axelMems.rawData[i], //  random.Next()
-                                    tm + SamplingPeriod * i);
-            }
-            AxelChart1.Refresh();
-            if (AxelChart1.Running && (CyclesLeft == 1)) // last call
+            //AxelChart1.Refresh();
+            DoEvents();
+            if (!next)
             {
                 AxelChart1.Running = false;
                 ucScan1.Running = false;
-                TotalCycleCount = 0;
             }
+        }
+
+        // remote ADC call
+        public void DoRemote(double SamplingPeriod, double CyclePeriod, double Pause, double Distance, double Accel, int CyclesLeft) // from TotalCount to 1
+        {
         }
         
         // XPS log file reference .....

@@ -7,7 +7,7 @@ using NationalInstruments.DAQmx;
 //using DS345NS;
 using UtilsNS;
 
-namespace AxelMemsNS
+namespace AxelBMemsNS
 {
     public class AxelMems
     {
@@ -34,14 +34,12 @@ namespace AxelMemsNS
         }
 
         public double[,] readBurst(int nPoints) // synchro read
-        {   
-            int np = nSamples;
-            if (nPoints > 0) np = nPoints;
-            double[,] aiData = new double[1, np];
+        {
+            double[,] aiData = new double[1, nPoints];
 
             voltageInputTask.Control(TaskAction.Abort); // reset the device
             voltageInputTask.Start();
-            aiData = VIReader.ReadMultiSample(np);
+            aiData = VIReader.ReadMultiSample(nPoints);
             voltageInputTask.Stop();
             return aiData;
         }

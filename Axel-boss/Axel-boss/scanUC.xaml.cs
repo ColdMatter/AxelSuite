@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 using PipesServerNS;
 using UtilsNS;
 
-namespace scanHub
+namespace scanNS
 {
     
     /// <summary>
@@ -26,7 +26,7 @@ namespace scanHub
     {
         public delegate void NewMessageDelegate(string NewMessage);
         private PipeServer _pipeServer;
-        private string TrackPipeName = "AxelHubPipe";
+        private string TrackPipeName = "XPStrackPipe";
         private bool Connected = false;
         public readonly double[] FixConvRate = { 102400, 51200, 34133, 25600, 20480, 17067, 14629, 12800, 11378,
             10240, 9309, 8533, 7314, 6400, 5689, 5120, 4655, 4267, 3657, 3200, 2844, 2560, 2327, 2133, 1829,
@@ -253,7 +253,7 @@ namespace scanHub
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("     Axel Hub v1.0 \n   by Teodor Krastev \nfor Imperial College, London, UK", "About");
+            MessageBox.Show("     Axel Boss v1.3 \n   by Teodor Krastev \nfor Imperial College, London, UK", "About");
         }
 
         private double GetSamplingPeriod()
@@ -334,6 +334,11 @@ namespace scanHub
                 bbtnStart.Visibility = System.Windows.Visibility.Visible;
                 Status("Ready to go ");
              }            
+         }
+
+         private void cbDigitMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+         {
+
          }
     }
 }

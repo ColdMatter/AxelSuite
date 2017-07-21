@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace scanNS.Properties {
+namespace scanHub.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AxelChart", "AxelChart\Axel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilsLib", "Utils\UtilsLib.csproj", "{A377A708-96B9-4569-BC22-0187D647611E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scanBoss", "Axel-boss\scanUC\scanUC\scanBoss.csproj", "{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scanHub", "Axel-hub\scanUC\scanUC\scanHub.csproj", "{EC092AFA-EC88-499D-9932-0A0273F4BF87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +81,22 @@ Global
 		{A377A708-96B9-4569-BC22-0187D647611E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A377A708-96B9-4569-BC22-0187D647611E}.Release|x64.ActiveCfg = Release|Any CPU
 		{A377A708-96B9-4569-BC22-0187D647611E}.Release|x86.ActiveCfg = Release|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|x64.ActiveCfg = Release|Any CPU
+		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|x86.ActiveCfg = Release|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|x64.ActiveCfg = Release|Any CPU
+		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

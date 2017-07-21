@@ -66,10 +66,6 @@ E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.exe
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.pdb
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\Axel-boss.exe
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\Axel-boss.pdb
-E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\AxelChart.pdb
-E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\scanUC.pdb
-E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\UtilsLib.pdb
-E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csprojResolveAssemblyReference.cache
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\MainWindow.baml
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\MainWindow.g.cs
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\App.g.cs

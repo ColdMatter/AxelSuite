@@ -83,9 +83,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="scanUC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\scanUC\scanUC\bin\scanUC.dll</HintPath>
+    <Reference Include="scanHub">
+      <HintPath>..\scanUC\scanUC\bin\scanHub.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -110,7 +109,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AxelMems.cs" />
+    <Compile Include="AxelHMems.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

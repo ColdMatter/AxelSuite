@@ -20,10 +20,8 @@ E:\VSprojects\AxelSuite\Axel-hub\Axel-boss\obj\Debug\Axel-hub.pdb
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\Axel-hub.exe
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\Axel-hub.pdb
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\AxelChart.dll
-E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\scanUC.dll
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\UtilsLib.dll
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\AxelChart.pdb
-E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\scanUC.pdb
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\UtilsLib.pdb
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.csprojResolveAssemblyReference.cache
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\obj\Debug\MainWindow.baml
@@ -36,3 +34,5 @@ E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.csproj.GenerateReso
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.exe.licenses
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.exe
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.pdb
+E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\scanHub.dll
+E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\scanHub.pdb
