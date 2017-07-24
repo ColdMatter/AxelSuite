@@ -1,0 +1,13 @@
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanUC.baml
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanUC.g.cs
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub_MarkupCompile.cache
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.g.resources
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.Properties.Resources.resources
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.csproj.GenerateResource.Cache
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.dll.licenses
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\scanHub.dll
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\scanHub.pdb
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\UtilsLib.dll
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\UtilsLib.pdb
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.dll
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.pdb

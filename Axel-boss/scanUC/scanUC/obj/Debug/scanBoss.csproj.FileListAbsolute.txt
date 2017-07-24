@@ -1,0 +1,12 @@
+E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\scanUC.dll
+E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\bin\scanUC.pdb
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.csprojResolveAssemblyReference.cache
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.baml
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.g.cs
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC_MarkupCompile.cache
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.g.resources
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanNS.Properties.Resources.resources
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.csproj.GenerateResource.Cache
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.dll.licenses
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.dll
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.pdb
