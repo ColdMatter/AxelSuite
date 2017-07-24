@@ -117,7 +117,7 @@ namespace Axel_hub
             next = (EndlessMode && ucScan1.Running);
             for (int i = 0; i < nSamples; i++)
             {
-                AxelChart1.Waveform.Add(dt[i]);
+                AxelChart1.Waveform.AddPoint(dt[i].Y);
             }
             //AxelChart1.Refresh();
             DoEvents();

@@ -146,7 +146,7 @@ namespace AxelHMemsNS
 
                     for (int sample = 0; sample < waveform[activeChannel].Samples.Count; ++sample)
                     {
-                       data.Add(new Point( ts + sample/sampleRate, waveform[activeChannel].Samples[sample].Value));
+                        data.Add(new Point( ts + sample/sampleRate, waveform[activeChannel].Samples[sample].Value));
                     }
                     bool next = false;
                     if (Acquire != null) Acquire(data, out next);
