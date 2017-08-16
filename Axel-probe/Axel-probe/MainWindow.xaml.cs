@@ -16,7 +16,9 @@ using System.Windows.Threading;
 using System.Diagnostics;
 using NationalInstruments.Controls;
 using NationalInstruments.Analysis.Math;
-
+using PidController;
+using RemoteMessagingNS;
+using Newtonsoft.Json;
 
 namespace Axel_probe
 {
@@ -26,13 +28,23 @@ namespace Axel_probe
     public partial class MainWindow : Window
     {   
         ChartCollection<Point> fringes, ramp, corr;
-        List<double> iStack, dStack, corrList;  
+        ChartCollection<double> signalN, signalB;
+        List<double> iStack, dStack, corrList;
+        RemoteMessaging remote;
+        Random rnd = new Random();
+
         public MainWindow()
         {
             InitializeComponent();
 
+            
             fringes = new ChartCollection<Point>();
             grFringes.DataSource = fringes;
+
+            signalN = new ChartCollection<double>();
+            graphNs.Data[0] = signalN;
+            signalB = new ChartCollection<double>();
+            graphNs.Data[1] = signalB;
 
             ramp = new ChartCollection<Point>();
             grRslt.Data[0] = ramp;
@@ -84,6 +96,16 @@ namespace Axel_probe
                          Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
             return randStdNormal * ndGaussSigma.Value / 100;
         }
+
+        public double Gauss01()
+        {
+            double u1 = 1.0 - rand.NextDouble(); //uniform(0,1] random doubles
+            double u2 = 1.0 - rand.NextDouble();
+            double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
+                         Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
+            return randStdNormal;
+        }
+
 
         public double Breathing(double x)
         {
@@ -155,20 +177,21 @@ namespace Axel_probe
                     }
                     if (chkFollowPID.IsChecked.Value) 
                     {
-                        switch (tcStrobes.SelectedIndex)
+                        if(rbSingle.IsChecked.Value) 
+                        { 
+                            err = SingleAdjust(drift);
+                            if (!double.IsNaN(err))
+                            {
+                                corr.Add(new Point(pos, err)); corrList.Add(err);
+                            }
+                        }
+                        if (rbDouble.IsChecked.Value)
                         {
-                            case 0: err = SingleAdjust(drift);
-                                    if (!double.IsNaN(err))
-                                    {
-                                        corr.Add(new Point(pos, err)); corrList.Add(err);
-                                    }
-                                break;
-                            case 1: err = DoubleAdjust(j,drift);
-                                    if (!double.IsNaN(err) && ((j % 2) == 1))
-                                    {
-                                        corr.Add(new Point(pos, err)); corrList.Add(err);
-                                    }
-                                break;
+                            err = DoubleAdjust(j, drift);
+                            if (!double.IsNaN(err) && ((j % 2) == 1))
+                            {
+                                corr.Add(new Point(pos, err)); corrList.Add(err);
+                            }
                         }
                     }
                     pos += step; j++;
@@ -199,7 +222,7 @@ namespace Axel_probe
         public double PID(double curr)
         {
             int hillSide = 1;
-            if (cbHillPos.SelectedIndex == 0) hillSide = -1;
+            //if (cbHillPos.SelectedIndex == 0) hillSide = -1;
             double pTerm = curr;
             iStack.Add(curr); while (iStack.Count > iStDepth) iStack.RemoveAt(0);
             double iTerm = iStack.Average();
@@ -221,22 +244,6 @@ namespace Axel_probe
             return cr;
         }
         
-        private void tcStrobes_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (tcStrobes.SelectedIndex == 0)
-            {
-                crsFringes2.Visibility = System.Windows.Visibility.Hidden;
-                crsFringes1.AxisValue = 7.85;
-            }
-            else
-            {
-                crsFringes2.Visibility = System.Windows.Visibility.Visible;
-                crsFringes1.AxisValue = 4.71;
-                crsFringes1.AxisValue = 7.85;
-                leftLvl = double.NaN; rightLvl = double.NaN;
-            }
-        }
-
         private double SingleAdjust(double drift) // return error in fringe position/phase
         {
             double curX = (double)crsFringes1.AxisValue;
@@ -304,6 +311,215 @@ namespace Axel_probe
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
             tbLog.Text = "";
+        }
+
+        private void rbSingle_Checked(object sender, RoutedEventArgs e)
+        {
+            if ((crsFringes2 == null) || (crsFringes1 == null)) return;
+            if (rbSingle.IsChecked.Value)
+            {
+                crsFringes2.Visibility = System.Windows.Visibility.Hidden;
+                crsFringes1.AxisValue = 7.85;
+            }
+            else
+            {
+                crsFringes2.Visibility = System.Windows.Visibility.Visible;
+                crsFringes1.AxisValue = 4.71;
+                crsFringes1.AxisValue = 7.85;
+                leftLvl = double.NaN; rightLvl = double.NaN;
+            }
+        }
+
+        private void frmMain_Loaded(object sender, RoutedEventArgs e)
+        {
+            remote = new RemoteMessaging("Axel Hub");
+        }
+
+        private void btnCommCheck_Click(object sender, RoutedEventArgs e)        
+        {
+            if (remote.CheckConnection()) grpRemote.Header = "Remote - ON";
+            else grpRemote.Header = "Remote - PROBLEM!";
+        }
+
+        /* Example base data + some noise
+           N1	N2	B1	B2	Bg		N1	N2	B1	B2	Bg
+            2	5	1	4	0		4	5	1	4	0
+										
+            NB1	NB2					NB1	NB2			
+            1	1					3	1			
+										
+            A						A				
+            1						-1		*/		
+
+        private void btnScan_Click(object sender, RoutedEventArgs e)
+        {
+            //MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+            double sfrom = 0;
+            double sto =  8;
+            double sstep = 0.2;
+
+            double n1 = 2; // 4
+            double n2 = 5; double b1 = 1; double b2 = 4; double bg = 0;
+            lboxNB.Items[1] = "N2 = " + n2.ToString();
+            lboxNB.Items[2] = "B1 = " + b1.ToString();
+            lboxNB.Items[3] = "B2 = " + b2.ToString();
+            lboxNB.Items[4] = "Bg = " + bg.ToString();
+
+            string msg;
+            MMexec mm = new MMexec();
+            mm.mmexec = "";
+            mm.cmd = "scan";
+            mm.sender = "Axel Probe";
+            mm.id = rnd.Next(int.MaxValue);
+            mm.prms = new Dictionary<string,object>();
+            mm.prms["from"] = sfrom;
+            mm.prms["to"] = sto;
+            mm.prms["step"] = sstep;
+            mm.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+
+            MMexec md = new MMexec();
+            md.mmexec = "";
+            md.cmd = "shotData";
+            md.sender = "Axel Probe";
+            md.prms = new Dictionary<string, object>();
+            md.prms["groupID"] = mm.prms["groupID"];
+ 
+            if (chkRemoteEnabled.IsChecked.Value)
+            {
+                msg = JsonConvert.SerializeObject(mm);
+                if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
+                log(msg);
+            }
+            double d, scl = 100;
+            List<Double> srsN1 = new List<Double>();
+            List<Double> srsN2 = new List<Double>();
+            List<Double> srsB1 = new List<Double>();
+            List<Double> srsB2 = new List<Double>();
+            List<Double> srsBg = new List<Double>();
+
+            int j = 0; fringes.Clear();
+            for (double cr = sfrom; cr < sto; cr += sstep)
+            {
+                fringes.Add(new Point(cr,Math.Sin(cr)));
+                DoEvents();
+               // System.Threading.Thread.Sleep(500);
+                DoEvents();
+                signalN.Clear(); srsN1.Clear(); srsN2.Clear();
+                signalB.Clear(); srsB1.Clear(); srsB2.Clear(); srsBg.Clear(); 
+                for (int i = 0; i < 30; i++)
+                {
+                    d = n1 + cr / 4 + Gauss01() / scl;
+                    lboxNB.Items[0] = "N1 = " + d.ToString("G4");
+                    srsN1.Add(d);
+                    d = n2 + Gauss01() / scl;
+                    srsN2.Add(d);
+
+                    d = b1 + Gauss01() / scl;
+                    srsB1.Add(d);
+                    d = b2 + Gauss01() / scl;
+                    srsB2.Add(d);
+
+                    d = bg + Gauss01() / scl;
+                    srsBg.Add(d);                   
+                }
+                signalN.Append(srsN1); signalN.Append(srsN2);
+                signalB.Append(srsB1); signalB.Append(srsB2); 
+
+                if (chkRemoteEnabled.IsChecked.Value)
+                {
+                    md.prms["runID"] = j++;
+                    md.prms["N1"] = srsN1.ToArray(); md.prms["N2"] = srsN2.ToArray();
+                    md.prms["B1"] = srsB1.ToArray(); md.prms["B2"] = srsB2.ToArray();
+                    md.prms["Bg"] = srsBg.ToArray();
+                    md.id = rnd.Next(int.MaxValue);
+                    msg = JsonConvert.SerializeObject(md);
+                    remote.sendCommand(msg);
+                    log(msg.Substring(0,40)+"...");
+                }
+            }               
+        }
+
+        private void btnRepeat_Click(object sender, RoutedEventArgs e)
+        {
+            double n1 = 2.5; // 4
+            double n2 = 5; double b1 = 1; double b2 = 4; double bg = 0;
+            lboxNB.Items[1] = "N2 = " + n2.ToString();
+            lboxNB.Items[2] = "B1 = " + b1.ToString();
+            lboxNB.Items[3] = "B2 = " + b2.ToString();
+            lboxNB.Items[4] = "Bg = " + bg.ToString();
+
+            string msg;
+            MMexec mm = new MMexec();
+            mm.id = rnd.Next(int.MaxValue);
+            mm.cmd = "repeat";
+            mm.mmexec = "";
+            mm.sender = "Axel Probe";
+            mm.prms = new Dictionary<string, object>();
+            int cycles = 20;
+            mm.prms["cycles"] = cycles;
+            mm.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+
+            MMexec md = new MMexec();
+            md.id = rnd.Next(int.MaxValue);
+            md.cmd = "shotData";
+            md.mmexec = "";
+            md.sender = "Axel Probe";
+            md.prms = new Dictionary<string, object>();
+            md.prms["groupID"] = mm.prms["grpID"];
+
+            if (chkRemoteEnabled.IsChecked.Value)
+            {
+                msg = new String('a', 1000); // JsonConvert.SerializeObject(mm);
+                if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
+                log(msg);
+            }
+            double d, scl = 100; return;
+            List<Double> srsN1 = new List<Double>();
+            List<Double> srsN2 = new List<Double>();
+            List<Double> srsB1 = new List<Double>();
+            List<Double> srsB2 = new List<Double>();
+            List<Double> srsBg = new List<Double>();
+            fringes.Clear();
+
+            for (int j = 0; j < cycles; j++)
+            {
+                DoEvents();
+                //System.Threading.Thread.Sleep(500);
+                DoEvents();
+                signalN.Clear(); srsN1.Clear(); srsN2.Clear();
+                signalB.Clear(); srsB1.Clear(); srsB2.Clear(); srsBg.Clear();
+                for (int i = 0; i < 30; i++)
+                {
+                    d = n1 + Gauss01() / scl;
+                    lboxNB.Items[0] = "N1 = " + d.ToString("G4");
+                    srsN1.Add(d);
+                    d = n2 + Gauss01() / scl;
+                    srsN2.Add(d);
+
+                    d = b1 + Gauss01() / scl;
+                    srsB1.Add(d);
+                    d = b2 + Gauss01() / scl;
+                    srsB2.Add(d);
+
+                    d = bg + Gauss01() / scl;
+                    srsBg.Add(d);
+                }
+                signalN.Append(srsN1); signalN.Append(srsN2);
+                signalB.Append(srsB1); signalB.Append(srsB2);
+
+                if (chkRemoteEnabled.IsChecked.Value)
+                {
+                    md.prms["runID"] = j;
+                    md.prms["N1"] = srsN1.ToArray(); md.prms["N2"] = srsN2.ToArray();
+                    md.prms["B1"] = srsB1.ToArray(); md.prms["B2"] = srsB2.ToArray();
+                    md.prms["Bg"] = srsBg.ToArray();
+                    md.id = rnd.Next(int.MaxValue);
+                    msg = JsonConvert.SerializeObject(md);
+                    remote.sendCommand(msg);
+                    log(msg.Substring(0, 40) + "...");
+                }
+            }               
+
         }
      }
 }

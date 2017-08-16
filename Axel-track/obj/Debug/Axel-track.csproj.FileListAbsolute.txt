@@ -31,3 +31,13 @@ E:\VSprojects\AxelSuite\Axel-track\obj\Debug\AxelTrackNS.FormAxelTrack.resources
 E:\VSprojects\AxelSuite\Axel-track\obj\Debug\AxelTrack.Properties.Resources.resources
 E:\VSprojects\AxelSuite\Axel-track\obj\Debug\Axel-track.csproj.GenerateResource.Cache
 E:\VSprojects\AxelSuite\Axel-track\obj\Debug\Axel-track.exe.licenses
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\bin\Axel-track.exe.config
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\bin\Axel-track.exe
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\bin\Axel-track.pdb
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\Axel-track.csprojResolveAssemblyReference.cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\AxelTrackNS.FormAxelTrack.resources
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\AxelTrack.Properties.Resources.resources
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\Axel-track.csproj.GenerateResource.Cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\Axel-track.exe.licenses
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\Axel-track.exe
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-track\obj\Debug\Axel-track.pdb

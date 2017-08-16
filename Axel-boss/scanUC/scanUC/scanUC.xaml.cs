@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 using PipesServerNS;
 using UtilsNS;
 
-namespace scanNS
+namespace scanBoss
 {
     
     /// <summary>

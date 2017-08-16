@@ -17,3 +17,8 @@ E:\VSprojects\AxelSuite\Utils\bin\UtilsLib.pdb
 E:\VSprojects\AxelSuite\Utils\obj\Debug\UtilsLib.dll
 E:\VSprojects\AxelSuite\Utils\obj\Debug\UtilsLib.pdb
 E:\VSprojects\AxelSuite\Utils\obj\Debug\UtilsLib.csprojResolveAssemblyReference.cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Utils\bin\UtilsLib.dll
+D:\Dropbox\PhDWork\Software\AxelSuite\Utils\bin\UtilsLib.pdb
+D:\Dropbox\PhDWork\Software\AxelSuite\Utils\obj\Debug\UtilsLib.csprojResolveAssemblyReference.cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Utils\obj\Debug\UtilsLib.dll
+D:\Dropbox\PhDWork\Software\AxelSuite\Utils\obj\Debug\UtilsLib.pdb

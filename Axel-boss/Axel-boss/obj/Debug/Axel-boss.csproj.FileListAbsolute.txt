@@ -74,3 +74,15 @@ E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.g.resources
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel_boss.Properties.Resources.resources
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csproj.GenerateResource.Cache
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.exe.licenses
+E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csprojResolveAssemblyReference.cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csprojResolveAssemblyReference.cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\MainWindow.baml
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\MainWindow.g.cs
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\App.g.cs
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss_MarkupCompile.cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.g.resources
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel_boss.Properties.Resources.resources
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csproj.GenerateResource.Cache
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.exe.licenses
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.exe
+D:\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.pdb
