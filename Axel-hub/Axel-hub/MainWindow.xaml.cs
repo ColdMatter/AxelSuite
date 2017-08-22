@@ -35,7 +35,9 @@ using Newtonsoft.Json.Converters;
 using scanHub;
 using AxelHMemsNS;
 using AxelChartNS;
+using Newtonsoft.Json.Linq;
 using UtilsNS;
+using RemoteMessagingNS;
 //using DS345NS;
 
 
@@ -45,26 +47,42 @@ namespace Axel_hub
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow: Window
     {
+        scanClass ucScan1;
         private bool EndlessMode = false;
         int nSamples = 1500; 
-        private AxelMems axelMems = null;     
-
+        private AxelMems axelMems = null;
+        Random rnd = new Random();
+        private double _tempxVal;
+        private List<Point> _fringePoints = new List<Point>();
         public MainWindow()
         {
             InitializeComponent();
-            tabSecPlots.SelectedIndex = 4;
+            tabSecPlots.SelectedIndex = 1;
+            ucScan1 = new scanClass();
+            gridLeft.Children.Add(ucScan1);
+            ucScan1.Height = 266; ucScan1.VerticalAlignment = System.Windows.VerticalAlignment.Top; //ucScan1.Width = "Auto";
+
             ucScan1.Start += new scanClass.StartHandler(DoStart);
             ucScan1.Remote += new scanClass.RemoteHandler(DoRemote);
             ucScan1.FileRef += new scanClass.FileRefHandler(DoRefFile);
+
             axelMems = new AxelMems();
             axelMems.Acquire += new AxelMems.AcquireHandler(DoAcquire);
+            axelMems.RealSampling += new AxelMems.RealSamplingHandler(ucScan1.OnRealSampling);
         }
 
         private void log(string txt) 
         {
-            tbLog.AppendText(txt + "\n");
+            if (!chkLog.IsChecked.Value) return;
+            string printOut;
+            if (chkVerbatim.IsChecked.Value) printOut = txt;
+            else printOut = txt.Substring(0,80)+"...";
+            tbLog.AppendText(printOut + "\n");
+            tbLog.Focus();
+            tbLog.CaretIndex = tbLog.Text.Length;
+            tbLog.ScrollToEnd();
         }
 
         public void DoEvents()
@@ -85,11 +103,11 @@ namespace Axel_hub
         public void DoStart(bool down, double period, bool TimeMode, bool Endless, double Limit)
         {
             EndlessMode = Endless;
-            
             if (!down) // user cancel
             {
                 AxelChart1.Running = false; 
-                ucScan1.Running = false; 
+                axelMems.StopAqcuisition();
+                AxelChart1.Waveform.logger.Enabled = false;
                 return;
             }
             Random random = new Random();
@@ -103,34 +121,107 @@ namespace Axel_hub
             else
             {
                 AxelChart1.Waveform.SizeLimit = (int)Limit; 
+                //AxelChart1.Waveform.StackMode = true;
                 nSamples = AxelChart1.Waveform.SizeLimit;
             }
             AxelChart1.SamplingPeriod = period;
             AxelChart1.Running = true;
             AxelChart1.Clear();
 
-            axelMems.StartAqcuisition(nSamples, 1 / period);
+            AxelChart1.remoteArg = "freq: " + (1 / period).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
+            AxelChart1.Waveform.logger.Enabled = true;
+            axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
         }
 
         public void DoAcquire(List<Point> dt, out bool next)
         {
             next = (EndlessMode && ucScan1.Running);
-            for (int i = 0; i < nSamples; i++)
-            {
-                AxelChart1.Waveform.AddPoint(dt[i].Y);
-            }
-            //AxelChart1.Refresh();
+            if (axelMems.activeChannel == 2) throw new Exception("not ready for two channels");
+            /*{ 
+                for (int i = 0; i<dt.Count; i++) 
+                {
+                    if((i%2) == 0) AxelChart1.Waveform.Add(dt[i]); // channel 0
+                    else AxelChart1.Waveform.Add(dt[i]); // channel 1
+                }
+            }*/
+            else AxelChart1.Waveform.AddRange(dt);
+            //log(AxelChart1.Waveform.logger.bufferSize.ToString());
+
             DoEvents();
             if (!next)
             {
                 AxelChart1.Running = false;
                 ucScan1.Running = false;
+                axelMems.StopAqcuisition(); 
+                AxelChart1.Refresh();
             }
         }
 
-        // remote ADC call
-        public void DoRemote(double SamplingPeriod, double CyclePeriod, double Pause, double Distance, double Accel, int CyclesLeft) // from TotalCount to 1
+        MMexec lastGrpExe;
+        // remote MM call
+        public void DoRemote(string json) // from TotalCount to 1
         {
+            log(json.Length.ToString()+" "+ json); //.Substring(1, 35) + "...");
+            
+            MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+            
+           if(mme.cmd.Equals("repeat"))
+            {
+                _tempxVal = Convert.ToDouble(mme.prms["runID"]);
+            }
+            else if (mme.cmd.Equals("scan"))
+            {
+                var scanParam = (JObject) mme.prms["param"];
+               
+                _tempxVal = scanParam.ToObject<Dictionary<string,double>>().Values.First();
+            }
+            else if(mme.cmd.Equals("shotData"))
+            {
+                if (Convert.ToInt32(mme.prms["runID"]) == 0) _fringePoints.Clear();
+                
+                lastGrpExe = JsonConvert.DeserializeObject<MMexec>(json);
+                mme = MOTMasterDataConverter.ConvertToDoubleArray(mme);
+                lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + " groupID: " + lastGrpExe.prms["groupID"] +" runID: "+ lastGrpExe.prms["runID"];
+                Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
+                lboxNB.Items.Clear();
+                foreach (var item in avgs)
+                {
+                    lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
+                }
+                double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
+                var fringePoints = graphFringes.DataSource as Point[];
+                _fringePoints.Add(new Point(_tempxVal,asymmetry));
+                graphFringes.DataSource = _fringePoints.ToArray();
+                DataStack signalDataStack = new DataStack();
+                DataStack backgroundDataStack = new DataStack();
+                int xVal = 0;
+                foreach (double yVal in (double[])mme.prms["N2"])
+                {
+                    signalDataStack.Add(new Point(xVal, yVal));
+                    xVal++;
+                }
+                foreach (double yVal in (double[])mme.prms["NTot"])
+                {
+                    signalDataStack.Add(new Point(xVal, yVal));
+                    xVal++;
+                }
+                xVal = 0;
+                foreach (double yVal in (double[])mme.prms["B2"])
+                {
+                    backgroundDataStack.Add(new Point(xVal, yVal));
+                    xVal++;
+                }
+                foreach (double yVal in (double[])mme.prms["BTot"])
+                {
+                    backgroundDataStack.Add(new Point(xVal, yVal));
+                    xVal++;
+                }
+                Point[] pA, pB;
+                pA = signalDataStack.ToArray();
+                pB = backgroundDataStack.ToArray();
+                graphSignal.DataSource = new List<Point[]>() {pA, pB};
+                return;
+            }               
         }
         
         // XPS log file reference .....
@@ -141,7 +232,7 @@ namespace Axel_hub
         public void DoCompareChart()
         {
         }
-        #region File operation ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        #region File operation 
         public bool Open(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
@@ -235,6 +326,11 @@ namespace Axel_hub
                 rowMiddleChart.Height = new GridLength(mh, GridUnitType.Star);
                 rowLowerChart.Height = new GridLength(d-mh/2, GridUnitType.Star);                
             }
+        }
+
+        private void btnLogClear_Click(object sender, RoutedEventArgs e)
+        {
+            tbLog.Text = "";
         }
     }
 }

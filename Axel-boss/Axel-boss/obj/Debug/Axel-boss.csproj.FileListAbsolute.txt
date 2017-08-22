@@ -74,3 +74,4 @@ E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.g.resources
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel_boss.Properties.Resources.resources
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csproj.GenerateResource.Cache
 E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.exe.licenses
+E:\VSprojects\AxelSuite\Axel-boss\Axel-boss\obj\Debug\Axel-boss.csprojResolveAssemblyReference.cache

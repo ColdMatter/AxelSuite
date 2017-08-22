@@ -26,3 +26,10 @@ E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\obj\Debug\Axel-probe.g.resources
 E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\obj\Debug\Axel_probe.Properties.Resources.resources
 E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\obj\Debug\Axel-probe.csproj.GenerateResource.Cache
 E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\obj\Debug\Axel-probe.exe.licenses
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\scanHub.dll
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\UtilsLib.dll
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\scanHub.pdb
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\UtilsLib.pdb
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\Newtonsoft.Json.dll
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\Newtonsoft.Json.pdb
+E:\VSprojects\AxelSuite\Axel-probe\Axel-probe\bin\Debug\Newtonsoft.Json.xml

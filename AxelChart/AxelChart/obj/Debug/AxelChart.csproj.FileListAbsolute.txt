@@ -80,6 +80,8 @@ E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\NationalInstruments.Net.dll
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\NationalInstruments.UI.Styles3D.dll
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\Newtonsoft.Json.dll
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\NationalInstruments.Net.xml
-E:\VSprojects\AxelSuite\AxelChart\AxelChart\obj\Debug\AxelChart.csprojResolveAssemblyReference.cache
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\UtilsLib.dll
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\UtilsLib.pdb
+E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\System.Threading.Tasks.Dataflow.dll
+E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\System.Threading.Tasks.Dataflow.xml
+E:\VSprojects\AxelSuite\AxelChart\AxelChart\obj\Debug\AxelChart.csprojResolveAssemblyReference.cache

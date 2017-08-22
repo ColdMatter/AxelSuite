@@ -47,6 +47,10 @@ namespace Axel_boss
     /// </summary>
     public partial class MainWindow : Window
     {
+        private DataStack FirstDerv = null;
+        private DataStack CleanSeries = null;
+        private DataStack OriginalWaveform = null;
+
         private int nSamples = 2000;
         Stopwatch stopWatch;
        
@@ -54,6 +58,9 @@ namespace Axel_boss
         {
             InitializeComponent();
             tabSecPlots.SelectedIndex = 4;
+            FirstDerv = new DataStack();
+            CleanSeries = new DataStack();
+
             ucScan1.Start += new scanClass.StartHandler(DoStart);
             ucScan1.Remote += new scanClass.RemoteHandler(DoRemote);
             ucScan1.FileRef += new scanClass.FileRefHandler(DoRefFile);
@@ -230,7 +237,7 @@ namespace Axel_boss
             AxelChart1.Open(fn);
             AxelChart1.Refresh();
 
-            int ext = 0; tbRem.Text = "";
+            int ext = 0; //tbRem.Text = "";
             foreach (string line in File.ReadLines(fn))
             {
                 if (line.Contains("#RefFile=")) 
@@ -241,10 +248,10 @@ namespace Axel_boss
                     AxelChart2.Refresh();
                     ext++;
                 }
-                if (line.Contains("#Rem="))
+               /* if (line.Contains("#Rem="))
                 {
                     tbRem.Text = line.Substring(5);                    
-                }
+                }*/
             }
             if (ext < 1) MessageBox.Show("Some internal extensions are missing in <" + fn + ">.");
 
@@ -277,7 +284,7 @@ namespace Axel_boss
             if (AxelChart1.remoteArg == string.Empty) throw new Exception("No remote arguments in upper chart");
             file.WriteLine("#" + AxelChart1.remoteArg);
             file.WriteLine("#RefFile=" + destFile);
-            if (!String.IsNullOrEmpty(tbRem.Text)) file.WriteLine("#Rem=" + tbRem.Text);
+            //if (!String.IsNullOrEmpty(tbRem.Text)) file.WriteLine("#Rem=" + tbRem.Text);
             for (int i = 0; i < AxelChart1.Waveform.Count; i++)
                 file.WriteLine(AxelChart1.Waveform[i].X.ToString() + "\t" + AxelChart1.Waveform[i].Y.ToString());
             file.Close();
@@ -298,7 +305,7 @@ namespace Axel_boss
 
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
-            tbRem.Text = "";
+            //tbRem.Text = "";
             AxelChart1.Clear();
             AxelChart1.Refresh();
             AxelChart2.Clear();
@@ -339,5 +346,6 @@ namespace Axel_boss
             List<DataStack> lst = AxelChart2.SplitCycles(AxelChart2.Waveform);
             MessageBox.Show("Count is " + lst.Count.ToString());
         }
-    }
+
+     }
 }

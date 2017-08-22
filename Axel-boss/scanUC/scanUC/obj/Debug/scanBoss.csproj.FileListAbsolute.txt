@@ -10,3 +10,7 @@ E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.csproj.Genera
 E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.dll.licenses
 E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.dll
 E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.pdb
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss_MarkupCompile.cache
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.g.resources
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.Properties.Resources.resources
+E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.dll.licenses

@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,62 +31,156 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.Windows.Controls.Primitives;
+using System.Threading.Tasks.Dataflow;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UtilsNS;
 
 namespace AxelChartNS
 {
-    struct movePrmStr
+    #region async file logger
+    /// <summary>
+    /// Async data storage device 
+    /// first you set the full path of the file, if - not, it will save in data dir under date-time filename
+    /// when you want the logging to start you set Enabled to true
+    /// at the end you set Enabled to false (that will flush the buffer to HD)
+    /// </summary>
+    public class AutoFileLogger 
     {
-        public double TimeElapsed;
-        public double CurrentPosition;
-        public double CalcVelocity;
-        public double CalcAcceleration;
-        public double CurrentVelocity;
-        public double CurrentAcceleration;
-        public double SetpointPosition;
-        public double SetpointVelocity;
-        public double SetpointAcceleration;
-        public double FollowingError;
-    }
+        public string header = ""; // that will be put as a file first line with # in front of it
+        List<string> buffer;
+        public int bufferLimit = 2560;
+        public int bufferSize { get { return buffer.Count; } }
+        public bool writing { get; private set; }
+        public bool missingData { get; private set; }
+        Stopwatch stw;
 
-    public struct SingleStatStr 
-    {
-        public void clear()
+        public AutoFileLogger(string Filename = "")
         {
-            level = 0;
-            sd = 0;
+            _AutoSaveFileName = Filename;
+            buffer = new List<string>();
+            stw = new Stopwatch();
         }
-        public double level;
-        public double sd;
-    }
 
-    public struct StatsStr 
-    {
-        public bool ok;
-        public void clear()
+        public int log(List<string> newItems)
         {
-            upper.clear();
-            lower.clear();
+            if (!Enabled) return buffer.Count;
+            buffer.AddRange(newItems);
+            if (buffer.Count > bufferLimit) Flush();
+            return buffer.Count;
         }
-        public SingleStatStr upper;
-        public SingleStatStr lower;
-        public SingleStatStr mean() 
+
+        public int log(string newItem)
         {
-            SingleStatStr rslt;
-            rslt.level = (Math.Abs(upper.level) + Math.Abs(lower.level))/2;
-            rslt.sd = (upper.sd + lower.sd)/2; 
-            return rslt;
+            if (!Enabled) return buffer.Count;
+            buffer.Add(newItem);
+            if (buffer.Count > bufferLimit) Flush();
+            return buffer.Count;
         }
-    } 
+
+        private void ConsoleLine(string txt)
+        {
+            #if DEBUG
+            Console.WriteLine(txt);
+            #endif
+        }
+ 
+        public Task Flush() // do not forget to flush when exit (OR switch Enabled Off)
+        {
+            if (buffer.Count == 0) return null;
+            string strBuffer = ""; 
+            for (int i=0; i<buffer.Count; i++)
+            {
+                strBuffer += buffer[i] + "\n";
+            }           
+            buffer.Clear();
+            ConsoleLine("0h: " + stw.ElapsedMilliseconds.ToString());
+            var task = Task.Run(() => FileWriteAsync(AutoSaveFileName, strBuffer, true));
+            return task;
+        }
+
+        private async Task FileWriteAsync(string filePath, string messaage, bool append = true)
+        {
+            try 
+            {
+                using (FileStream stream = new FileStream(filePath, append ? FileMode.Append : FileMode.Create, FileAccess.Write,
+                                                                                               FileShare.None, 65536, true))
+                using (StreamWriter sw = new StreamWriter(stream))
+                {
+                    writing = true;
+                    ConsoleLine("1k: "+stw.ElapsedMilliseconds.ToString());
+                    await sw.WriteAsync(messaage);
+                    ConsoleLine("2p: " + stw.ElapsedMilliseconds.ToString());
+                    writing = false;
+                }
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine(">> IOException - "+e.Message);
+                missingData = true; 
+            }
+        }
+
+        private bool _Enabled = false;
+        public bool Enabled 
+        {
+            get { return _Enabled; }       
+            set
+            {
+                if (value == _Enabled) return;
+                if (value && !_Enabled) // when it goes from false to true
+                {
+                    string dir = "";
+                    if (!_AutoSaveFileName.Equals("")) dir = Directory.GetParent(_AutoSaveFileName).FullName;
+                    if (!Directory.Exists(dir)) 
+                        _AutoSaveFileName = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + ".ahf"; //axel hub file
+
+                    string hdr = "";
+                    if (header != "") hdr = "# " + header+"\n";
+                    var task = Task.Run(() => FileWriteAsync(AutoSaveFileName, hdr, false));
+
+                    task.Wait();
+                    writing = false;
+                    missingData = false;
+                    stw.Start();
+                    _Enabled = true;
+                }
+                if (!value && _Enabled) // when it goes from true to false
+                {
+                    while (writing)
+                    {
+                        Thread.Sleep(100);
+                    }
+                    Task task = Flush();
+                    if(task != null) task.Wait();
+                    if (missingData) System.Windows.MessageBox.Show("Some data maybe missing from the log");
+                    stw.Reset();
+                    header = "";
+                    _Enabled = false;
+                }   
+             }     
+        }
+        
+        private string _AutoSaveFileName = "";
+        public string AutoSaveFileName
+        {
+            get 
+            {
+                return _AutoSaveFileName;
+            }
+            set 
+            { 
+                if(_Enabled) throw new Exception("Logger.Enabled must be Off when you set AutoSaveFileName.");
+                _AutoSaveFileName = value; 
+            }
+        }
+    }
+    #endregion
 
     #region DataStack - data storage for AxelChart
     /// <summary>
     /// You (developer) need to set TimeMode and one of SizeLimit or TimeLimit
-    /// When (before) you start using the stack you have to set Running = true, ResetTimer will start timer
-    /// Point.X is acommodating increasing value of double, if TimeMode -> sec, else - custom (incl. point number)
-    /// TimeMode is about the way DataStack limits its size, only exception is if AddPoint has no second param and TimeMode is ON
+    /// TimeMode is about the way DataStack limits its size
     /// The output is from standart List method ToArray in order to set DataSource of Graph
     /// </summary>
     public class DataStack : List<System.Windows.Point>
@@ -95,8 +190,8 @@ namespace AxelChartNS
             _stackMode = stackMode;
             SizeLimit = 100000;
             TimeLimit = 1;
-            RefFileStats = new Dictionary<string, double>();
             stopWatch = new Stopwatch();
+            logger = new AutoFileLogger();
         }
         public Dictionary<string, double> RefFileStats;
 
@@ -104,8 +199,12 @@ namespace AxelChartNS
         public bool StackMode
         {
             get { return _stackMode; }
+            set { _stackMode = value; }
         }
+
+        public AutoFileLogger logger;
         public Stopwatch stopWatch;
+
         private bool _running; 
         public bool Running
         {
@@ -136,46 +235,50 @@ namespace AxelChartNS
 
         public int Fit2Limit()
         {
-            if (StackMode)
+            if (TimeMode) // TimeLimit is valid
             {
-                if (TimeMode) // TimeLimit is valid
-                {
-                    if ((TimeLimit <= 0) || (TimeLimit > 1000)) throw new Exception("Invalid TimeLimit in TimeMode");
-                    while ((this[Count-1].X - this[0].X) > TimeLimit)
-                        RemoveAt(0);
-                }
-                else // SizeLimit is valid
-                {
-                    if ((SizeLimit <= 0) || (SizeLimit > 1E6)) throw new Exception("Invalid SizeLimit in SizeMode (TimeMode = false)");
-                    while (Count > SizeLimit)
-                        RemoveAt(0);
-                }
+                if ((TimeLimit <= 0) || (TimeLimit > 1000)) throw new Exception("Invalid TimeLimit in TimeMode");
+                while ((this[Count-1].X - this[0].X) > TimeLimit)
+                    RemoveAt(0);
             }
+            else // SizeLimit is valid
+            {
+                if ((SizeLimit <= 0) || (SizeLimit > 1E6)) throw new Exception("Invalid SizeLimit in SizeMode (TimeMode = false)");
+                while (Count > SizeLimit)
+                    RemoveAt(0);
+            }            
             return Count;
         }
 
-        public int AddPoint(double dt, double tm = Double.NaN) // in order of Y,X 
+        private void OnAddPoint()
         {
-            double t = 0;
-            if (TimeMode) 
+            if (StackMode)
             {
-                if (Double.IsNaN(tm)) 
-                {
-                    TimeSpan ts = stopWatch.Elapsed; // use this with caution !
-                    t = ts.TotalSeconds;
-                }
-                else t = tm;
+                Fit2Limit();
             }
-            else 
-            {
-                if (Double.IsNaN(tm)) t = Count;
-                else t = tm;
-            }
-            Add(new System.Windows.Point(t, dt));
-            return Fit2Limit();
         }
 
-        public void CopyEach(int each, out System.Windows.Point[] pntsArr) // skip some points for speed
+        public new int Add(Point pnt) 
+        {
+            base.Add(pnt);
+            if (logger.Enabled) logger.log(pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
+            OnAddPoint();
+            return Count;
+        }
+
+        public new int AddRange(List<Point> pnts)
+        {
+            base.AddRange(pnts);
+            if (logger.Enabled)
+                for (int i = 0; i < pnts.Count; i++)
+                {
+                    logger.log(pnts[i].X.ToString("G6") + '\t' + pnts[i].Y.ToString("G5")); 
+                }
+            OnAddPoint();
+            return Count;
+        }
+
+        public void CopyEach(int each, out System.Windows.Point[] pntsArr) // skip some points for visual speed
         {
             if (each == 1)
             {
@@ -197,7 +300,7 @@ namespace AxelChartNS
         {
             DataStack rslt = new DataStack(StackMode);
             for (int i = 0; i < Count; i++)
-                rslt.AddPoint(this[i].Y + offsetY, this[i].X + offsetX);
+                rslt.Add(new Point(this[i].X + offsetX, this[i].Y + offsetY));
             rslt.TimeMode = TimeMode;
             rslt.Running = Running;
             rslt.TimeLimit = TimeLimit;
@@ -236,7 +339,7 @@ namespace AxelChartNS
             Clear();
             for(int i=0; i<newXs.Length; i++)
             {
-                AddPoint(CurveFit.SplineInterpolation(cln.pointXs(), cln.pointYs(), secondDev, newXs[i]), newXs[i]);
+                Add(new Point(newXs[i], CurveFit.SplineInterpolation(cln.pointXs(), cln.pointYs(), secondDev, newXs[i])));
             }           
         }
 
@@ -273,70 +376,9 @@ namespace AxelChartNS
                 pair = line.Split('\t');
                 if (!double.TryParse(pair[0], out X)) throw new Exception("Wrong double at line " + j.ToString());
                 if (!double.TryParse(pair[1], out Y)) throw new Exception("Wrong double at line " + j.ToString());
-                AddPoint(Y, X);
+                Add(new Point(X, Y));
                 j++;
             }
-        }
-
-        public void OpenFileRef(string fn)
-        {
-            //Group1.Pos.CurrentPosition	Group1.Pos.CurrentVelocity	Group1.Pos.CurrentAcceleration	
-            //Group1.Pos.SetpointPosition	Group1.Pos.SetpointVelocity	Group1.Pos.SetpointAcceleration	Group1.Pos.FollowingError
-            int j = -1;
-            movePrmStr mp;
-            string[] prms;
-            double timeInterval = 1;
-            List<movePrmStr> mList = new List<movePrmStr>();
-            foreach (string line in File.ReadLines(fn))
-            {
-                j++;
-                if (j == 0) // first row
-                {
-                    prms = line.Split('\t');
-                    double.TryParse(prms[0], out timeInterval);
-                }
-                if (j < 2) continue; // skip first two rows
-                prms = line.Split('\t');
-                if (prms.Length != 8) break; // end of list or broken (incomplete) row 
-                mp.TimeElapsed = j * timeInterval;
-                if (!double.TryParse(prms[0], out mp.CurrentPosition)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(prms[1], out mp.CurrentVelocity)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(prms[2], out mp.CurrentAcceleration)) throw new Exception("Wrong double at line " + j.ToString());
-                //if (prms[3].Equals("0") || prms[4].Equals("0") || prms[5].Equals("0")) continue; // ??? clean or raw
-                if (!double.TryParse(prms[3], out mp.SetpointPosition)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(prms[4], out mp.SetpointVelocity)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(prms[5], out mp.SetpointAcceleration)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(prms[6], out mp.FollowingError)) throw new Exception("Wrong double at line " + j.ToString());
-                mp.CalcVelocity = 0; mp.CalcAcceleration = 0;
-                mList.Add(mp);
-            }
-            j = 0;           
-            Clear();
-            TimeMode = false;
-            SizeLimit = mList.Count;
-            List<double> feList = new List<double>(); List<double> afeList = new List<double>();
-            List<double> posList = new List<double>();
-            for (int i = 0; i < mList.Count; i++)
-            {
-                posList.Add(mList[i].CurrentPosition);
-            }
-            double[] iniCond = {0.0, 0.0};
-            double[] velArr = SignalProcessing.Differentiate(posList.ToArray(), timeInterval, iniCond, iniCond, DifferentiationMethod.Forward);
-            double[] accelArr = SignalProcessing.Differentiate(velArr, timeInterval, iniCond, iniCond, DifferentiationMethod.Forward);
-            for (int i = 4; i < mList.Count - 4; i++)
-            {
-                mp = mList[i];
-                //mp.CalcVelocity = velArr[i];
-                mp.CalcAcceleration = accelArr[i];
-                feList.Add(mp.FollowingError); afeList.Add(Math.Abs(mp.FollowingError));
-                AddPoint(mp.CalcAcceleration, mp.TimeElapsed);
-                mList[i] = mp;
-            }
-            Double average = feList.Average(); RefFileStats["Mean_FE"] = average;
-            double sumOfSquaresOfDifferences = feList.Select(val => (val - average) * (val - average)).Sum();
-            RefFileStats["SDev_FE"] = Math.Sqrt(sumOfSquaresOfDifferences / feList.Count);
-            RefFileStats["Min_FE"] = feList.Min(); RefFileStats["Max_FE"] = feList.Max();
-            RefFileStats["Mean_abs_FE"] = afeList.Average();
         }
         
         public void Save(string fn)
@@ -354,16 +396,10 @@ namespace AxelChartNS
     /// </summary>
     public partial class AxelChartClass : UserControl
     {
-        private DataStack FirstDerv = null;
-        private DataStack CleanSeries = null;
-        private DataStack OriginalWaveform = null;
-
         public AxelChartClass()
         {
             InitializeComponent();
             Waveform = new DataStack();
-            FirstDerv = new DataStack();
-            CleanSeries = new DataStack();
 
             Running = false;
             tabSecPlots.SelectedIndex = 1;
@@ -374,19 +410,6 @@ namespace AxelChartNS
         public void Clear(bool andRefresh = true) 
         {
             Waveform.Clear();
-            FirstDerv.Clear();
-            CleanSeries.Clear();
-            if (!Utils.isNull(OriginalWaveform)) OriginalWaveform.Clear();
-
-            remoteArg = String.Empty;
-            refFile = String.Empty;
-            lbResult.Content = "";
-            lbLvlP.Content = "level+ = ";
-            lvDspP.Content = "SDev+ = ";
-            lbLvlM.Content = "level- = ";
-            lvDspM.Content = "SDev- = ";
-            lbInfo.Content = "Info:";
-            tbLog.Clear();
             if (andRefresh) Refresh();
         }
 
@@ -400,8 +423,9 @@ namespace AxelChartNS
             set
             {
                 SetValue(remoteArgProperty, value);
-                //if (!String.IsNullOrEmpty(value)) 
-                    lbInfo.Content = "remArg> " + value;
+                Waveform.logger.header = value;
+                if (String.IsNullOrEmpty(value)) lbInfo.Content = "Info: ";
+                else lbInfo.Content = "Info: " + value;
             }
         }
         // Using a DependencyProperty as the backing store for remoteArg.  
@@ -413,27 +437,27 @@ namespace AxelChartNS
                   new PropertyMetadata("")
               );
 
-        private string _refFile = String.Empty;
-        public string refFile
+/*        private string _refInfo = String.Empty;
+        public string refInfo
         {
             get
             {
-                return (string)GetValue(refFileProperty);
+                return (string)GetValue(refInfoProperty);
             }
             set
             {
-                SetValue(refFileProperty, value);
-                if (!String.IsNullOrEmpty(value)) lbInfo.Content = "RefFile> " + value;
+                SetValue(refInfoProperty, value);
+                
             }
         }
         // Using a DependencyProperty as the backing store for refFile.  
-        public static readonly DependencyProperty refFileProperty
+        public static readonly DependencyProperty refInfoProperty
             = DependencyProperty.Register(
-                  "refFile",
+                  "refInfo",
                   typeof(string),
                   typeof(AxelChartClass),
                   new PropertyMetadata("")
-              );
+              );*/
 
         public double SamplingPeriod
         {
@@ -512,7 +536,7 @@ namespace AxelChartNS
                 if (value)
                 {
                     btnPause.Visibility = Visibility.Visible;
-                    Clear();
+                   // Clear();
                 }
                 else
                 {
@@ -547,9 +571,9 @@ namespace AxelChartNS
             return null;
         }
 
-        public int AddPoint(double pnt, double tm = Double.NaN)
+        public int AddPoint(double X, double Y)
         {
-            return Waveform.AddPoint(pnt,tm);          
+            return Waveform.Add(new Point(X,Y));          
         }
 
         private void rescaleX(System.Windows.Point[] pntsIn, out System.Windows.Point[] pntsOut)
@@ -721,7 +745,7 @@ namespace AxelChartNS
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
             dlg.FileName = ""; // Default file name
             dlg.DefaultExt = ".abf"; // Default file extension
-            dlg.Filter = "Axel Boss File (.abf)|*.abf"; // Filter files by extension
+            dlg.Filter = "Axel Boss File (.abf)|*.abf|"+"Axel Hib File (.ahf)|*.ahf"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -731,16 +755,16 @@ namespace AxelChartNS
             {
                 // Save file                
                 Waveform.Save(dlg.FileName);
-                lbInfo.Content = "Saved: " + dlg.FileName; 
+               // lbInfo.Content = "Saved: " + dlg.FileName; 
             }
         }
 
         public void Open(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
-            Clear();
+            //Clear();
             string ext = System.IO.Path.GetExtension(fn);
-            if (ext.Equals(".abf"))
+            if (ext.Equals(".abf") || ext.Equals(".ahf"))
             {
                 remoteArg = "";
                 foreach (string line in File.ReadLines(fn))
@@ -757,24 +781,11 @@ namespace AxelChartNS
                     Dictionary<string, object> remotePrms = JsonConvert.DeserializeObject < Dictionary<string, object>>(remoteArg);
                     SamplingPeriod = (double)remotePrms["SamplingPeriod"];
                 }
-                tbLog.AppendText("Count= " + Waveform.Count.ToString() + "\n");
-                tbLog.AppendText("Sampling period= " + SamplingPeriod.ToString("G3") + "\n");
-                tbLog.AppendText("^^^^^^^^^^^^^^^^^^^\n");
+              //  tbLog.AppendText("Count= " + Waveform.Count.ToString() + "\n");
+              //  tbLog.AppendText("Sampling period= " + SamplingPeriod.ToString("G3") + "\n");
+              //  tbLog.AppendText("^^^^^^^^^^^^^^^^^^^\n");
             }
-            if (ext.Equals(".log"))
-            {
-                Waveform.OpenFileRef(fn);
-                refFile = fn;
-                SamplingPeriod = (Waveform.pointXs()[99] - Waveform.pointXs()[0]) / 100;
-                tbLog.AppendText("Count= " + Waveform.Count.ToString() + "\n");
-                tbLog.AppendText("Sampling period= " + SamplingPeriod.ToString("G3") + "\n");
-                foreach (var st in Waveform.RefFileStats)
-                {
-                    tbLog.AppendText(st.Key + "= " + st.Value.ToString("G4") + "\n");
-                }
-                tbLog.AppendText("^^^^^^^^^^^^^^^^^^^\n");
-            }
-            OriginalWaveform = Waveform.Clone();
+         //OriginalWaveform = Waveform.Clone();
         }
 
         private void btnOpen_Click(object sender, RoutedEventArgs e)
@@ -793,357 +804,43 @@ namespace AxelChartNS
                 // Open file                
                 Open(dlg.FileName);
                 Refresh();
-                lbInfo.Content = "Opened: " + dlg.FileName; 
+                //lbInfo.Content = "Opened: " + dlg.FileName; 
             }
         }
         #endregion
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-        #region Statistical routines
-
-        private DataStack CalcFirstDerv(DataStack orig, int deg = 2) // 2-4
-        {
-            DataStack rslt = new DataStack();
-            deg = Utils.EnsureRange(deg, 2, 4);
-            double y;
-            switch(deg) 
-            {
-               case 2: 
-                    for (int i = 2; i < orig.Count-2; i++)
-                    {
-                        y = - 2 * orig[i - 2].Y - orig[i - 1].Y +  orig[i + 1].Y + 2 * orig[i + 2].Y ;
-                        rslt.AddPoint(y / 10, orig[i].X);
-                    }
-                    break;
-                case 3:
-                    for (int i = 3; i < orig.Count - 3; i++)
-                    {
-                        y = - 3 * orig[i - 3].Y - 2 * orig[i - 2].Y - orig[i - 1].Y +
-                            orig[i + 1].Y + 2 * orig[i + 2].Y + 3 * orig[i + 3].Y;
-                        rslt.AddPoint(y / 28, orig[i].X);
-                    }
-                    break;
-                case 4:
-                    for (int i = 4; i < orig.Count - 4; i++)
-                    {
-                        y = -4 * orig[i - 4].Y - 3 * orig[i - 3].Y - 2 * orig[i - 2].Y - orig[i - 1].Y +
-                            orig[i + 1].Y + 2 * orig[i + 2].Y + 3 * orig[i + 3].Y + 4 * orig[i + 4].Y;
-                        rslt.AddPoint(y / 60, orig[i].X);
-                    }
-                    break;
-            }
-            return rslt;
-        }
-
-        private DataStack Histogram(DataStack src, int numBins = 100)
-        {
-            if (src.Count == 0) throw new Exception("No data for the histogram");
-            DataStack rslt = new DataStack();
-            double[] centerValues,Ys;
-            Ys = src.pointYs();
-            int[] histo = Statistics.Histogram(Ys, Ys.Min(), Ys.Max(), numBins, out centerValues);
-            if (histo.Length != centerValues.Length) throw new Exception("histogram trouble!");
-            for (int i = 0; i < histo.Length; i++)
-            {
-                rslt.AddPoint(histo[i], centerValues[i]);
-            }    
-            return rslt;
-        }
-
-        private DataStack statsByHistoExt(DataStack src, double thresholdAmpl, double thresholdHisto, bool centered, bool upper, out SingleStatStr stats) 
-                                         // threshold is the level of distrimination as % of the max
-        {
-            Func<string, bool> log = new Func<string, bool>((txt) =>
-            {
-                //Console.WriteLine(txt); 
-                tbLog.AppendText(txt + "\n");
-                return true;
-            });
-            DataStack rslt = new DataStack();
-            stats.level = 0; stats.sd = 0;
-            try
-            {
-                if (src.Count == 0) throw new Exception("No data to be processed");
-                if (upper) log(">-- calculating upper part --<");
-                else log(">-- calculating lower part --<");            
-                DataStack offmd;
-                if (centered)
-                {
-                    double offsetY = src.pointYs().Sum() / src.Count;
-                    log("offset by Y= " + offsetY.ToString("G3"));
-                    offmd = src.Clone(0, -offsetY);
-                }  
-                else offmd = src.Clone();
-
-                double minY = src.pointYs().Min(); double maxY = src.pointYs().Max(); 
-                DataStack md = new DataStack();
-                for (int i = 0; i < src.Count; i++)
-                {
-                    if (upper) 
-                    {
-                        if (offmd[i].Y < (thresholdAmpl / 100) * maxY) continue;
-                        md.AddPoint(offmd[i].Y, offmd[i].X);
-                    }
-                    else
-                    {
-                        if (offmd[i].Y > (thresholdAmpl / 100) * minY) continue;
-                        md.AddPoint(-offmd[i].Y, offmd[i].X);
-                    } 
-                }
-
-                DataStack hst = Histogram(md);
-                // peak detection
-                double[] amplitudes, locations, secondDerivatives;
-                double initialThreshold;
-                int initialWidth;
-                bool endOfData;
-
-                PeakDetector peakDetector = new PeakDetector();
-                // Set initial state of peakDetector
-                initialThreshold = 0.0;
-                initialWidth = 20; 
-                peakDetector.Reset(initialThreshold, initialWidth, PeakPolarity.Peaks);
-                endOfData = true;
-
-                // Find location of amplitude, locations and second derivates of peaks in signalIn array
-                peakDetector.Detect(hst.pointYs(), endOfData, out amplitudes, out locations, out secondDerivatives);
-                int pkIdx = 0; double mx = 0;
-                if (amplitudes.Length == 0) throw new Exception("No peaks found in histogram");
-                if (locations.Length > 1) log(locations.Length.ToString() + " peaks found, searching for the highest one");
-                for (int i = 0; i < amplitudes.Length; i++)
-                {
-                    if (mx > amplitudes[i]) continue;
-                    mx = amplitudes[i];
-                    pkIdx = i; 
-                }
-                //log("peakPosIdx in histo= " + locations[pkIdx].ToString("G3"));
-                // fit Gauss
-                double ampl, res; 
-                double iAmpl =  hst.pointYs().Max();
-                int cIdx = (int)Math.Round(locations[pkIdx]); double iCentre = hst.pointXs()[cIdx];
-                double iSDev = md.pointSDevY();                
-                double[] fitted = CurveFit.GaussianFit(hst.pointXs(), hst.pointYs(), FitMethod.Bisquare, iAmpl, iCentre, iSDev,
-                                                       out ampl, out stats.level, out stats.sd, out res);
-                cIdx = hst.indexByX(stats.level);
-                if (cIdx == -1) throw new Exception("No level index found");
-                log("ampl= " + ampl.ToString("G4") + "; level= " + stats.level.ToString("G4"));
-                log("SDev= " + stats.sd.ToString("G4") + "; res= " + res.ToString("G4")); //+ "; cIdx= " + cIdx.ToString());
-                int li = 0; int ri = hst.Count - 1;
-                double lvl = (thresholdHisto / 100) * ampl;
-                for (int i = cIdx; i < hst.Count; i++)
-                {
-                    if (hst[i].Y < lvl)
-                    {
-                        ri = i; break; 
-                    }
-                }
-                for (int i = cIdx; i>0 ; i--)
-                {
-                    if (hst[i].Y < lvl)
-                    {
-                        li = i; break;
-                    }
-                }
-                log("left Idx= " + li.ToString() + "; level= " + hst[li].X.ToString("G4"));   
-                log("right Idx= " + ri.ToString() + "; level= " + hst[ri].X.ToString("G4"));
-            
-                for (int i = 0; i < md.Count; i++)
-                {
-                    if (Utils.InRange(md[i].Y, hst[li].X, hst[ri].X)) rslt.AddPoint(md[i].Y, md[i].X);
-                }
-                log("sp.mean= "+rslt.pointYs().Average().ToString("G3")+"; sp.SDev= "+rslt.pointSDevY(false).ToString("G3")); //+"%"
-                log("src.Cnt= " + src.Count.ToString()+"; rslt.Cnt= "+rslt.Count.ToString());
-                
-                return rslt;    
-                }
-            catch (Exception e)
-
-            {
-                rslt.Clear();
-                log("Error: " + e.Message);
-                return rslt; 
-            }
-        }
-
-        // same as above but params from GUI
-        public DataStack statsByHistoExt(DataStack src, bool upper, out SingleStatStr stats)
-        {
-            return statsByHistoExt(src, ntbAmplThre.Value, ntbHistoThre.Value, chkCentralize.IsChecked.Value, upper, out stats);
-        }
-
-        public List<DataStack> SplitCycles(DataStack src) // split upper or lower result of statsByHisto
-        {
-            double intervalThre = 0.2; int minCount = 10;
-            List<DataStack> rslt = new List<DataStack>();
-            rslt.Add(new DataStack());
-            for (int i=0; i<src.Count-1; i++)
-            {
-                if((src[i+1].X-src[i].X)<intervalThre) 
-                {
-                    rslt.Last().Add(src[i]);
-                }
-                else
-                {
-                    if (rslt.Last().Count < minCount) rslt.Last().Clear();
-                    else rslt.Add(new DataStack());
-                }                    
-            }
-            return rslt;
-        } 
-
-        public StatsStr statsByHisto()
-        {
-            StatsStr rslt;
-            //if (Utils.isNull(OriginalWaveform)) 
-            OriginalWaveform = Waveform.Clone();
-            DataStack wu = statsByHistoExt(OriginalWaveform, true, out rslt.upper);
-            DataStack wl = statsByHistoExt(OriginalWaveform, false, out rslt.lower);
-            rslt.ok = (wu.Count>0) && (wl.Count>0);
-            return rslt;
-        }
-
-        private double myResidue(DataStack src, double slope, double intercept)
-        {
-            double kai = 0;
-            for (int i = 0; i < src.Count; i++)
-            {
-                kai += Math.Pow(src.pointYs()[i] - (src.pointXs()[i]*slope + intercept),2);
-            }
-            return Math.Sqrt(kai/ src.Count);
-        }
-
-        private StatsStr statsByLinRegr(DataStack src)
-        {
-            StatsStr mr, rslt; 
-            double slope, intercept, residue;
-            DataStack wu = statsByHistoExt(src, true, out mr.upper);
-            CurveFit.LinearFit(wu.pointXs(), wu.pointYs(), FitMethod.LeastSquare, out slope, out intercept, out residue);
-            rslt.upper.level = intercept; rslt.upper.sd = residue; ; // myResidue(src, slope, intercept);
-
-            DataStack wl = statsByHistoExt(src, false, out mr.lower);
-            CurveFit.LinearFit(wl.pointXs(), wl.pointYs(), FitMethod.LeastSquare, out slope, out intercept, out residue);
-            rslt.lower.level = intercept; rslt.lower.sd = residue;
-            rslt.ok = (wu.Count > 0) && (wl.Count > 0);
-            return rslt;
-        }
-        #endregion
-
-        public void reportRslt(StatsStr stats)
-        {
-            if (!stats.ok)
-            {
-                lbResult.Content = "Problem...!";
-                return;
-            }
-            lbResult.Content = "Aver.SDev = " + (100 * stats.mean().sd / stats.mean().level).ToString("G3")+"%";
-            lbLvlP.Content = "level+ = " + stats.upper.level.ToString("G4");
-            lvDspP.Content = "SDev+ = " + stats.upper.sd.ToString("G4");
-            lbLvlM.Content = "level- = " + stats.lower.level.ToString("G4");
-            lvDspM.Content = "SDev- = " + stats.lower.sd.ToString("G4");
-            Refresh();
-        }
-
-         private void btnShowDerv_Click(object sender, RoutedEventArgs e)
-        {
-            OriginalWaveform = Waveform.Clone();
-            Waveform = CalcFirstDerv(Waveform);
-            Refresh();
-        }
-
-        private void btnOriginal_Click(object sender, RoutedEventArgs e)
-        {
-            Waveform = OriginalWaveform.Clone();
-            Refresh();
-        }
-
-        private void btnShowCleared_Click(object sender, RoutedEventArgs e)
-        {
-            if (Utils.isNull(OriginalWaveform)) OriginalWaveform = Waveform.Clone();
-            StatsStr stats;
-            Waveform = statsByHistoExt(OriginalWaveform, true, out stats.upper);
-            DataStack wl = statsByHistoExt(OriginalWaveform, false, out stats.lower);
-            stats.ok = (Waveform.Count > 0) && (wl.Count > 0);
-            reportRslt(stats);
-        }
-
-        private void btnSimul_Click(object sender, RoutedEventArgs e)
-        {
-            Waveform.Clear(); SamplingPeriod = 0.001; double d, w;
-            for (int i = 0; i < 20000; i++)
-            {
-                d = SamplingPeriod * i;
-                /*w =  Math.Cos(6.28 * 10 *d) + Math.Cos(6.28 * 50 *d);
-                for (int j = 1; j < 5; j++)
-                {
-                    w += Math.Cos(6.28 * 100 * j *d);
-                }*/
-                //Waveform.AddPoint(5*(0.5 * Math.Cos(6.28 * 30 * d) + Math.Cos(6.28 * 2 * d)), d);
-
-                Waveform.AddPoint(Math.Exp(d),d);
-            }
-            Refresh();
-        }
-
         private void graphOverview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ((Graph)sender).ResetZoomPan();
         }
 
-        private void btnLinRegr_Click(object sender, RoutedEventArgs e)
-        {
-            if (Utils.isNull(OriginalWaveform)) OriginalWaveform = Waveform.Clone();
-            /*  StatsStr stats = statsByLinRegr(OriginalWaveform);
-              reportRslt(stats);*/
-         /*    double v, va,vb, axel;
-            Waveform.Clear();
-            for (int i = 1; i < OriginalWaveform.Count - 1; i++)
-            {
-
-                v = (OriginalWaveform[i + 1].Y - OriginalWaveform[i - 1].Y) / (2 * SamplingPeriod);
-                va = (OriginalWaveform[i].Y - OriginalWaveform[i - 1].Y) / SamplingPeriod;
-                vb = (OriginalWaveform[i + 1].Y - OriginalWaveform[i].Y) / SamplingPeriod;
-                axel = (vb - va) / SamplingPeriod;
-         
-                AddPoint(axel, OriginalWaveform[i].X);
-            } 
-           feList.Clear(); afeList.Clear(); 
-            List<double> posList = new List<double>();
-            double[] iniCond = { 0.0, 0.0 };
-            double[] velArr = SignalProcessing.Differentiate(OriginalWaveform.pointYs(), SamplingPeriod, iniCond, iniCond, DifferentiationMethod.Forward);
-            double[] accelArr = SignalProcessing.Differentiate(velArr, SamplingPeriod, iniCond, iniCond, DifferentiationMethod.Forward);
-            for (int i = 4; i < velArr.Length - 4; i++)
-            {
-                AddPoint(accelArr[i], SamplingPeriod*i);             
-            } */
-            double Xmin = Math.Max(((AxisDouble)graphScroll.Axes[0]).Range.Minimum, Waveform[0].X);
-            double Xmax = Math.Min(((AxisDouble)graphScroll.Axes[0]).Range.Maximum, Waveform[Waveform.Count-2].X);
-
-            int X0 = Waveform.indexByX(Xmin);
-            int X1 = Waveform.indexByX(Xmax);
-
-            if((X0 == -1) || (X1 == -1)) throw new Exception("Problem with X range of scroll graph");
-            Console.WriteLine(X0.ToString() + " / " + X1.ToString());
-            DataStack partial = new DataStack();
-            
-            for (int i = X0; i < X1; i++)
-            {
-                partial.Add(Waveform[i]);
-            }
-            tbLog.AppendText("top part: M= " + partial.pointYs().Average().ToString("G3") + "; SD= " + partial.pointSDevY(false).ToString("G3")+ 
-                                " ("+partial.pointSDevY(true).ToString("G3") + "%)\n");
-        }
-
         private void btnCpyPic_Click(object sender, RoutedEventArgs e)
         {
             Button btn = (Button)sender; Graph graph = null;
-            if(sender == btnCpyPic1) graph = graphOverview;
-            if(sender == btnCpyPic2) graph = graphPower;
+            if (sender == btnCpyPic1) graph = graphOverview;
+            if (sender == btnCpyPic2) graph = graphPower;
             if (sender == btnCpyPic3) graph = graphHisto;
             Rect bounds = LayoutInformation.GetLayoutSlot(tabSecPlots);//graph ); 
-            var bitmap = new RenderTargetBitmap( (int)bounds.Width, (int)bounds.Height, 96, 96, PixelFormats.Pbgra32 ); 
+            var bitmap = new RenderTargetBitmap((int)bounds.Width, (int)bounds.Height, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(tabSecPlots);
             Clipboard.SetImage(bitmap);
             Utils.TimedMessageBox("The image is in the clipboard");
         }
+
+        public DataStack Histogram(DataStack src, int numBins = 100)
+        {
+            if (src.Count == 0) throw new Exception("No data for the histogram");
+            DataStack rslt = new DataStack();
+            double[] centerValues, Ys;
+            Ys = src.pointYs();
+            int[] histo = Statistics.Histogram(Ys, Ys.Min(), Ys.Max(), numBins, out centerValues);
+            if (histo.Length != centerValues.Length) throw new Exception("histogram trouble!");
+            for (int i = 0; i < histo.Length; i++)
+            {
+                rslt.Add(new Point(centerValues[i], histo[i]));
+            }
+            return rslt;
+        }
+
     }
 }

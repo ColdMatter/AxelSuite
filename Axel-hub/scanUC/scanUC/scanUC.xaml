@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Class="scanHub.scanClass" 
-             mc:Ignorable="d" Width="261.714" Height="270.285">
+             mc:Ignorable="d" Width="261.714" Height="270.285" Loaded="UserControl_Loaded">
     <Grid HorizontalAlignment="Left" Width="259" Margin="6,0,-0.429,0.429">
         <Grid.RowDefinitions>
             <RowDefinition Height="25.143"/>
@@ -27,11 +27,11 @@
                 <TextBox x:Name="tbDigitValue" Height="23" TextWrapping="Wrap" Text="2000" Margin="5,0,0,0" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Right" Width="93" RenderTransformOrigin="0.509,-1.547"/>
             </StackPanel>
         </GroupBox>
-        <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="0,4.571,10,0" VerticalAlignment="Top" SelectedIndex="1" SelectionChanged="tabControl_SelectionChanged">
+        <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="0,4.571,10,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
             <TabItem x:Name="tabTimeLimit" Header=" Time Limit ">
                 <Grid Margin="0,1,0.429,-0.857">
                     <TextBox x:Name="tbTimeLimit" HorizontalAlignment="Right" Height="23" Margin="0,0,40.428,7" TextWrapping="Wrap" Text="3" VerticalAlignment="Bottom" Width="74" FontSize="14"/>
-                    <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="0">
+                    <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
@@ -53,13 +53,13 @@
                 <Grid>
                     <Label x:Name="lbTotalTime" Content="Time [sec]:" HorizontalAlignment="Left" Margin="10,22,0,0" VerticalAlignment="Top" Foreground="#FF0429C5"/>
                     <Label x:Name="lbBufferSize" Content="Buffer size:" HorizontalAlignment="Left" Margin="125,22,0,0" VerticalAlignment="Top" Foreground="#FF0726AA"/>
-                    <CheckBox x:Name="chkRemoteEnabled" Content="Remote control enabled" HorizontalAlignment="Left" Margin="29,7,0,0" VerticalAlignment="Top" FontWeight="Bold" IsChecked="True"/>
                     <CheckBox x:Name="chkStatsEnabled" Content="Run stats afterwards" HorizontalAlignment="Left" Margin="29,48,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                    <Button x:Name="btnCheckComm" Content="Check comm. to MM2" HorizontalAlignment="Left" Margin="29,4,0,0" VerticalAlignment="Top" Width="143" Click="btnCheckComm_Click"/>
                 </Grid>
             </TabItem>
 
         </TabControl>
-        <Image x:Name="imgSpeed" Margin="2,7,0,0" Source="Properties/speed2.png" MouseDown="Image_MouseDown" IsEnabled="True" Cursor="Hand" OpacityMask="#FFF01414" HorizontalAlignment="Left" VerticalAlignment="Top" Width="94" Height="97" Grid.RowSpan="3" Stretch="None">
+        <Image x:Name="imgSpeed" Margin="2,20,0,0" Source="Properties/speed2.png" MouseDown="Image_MouseDown" IsEnabled="True" Cursor="Hand" OpacityMask="#FFF01414" HorizontalAlignment="Left" VerticalAlignment="Top" Width="82" Height="78" Grid.RowSpan="3" Stretch="Fill">
             <Image.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform ScaleY="0.7" ScaleX="0.9"/>
@@ -72,6 +72,6 @@
         <ProgressBar x:Name="progressBar" Grid.Row="4" HorizontalAlignment="Left" Height="25" Margin="0,1.571,0,0" VerticalAlignment="Top" Width="249" Background="#FFF1F0F0" Foreground="#FFB8D9BE" />
         <Label x:Name="lbTimeElapsed" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" VerticalAlignment="Top" Height="25" Width="40" Margin="10,1.571,0,0"/>
         <Label x:Name="lbTimeLeft" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" Margin="207,1.571,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.466,0" Height="25" Width="40"/>
-        <Label x:Name="lblStatus" Grid.Row="0"  Content="Status:" HorizontalAlignment="Left" Height="28" Margin="85,0,0,0" VerticalAlignment="Top" Width="169" FontSize="14" RenderTransformOrigin="0.5,0.5" Foreground="#FF1B7F11" Grid.RowSpan="2"/>
+        <Label x:Name="lblStatus" Grid.Row="0"  Content="Status:" HorizontalAlignment="Left" Height="28" Margin="0,-4,0,0" VerticalAlignment="Top" Width="254" FontSize="14" RenderTransformOrigin="0.5,0.5" Foreground="#FF1B7F11"/>
     </Grid>
 </UserControl>

@@ -13,75 +13,44 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using PipesServerNS;
+using System.Diagnostics;
+using RemoteMessagingNS;
 using UtilsNS;
 
 namespace scanHub
-{
-    
+{    
     /// <summary>
     /// Interaction logic for UserControl1.xaml
     /// </summary>
     public partial class scanClass : UserControl
     {
         public delegate void NewMessageDelegate(string NewMessage);
-        private PipeServer _pipeServer;
-        private string TrackPipeName = "AxelHubPipe";
-        private bool Connected = false;
-        public readonly double[] FixConvRate = { 102400, 51200, 34133, 25600, 20480, 17067, 14629, 12800, 11378,
-            10240, 9309, 8533, 7314, 6400, 5689, 5120, 4655, 4267, 3657, 3200, 2844, 2560, 2327, 2133, 1829,
-            1600, 1422, 1280, 1164, 1067, 914, 800, 711, 640, 582, 533, 457, 400, 356, 320, 291, 267}; // [Hz]
+        private RemoteMessaging mm2;
+        private double realSampling;
 
         TimeSpan totalTime, currentTime;
-        DispatcherTimer dispatcherTimer;
-
-        public double RealConvRate(double wantedCR)
-        {
-            if (wantedCR > FixConvRate[0]) return FixConvRate[0];
-            int len = FixConvRate.Length;
-            if (wantedCR <= FixConvRate[len-1]) return FixConvRate[len-1];
-            int found = 0;
-            for (int i = 0; i < len-1; i++)
-            {
-                if ((FixConvRate[i] >= wantedCR) && (wantedCR > FixConvRate[i + 1]))
-                {
-                    found = i; break;
-                }
-            }
-            groupDigit.Header = " Conversion rate (" + FixConvRate[found].ToString() + " [Hz])"; DoEvents();
-            return FixConvRate[found];
-        }
-
-        private void Connect2Track()
-        {
-            try
-            {
-                _pipeServer.Listen(TrackPipeName);
-                Connected = true;
-            }
-            catch (Exception)
-            {
-                Connected = false;
-            }
-            if (Connected) Status("Ready to go remote <->");
-        }
+        DispatcherTimer dTimer;
+        Stopwatch sw;
 
         public scanClass()
         {
             InitializeComponent();
+            
+            dTimer = new DispatcherTimer(DispatcherPriority.Send);
+            dTimer.Tick += new EventHandler(dispatcherTimer_Tick);
+            dTimer.Interval = new TimeSpan(0, 0, 1);
 
-            _pipeServer = new PipeServer();
-            _pipeServer.PipeMessage += new DelegateMessage(PipesMessageHandler);
-
-            dispatcherTimer = new DispatcherTimer(DispatcherPriority.Send);
-            dispatcherTimer.Tick += dispatcherTimer_Tick;
-            dispatcherTimer.Interval = new TimeSpan(0,0,1);
-
-            //if(!Connected) Connect2Track();
+            sw = new Stopwatch();
 
             tabControl.SelectedIndex = 0;
             //Status("Ready to go ");
         }
+
+        public void OnRealSampling(double _realSampling) 
+        {
+            realSampling = _realSampling;
+            groupDigit.Header = " Conversion rate (" + realSampling.ToString() + " [Hz])"; DoEvents();
+        }  
 
         private void dispatcherTimer_Tick(object sender, EventArgs e)
         {
@@ -118,7 +87,7 @@ namespace scanHub
         private void Status(string sts)
         {
             if (Utils.isNull(lblStatus)) return;
-            lblStatus.Content = "Status: " + sts;
+            lblStatus.Content = ">> " + sts;
             DoEvents();
         }
 
@@ -132,14 +101,14 @@ namespace scanHub
                 {
                     bbtnStart.Content = "Stop";
                     Status("Running....");
-                    dispatcherTimer.Start();
+                    dTimer.Start();
                     currentTime = new TimeSpan(0, 0, 0);
                 }
                 else
                 {
                     bbtnStart.Content = "Start";
                     Status("Ready for another go");
-                    dispatcherTimer.Stop();
+                    dTimer.Stop();
                     lbTimeLeft.Visibility = System.Windows.Visibility.Visible;
                     totalTime = new TimeSpan(0, 0, 0);
                     currentTime = new TimeSpan(0, 0, 0);
@@ -161,69 +130,20 @@ namespace scanHub
               );
 
         int TotalCycleCount = 0;
-        double TotalCycleTime = 0; //[sec]
-        private void PipesMessageHandler(string message)
+        double TotalCycleTime = 0.0; //[sec]
+
+        private bool MessageHandler(string message)
         {
-            if (!Connected)
-            {
-                Status("Error: no named pipe to Axel Track");
-                return;
-            }
-            //if (tabControl.SelectedIndex != 2) tabControl.SelectedIndex = 2;  // ???
             try
             {
-                if (!CheckAccess()) 
-                { 
-                    // On a different thread
-                    Dispatcher.Invoke(() => PipesMessageHandler(message));
-                }
-                else
-                {
-                    if ((!chkRemoteEnabled.IsChecked.Value) || (tabControl.SelectedIndex != 2)) return; 
-                    string[] ws = message.Split('>');
-                    string ws0 = ws[0].ToUpper();
-                    if (ws0 == "ACQ") // acquisition
-                    {
-                        Status("Axel Track is moving...");
-                        double SamplingPeriod = GetSamplingPeriod();
-                        string prms = ws[1].Replace("\0", "");
-                        string[] wt = prms.Split(';');
-                        double CyclePeriod = double.Parse(wt[0]); // one cycle motion only 
-                        double Pause = double.Parse(wt[1]); // two time gaps when it changes direction for safety
-                        double Distance = double.Parse(wt[2]);
-                        double Accel = double.Parse(wt[3]);
-                        int CyclesLeft = int.Parse(wt[4]);
-                        
-                        if (TotalCycleCount == 0)  // first call 
-                        {
-                            TotalCycleCount = CyclesLeft;
-                            TotalCycleTime = TotalCycleCount * (CyclePeriod + 2 * Pause);
-                            lbTotalTime.Content = "Time [sec]: " + (int)(TotalCycleTime);
-                            lbBufferSize.Content = "Buffer size: " + (int)(TotalCycleTime / SamplingPeriod);
-
-                            lbTimeLeft.Visibility = System.Windows.Visibility.Visible;
-                            totalTime = new TimeSpan(0, 0, (int)(TotalCycleTime));
-                            Running = true;
-                        }                        
-                        OnRemote(SamplingPeriod, CyclePeriod, Pause, Distance, Accel, CyclesLeft);
-                        if (CyclesLeft == 1)
-                        {
-                            TotalCycleCount = 0; // last turn
-                            Running = false;
-                        }                          
-                    }
-                    if (ws0 == "FRF") // open XPS log file for reference
-                    {
-                        Status("Axel Track sent ref. file");
-                        string fr = ws[1].Replace("\0", "");
-                        OnFileRef(fr, chkStatsEnabled.IsChecked.Value);
-                        Status("Ready for another go");
-                    }
-                }
+                bool back = false;
+                OnRemote(message);
+                return back;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return false;
             }
         } 
 
@@ -235,12 +155,12 @@ namespace scanHub
             if(Start != null) Start(down, period, TimeMode, Endless, Limit);
         }
 
-        public delegate void RemoteHandler(double SamplingPeriod, double CyclePeriod, double Pause, double Distance, double Accel, int CyclesLeft);
+        public delegate void RemoteHandler(string msg);
         public event RemoteHandler Remote;
 
-        protected void OnRemote(double SamplingPeriod, double CyclePeriod, double Pause, double Distance, double Accel, int CyclesLeft)
+        protected void OnRemote(string msg)
         {
-            if (Remote != null) Remote(SamplingPeriod, CyclePeriod, Pause, Distance, Accel, CyclesLeft);
+            if (Remote != null) Remote(msg);
         }
 
         public delegate void FileRefHandler(string FN, bool stats);
@@ -274,21 +194,19 @@ namespace scanHub
                 case 3: if (!double.TryParse(tbDigitValue.Text, out vl)) throw new Exception("Not number for digit. value");  // ms
                         freq = 1000 / vl;
                         break;
-                case 4: throw new Exception("Not implemented yet");
-                     
-            }           
-            freq = RealConvRate(freq);
+                case 4: throw new Exception("Not implemented yet");                    
+            }
             return 1 / freq;
         }
         
         private void bbtnStart_Click(object sender, RoutedEventArgs e)
         {
             if (Start == null) return;
-            Running = !Running;
+            Running = !Running; 
             
             bool down = Running;
             bool Endless = true;
-            double period = GetSamplingPeriod();
+            double period = GetSamplingPeriod(); // sampling rate in sec
             int plannedTime = 0; // [s]
 
             double Limit = 1;
@@ -323,10 +241,11 @@ namespace scanHub
 
          private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
          {
+             if(mm2 != null) mm2.Enabled = (tabControl.SelectedIndex == 2);
              if (tabControl.SelectedIndex == 2) 
              {
-                 if (Connected) Status("Ready to go remote <->");
-                 else Connect2Track();
+                 if (mm2.CheckConnection()) Status("Ready to remote<->");
+                 else Status("Commun. problem");
                  bbtnStart.Visibility = System.Windows.Visibility.Hidden;
              }                     
              else
@@ -334,6 +253,33 @@ namespace scanHub
                 bbtnStart.Visibility = System.Windows.Visibility.Visible;
                 Status("Ready to go ");
              }            
+         }
+
+         private void OnActiveComm(bool active)
+         {
+             if (active) Status("Ready to remote<->");
+             else Status("Commun. problem"); 
+         }
+
+         private void UserControl_Loaded(object sender, RoutedEventArgs e)
+         {
+             mm2 = new RemoteMessaging("Axel Probe"); //MOTMaster2");
+             mm2.Enabled = false; 
+             mm2.Remote += MessageHandler;
+             mm2.ActiveComm += OnActiveComm;
+
+             string[] args = Environment.GetCommandLineArgs(); 
+             if (args.Length > 1) 
+             {
+                Console.WriteLine("Command line argument: " + args[1]);
+                if (args[1].Equals("-remote")) tabControl.SelectedIndex = 2;
+             }    
+         }
+
+         private void btnCheckComm_Click(object sender, RoutedEventArgs e)
+         {
+             if (mm2.CheckConnection()) Status("Ready to remote<->");
+             else Status("Commun. problem");
          }
     }
 }
