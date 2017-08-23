@@ -171,16 +171,17 @@ namespace Axel_hub
             }
             else if (mme.cmd.Equals("scan"))
             {
-                var scanParam = (JObject) mme.prms["param"];
+                var scanParam = mme.prms["param"];
                
-                _tempxVal = scanParam.ToObject<Dictionary<string,double>>().Values.First();
+                //_tempxVal = scanParam.ToObject<Dictionary<string,double>>().Values.First();
+
             }
             else if(mme.cmd.Equals("shotData"))
             {
                 if (Convert.ToInt32(mme.prms["runID"]) == 0) _fringePoints.Clear();
                 
                 lastGrpExe = JsonConvert.DeserializeObject<MMexec>(json);
-                mme = MOTMasterDataConverter.ConvertToDoubleArray(mme);
+                MOTMasterDataConverter.ConvertToDoubleArray(ref mme);
                 lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + " groupID: " + lastGrpExe.prms["groupID"] +" runID: "+ lastGrpExe.prms["runID"];
                 Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
                 lboxNB.Items.Clear();

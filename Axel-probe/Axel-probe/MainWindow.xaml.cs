@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Diagnostics;
+using System.IO;
 using NationalInstruments.Controls;
 using NationalInstruments.Analysis.Math;
 using PidController;
@@ -333,30 +335,48 @@ namespace Axel_probe
         private void frmMain_Loaded(object sender, RoutedEventArgs e)
         {
             remote = new RemoteMessaging("Axel Hub");
+            remote.ActiveComm += new RemoteMessaging.ActiveCommHandler(DoActiveComm);
         }
 
-        private void btnCommCheck_Click(object sender, RoutedEventArgs e)        
+        private void DoActiveComm(bool active)
         {
-            Utils.ExecuteBatFile(Utils.configPath + "axel-hub.bat"); return;
-            if (remote.CheckConnection()) grpRemote.Header = "Remote - Ready<->";
+            if (!chkRemoteEnabled.IsChecked.Value) return;
+            if (active)
+            {
+                grpRemote.Foreground = Brushes.DarkGreen;
+                grpRemote.Header = "Remote - is ready <->";
+            }
             else
             {
-                grpRemote.Header = "Remote - not found! ...starting";
-                Utils.ExecuteBatFile(Utils.configPath + "axel-hub.bat");
-                if (remote.CheckConnection()) grpRemote.Header = "Remote - NOW is ready<->";
-                else grpRemote.Header = "Remote - Problem -X-";
+                grpRemote.Foreground = Brushes.DarkRed;
+                grpRemote.Header = "Remote - problem -X-";
             }
+                
+         //  if (active) Console.WriteLine("Remote - is ready <->");
+         //   else Console.WriteLine("Remote - problem -X-");
+        }
+        private void btnCommCheck_Click(object sender, RoutedEventArgs e)        
+        {
+            chkRemoteEnabled.SetCurrentValue(CheckBox.IsCheckedProperty, true);
+            if (remote.CheckConnection()) grpRemote.Header = "Remote - is ready <->";
+            else {
+                grpRemote.Header = "Remote - not found! ...starting";
+                System.Diagnostics.Process.Start(File.ReadAllText(Utils.configPath + "axel-hub.bat"), "-remote");
+                Thread.Sleep(1000);
+                if(remote.CheckConnection()) grpRemote.Header = "Remote - is ready <->";
+                else grpRemote.Header = "Remote - problem -X-";
+           }
         }
 
         /* Example base data + some noise
-           N2	NTOT	B1	B2	Bg		N1	N2	B1	B2	Bg
-            2	5	1	4	0		4	5	1	4	0
+           N2	Ntot	B2	Btot	Bg		N2	Ntot	B2	Btot	Bg
+            2	5	    1	4	    0		4	5	    1	4	    0
 										
-            NB1	NB2					NB1	NB2			
-            1	1					3	1			
+            NB2	NBtot					    NB2	NBtot			
+            1	1					        3	1			
 										
-            A						A				
-            1						-1		*/		
+            A						        A				
+            1						        -1		*/		
 
         private void btnScan_Click(object sender, RoutedEventArgs e)
         {
@@ -365,11 +385,11 @@ namespace Axel_probe
             double sto =  8;
             double sstep = 0.2;
 
-            double n1 = 2; // 4
-            double n2 = 5; double b1 = 1; double b2 = 4; double bg = 0;
-            lboxNB.Items[1] = "NTot = " + (n1+n2).ToString();
+            double n2 = 2; double ntot = 5; // n2 to 4            
+            double b2 = 1; double btot = 4; double bg = 0;
+            lboxNB.Items[1] = "NTot = " + ntot.ToString();
             lboxNB.Items[3] = "B2 = " + b2.ToString();
-            lboxNB.Items[2] = "BTot = " + (b1+b2).ToString();
+            lboxNB.Items[2] = "BTot = " + btot.ToString();
             lboxNB.Items[4] = "Bg = " + bg.ToString();
 
             string msg;
@@ -410,19 +430,19 @@ namespace Axel_probe
             {
                 fringes.Add(new Point(cr,Math.Sin(cr)));
                 DoEvents();
-                signalN.Clear(); srsNTot.Clear(); srsN2.Clear();
-                signalB.Clear(); srsBTot.Clear(); srsB2.Clear(); srsBg.Clear(); 
+                signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
+                signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear(); 
                 for (int i = 0; i < 30; i++)
                 {
                     d = n2 + cr / 4 + Gauss01() / scl;
                     lboxNB.Items[0] = "N2 = " + d.ToString("G4");
-                    srsN2.Add(d);
-                    d = n2 + Gauss01() / scl;
+                    srsN2.Add(Utils.formatDouble(d,"G4"));
+                    d = ntot + Gauss01() / scl;
                     srsNTot.Add(d);
 
-                    d = b1 + Gauss01() / scl;
-                    srsB2.Add(d);
                     d = b2 + Gauss01() / scl;
+                    srsB2.Add(d);
+                    d = btot + Gauss01() / scl;
                     srsBTot.Add(d);
 
                     d = bg + Gauss01() / scl;
@@ -440,18 +460,18 @@ namespace Axel_probe
                     md.id = rnd.Next(int.MaxValue);
                     msg = JsonConvert.SerializeObject(md);
                     remote.sendCommand(msg);
-                    log(msg.Substring(0,40)+"...");
+                    log(msg.Substring(1,80)+"...");
                 }
             }               
         }
 
         private void btnRepeat_Click(object sender, RoutedEventArgs e)
         {
-            double n1 = 2.5; // 4
-            double n2 = 5; double b1 = 1; double b2 = 4; double bg = 0;
-            lboxNB.Items[1] = "NTot = " + (n1 + n2).ToString();
+            double n2 = 2.5; double ntot = 5; // n2 to 4            
+            double b2 = 1; double btot = 4; double bg = 0;
+            lboxNB.Items[1] = "NTot = " + ntot.ToString();
             lboxNB.Items[3] = "B2 = " + b2.ToString();
-            lboxNB.Items[2] = "BTot = " + (b1 + b2).ToString();
+            lboxNB.Items[2] = "BTot = " + btot.ToString();
             lboxNB.Items[4] = "Bg = " + bg.ToString();
 
             string msg;
@@ -479,7 +499,7 @@ namespace Axel_probe
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
                 log(msg);
             }
-            double d, scl = 100; return;
+            double d, scl = 100; 
             List<Double> srsN2 = new List<Double>();
             List<Double> srsNTot = new List<Double>();
             List<Double> srsB2 = new List<Double>();
@@ -491,19 +511,19 @@ namespace Axel_probe
             for (int j = 0; j < cycles; j++)
             {
                 DoEvents();
-                signalN.Clear(); srsNTot.Clear(); srsN2.Clear();
-                signalB.Clear(); srsBTot.Clear(); srsB2.Clear(); srsBg.Clear();
+                signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
+                signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear();
                 for (int i = 0; i < 30; i++)
                 {
                     d = n2 + Gauss01() / scl;
                     lboxNB.Items[0] = "N2 = " + d.ToString("G4");
                     srsN2.Add(d);
-                    d = n2 + Gauss01() / scl;
+                    d = ntot + Gauss01() / scl;
                     srsNTot.Add(d);
 
-                    d = b1 + Gauss01() / scl;
-                    srsB2.Add(d);
                     d = b2 + Gauss01() / scl;
+                    srsB2.Add(d);
+                    d = btot + Gauss01() / scl;
                     srsBTot.Add(d);
 
                     d = bg + Gauss01() / scl;
@@ -521,7 +541,7 @@ namespace Axel_probe
                     md.id = rnd.Next(int.MaxValue);
                     msg = JsonConvert.SerializeObject(md);
                     remote.sendCommand(msg);
-                    log(msg.Substring(0, 40) + "...");
+                    log(msg.Substring(1, 80) + "...");
                 }
             }               
 

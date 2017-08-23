@@ -38,6 +38,11 @@ namespace UtilsNS
             Console.WriteLine("Error: " + errorMsg);
         }
 
+        public static double formatDouble(double d, string format) 
+        {
+            return Convert.ToDouble(d.ToString(format));
+        }
+
         [DllImport("user32.dll", SetLastError=true)]
         static extern int MessageBoxTimeout(IntPtr hwnd, String text, String title, uint type, Int16 wLanguageId, Int32 milliseconds);
         public static void TimedMessageBox(string text, string title = "Information", int milliseconds = 1500)
@@ -50,7 +55,7 @@ namespace UtilsNS
         public static string configPath { get { return basePath + "\\Config\\"; } }
         public static string dataPath { get { return basePath + "\\Data\\"; } }
 
-        public static void ExecuteBatFile(string batchFN, string arguments = "") // batch file in Config folder
+ /*       public static void ExecuteBatFile(string batchFN, string arguments = "") // batch file in Config folder
         {
             Process proc = null;
             try
@@ -68,7 +73,7 @@ namespace UtilsNS
             {
                 Console.WriteLine("Exception Occurred :{0},{1}", ex.Message, ex.StackTrace.ToString());
             }
-        }
+        }*/
     }
 
     #region async file logger

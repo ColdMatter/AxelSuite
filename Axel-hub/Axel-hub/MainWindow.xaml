@@ -4,7 +4,7 @@
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
         xmlns:vsc="clr-namespace:scanHub;assembly=scanHub" 
         xmlns:vss="clr-namespace:AxelChartNS;assembly=AxelChart" 
-        Title="Axel Hub" Height="856.652" Width="1176.785" Icon="rocket1.ico">
+        Title="Axel Hub" Height="856.652" Width="1176.785" Icon="rocket1.ico" ResizeMode="CanResizeWithGrip">
     <Grid x:Name="gridMain" Margin="0,0,-0.143,0.429">
         <Grid.ColumnDefinitions>
             <ColumnDefinition MinWidth="265" Width="265"/>
@@ -43,21 +43,21 @@
                         <Grid Margin="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="391*"/>
-                                <ColumnDefinition Width="56*"/>
+                                <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
-                            <ListBox x:Name="lboxNB" Grid.Column="1" HorizontalAlignment="Left" Margin="0,0,0,5" Width="115" Grid.ColumnSpan="1">
+                            <ListBox x:Name="lboxNB" Grid.Column="1" Margin="0" Grid.ColumnSpan="1" FontSize="13">
                                 <ListBoxItem Content="N1"/>
                                 <ListBoxItem Content="N2"/>
                                 <ListBoxItem Content="B1"/>
                                 <ListBoxItem Content="B2"/>
                                 <ListBoxItem Content="Bg"/>
                             </ListBox>
-                            <Grid HorizontalAlignment="Left" Grid.Column="0" Margin="5,5,0,0" VerticalAlignment="Top" Height="210" Width="781">
+                            <Grid Grid.Column="0" Margin="0">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="3*"/>
-                                    <RowDefinition Height="17*"/>
+                                    <RowDefinition Height="26"/>
+                                    <RowDefinition Height="70*"/>
                                 </Grid.RowDefinitions>
-                                <ni:Graph x:Name="graphSignal" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" >
+                                <ni:Graph x:Name="graphSignal" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" >
                                     <ni:Graph.Plots>
                                         <ni:Plot Label="Plot 1">
                                             <ni:PointPlotRenderer Fill="#FFF92727"/>
@@ -71,7 +71,7 @@
                                     </ni:Graph.SelectionFill>
                                 </ni:Graph>
                                 <ni:GraphInteractionPalette Grid.Row="0" x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}" Margin="10,4,565,0"/>
-                                <Label x:Name="lbInfo" Content="Info:" HorizontalAlignment="Left" Margin="221,0,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Height="31" Width="295"/>
+                                <Label x:Name="lbInfo" Content="Info:" HorizontalAlignment="Left" Margin="216,0,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Height="31" Width="560" FontSize="13"/>
                             </Grid>
                         </Grid>
                     </TabItem>

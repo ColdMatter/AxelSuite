@@ -56,7 +56,7 @@
                     <ni:NumericTextBoxDouble x:Name="ndDelay" HorizontalAlignment="Left" Height="23" Margin="104,18,0,0" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.501,-0.217" Value="50"/>
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="grpRemote" Header="Remote" Height="140">
+            <GroupBox x:Name="grpRemote" Header="Remote" Height="140" Foreground="Black">
                 <Grid Margin="0">
                     <Button x:Name="btnCommCheck" Content="Comm.Check" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click"/>
                     <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click"/>

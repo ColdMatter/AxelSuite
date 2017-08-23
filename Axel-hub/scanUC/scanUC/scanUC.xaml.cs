@@ -29,7 +29,7 @@ namespace scanHub
         private double realSampling;
 
         TimeSpan totalTime, currentTime;
-        DispatcherTimer dTimer;
+        public DispatcherTimer dTimer;
         Stopwatch sw;
 
         public scanClass()

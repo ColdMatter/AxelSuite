@@ -3,6 +3,7 @@ using System.Windows;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Timers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -18,6 +19,13 @@ namespace RemoteMessagingNS
         public string lastRcvMsg { get; private set; }
         public string lastSndMsg { get; private set; }
         public List<string> msgLog;
+        public System.Windows.Threading.DispatcherTimer dTimer = null;
+        private int _autoCheckPeriod = 10;
+        public int autoCheckPeriod
+        {
+            get { return _autoCheckPeriod; }
+            set { _autoCheckPeriod = value; dTimer.Interval = new TimeSpan(0, 0, _autoCheckPeriod); }
+        }
 
         public bool Enabled = true;
 
@@ -29,7 +37,28 @@ namespace RemoteMessagingNS
             hwndSource.AddHook(new HwndSourceHook(WndProc));
 
             msgLog = new List<string>();
+            lastRcvMsg = ""; lastSndMsg = "";
+
+            dTimer = new System.Windows.Threading.DispatcherTimer();
+            dTimer.Tick += new EventHandler(dTimer_Tick);
+            dTimer.Interval = new TimeSpan(0, 0, autoCheckPeriod);
+            dTimer.Start();
         }
+        private void ResetTimer()
+        {
+            dTimer.Stop(); 
+            if (Enabled) dTimer.Start();
+        }
+
+        private void dTimer_Tick(object sender, EventArgs e)
+        {
+            
+            if(!CheckConnection()) Console.WriteLine("Warning: the partner <"+partner+"> is not responsive!");
+            else Console.WriteLine("Info: the partner <" + partner + "> is responsive.");
+
+            // Forcing the CommandManager to raise the RequerySuggested event
+            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+         }
 
         public delegate bool RemoteHandler(string msg);
         public event RemoteHandler Remote;
@@ -39,11 +68,11 @@ namespace RemoteMessagingNS
             else return false;
         }
 
-        public delegate void ActiveCommHandler(bool msg);
+        public delegate void ActiveCommHandler(bool active);
         public event ActiveCommHandler ActiveComm;
-        protected void OnActiveComm(bool msg)
+        protected void OnActiveComm(bool active)
         {
-            if (ActiveComm != null) ActiveComm(msg);
+            if (ActiveComm != null) ActiveComm(active);
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -59,6 +88,7 @@ namespace RemoteMessagingNS
                     {
                         lastRcvMsg = myStruct.Message;
                         msgLog.Add("R: " + lastRcvMsg);
+                        ResetTimer();
                         switch (lastRcvMsg) 
                         {
                         case("ping"):
@@ -85,7 +115,7 @@ namespace RemoteMessagingNS
             IntPtr hTargetWnd = NativeMethod.FindWindow(null, partner);
             if (hTargetWnd == IntPtr.Zero)
             {
-                MessageBox.Show("Unable to find the "+partner +" window");
+                Console.WriteLine("Unable to find the "+partner +" window");
                 return false;
             }
 
@@ -115,12 +145,13 @@ namespace RemoteMessagingNS
                 int result = Marshal.GetLastWin32Error();
                 if (result != 0)
                 {
-                    MessageBox.Show(String.Format("SendMessage(WM_COPYDATA) failed w/err 0x{0:X}", result));
+                    Console.WriteLine(String.Format("SendMessage(WM_COPYDATA) failed w/err 0x{0:X}", result));
                     return false;
                 }
                 else
                 {
                     lastSndMsg = msg; msgLog.Add("S: " + lastSndMsg);
+                    ResetTimer(); 
                 }
                 return true;
             }                
@@ -156,7 +187,9 @@ namespace RemoteMessagingNS
                     if (lastRcvMsg.Equals("pong")) break;
                 }
             }
-            return back && (lastRcvMsg.Equals("pong"));
+            back = back && (lastRcvMsg.Equals("pong"));
+            OnActiveComm(back);
+            return back;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]       
