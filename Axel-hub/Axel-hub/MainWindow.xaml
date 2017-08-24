@@ -46,10 +46,10 @@
                                 <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
                             <ListBox x:Name="lboxNB" Grid.Column="1" Margin="0" Grid.ColumnSpan="1" FontSize="13">
-                                <ListBoxItem Content="N1"/>
                                 <ListBoxItem Content="N2"/>
-                                <ListBoxItem Content="B1"/>
+                                <ListBoxItem Content="NTot"/>
                                 <ListBoxItem Content="B2"/>
+                                <ListBoxItem Content="BTot"/>
                                 <ListBoxItem Content="Bg"/>
                             </ListBox>
                             <Grid Grid.Column="0" Margin="0">
@@ -141,7 +141,8 @@
                 <TabControl x:Name="tabLowPlots" Margin="0,2,0.429,0.429" SelectedIndex="0" FontSize="14">
                     <TabItem x:Name="tabFringes" Header="Fringes" Width="100" Height="28">
                         <Grid>
-                            <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,0.143,0" VerticalAlignment="Top" ButtonSize="22,22" Grid.ColumnSpan="2" Graph="{Binding ElementName=graphSignal}"/>
+                            <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,667.857,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
+                            <Label x:Name="lbInfoFrng" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="640" FontSize="13"/>
                             <ni:Graph x:Name="graphFringes" Margin="3,30,0.143,-0.143" Grid.ColumnSpan="2" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto">
                                 <ni:Graph.Plots>
                                     <ni:Plot Label="Plot 1">

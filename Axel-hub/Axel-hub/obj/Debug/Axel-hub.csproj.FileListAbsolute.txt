@@ -83,3 +83,4 @@ C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debu
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel_hub.Properties.Resources.resources
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.csproj.GenerateResource.Cache
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.exe.licenses
+E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\UtilsLib.dll

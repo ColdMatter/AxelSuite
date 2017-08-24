@@ -16,3 +16,4 @@ E:\VSprojects\AxelSuite\Utils\bin\UtilsLib.dll
 E:\VSprojects\AxelSuite\Utils\bin\UtilsLib.pdb
 E:\VSprojects\AxelSuite\Utils\obj\Debug\UtilsLib.dll
 E:\VSprojects\AxelSuite\Utils\obj\Debug\UtilsLib.pdb
+E:\VSprojects\AxelSuite\Utils\obj\Debug\UtilsLib.csprojResolveAssemblyReference.cache

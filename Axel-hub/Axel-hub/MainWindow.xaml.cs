@@ -157,11 +157,11 @@ namespace Axel_hub
             }
         }
 
-        MMexec lastGrpExe;
+        private MMexec lastGrpExe; private MMscan lastScan; ChartCollection<Point> srsFringes = null;
         // remote MM call
         public void DoRemote(string json) // from TotalCount to 1
         {
-            log(json.Length.ToString()+" "+ json); //.Substring(1, 35) + "...");
+            log(json); 
             
             MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
             
@@ -171,18 +171,27 @@ namespace Axel_hub
             }
             else if (mme.cmd.Equals("scan"))
             {
-                var scanParam = mme.prms["param"];
-               
-                //_tempxVal = scanParam.ToObject<Dictionary<string,double>>().Values.First();
-
+                lastGrpExe = mme.Clone();
+                lastScan.FromDictionary(lastGrpExe.prms);
+                lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.param +
+                    ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
+                srsFringes = new ChartCollection<Point>(); 
             }
             else if(mme.cmd.Equals("shotData"))
             {
                 if (Convert.ToInt32(mme.prms["runID"]) == 0) _fringePoints.Clear();
                 
-                lastGrpExe = JsonConvert.DeserializeObject<MMexec>(json);
                 MOTMasterDataConverter.ConvertToDoubleArray(ref mme);
-                lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + " groupID: " + lastGrpExe.prms["groupID"] +" runID: "+ lastGrpExe.prms["runID"];
+
+                string endBit = ""; int runID = 0;
+                if(lastGrpExe.cmd.Equals("scan"))
+                {
+                    runID = Convert.ToInt32(mme.prms["runID"]);
+                    endBit = ";  cur.value: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
+                } 
+                  
+                lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + ";  groupID: " + lastGrpExe.prms["groupID"] +
+                                 ";  runID: "+ mme.prms["runID"]+ endBit;
                 Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
                 lboxNB.Items.Clear();
                 foreach (var item in avgs)
@@ -190,28 +199,31 @@ namespace Axel_hub
                     lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
                 }
                 double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
-                var fringePoints = graphFringes.DataSource as Point[];
+                /*var fringePoints = graphFringes.DataSource as Point[];
                 _fringePoints.Add(new Point(_tempxVal,asymmetry));
-                graphFringes.DataSource = _fringePoints.ToArray();
+                graphFringes.DataSource = _fringePoints.ToArray();*/
                 DataStack signalDataStack = new DataStack();
                 DataStack backgroundDataStack = new DataStack();
-                int xVal = 0;
+
+                int xVal = 0; double N2 = ((double[])mme.prms["N2"]).Average();
                 foreach (double yVal in (double[])mme.prms["N2"])
                 {
                     signalDataStack.Add(new Point(xVal, yVal));
                     xVal++;
                 }
+                double NTot = ((double[])mme.prms["NTot"]).Average();
                 foreach (double yVal in (double[])mme.prms["NTot"])
                 {
                     signalDataStack.Add(new Point(xVal, yVal));
                     xVal++;
                 }
-                xVal = 0;
+                xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
                 foreach (double yVal in (double[])mme.prms["B2"])
                 {
                     backgroundDataStack.Add(new Point(xVal, yVal));
                     xVal++;
                 }
+                double BTot = ((double[])mme.prms["BTot"]).Average();
                 foreach (double yVal in (double[])mme.prms["BTot"])
                 {
                     backgroundDataStack.Add(new Point(xVal, yVal));
@@ -221,6 +233,12 @@ namespace Axel_hub
                 pA = signalDataStack.ToArray();
                 pB = backgroundDataStack.ToArray();
                 graphSignal.DataSource = new List<Point[]>() {pA, pB};
+                double A = 2 - (N2 - B2) / (NTot - BTot);
+                if(lastGrpExe.cmd.Equals("scan")) 
+                {
+                    srsFringes.Append(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
+                    graphFringes.DataSource = srsFringes;
+                }
                 return;
             }               
         }

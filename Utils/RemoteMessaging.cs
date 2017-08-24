@@ -20,7 +20,7 @@ namespace RemoteMessagingNS
         public string lastSndMsg { get; private set; }
         public List<string> msgLog;
         public System.Windows.Threading.DispatcherTimer dTimer = null;
-        private int _autoCheckPeriod = 10;
+        private int _autoCheckPeriod = 10; // sec
         public int autoCheckPeriod
         {
             get { return _autoCheckPeriod; }
@@ -52,9 +52,9 @@ namespace RemoteMessagingNS
 
         private void dTimer_Tick(object sender, EventArgs e)
         {
-            
+            if (!Enabled) return;
             if(!CheckConnection()) Console.WriteLine("Warning: the partner <"+partner+"> is not responsive!");
-            else Console.WriteLine("Info: the partner <" + partner + "> is responsive.");
+            //else Console.WriteLine("Info: the partner <" + partner + "> is responsive.");
 
             // Forcing the CommandManager to raise the RequerySuggested event
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
@@ -266,6 +266,49 @@ namespace RemoteMessagingNS
         public string cmd { get; set; }
         public int id { get; set; }
         public Dictionary<string, object> prms = new Dictionary<string, object>();
+        public MMexec Clone()
+        {
+            MMexec mm = new MMexec();
+            mm.mmexec = mmexec;
+            mm.sender = sender;
+            mm.cmd = cmd;
+            mm.id = id;
+            mm.prms = new Dictionary<string, object>(prms);
+            return mm;
+        }
+    }
 
+    struct MMscan
+    {
+        public string groupID;
+        public string param;
+        public double sFrom;
+        public double sTo;
+        public double sBy;
+        public void TestInit()
+        {
+            groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            param = "frng";
+            sFrom = 0;
+            sTo = 4*3.14;
+            sBy = 0.1;
+        }
+        public void ToDictionary(ref Dictionary<string, object> dict)
+        {
+            if (dict == null) dict = new Dictionary<string, object>();
+            dict["groupID"] = groupID;
+            dict["param"] = param;
+            dict["from"] = sFrom;
+            dict["to"] = sTo;
+            dict["by"] = sBy;
+        }
+        public void FromDictionary(Dictionary<string, object> dict)
+        {
+            groupID = (string)dict["groupID"];
+            param = (string)dict["param"];
+            sFrom = (double)dict["from"];
+            sTo = (double)dict["to"];
+            sBy = (double)dict["by"];
+        }
     }
 }

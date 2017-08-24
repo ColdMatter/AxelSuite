@@ -61,7 +61,7 @@
                     <Button x:Name="btnCommCheck" Content="Comm.Check" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click"/>
                     <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click"/>
                     <Button x:Name="btnRepeat" Content="Repeat" HorizontalAlignment="Left" Margin="99,74,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnRepeat_Click"/>
-                    <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked"/>
                 </Grid>
             </GroupBox>
 
@@ -101,24 +101,31 @@
                     <ni:AxisDouble x:Name="yAxis2" Orientation="Vertical" Range="-0.5, 0.5, System.Double"  Adjuster="None"/>
                 </ni:Graph.Axes>
             </ni:Graph>
-            <ni:Graph x:Name="graphNs" Margin="115,2,0,0" Grid.Row="1">
-                <ni:Graph.Plots>
-                    <ni:Plot Label="Plot 1">
-                        <ni:PointPlotRenderer Fill="#FFEA3232"/>
-                    </ni:Plot>
-                    <ni:Plot Label="Plot 2">
-                        <ni:PointPlotRenderer Fill="#FF3D2EED"/>
-                    </ni:Plot>
-                </ni:Graph.Plots>
-            </ni:Graph>
+            <Grid Margin="0,0,0,0" Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="85"/>
+                    <ColumnDefinition Width="321*"/>
+                </Grid.ColumnDefinitions>
 
-            <ListBox x:Name="lboxNB" Grid.Row="1" HorizontalAlignment="Left" Margin="0,10,0,0" Width="115">
-                <ListBoxItem Content="N2"/>
-                <ListBoxItem Content="NTot"/>
-                <ListBoxItem Content="B2"/>
-                <ListBoxItem Content="BTot"/>
-                <ListBoxItem Content="Bg"/>
-            </ListBox>
+                <ni:Graph x:Name="graphNs" Margin="0,0,0,0" Grid.Column="1">
+                    <ni:Graph.Plots>
+                        <ni:Plot Label="Plot 1">
+                            <ni:PointPlotRenderer Fill="#FFEA3232"/>
+                        </ni:Plot>
+                        <ni:Plot Label="Plot 2">
+                            <ni:PointPlotRenderer Fill="#FF3D2EED"/>
+                        </ni:Plot>
+                    </ni:Graph.Plots>
+                </ni:Graph>
+
+                <ListBox x:Name="lboxNB" HorizontalAlignment="Left" Margin="0,0,0,0.286" Grid.Column="0" Width="85">
+                    <ListBoxItem Content="N2"/>
+                    <ListBoxItem Content="NTot"/>
+                    <ListBoxItem Content="B2"/>
+                    <ListBoxItem Content="BTot"/>
+                    <ListBoxItem Content="Bg"/>
+                </ListBox>
+            </Grid>
             <Grid Margin="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="115"/>
@@ -136,7 +143,7 @@
                         <GroupBox Header="Strobes" HorizontalAlignment="Left" Margin="0,126,0,0" VerticalAlignment="Top" Height="67" Width="103">
                             <StackPanel Margin="0,0,0.429,-12.714">
                                 <RadioButton x:Name="rbSingle" Content="Single(down)" Margin="0,5,0,0" IsChecked="True" Checked="rbSingle_Checked"/>
-                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0"/>
+                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0" Checked="rbSingle_Checked"/>
                             </StackPanel>
                         </GroupBox>
                     </Grid>
@@ -167,6 +174,7 @@
                     <Label x:Name="lbStatus" Content="Status: " HorizontalAlignment="Left" Margin="185,2,0,1.714" Height="26" Width="415" FontSize="13" Background="#FFFEFEFE" Foreground="#FF239E0F"/>
                 </Grid>
             </Grid>
+
         </Grid>
     </Grid>
 </Window>

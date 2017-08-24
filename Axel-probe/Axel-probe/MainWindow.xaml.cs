@@ -34,6 +34,7 @@ namespace Axel_probe
         ChartCollection<double> signalN, signalB;
         List<double> iStack, dStack, corrList;
         RemoteMessaging remote;
+        string remoteDoubleFormat = "G4";
         Random rnd = new Random();
 
         public MainWindow()
@@ -116,6 +117,8 @@ namespace Axel_probe
             double norm = ndBreatheAmpl.Value / 100;
             return per * norm;
         }
+
+
 
         bool stopRequest = false; 
         private void btnRun_Click(object sender, RoutedEventArgs e)
@@ -336,6 +339,7 @@ namespace Axel_probe
         {
             remote = new RemoteMessaging("Axel Hub");
             remote.ActiveComm += new RemoteMessaging.ActiveCommHandler(DoActiveComm);
+            remote.Enabled = chkRemoteEnabled.IsChecked.Value;
         }
 
         private void DoActiveComm(bool active)
@@ -360,11 +364,10 @@ namespace Axel_probe
             chkRemoteEnabled.SetCurrentValue(CheckBox.IsCheckedProperty, true);
             if (remote.CheckConnection()) grpRemote.Header = "Remote - is ready <->";
             else {
-                grpRemote.Header = "Remote - not found! ...starting";
+                grpRemote.Header = "Remote - not found! ...starting it";
                 System.Diagnostics.Process.Start(File.ReadAllText(Utils.configPath + "axel-hub.bat"), "-remote");
                 Thread.Sleep(1000);
-                if(remote.CheckConnection()) grpRemote.Header = "Remote - is ready <->";
-                else grpRemote.Header = "Remote - problem -X-";
+                remote.CheckConnection();
            }
         }
 
@@ -377,14 +380,10 @@ namespace Axel_probe
 										
             A						        A				
             1						        -1		*/		
-
+        private MMscan mms;
         private void btnScan_Click(object sender, RoutedEventArgs e)
         {
            // MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
-            double sfrom = 0;
-            double sto =  8;
-            double sstep = 0.2;
-
             double n2 = 2; double ntot = 5; // n2 to 4            
             double b2 = 1; double btot = 4; double bg = 0;
             lboxNB.Items[1] = "NTot = " + ntot.ToString();
@@ -397,13 +396,10 @@ namespace Axel_probe
             mm.mmexec = "";
             mm.cmd = "scan";
             mm.sender = "Axel Probe";
-            mm.id = rnd.Next(int.MaxValue);
-            mm.prms = new Dictionary<string,object>();
-            mm.prms["param"] = "change";
-            mm.prms["from"] = sfrom;
-            mm.prms["to"] = sto;
-            mm.prms["step"] = sstep;
             mm.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            mm.id = rnd.Next(int.MaxValue);
+            mms.TestInit();
+            mms.ToDictionary(ref mm.prms);
 
             MMexec md = new MMexec();
             md.mmexec = "";
@@ -426,7 +422,8 @@ namespace Axel_probe
             List<Double> srsBg = new List<Double>();
 
             int j = 0; fringes.Clear();
-            for (double cr = sfrom; cr < sto; cr += sstep)
+            
+            for (double cr = mms.sFrom; cr <= mms.sTo; cr += mms.sBy)
             {
                 fringes.Add(new Point(cr,Math.Sin(cr)));
                 DoEvents();
@@ -434,24 +431,24 @@ namespace Axel_probe
                 signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear(); 
                 for (int i = 0; i < 30; i++)
                 {
-                    d = n2 + cr / 4 + Gauss01() / scl;
+                    d = n2 + (Math.Sin(cr) + 1) + Gauss01() / scl;
                     lboxNB.Items[0] = "N2 = " + d.ToString("G4");
-                    srsN2.Add(Utils.formatDouble(d,"G4"));
+                    srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
                     d = ntot + Gauss01() / scl;
-                    srsNTot.Add(d);
+                    srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
                     d = b2 + Gauss01() / scl;
-                    srsB2.Add(d);
+                    srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
                     d = btot + Gauss01() / scl;
-                    srsBTot.Add(d);
+                    srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
                     d = bg + Gauss01() / scl;
-                    srsBg.Add(d);                   
+                    srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));                   
                 }
                 signalN.Append(srsN2); signalN.Append(srsNTot);
                 signalB.Append(srsB2); signalB.Append(srsBTot); 
 
-                if (chkRemoteEnabled.IsChecked.Value)
+                if (remote.Enabled)
                 {
                     md.prms["runID"] = j++;
                     md.prms["N2"] = srsN2.ToArray(); md.prms["NTot"] = srsNTot.ToArray();
@@ -517,17 +514,17 @@ namespace Axel_probe
                 {
                     d = n2 + Gauss01() / scl;
                     lboxNB.Items[0] = "N2 = " + d.ToString("G4");
-                    srsN2.Add(d);
+                    srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
                     d = ntot + Gauss01() / scl;
-                    srsNTot.Add(d);
+                    srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
                     d = b2 + Gauss01() / scl;
-                    srsB2.Add(d);
+                    srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
                     d = btot + Gauss01() / scl;
-                    srsBTot.Add(d);
+                    srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
                     d = bg + Gauss01() / scl;
-                    srsBg.Add(d);
+                    srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));
                 }
                 signalN.Append(srsN2); signalN.Append(srsNTot);
                 signalB.Append(srsB2); signalB.Append(srsBTot);
@@ -544,7 +541,11 @@ namespace Axel_probe
                     log(msg.Substring(1, 80) + "...");
                 }
             }               
+        }
 
+        private void chkRemoteEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            remote.Enabled = chkRemoteEnabled.IsChecked.Value;
         }
      }
 }
