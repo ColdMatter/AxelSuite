@@ -61,10 +61,10 @@ namespace RemoteMessagingNS
          }
 
         public delegate bool RemoteHandler(string msg);
-        public event RemoteHandler Remote;
+        public event RemoteHandler OnReceive;
         protected bool OnRemote(string msg)
         {
-            if (Remote != null) return Remote(msg);
+            if (OnReceive != null) return OnReceive(msg);
             else return false;
         }
 
@@ -258,14 +258,36 @@ namespace RemoteMessagingNS
         }
         #endregion
     }
-
+    
     public class MMexec
     {
+        Random rnd = new Random(); 
         public string mmexec { get; set; }
         public string sender { get; set; }
         public string cmd { get; set; }
         public int id { get; set; }
-        public Dictionary<string, object> prms = new Dictionary<string, object>();
+        public Dictionary<string, object> prms;
+        public MMexec()
+        {
+            prms = new Dictionary<string, object>();
+        }
+        public MMexec(string Caption = "", string Sender = "", string Command = "", int ID = -1)
+        {
+            mmexec = Caption;
+            sender = Sender;
+            cmd = Command;
+            if (ID == -1) id = rnd.Next(int.MaxValue);
+            else id = ID;
+            prms = new Dictionary<string, object>();
+        }
+        public void Clear()
+        {
+            mmexec = "";
+            sender = "";
+            cmd = "";
+            id = -1;
+            prms.Clear();
+        }
         public MMexec Clone()
         {
             MMexec mm = new MMexec();

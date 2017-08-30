@@ -14,7 +14,7 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ni:BooleanButton x:Name="bbtnStart" Grid.Row="1"  Content="Start" HorizontalAlignment="Right" Height="31" Margin="0,13.857,15,0" VerticalAlignment="Top" Width="113" FontSize="18" Click="bbtnStart_Click"/>
+        <ni:BooleanButton x:Name="bbtnStart" Grid.Row="1"  Content="Start" HorizontalAlignment="Right" Height="31" Margin="0,13.857,15,0" VerticalAlignment="Top" Width="139" FontSize="18" Click="bbtnStart_Click"/>
         <GroupBox x:Name="groupDigit" Grid.Row="2" Header=" Conversion rate " Height="59" Margin="0,0.429,6,0" VerticalAlignment="Top" Grid.RowSpan="2">
             <StackPanel HorizontalAlignment="Center" Height="28" Width="216" Margin="2,10,6,0" VerticalAlignment="Top" Orientation="Horizontal">
                 <ComboBox x:Name="cbDigitMode" HorizontalAlignment="Left" Height="23" VerticalAlignment="Top" Width="116" SelectedIndex="0">
@@ -51,10 +51,9 @@
 
             <TabItem x:Name="tabRemote_" Header=" Remote ">
                 <Grid>
-                    <Label x:Name="lbTotalTime" Content="Time [sec]:" HorizontalAlignment="Left" Margin="10,22,0,0" VerticalAlignment="Top" Foreground="#FF0429C5"/>
-                    <Label x:Name="lbBufferSize" Content="Buffer size:" HorizontalAlignment="Left" Margin="125,22,0,0" VerticalAlignment="Top" Foreground="#FF0726AA"/>
-                    <CheckBox x:Name="chkStatsEnabled" Content="Run stats afterwards" HorizontalAlignment="Left" Margin="29,48,0,0" VerticalAlignment="Top" IsChecked="True"/>
-                    <Button x:Name="btnCheckComm" Content="Check comm. to MM2" HorizontalAlignment="Left" Margin="29,4,0,0" VerticalAlignment="Top" Width="143" Click="btnCheckComm_Click"/>
+                    <Label x:Name="lbMode" Content="Mode(stage):" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
+                    <Label x:Name="lbFringePrm" Content="Fringe Prm:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>
+                    <Button x:Name="btnCheckComm" Content="&lt;-&gt; MM2" HorizontalAlignment="Left" Margin="5,7,0,0" VerticalAlignment="Top" Width="67" Click="btnCheckComm_Click"/>
                 </Grid>
             </TabItem>
 

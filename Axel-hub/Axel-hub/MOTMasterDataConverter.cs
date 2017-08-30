@@ -53,12 +53,11 @@ namespace Axel_hub
             var back = avgs["Bg"];
             if (subtractBackground && subtractDark)
             {
-                //return (ntot - 2 * n2 - btot - 2 * b2 - back) / (ntot - btot - back);
-                return (2 * ntot - 2 * btot - n2  + b2 - back) / (ntot - btot - back);
+                return ((ntot - btot) - 2 * (n2 - b2) - back) / (ntot - btot - back);
             }
             if (!subtractDark)
             {
-                return (ntot - 2 * n2 - btot - 2 * b2) / (ntot - btot);
+                return ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
             }
             else
             {

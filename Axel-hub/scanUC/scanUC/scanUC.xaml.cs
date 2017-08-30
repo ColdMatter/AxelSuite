@@ -19,13 +19,27 @@ using UtilsNS;
 
 namespace scanHub
 {    
+    public enum RemoteMode
+    {
+        Jumbo_Scan, // scan as part of Jumbo Run
+        Jumbo_Repeat, // repeat as part of Jumbo Run
+        Simple_Scan, // scan initiated by MM
+        Simple_Repeat, // repeat initiated by MM
+        Free // ungrouped data (default state)
+    }
+    public struct FringeParams  // = cos(period * t + phase) + offset
+    {
+        public double period;
+        public double phase;
+        public double offset;
+    }
     /// <summary>
     /// Interaction logic for UserControl1.xaml
     /// </summary>
     public partial class scanClass : UserControl
     {
         public delegate void NewMessageDelegate(string NewMessage);
-        private RemoteMessaging mm2;
+        private RemoteMessaging remote;
         private double realSampling;
 
         TimeSpan totalTime, currentTime;
@@ -44,6 +58,16 @@ namespace scanHub
 
             tabControl.SelectedIndex = 0;
             //Status("Ready to go ");
+        }
+
+        public bool SendJson(string json)
+        {
+            return remote.sendCommand(json);
+        }
+
+        public void SetFringeParams(FringeParams fp)
+        {
+            lbFringePrm.Content = "Fringe Prm: per= " + fp.period.ToString()+"; phase= " + fp.phase.ToString()+"; off= " + fp.offset.ToString();
         }
 
         public void OnRealSampling(double _realSampling) 
@@ -99,14 +123,12 @@ namespace scanHub
                 bbtnStart.Value = value;               
                 if (value)
                 {
-                    bbtnStart.Content = "Stop";
                     Status("Running....");
                     dTimer.Start();
                     currentTime = new TimeSpan(0, 0, 0);
                 }
                 else
                 {
-                    bbtnStart.Content = "Start";
                     Status("Ready for another go");
                     dTimer.Stop();
                     lbTimeLeft.Visibility = System.Windows.Visibility.Visible;
@@ -120,6 +142,22 @@ namespace scanHub
             }
         }
 
+        public bool EndlessMode()
+        {
+            if (tabControl.SelectedIndex == 0) return (cbTimeEndless.SelectedIndex == 1);
+            else return (cbSizeEndless.SelectedIndex == 1);
+        }
+
+        public RemoteMode remoteMode
+        {
+            get { return (RemoteMode)GetValue(remoteModeProperty); }
+            set
+            {
+                lbMode.Content = "Mode(stage): " + value.ToString();
+                SetValue(remoteModeProperty, value);
+            }
+        }
+
         // Using a DependencyProperty as the backing store for Running.  
         public static readonly DependencyProperty RunningProperty
             = DependencyProperty.Register(
@@ -127,6 +165,14 @@ namespace scanHub
                   typeof(bool),
                   typeof(scanClass),
                   new PropertyMetadata(false)
+              );
+
+        public static readonly DependencyProperty remoteModeProperty
+            = DependencyProperty.Register(
+                  "remoteMode",
+                  typeof(RemoteMode),
+                  typeof(scanClass),
+                  new PropertyMetadata(RemoteMode.Free)
               );
 
         int TotalCycleCount = 0;
@@ -145,14 +191,14 @@ namespace scanHub
                 MessageBox.Show(ex.Message);
                 return false;
             }
-        } 
+        }
 
-        public delegate void StartHandler(bool down, double period, bool TimeMode, bool Endless, double Limit);
+        public delegate void StartHandler(bool jumbo, bool down, double period, bool TimeMode, double Limit);
         public event StartHandler Start;
 
-        protected void OnStart(bool down, double period, bool TimeMode, bool Endless, double Limit)
+        protected void OnStart(bool jumbo, bool down, double period, bool TimeMode, double Limit)
         {
-            if(Start != null) Start(down, period, TimeMode, Endless, Limit);
+            if(Start != null) Start(jumbo, down, period, TimeMode, Limit);
         }
 
         public delegate void RemoteHandler(string msg);
@@ -199,13 +245,44 @@ namespace scanHub
             return 1 / freq;
         }
         
-        private void bbtnStart_Click(object sender, RoutedEventArgs e)
+        public void bbtnStart_Click(object sender, RoutedEventArgs e)
         {
             if (Start == null) return;
-            Running = !Running; 
-            
+            bool jumbo = false;
+            switch ((string)bbtnStart.Content)
+            {
+                case "Start":
+                    {
+                        bbtnStart.Content = "Cancel";
+                        bbtnStart.Value = true;
+                        Running = true;                        
+                    }
+                    break;
+                case "Cancel":
+                    {
+                        bbtnStart.Content = "Start";
+                        bbtnStart.Value = false;
+                        Running = false;
+                    }
+                    break;
+                case "Jumbo Run":
+                    {
+                        bbtnStart.Content = "Jumbo Stop";
+                        bbtnStart.Value = true;
+                        jumbo = true;
+                        Running = true; 
+                    }
+                    break;
+                case "Jumbo Stop":
+                    {
+                        bbtnStart.Content = "Jumbo Run";
+                        bbtnStart.Value = false;
+                        jumbo = false;
+                        Running = false; 
+                    }
+                    break;
+            }
             bool down = Running;
-            bool Endless = true;
             double period = GetSamplingPeriod(); // sampling rate in sec
             int plannedTime = 0; // [s]
 
@@ -213,17 +290,15 @@ namespace scanHub
             bool TimeMode = (tabControl.SelectedIndex == 0);
             if (TimeMode)
             {
-                Endless = (cbTimeEndless.SelectedIndex == 1);
                 if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
                 plannedTime = (int)Limit;
             }
             else
             {
-                Endless = (cbSizeEndless.SelectedIndex == 1);
                 if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
                 plannedTime = (int)(Limit * period);
             }
-            if (Endless)
+            if (EndlessMode())
             {
                 lbTimeLeft.Visibility = System.Windows.Visibility.Hidden;
                 totalTime = new TimeSpan(0, 0, 0);
@@ -236,37 +311,47 @@ namespace scanHub
                 currentTime = new TimeSpan(0, 0, 0);
             }
             DoEvents();
-            OnStart(down, period, TimeMode, Endless, Limit);
+
+            OnStart(jumbo, down, period, TimeMode, Limit); // the last three are igniored in jumbo mode
         }
 
          private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
          {
-             if(mm2 != null) mm2.Enabled = (tabControl.SelectedIndex == 2);
+             if (remote != null) remote.Enabled = (tabControl.SelectedIndex == 2);
              if (tabControl.SelectedIndex == 2) 
              {
-                 if (mm2.CheckConnection()) Status("Ready to remote<->");
-                 else Status("Commun. problem");
-                 bbtnStart.Visibility = System.Windows.Visibility.Hidden;
+                 remote.CheckConnection();
              }                     
              else
              {
-                bbtnStart.Visibility = System.Windows.Visibility.Visible;
-                Status("Ready to go ");
+                 bbtnStart.Visibility = System.Windows.Visibility.Visible;
+                 Status("Ready to go ");
+                 if(bbtnStart.Content.ToString().Equals("Start")) return;
+                 if(bbtnStart.Content.ToString().Substring(1,5).Equals("Jumbo")) bbtnStart.Content = "Start"; // TODO ask confirmation                
              }            
          }
 
          private void OnActiveComm(bool active)
          {
-             if (active) Status("Ready to remote<->");
-             else Status("Commun. problem"); 
+             if (active)
+             {
+                 Status("Ready to remote<->");
+                 bbtnStart.Visibility = System.Windows.Visibility.Visible;
+                 if (bbtnStart.Content.ToString().Equals("Start") || bbtnStart.Content.ToString().Equals("Stop")) bbtnStart.Content = "Jumbo Run";
+             }
+             else
+             {
+                 Status("Commun. problem");
+                 bbtnStart.Visibility = System.Windows.Visibility.Hidden;
+             }
          }
 
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
-             mm2 = new RemoteMessaging("Axel Probe"); //MOTMaster2");
-             mm2.Enabled = false; 
-             mm2.Remote += MessageHandler;
-             mm2.ActiveComm += OnActiveComm;
+             remote = new RemoteMessaging("Axel Probe"); //MOTMaster2");
+             remote.Enabled = false;
+             remote.OnReceive += MessageHandler;
+             remote.ActiveComm += OnActiveComm;
 
              string[] args = Environment.GetCommandLineArgs(); 
              if (args.Length > 1) 
@@ -278,8 +363,7 @@ namespace scanHub
 
          private void btnCheckComm_Click(object sender, RoutedEventArgs e)
          {
-             if (mm2.CheckConnection()) Status("Ready to remote<->");
-             else Status("Commun. problem");
+             remote.CheckConnection();
          }
     }
 }

@@ -50,7 +50,6 @@ namespace Axel_hub
     public partial class MainWindow: Window
     {
         scanClass ucScan1;
-        private bool EndlessMode = false;
         int nSamples = 1500; 
         private AxelMems axelMems = null;
         Random rnd = new Random();
@@ -73,15 +72,17 @@ namespace Axel_hub
             axelMems.RealSampling += new AxelMems.RealSamplingHandler(ucScan1.OnRealSampling);
         }
 
-        private void log(string txt) 
+        private void log(string txt, Color? clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
             if (chkVerbatim.IsChecked.Value) printOut = txt;
             else printOut = txt.Substring(0,80)+"...";
-            tbLog.AppendText(printOut + "\n");
-            tbLog.Focus();
-            tbLog.CaretIndex = tbLog.Text.Length;
+            
+            Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
+            TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
+            rangeOfText1.Text = printOut + "\n";
+            rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
             tbLog.ScrollToEnd();
         }
 
@@ -99,43 +100,90 @@ namespace Axel_hub
             return null;
         }
 
-        // main ADC call
-        public void DoStart(bool down, double period, bool TimeMode, bool Endless, double Limit)
+        private MMscan jumboScan()
         {
-            EndlessMode = Endless;
-            if (!down) // user cancel
+            MMscan mms = new MMscan();
+            mms.groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            mms.param = "prm"; // phase !!!
+            mms.sFrom = numFrom.Value;
+            mms.sTo = numTo.Value;
+            mms.sBy = numBy.Value;
+            return mms;
+        }
+        
+        // main ADC call
+        public void DoStart(bool jumbo, bool down, double period, bool TimeMode, double Limit)
+        {
+            if (jumbo)
             {
-                AxelChart1.Running = false; 
-                axelMems.StopAqcuisition();
-                AxelChart1.Waveform.logger.Enabled = false;
-                return;
-            }
-            Random random = new Random();
+                if (!down) // user jumbo cancel
+                {
+                    AxelChart1.Running = false;
+                    axelMems.StopAqcuisition();
+                    AxelChart1.Waveform.logger.Enabled = false;
+                    ucScan1.remoteMode = RemoteMode.Free;
+                    return;
+                }
+                lastScan = jumboScan();
+                lastGrpExe = new MMexec();
+                lastGrpExe.mmexec = "test drive";
+                lastGrpExe.sender = "Axel-hub";
+                lastGrpExe.cmd = "scan";
+                lastGrpExe.id = rnd.Next(int.MaxValue);
+                lastScan.ToDictionary(ref lastGrpExe.prms);
+      
+                string json = JsonConvert.SerializeObject(lastGrpExe);
+                ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
+                ucScan1.SendJson(json);
 
-            AxelChart1.Waveform.TimeMode = TimeMode;            
-            if (TimeMode)
-            {
-                AxelChart1.Waveform.TimeLimit = Limit;
-                nSamples = (int)(Limit / period);
+                lastGrpExe.cmd = "repeat";
+                lastGrpExe.id = rnd.Next(int.MaxValue);
+                lastGrpExe.prms.Clear();
+                lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+                lastGrpExe.prms["cycles"] = 100;
+                json = JsonConvert.SerializeObject(lastGrpExe);
+                ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
+                ucScan1.SendJson(json);
+
+                ucScan1.bbtnStart_Click(null, null); // reset
+                ucScan1.remoteMode = RemoteMode.Free;
             }
             else
             {
-                AxelChart1.Waveform.SizeLimit = (int)Limit; 
-                //AxelChart1.Waveform.StackMode = true;
-                nSamples = AxelChart1.Waveform.SizeLimit;
-            }
-            AxelChart1.SamplingPeriod = period;
-            AxelChart1.Running = true;
-            AxelChart1.Clear();
+                if (!down) // user cancel
+                {
+                    AxelChart1.Running = false; 
+                    axelMems.StopAqcuisition();
+                    AxelChart1.Waveform.logger.Enabled = false;
+                    return;
+                }
+                Random random = new Random();
 
-            AxelChart1.remoteArg = "freq: " + (1 / period).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
-            AxelChart1.Waveform.logger.Enabled = true;
-            axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
+                AxelChart1.Waveform.TimeMode = TimeMode;            
+                if (TimeMode)
+                {
+                    AxelChart1.Waveform.TimeLimit = Limit;
+                    nSamples = (int)(Limit / period);
+                }
+                else
+                {
+                    AxelChart1.Waveform.SizeLimit = (int)Limit; 
+                    //AxelChart1.Waveform.StackMode = true;
+                    nSamples = AxelChart1.Waveform.SizeLimit;
+                }
+                AxelChart1.SamplingPeriod = period;
+                AxelChart1.Running = true;
+                AxelChart1.Clear();
+
+                AxelChart1.remoteArg = "freq: " + (1 / period).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
+                AxelChart1.Waveform.logger.Enabled = true;
+                axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
+            }
         }
 
         public void DoAcquire(List<Point> dt, out bool next)
         {
-            next = (EndlessMode && ucScan1.Running);
+            next = (ucScan1.EndlessMode() && ucScan1.Running);
             if (axelMems.activeChannel == 2) throw new Exception("not ready for two channels");
             /*{ 
                 for (int i = 0; i<dt.Count; i++) 
@@ -157,38 +205,52 @@ namespace Axel_hub
             }
         }
 
-        private MMexec lastGrpExe; private MMscan lastScan; ChartCollection<Point> srsFringes = null;
+        private MMexec lastGrpExe; private MMscan lastScan;
+        ChartCollection<Point> srsFringes = null; ChartCollection<Point> srsMotAccel = null;
         // remote MM call
         public void DoRemote(string json) // from TotalCount to 1
         {
-            log(json); 
-            
-            MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+           MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
             
            if(mme.cmd.Equals("repeat"))
             {
-                _tempxVal = Convert.ToDouble(mme.prms["runID"]);
+                log(json, Brushes.Blue.Color);
+                lastGrpExe = mme.Clone();
+                if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Repeat;
+                tabLowPlots.SelectedIndex = 1;
             }
             else if (mme.cmd.Equals("scan"))
             {
+                log(json, Brushes.DarkGreen.Color);
                 lastGrpExe = mme.Clone();
                 lastScan.FromDictionary(lastGrpExe.prms);
-                lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.param +
-                    ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
-                srsFringes = new ChartCollection<Point>(); 
+                if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
+                tabLowPlots.SelectedIndex = 0;
             }
             else if(mme.cmd.Equals("shotData"))
-            {
-                if (Convert.ToInt32(mme.prms["runID"]) == 0) _fringePoints.Clear();
-                
+            { 
+                log(json);
+                if (Convert.ToInt32(mme.prms["runID"]) == 0)
+                {
+                    if (Utils.isNull(srsFringes)) srsFringes = new ChartCollection<Point>();
+                    else srsFringes.Clear();
+                    if (Utils.isNull(srsMotAccel)) srsMotAccel = new ChartCollection<Point>();
+                    else srsMotAccel.Clear();
+
+                    if (lastGrpExe.cmd.Equals("scan")) lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.param +
+                       ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
+                    if (lastGrpExe.cmd.Equals("repeat")) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
+
+                }
+                string s1 = (string)lastGrpExe.prms["groupID"];
+                if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID"); 
                 MOTMasterDataConverter.ConvertToDoubleArray(ref mme);
 
                 string endBit = ""; int runID = 0;
-                if(lastGrpExe.cmd.Equals("scan"))
-                {
-                    runID = Convert.ToInt32(mme.prms["runID"]);
-                    endBit = ";  cur.value: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
-                } 
+                runID = Convert.ToInt32(mme.prms["runID"]);
+                if(lastGrpExe.cmd.Equals("scan")) endBit = ";  cur.value: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
+
+                if (lastGrpExe.cmd.Equals("repeat")) endBit = ";  runID: " + runID.ToString();
                   
                 lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + ";  groupID: " + lastGrpExe.prms["groupID"] +
                                  ";  runID: "+ mme.prms["runID"]+ endBit;
@@ -199,9 +261,6 @@ namespace Axel_hub
                     lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
                 }
                 double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
-                /*var fringePoints = graphFringes.DataSource as Point[];
-                _fringePoints.Add(new Point(_tempxVal,asymmetry));
-                graphFringes.DataSource = _fringePoints.ToArray();*/
                 DataStack signalDataStack = new DataStack();
                 DataStack backgroundDataStack = new DataStack();
 
@@ -239,6 +298,12 @@ namespace Axel_hub
                     srsFringes.Append(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
                     graphFringes.DataSource = srsFringes;
                 }
+                if (lastGrpExe.cmd.Equals("repeat"))
+                {
+                    srsMotAccel.Append(new Point(runID, asymmetry));
+                    graphAccelTrend.DataSource = srsMotAccel;
+                }
+                DoEvents();
                 return;
             }               
         }
@@ -349,7 +414,32 @@ namespace Axel_hub
 
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
-            tbLog.Text = "";
+           tbLog.Document.Blocks.Clear();
+        }
+
+        private void ndKP_KeyDown(object sender, KeyEventArgs e)
+        {
+            if ((e.Key == Key.L) && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
+            {
+                log("Coeff.PID= " + ndKP.Value.ToString("G3") + " / " + ndKI.Value.ToString("G3") + " / " + ndKD.Value.ToString("G3") + " ;");
+            }     
+        }
+
+        private void rbSingle_Checked(object sender, RoutedEventArgs e)
+        {
+          /*  if ((crsFringes2 == null) || (crsFringes1 == null)) return;
+            if (rbSingle.IsChecked.Value)
+            {
+                crsFringes2.Visibility = System.Windows.Visibility.Hidden;
+                crsFringes1.AxisValue = 7.85;
+            }
+            else
+            {
+                crsFringes2.Visibility = System.Windows.Visibility.Visible;
+                crsFringes1.AxisValue = 4.71;
+                crsFringes1.AxisValue = 7.85;
+                leftLvl = double.NaN; rightLvl = double.NaN;
+            }*/
         }
     }
 }

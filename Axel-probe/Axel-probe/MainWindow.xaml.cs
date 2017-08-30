@@ -109,7 +109,6 @@ namespace Axel_probe
             return randStdNormal;
         }
 
-
         public double Breathing(double x)
         {
             if (!chkVaryAmpl.IsChecked.Value) return 0;
@@ -117,8 +116,6 @@ namespace Axel_probe
             double norm = ndBreatheAmpl.Value / 100;
             return per * norm;
         }
-
-
 
         bool stopRequest = false; 
         private void btnRun_Click(object sender, RoutedEventArgs e)
@@ -339,6 +336,7 @@ namespace Axel_probe
         {
             remote = new RemoteMessaging("Axel Hub");
             remote.ActiveComm += new RemoteMessaging.ActiveCommHandler(DoActiveComm);
+            remote.OnReceive += new RemoteMessaging.RemoteHandler(OnReceive);
             remote.Enabled = chkRemoteEnabled.IsChecked.Value;
         }
 
@@ -359,6 +357,7 @@ namespace Axel_probe
          //  if (active) Console.WriteLine("Remote - is ready <->");
          //   else Console.WriteLine("Remote - problem -X-");
         }
+
         private void btnCommCheck_Click(object sender, RoutedEventArgs e)        
         {
             chkRemoteEnabled.SetCurrentValue(CheckBox.IsCheckedProperty, true);
@@ -371,6 +370,34 @@ namespace Axel_probe
            }
         }
 
+        private bool OnReceive(string json)
+        {
+            //if (string.IsNullOrEmpty(json) == true) // throw new Exception("Nothing to receive");
+            if(Utils.isNull(json) || json == "") return false;
+            MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+            if (Utils.isNull(mme)) return false;
+            switch (mme.cmd)
+            {
+                case ("scan"):
+                    {
+                        MMscan mms = new MMscan();
+                        mms.FromDictionary(mme.prms);
+                        SimpleScan(mms,  (string)mme.prms["groupID"]);
+                    }
+                    break;
+                case ("repeat"):
+                    {
+                        string groupID = (string)mme.prms["groupID"];
+                        mme.prms.Clear();
+                        mme.prms["groupID"] = groupID;
+                        mme.prms["runID"] = 0;
+                        SimpleRepeat(100, groupID);
+                    }
+                    break;
+            }
+            return true;
+        }
+
         /* Example base data + some noise
            N2	Ntot	B2	Btot	Bg		N2	Ntot	B2	Btot	Bg
             2	5	    1	4	    0		4	5	    1	4	    0
@@ -379,168 +406,144 @@ namespace Axel_probe
             1	1					        3	1			
 										
             A						        A				
-            1						        -1		*/		
-        private MMscan mms;
-        private void btnScan_Click(object sender, RoutedEventArgs e)
+            1						        -1		*/
+        private void SingleShot(double cr, // phase in radians 
+                                ref MMexec mme) // group template
         {
-           // MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
             double n2 = 2; double ntot = 5; // n2 to 4            
             double b2 = 1; double btot = 4; double bg = 0;
+
             lboxNB.Items[1] = "NTot = " + ntot.ToString();
             lboxNB.Items[3] = "B2 = " + b2.ToString();
             lboxNB.Items[2] = "BTot = " + btot.ToString();
             lboxNB.Items[4] = "Bg = " + bg.ToString();
 
-            string msg;
-            MMexec mm = new MMexec();
-            mm.mmexec = "";
-            mm.cmd = "scan";
-            mm.sender = "Axel Probe";
-            mm.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-            mm.id = rnd.Next(int.MaxValue);
-            mms.TestInit();
-            mms.ToDictionary(ref mm.prms);
-
-            MMexec md = new MMexec();
-            md.mmexec = "";
-            md.cmd = "shotData";
-            md.sender = "Axel Probe";
-            md.prms = new Dictionary<string, object>();
-            md.prms["groupID"] = mm.prms["groupID"];
- 
-            if (chkRemoteEnabled.IsChecked.Value)
-            {
-                msg = JsonConvert.SerializeObject(mm);
-                if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
-                log(msg);
-            }
             double d, scl = 100;
             List<Double> srsN2 = new List<Double>();
             List<Double> srsNTot = new List<Double>();
             List<Double> srsB2 = new List<Double>();
             List<Double> srsBTot = new List<Double>();
             List<Double> srsBg = new List<Double>();
+            signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
+            signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear(); 
+            for (int i = 0; i < 30; i++)
+            {
+                d = n2 + (Math.Sin(cr) + 1) + Gauss01() / scl;
+                lboxNB.Items[0] = "N2 = " + d.ToString("G4");
+                srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
+                d = ntot + Gauss01() / scl;
+                srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
-            int j = 0; fringes.Clear();
-            
+                d = b2 + Gauss01() / scl;
+                srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
+                d = btot + Gauss01() / scl;
+                srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
+
+                d = bg + Gauss01() / scl;
+                srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));                   
+            }
+            signalN.Append(srsN2); signalN.Append(srsNTot);
+            signalB.Append(srsB2); signalB.Append(srsBTot); 
+
+            if (remote.Enabled)
+            {               
+                mme.prms["N2"] = srsN2.ToArray(); mme.prms["NTot"] = srsNTot.ToArray();
+                mme.prms["B2"] = srsB2.ToArray(); mme.prms["BTot"] = srsBTot.ToArray();
+                mme.prms["Bg"] = srsBg.ToArray();
+                mme.id = rnd.Next(int.MaxValue);
+                string msg = JsonConvert.SerializeObject(mme);
+                remote.sendCommand(msg);
+                mme.prms["runID"] = (int)mme.prms["runID"]+1;
+                log(msg.Substring(1,80)+"...");
+            }
+        } 
+        
+        private void SimpleScan(MMscan mms, string groupID)
+        {
+            MMexec md = new MMexec();
+            md.mmexec = "";
+            md.cmd = "shotData";
+            md.sender = "Axel-probe";
+            md.prms["groupID"] = groupID;
+            md.prms["runID"] = 0;
+
+            int j = 0; fringes.Clear();           
             for (double cr = mms.sFrom; cr <= mms.sTo; cr += mms.sBy)
             {
                 fringes.Add(new Point(cr,Math.Sin(cr)));
                 DoEvents();
-                signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
-                signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear(); 
-                for (int i = 0; i < 30; i++)
-                {
-                    d = n2 + (Math.Sin(cr) + 1) + Gauss01() / scl;
-                    lboxNB.Items[0] = "N2 = " + d.ToString("G4");
-                    srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                    d = ntot + Gauss01() / scl;
-                    srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
-
-                    d = b2 + Gauss01() / scl;
-                    srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                    d = btot + Gauss01() / scl;
-                    srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
-
-                    d = bg + Gauss01() / scl;
-                    srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));                   
-                }
-                signalN.Append(srsN2); signalN.Append(srsNTot);
-                signalB.Append(srsB2); signalB.Append(srsBTot); 
-
-                if (remote.Enabled)
-                {
-                    md.prms["runID"] = j++;
-                    md.prms["N2"] = srsN2.ToArray(); md.prms["NTot"] = srsNTot.ToArray();
-                    md.prms["B2"] = srsB2.ToArray(); md.prms["BTot"] = srsBTot.ToArray();
-                    md.prms["Bg"] = srsBg.ToArray();
-                    md.id = rnd.Next(int.MaxValue);
-                    msg = JsonConvert.SerializeObject(md);
-                    remote.sendCommand(msg);
-                    log(msg.Substring(1,80)+"...");
-                }
+                SingleShot(cr,ref md);
             }               
+        }
+
+        private void SimpleRepeat(int cycles, string groupID)
+        {
+            MMexec md = new MMexec();
+            md.mmexec = "";
+            md.cmd = "shotData";
+            md.sender = "Axel-probe";
+            md.prms["groupID"] = groupID;
+            md.prms["runID"] = 0;
+            md.id = rnd.Next(int.MaxValue);
+            double cr = 1;
+            for (int j = 0; j < cycles; j++)
+            {
+                cr = rnd.Next(200) / 100.0;
+                fringes.Add(new Point(cr, Math.Sin(cr)));
+                DoEvents();
+                SingleShot(cr, ref md);
+            }
+        }
+
+        private void btnScan_Click(object sender, RoutedEventArgs e)
+        {
+           // MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+
+            string msg;
+            MMexec mm = new MMexec();
+            mm.mmexec = "test_scan";
+            mm.cmd = "scan";
+            mm.id = rnd.Next(int.MaxValue);
+            mm.sender = "Axel-probe";
+            string groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            mm.id = rnd.Next(int.MaxValue);
+
+            MMscan mms = new MMscan();            
+            mms.TestInit();
+            mms.groupID = groupID;
+            mms.ToDictionary(ref mm.prms);
+
+            if (chkRemoteEnabled.IsChecked.Value) // title command
+            {
+                msg = JsonConvert.SerializeObject(mm);
+                if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
+                log(msg);
+            }
+
+            SimpleScan(mms, groupID); 
         }
 
         private void btnRepeat_Click(object sender, RoutedEventArgs e)
         {
-            double n2 = 2.5; double ntot = 5; // n2 to 4            
-            double b2 = 1; double btot = 4; double bg = 0;
-            lboxNB.Items[1] = "NTot = " + ntot.ToString();
-            lboxNB.Items[3] = "B2 = " + b2.ToString();
-            lboxNB.Items[2] = "BTot = " + btot.ToString();
-            lboxNB.Items[4] = "Bg = " + bg.ToString();
-
             string msg;
             MMexec mm = new MMexec();
             mm.id = rnd.Next(int.MaxValue);
             mm.cmd = "repeat";
-            mm.mmexec = "";
-            mm.sender = "Axel Probe";
-            mm.prms = new Dictionary<string, object>();
-            int cycles = 20;
+            mm.mmexec = "test_repeat";
+            mm.sender = "Axel-probe";
+            int cycles = 200;
             mm.prms["cycles"] = cycles;
-            mm.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            string groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            mm.prms["groupID"] = groupID;
 
-            MMexec md = new MMexec();
-            md.id = rnd.Next(int.MaxValue);
-            md.cmd = "shotData";
-            md.mmexec = "";
-            md.sender = "Axel Probe";
-            md.prms = new Dictionary<string, object>();
-            md.prms["groupID"] = mm.prms["groupID"];
-
-            if (chkRemoteEnabled.IsChecked.Value)
+            if (chkRemoteEnabled.IsChecked.Value) // title command
             {
-                msg = new String('a', 1000); // JsonConvert.SerializeObject(mm);
+                msg = JsonConvert.SerializeObject(mm);
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
                 log(msg);
             }
-            double d, scl = 100; 
-            List<Double> srsN2 = new List<Double>();
-            List<Double> srsNTot = new List<Double>();
-            List<Double> srsB2 = new List<Double>();
-            List<Double> srsBTot = new List<Double>();
-            List<Double> srsBg = new List<Double>();
 
-            fringes.Clear();
-
-            for (int j = 0; j < cycles; j++)
-            {
-                DoEvents();
-                signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
-                signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear();
-                for (int i = 0; i < 30; i++)
-                {
-                    d = n2 + Gauss01() / scl;
-                    lboxNB.Items[0] = "N2 = " + d.ToString("G4");
-                    srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                    d = ntot + Gauss01() / scl;
-                    srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
-
-                    d = b2 + Gauss01() / scl;
-                    srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                    d = btot + Gauss01() / scl;
-                    srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
-
-                    d = bg + Gauss01() / scl;
-                    srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                }
-                signalN.Append(srsN2); signalN.Append(srsNTot);
-                signalB.Append(srsB2); signalB.Append(srsBTot);
-
-                if (chkRemoteEnabled.IsChecked.Value)
-                {
-                    md.prms["runID"] = j++;
-                    md.prms["N2"] = srsN2.ToArray(); md.prms["NTot"] = srsNTot.ToArray();
-                    md.prms["B2"] = srsB2.ToArray(); md.prms["BTot"] = srsBTot.ToArray();
-                    md.prms["Bg"] = srsBg.ToArray();
-                    md.id = rnd.Next(int.MaxValue);
-                    msg = JsonConvert.SerializeObject(md);
-                    remote.sendCommand(msg);
-                    log(msg.Substring(1, 80) + "...");
-                }
-            }               
+            SimpleRepeat(cycles, groupID);
         }
 
         private void chkRemoteEnabled_Checked(object sender, RoutedEventArgs e)
