@@ -53,7 +53,6 @@ namespace Axel_hub
         int nSamples = 1500; 
         private AxelMems axelMems = null;
         Random rnd = new Random();
-        private double _tempxVal;
         private List<Point> _fringePoints = new List<Point>();
         public MainWindow()
         {
@@ -77,7 +76,7 @@ namespace Axel_hub
             if (!chkLog.IsChecked.Value) return;
             string printOut;
             if (chkVerbatim.IsChecked.Value) printOut = txt;
-            else printOut = txt.Substring(0,80)+"...";
+            else printOut = txt.Substring(0,80)+"..."; //
             
             Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
             TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
@@ -104,7 +103,7 @@ namespace Axel_hub
         {
             MMscan mms = new MMscan();
             mms.groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-            mms.param = "prm"; // phase !!!
+            mms.sParam = "prm"; // phase !!!
             mms.sFrom = numFrom.Value;
             mms.sTo = numTo.Value;
             mms.sBy = numBy.Value;
@@ -124,28 +123,35 @@ namespace Axel_hub
                     ucScan1.remoteMode = RemoteMode.Free;
                     return;
                 }
-                lastScan = jumboScan();
                 lastGrpExe = new MMexec();
-                lastGrpExe.mmexec = "test drive";
+                lastGrpExe.mmexec = "test_drive";
                 lastGrpExe.sender = "Axel-hub";
+
+                tabLowPlots.SelectedIndex = 0;
                 lastGrpExe.cmd = "scan";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
+                lastScan = jumboScan();
                 lastScan.ToDictionary(ref lastGrpExe.prms);
-      
+
                 string json = JsonConvert.SerializeObject(lastGrpExe);
+                log("<< "+json, Brushes.Green.Color);
                 ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                 ucScan1.SendJson(json);
 
+                if (ucScan1.remoteMode == RemoteMode.Free) return; // abort mission
+                tabLowPlots.SelectedIndex = 1;
                 lastGrpExe.cmd = "repeat";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
                 lastGrpExe.prms.Clear();
                 lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
                 lastGrpExe.prms["cycles"] = 100;
                 json = JsonConvert.SerializeObject(lastGrpExe);
+                log("<< " + json, Brushes.Blue.Color);
+
                 ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
                 ucScan1.SendJson(json);
 
-                ucScan1.bbtnStart_Click(null, null); // reset
+                if(ucScan1.remoteMode != RemoteMode.Free) ucScan1.bbtnStart_Click(null, null); // reset
                 ucScan1.remoteMode = RemoteMode.Free;
             }
             else
@@ -210,102 +216,116 @@ namespace Axel_hub
         // remote MM call
         public void DoRemote(string json) // from TotalCount to 1
         {
-           MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
-            
-           if(mme.cmd.Equals("repeat"))
+            MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+            switch(mme.cmd)
             {
-                log(json, Brushes.Blue.Color);
-                lastGrpExe = mme.Clone();
-                if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Repeat;
-                tabLowPlots.SelectedIndex = 1;
-            }
-            else if (mme.cmd.Equals("scan"))
-            {
-                log(json, Brushes.DarkGreen.Color);
-                lastGrpExe = mme.Clone();
-                lastScan.FromDictionary(lastGrpExe.prms);
-                if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
-                tabLowPlots.SelectedIndex = 0;
-            }
-            else if(mme.cmd.Equals("shotData"))
-            { 
-                log(json);
-                if (Convert.ToInt32(mme.prms["runID"]) == 0)
-                {
-                    if (Utils.isNull(srsFringes)) srsFringes = new ChartCollection<Point>();
-                    else srsFringes.Clear();
-                    if (Utils.isNull(srsMotAccel)) srsMotAccel = new ChartCollection<Point>();
-                    else srsMotAccel.Clear();
+                case("shotData"):
+                { 
+                    log(json);
+                    if (Convert.ToInt32(mme.prms["runID"]) == 0)
+                    {
+                        if (Utils.isNull(srsFringes)) srsFringes = new ChartCollection<Point>();
+                        else srsFringes.Clear();
+                        if (Utils.isNull(srsMotAccel)) srsMotAccel = new ChartCollection<Point>();
+                        else srsMotAccel.Clear();
 
-                    if (lastGrpExe.cmd.Equals("scan")) lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.param +
-                       ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
-                    if (lastGrpExe.cmd.Equals("repeat")) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
+                        if (lastGrpExe.cmd.Equals("scan")) lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
+                           ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
+                        if (lastGrpExe.cmd.Equals("repeat")) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
 
-                }
-                string s1 = (string)lastGrpExe.prms["groupID"];
-                if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID"); 
-                MOTMasterDataConverter.ConvertToDoubleArray(ref mme);
+                    }
+                    string s1 = (string)lastGrpExe.prms["groupID"];
+                    if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID"); 
+                    MOTMasterDataConverter.ConvertToDoubleArray(ref mme);
 
-                string endBit = ""; int runID = 0;
-                runID = Convert.ToInt32(mme.prms["runID"]);
-                if(lastGrpExe.cmd.Equals("scan")) endBit = ";  cur.value: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
+                    string endBit = ""; int runID = 0;
+                    runID = Convert.ToInt32(mme.prms["runID"]);
+                    if(lastGrpExe.cmd.Equals("scan")) endBit = ";  cur.value: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
 
-                if (lastGrpExe.cmd.Equals("repeat")) endBit = ";  runID: " + runID.ToString();
+                    if (lastGrpExe.cmd.Equals("repeat")) endBit = ";  runID: " + runID.ToString();
                   
-                lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + ";  groupID: " + lastGrpExe.prms["groupID"] +
-                                 ";  runID: "+ mme.prms["runID"]+ endBit;
-                Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
-                lboxNB.Items.Clear();
-                foreach (var item in avgs)
-                {
-                    lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
-                }
-                double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
-                DataStack signalDataStack = new DataStack();
-                DataStack backgroundDataStack = new DataStack();
+                    lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + ";  groupID: " + lastGrpExe.prms["groupID"] +
+                                     ";  runID: "+ mme.prms["runID"]+ endBit;
+                    Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
+                    lboxNB.Items.Clear();
+                    foreach (var item in avgs)
+                    {
+                        lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
+                    }
+                    double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
+                    DataStack signalDataStack = new DataStack();
+                    DataStack backgroundDataStack = new DataStack();
 
-                int xVal = 0; double N2 = ((double[])mme.prms["N2"]).Average();
-                foreach (double yVal in (double[])mme.prms["N2"])
-                {
-                    signalDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-                double NTot = ((double[])mme.prms["NTot"]).Average();
-                foreach (double yVal in (double[])mme.prms["NTot"])
-                {
-                    signalDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-                xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
-                foreach (double yVal in (double[])mme.prms["B2"])
-                {
-                    backgroundDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-                double BTot = ((double[])mme.prms["BTot"]).Average();
-                foreach (double yVal in (double[])mme.prms["BTot"])
-                {
-                    backgroundDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-                Point[] pA, pB;
-                pA = signalDataStack.ToArray();
-                pB = backgroundDataStack.ToArray();
-                graphSignal.DataSource = new List<Point[]>() {pA, pB};
-                double A = 2 - (N2 - B2) / (NTot - BTot);
-                if(lastGrpExe.cmd.Equals("scan")) 
-                {
-                    srsFringes.Append(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
-                    graphFringes.DataSource = srsFringes;
-                }
-                if (lastGrpExe.cmd.Equals("repeat"))
-                {
-                    srsMotAccel.Append(new Point(runID, asymmetry));
-                    graphAccelTrend.DataSource = srsMotAccel;
-                }
-                DoEvents();
-                return;
-            }               
+                    int xVal = 0; double N2 = ((double[])mme.prms["N2"]).Average();
+                    foreach (double yVal in (double[])mme.prms["N2"])
+                    {
+                        signalDataStack.Add(new Point(xVal, yVal));
+                        xVal++;
+                    }
+                    double NTot = ((double[])mme.prms["NTot"]).Average();
+                    foreach (double yVal in (double[])mme.prms["NTot"])
+                    {
+                        signalDataStack.Add(new Point(xVal, yVal));
+                        xVal++;
+                    }
+                    xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
+                    foreach (double yVal in (double[])mme.prms["B2"])
+                    {
+                        backgroundDataStack.Add(new Point(xVal, yVal));
+                        xVal++;
+                    }
+                    double BTot = ((double[])mme.prms["BTot"]).Average();
+                    foreach (double yVal in (double[])mme.prms["BTot"])
+                    {
+                        backgroundDataStack.Add(new Point(xVal, yVal));
+                        xVal++;
+                    }
+                    Point[] pA, pB;
+                    pA = signalDataStack.ToArray();
+                    pB = backgroundDataStack.ToArray();
+                    graphSignal.DataSource = new List<Point[]>() {pA, pB};
+                    double A = 2 - (N2 - B2) / (NTot - BTot);
+                    if(lastGrpExe.cmd.Equals("scan")) 
+                    {
+                        srsFringes.Append(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
+                        graphFringes.DataSource = srsFringes;
+                    }
+                    if (lastGrpExe.cmd.Equals("repeat"))
+                    {
+                        srsMotAccel.Append(new Point(runID, asymmetry));
+                        graphAccelTrend.DataSource = srsMotAccel;
+                    }
+                    DoEvents();
+                }            
+                    break;
+                case ("repeat"):
+                    {
+                        log(json, Brushes.Blue.Color);
+                        lastGrpExe = mme.Clone();
+                        if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Repeat;
+                        tabLowPlots.SelectedIndex = 1;
+                    }
+                    break;
+                case ("scan"):
+                    {
+                        log(json, Brushes.DarkGreen.Color);
+                        lastGrpExe = mme.Clone();
+                        lastScan.FromDictionary(lastGrpExe.prms);
+                        if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
+                        tabLowPlots.SelectedIndex = 0;
+                    }
+                    break;
+                case ("abort"):
+                    {
+                        log(json, Brushes.Red.Color);
+                        if (ucScan1.remoteMode != RemoteMode.Free)
+                        {
+                            ucScan1.Abort(false);
+                            ucScan1.remoteMode = RemoteMode.Free; 
+                        }
+                    }
+                    break;
+            }
         }
         
         // XPS log file reference .....

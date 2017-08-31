@@ -53,7 +53,7 @@
             <GroupBox Header="Visuals" Height="70" Margin="0,5,0.143,0">
                 <Grid Margin="0,0,-0.286,-0.143">
                     <Label Content="Delay [ms]" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndDelay" HorizontalAlignment="Left" Height="23" Margin="104,18,0,0" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.501,-0.217" Value="50"/>
+                    <ni:NumericTextBoxDouble x:Name="ndDelay" HorizontalAlignment="Left" Height="23" Margin="124,18,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="100"/>
                 </Grid>
             </GroupBox>
             <GroupBox x:Name="grpRemote" Header="Remote" Height="140" Foreground="Black">
@@ -62,6 +62,7 @@
                     <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click"/>
                     <Button x:Name="btnRepeat" Content="Repeat" HorizontalAlignment="Left" Margin="99,74,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnRepeat_Click"/>
                     <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked"/>
+                    <ni:BooleanButton x:Name="bbtnAbort" Content="Abort !" HorizontalAlignment="Left" Height="23" Margin="10,80,0,0" VerticalAlignment="Top" Width="75" Click="btnAbort_Click"/>
                 </Grid>
             </GroupBox>
 

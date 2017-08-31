@@ -33,6 +33,7 @@ namespace Axel_probe
         ChartCollection<Point> fringes, ramp, corr;
         ChartCollection<double> signalN, signalB;
         List<double> iStack, dStack, corrList;
+        bool cancelRequest = false;
         RemoteMessaging remote;
         string remoteDoubleFormat = "G4";
         Random rnd = new Random();
@@ -57,7 +58,7 @@ namespace Axel_probe
             iStack = new List<double>(); dStack = new List<double>(); corrList = new List<double>(); 
          }
 
-        public void DoEvents()
+       public void DoEvents()
         {
             DispatcherFrame frame = new DispatcherFrame(); //
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, //
@@ -394,6 +395,12 @@ namespace Axel_probe
                         SimpleRepeat(100, groupID);
                     }
                     break;
+                case ("abort"):
+                    {
+                        cancelRequest = true;
+                        log("<< External ABORT!!!");
+                    }
+                    break;
             }
             return true;
         }
@@ -467,11 +474,14 @@ namespace Axel_probe
             md.prms["groupID"] = groupID;
             md.prms["runID"] = 0;
 
-            int j = 0; fringes.Clear();           
+            cancelRequest = false; fringes.Clear();           
             for (double cr = mms.sFrom; cr <= mms.sTo; cr += mms.sBy)
-            {
-                fringes.Add(new Point(cr,Math.Sin(cr)));
+            { 
                 DoEvents();
+                if (cancelRequest) break;
+                fringes.Add(new Point(cr,Math.Sin(cr)));
+
+                System.Threading.Thread.Sleep((int)ndDelay.Value);
                 SingleShot(cr,ref md);
             }               
         }
@@ -484,21 +494,25 @@ namespace Axel_probe
             md.sender = "Axel-probe";
             md.prms["groupID"] = groupID;
             md.prms["runID"] = 0;
-            md.id = rnd.Next(int.MaxValue);
-            double cr = 1;
-            for (int j = 0; j < cycles; j++)
-            {
-                cr = rnd.Next(200) / 100.0;
-                fringes.Add(new Point(cr, Math.Sin(cr)));
+
+            long realCycles = cycles;
+            if (cycles == -1) realCycles = long.MaxValue; 
+            double cr = 1; fringes.Clear();
+            cancelRequest = false;
+            for (long j = 0; j < realCycles; j++)
+            {   
                 DoEvents();
+                if (cancelRequest) break;
+                cr = rnd.Next(200) / 100.0;
+                fringes.Add(new Point(j, Math.Sin(cr)));
+
+                System.Threading.Thread.Sleep((int)ndDelay.Value); 
                 SingleShot(cr, ref md);
             }
         }
 
         private void btnScan_Click(object sender, RoutedEventArgs e)
         {
-           // MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
-
             string msg;
             MMexec mm = new MMexec();
             mm.mmexec = "test_scan";
@@ -527,7 +541,6 @@ namespace Axel_probe
         {
             string msg;
             MMexec mm = new MMexec();
-            mm.id = rnd.Next(int.MaxValue);
             mm.cmd = "repeat";
             mm.mmexec = "test_repeat";
             mm.sender = "Axel-probe";
@@ -549,6 +562,26 @@ namespace Axel_probe
         private void chkRemoteEnabled_Checked(object sender, RoutedEventArgs e)
         {
             remote.Enabled = chkRemoteEnabled.IsChecked.Value;
+        }
+
+        private void btnAbort_Click(object sender, RoutedEventArgs e)
+        {
+            cancelRequest = true;
+            DoEvents();
+            log("About to ABORT !!!");
+            string msg;
+            MMexec mm = new MMexec();
+            mm.cmd = "abort";
+            mm.mmexec = "abort_and_save_yourself!!!";
+            mm.sender = "Axel-probe";
+
+            if (chkRemoteEnabled.IsChecked.Value) // title command
+            {
+                msg = JsonConvert.SerializeObject(mm);
+                if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
+                log(msg);
+            }
+
         }
      }
 }

@@ -155,6 +155,7 @@ namespace scanHub
             {
                 lbMode.Content = "Mode(stage): " + value.ToString();
                 SetValue(remoteModeProperty, value);
+                tabControl.IsEnabled = (value == RemoteMode.Free);
             }
         }
 
@@ -254,21 +255,20 @@ namespace scanHub
                 case "Start":
                     {
                         bbtnStart.Content = "Cancel";
-                        bbtnStart.Value = true;
                         Running = true;                        
                     }
                     break;
                 case "Cancel":
                     {
                         bbtnStart.Content = "Start";
-                        bbtnStart.Value = false;
                         Running = false;
+                        Abort(true);
+                        return;
                     }
                     break;
                 case "Jumbo Run":
                     {
                         bbtnStart.Content = "Jumbo Stop";
-                        bbtnStart.Value = true;
                         jumbo = true;
                         Running = true; 
                     }
@@ -276,13 +276,15 @@ namespace scanHub
                 case "Jumbo Stop":
                     {
                         bbtnStart.Content = "Jumbo Run";
-                        bbtnStart.Value = false;
                         jumbo = false;
-                        Running = false; 
+                        Running = false;
+                        Abort(true);
+                        return;
                     }
                     break;
             }
             bool down = Running;
+            bbtnStart.Value = down;
             double period = GetSamplingPeriod(); // sampling rate in sec
             int plannedTime = 0; // [s]
 
@@ -312,7 +314,23 @@ namespace scanHub
             }
             DoEvents();
 
-            OnStart(jumbo, down, period, TimeMode, Limit); // the last three are igniored in jumbo mode
+            OnStart(jumbo, down, period, TimeMode, Limit); // the last three are valid only in non-jumbo mode with down = true
+         }
+
+        public void Abort(bool local)
+        {
+            bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
+            remoteMode = RemoteMode.Free;
+            if (jumbo) bbtnStart.Content = "Jumbo Run";
+            else bbtnStart.Content = "Start";
+            Running = false;
+            bbtnStart.Value = false;
+            OnStart(jumbo, false, 0, false, 0);
+            if (local)
+            {
+                MMexec mme = new MMexec();
+                SendJson(mme.Abort("Axel-hub"));
+            }
         }
 
          private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -327,7 +345,7 @@ namespace scanHub
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
                  Status("Ready to go ");
                  if(bbtnStart.Content.ToString().Equals("Start")) return;
-                 if(bbtnStart.Content.ToString().Substring(1,5).Equals("Jumbo")) bbtnStart.Content = "Start"; // TODO ask confirmation                
+                 if(bbtnStart.Content.ToString().Substring(0,5).Equals("Jumbo")) bbtnStart.Content = "Start"; // TODO ask confirmation                
              }            
          }
 
@@ -337,7 +355,12 @@ namespace scanHub
              {
                  Status("Ready to remote<->");
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
-                 if (bbtnStart.Content.ToString().Equals("Start") || bbtnStart.Content.ToString().Equals("Stop")) bbtnStart.Content = "Jumbo Run";
+                 if (bbtnStart.Content.ToString().Equals("Start") || bbtnStart.Content.ToString().Equals("Stop"))
+                 {
+                     bbtnStart.Content = "Jumbo Run";
+                     remoteMode = RemoteMode.Free;
+                 }  
+                     
              }
              else
              {

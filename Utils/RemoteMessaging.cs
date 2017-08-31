@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
+using Newtonsoft.Json;
 
 namespace RemoteMessagingNS
 {
@@ -269,6 +270,7 @@ namespace RemoteMessagingNS
         public Dictionary<string, object> prms;
         public MMexec()
         {
+            id = rnd.Next(int.MaxValue);
             prms = new Dictionary<string, object>();
         }
         public MMexec(string Caption = "", string Sender = "", string Command = "", int ID = -1)
@@ -298,19 +300,28 @@ namespace RemoteMessagingNS
             mm.prms = new Dictionary<string, object>(prms);
             return mm;
         }
+
+        public string Abort(string Sender = "")
+        {
+            cmd = "abort";
+            mmexec = "abort!Abort!ABORT!";
+            if (!Sender.Equals("")) sender = Sender;
+            prms.Clear();
+            return JsonConvert.SerializeObject(this);
+        }
     }
 
     struct MMscan
     {
         public string groupID;
-        public string param;
+        public string sParam;
         public double sFrom;
         public double sTo;
         public double sBy;
         public void TestInit()
         {
             groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-            param = "frng";
+            sParam = "frng";
             sFrom = 0;
             sTo = 4*3.14;
             sBy = 0.1;
@@ -319,7 +330,7 @@ namespace RemoteMessagingNS
         {
             if (dict == null) dict = new Dictionary<string, object>();
             dict["groupID"] = groupID;
-            dict["param"] = param;
+            dict["param"] = sParam;
             dict["from"] = sFrom;
             dict["to"] = sTo;
             dict["by"] = sBy;
@@ -327,7 +338,7 @@ namespace RemoteMessagingNS
         public void FromDictionary(Dictionary<string, object> dict)
         {
             groupID = (string)dict["groupID"];
-            param = (string)dict["param"];
+            sParam = (string)dict["param"];
             sFrom = (double)dict["from"];
             sTo = (double)dict["to"];
             sBy = (double)dict["by"];
