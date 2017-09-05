@@ -317,7 +317,7 @@ namespace scanHub
             OnStart(jumbo, down, period, TimeMode, Limit); // the last three are valid only in non-jumbo mode with down = true
          }
 
-        public void Abort(bool local)
+        public void Abort(bool local) // make the partner know or not
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
             remoteMode = RemoteMode.Free;

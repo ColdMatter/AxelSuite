@@ -165,7 +165,7 @@
                                     <ni:NumericTextBoxDouble x:Name="ndKI" HorizontalAlignment="Left" Height="23" Margin="41,41,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
                                     <Label Content="kD" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top"/>
                                     <ni:NumericTextBoxDouble x:Name="ndKD" HorizontalAlignment="Left" Height="23" Margin="41,68,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                                    <CheckBox x:Name="chkFollowPID" Content="Follow" HorizontalAlignment="Left" Margin="10,106,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                                    <CheckBox x:Name="chkFollowPID" Content="Follow" HorizontalAlignment="Left" Margin="10,106,0,0" VerticalAlignment="Top" IsChecked="True" RenderTransformOrigin="0.5,0.5"/>
                                     <GroupBox Header="Strobes" HorizontalAlignment="Left" Margin="0,126,0,0" VerticalAlignment="Top" Height="67" Width="103">
                                         <StackPanel Margin="0,0,0.429,-12.714">
                                             <RadioButton x:Name="rbSingle" Content="Single(down)" Margin="0,5,0,0" IsChecked="True" Checked="rbSingle_Checked"/>

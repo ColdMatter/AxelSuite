@@ -69,13 +69,15 @@ namespace Axel_hub
             axelMems = new AxelMems();
             axelMems.Acquire += new AxelMems.AcquireHandler(DoAcquire);
             axelMems.RealSampling += new AxelMems.RealSamplingHandler(ucScan1.OnRealSampling);
+
+            iStack = new List<double>(); dStack = new List<double>();
         }
 
         private void log(string txt, Color? clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
-            if (chkVerbatim.IsChecked.Value) printOut = txt;
+            if ((chkVerbatim.IsChecked.Value) || (txt.Length<81)) printOut = txt;
             else printOut = txt.Substring(0,80)+"..."; //
             
             Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
@@ -127,7 +129,7 @@ namespace Axel_hub
                 lastGrpExe.mmexec = "test_drive";
                 lastGrpExe.sender = "Axel-hub";
 
-                tabLowPlots.SelectedIndex = 0;
+           /*     tabLowPlots.SelectedIndex = 0;
                 lastGrpExe.cmd = "scan";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
                 lastScan = jumboScan();
@@ -137,22 +139,21 @@ namespace Axel_hub
                 log("<< "+json, Brushes.Green.Color);
                 ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                 ucScan1.SendJson(json);
-
-                if (ucScan1.remoteMode == RemoteMode.Free) return; // abort mission
+                
+                if (ucScan1.remoteMode == RemoteMode.Free) return; */// abort mission
                 tabLowPlots.SelectedIndex = 1;
                 lastGrpExe.cmd = "repeat";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
                 lastGrpExe.prms.Clear();
                 lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
                 lastGrpExe.prms["cycles"] = 100;
-                json = JsonConvert.SerializeObject(lastGrpExe);
+                string json = JsonConvert.SerializeObject(lastGrpExe);
                 log("<< " + json, Brushes.Blue.Color);
 
                 ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
                 ucScan1.SendJson(json);
 
-                if(ucScan1.remoteMode != RemoteMode.Free) ucScan1.bbtnStart_Click(null, null); // reset
-                ucScan1.remoteMode = RemoteMode.Free;
+                ucScan1.Abort(false); // reset
             }
             else
             {
@@ -284,16 +285,26 @@ namespace Axel_hub
                     pA = signalDataStack.ToArray();
                     pB = backgroundDataStack.ToArray();
                     graphSignal.DataSource = new List<Point[]>() {pA, pB};
-                    double A = 2 - (N2 - B2) / (NTot - BTot);
-                    if(lastGrpExe.cmd.Equals("scan")) 
+                    double A = 1 - 2 * (N2 - B2) / (NTot - BTot);
+                    if (lastGrpExe.cmd.Equals("scan")) // title command
                     {
                         srsFringes.Append(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
                         graphFringes.DataSource = srsFringes;
                     }
-                    if (lastGrpExe.cmd.Equals("repeat"))
+                    if (lastGrpExe.cmd.Equals("repeat")) // title command
                     {
                         srsMotAccel.Append(new Point(runID, asymmetry));
                         graphAccelTrend.DataSource = srsMotAccel;
+                        if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                        {
+                            mme.sender = "Axel-hub";
+                            mme.cmd = "phaseConvert";
+                            mme.prms.Clear();
+                            mme.prms["runID"] = runID;
+                            mme.prms["accelVoltage"] = PID(asymmetry).ToString("G6");
+
+                            if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
+                        }                   
                     }
                     DoEvents();
                 }            
@@ -327,7 +338,31 @@ namespace Axel_hub
                     break;
             }
         }
-        
+
+        List<double> iStack, dStack;
+        int iStDepth = 5; int dStDepth = 3;
+        public double PID(double curr)
+        {
+            int hillSide = 1;
+            //if (cbHillPos.SelectedIndex == 0) hillSide = -1;
+            double pTerm = curr;
+            iStack.Add(curr); while (iStack.Count > iStDepth) iStack.RemoveAt(0);
+            double iTerm = iStack.Average();
+            dStack.Add(curr); while (dStack.Count > dStDepth) dStack.RemoveAt(0);
+            double dTerm = 0;
+            for (int i = 0; i < dStack.Count - 1; i++)
+            {
+                dTerm += dStack[i + 1] - dStack[i];
+            }
+            dTerm /= Math.Max(dStack.Count - 1, 1);
+
+            double cr = hillSide * (ndKP.Value * pTerm + ndKI.Value * iTerm + ndKD.Value * dTerm);
+            log("PID> " + pTerm.ToString("G3") + "  " + iTerm.ToString("G3") + " " + dTerm.ToString("G3") +
+                // PID X correction and Y value after the correction
+                " corr " + cr.ToString("G4") + " for " + curr.ToString("G4"), Brushes.Navy.Color);
+            return cr;
+        }
+
         // XPS log file reference .....
         public void DoRefFile(string FN, bool statFlag)
         {            
