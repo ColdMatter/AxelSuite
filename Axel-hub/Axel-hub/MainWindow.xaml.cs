@@ -111,6 +111,39 @@ namespace Axel_hub
             mms.sBy = numBy.Value;
             return mms;
         }
+
+        private void ADC24(bool down, double period, bool TimeMode, double Limit)
+        {
+            if (!down) // user cancel
+            {
+                AxelChart1.Running = false;
+                axelMems.StopAqcuisition();
+                AxelChart1.Waveform.logger.Enabled = false;
+                log("User ABORT !!!", Brushes.Red.Color);
+                return;
+            }
+
+            AxelChart1.Waveform.TimeMode = TimeMode;
+            if (TimeMode)
+            {
+                AxelChart1.Waveform.TimeLimit = Limit;
+                nSamples = (int)(Limit / period);
+            }
+            else
+            {
+                AxelChart1.Waveform.SizeLimit = (int)Limit;
+                //AxelChart1.Waveform.StackMode = true;
+                nSamples = AxelChart1.Waveform.SizeLimit;
+            }
+            AxelChart1.SamplingPeriod = period;
+            AxelChart1.Running = true;
+            AxelChart1.Clear();
+            AxelChart1.remoteArg = "freq: " + (1 / period).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
+            AxelChart1.Waveform.SizeLimit = nSamples;
+            AxelChart1.Waveform.logger.Enabled = false;
+            
+            axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
+        }
         
         // main ADC call
         public void DoStart(bool jumbo, bool down, double period, bool TimeMode, double Limit)
@@ -122,14 +155,14 @@ namespace Axel_hub
                     AxelChart1.Running = false;
                     axelMems.StopAqcuisition();
                     AxelChart1.Waveform.logger.Enabled = false;
-                    ucScan1.remoteMode = RemoteMode.Free;
+                    log("Jumbo END !", Brushes.Red.Color);
                     return;
                 }
                 lastGrpExe = new MMexec();
                 lastGrpExe.mmexec = "test_drive";
                 lastGrpExe.sender = "Axel-hub";
 
-           /*     tabLowPlots.SelectedIndex = 0;
+            /*    tabLowPlots.SelectedIndex = 0;
                 lastGrpExe.cmd = "scan";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
                 lastScan = jumboScan();
@@ -140,51 +173,29 @@ namespace Axel_hub
                 ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                 ucScan1.SendJson(json);
                 
-                if (ucScan1.remoteMode == RemoteMode.Free) return; */// abort mission
+                if (ucScan1.remoteMode == RemoteMode.Free) return; */ // abort mission
                 tabLowPlots.SelectedIndex = 1;
                 lastGrpExe.cmd = "repeat";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
                 lastGrpExe.prms.Clear();
                 lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
                 lastGrpExe.prms["cycles"] = 100;
-                string json = JsonConvert.SerializeObject(lastGrpExe);
-                log("<< " + json, Brushes.Blue.Color);
+                if (rbSingle.IsChecked.Value) lastGrpExe.prms["strobes"] = 1;
+                else lastGrpExe.prms["strobes"] = 2;
+
+                ADC24(down, 0.001, false, 200);
+
+                string jsonR = JsonConvert.SerializeObject(lastGrpExe);
+                log("<< " + jsonR, Brushes.Blue.Color);
 
                 ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
-                ucScan1.SendJson(json);
+                ucScan1.SendJson(jsonR);
 
                 ucScan1.Abort(false); // reset
             }
             else
             {
-                if (!down) // user cancel
-                {
-                    AxelChart1.Running = false; 
-                    axelMems.StopAqcuisition();
-                    AxelChart1.Waveform.logger.Enabled = false;
-                    return;
-                }
-                Random random = new Random();
-
-                AxelChart1.Waveform.TimeMode = TimeMode;            
-                if (TimeMode)
-                {
-                    AxelChart1.Waveform.TimeLimit = Limit;
-                    nSamples = (int)(Limit / period);
-                }
-                else
-                {
-                    AxelChart1.Waveform.SizeLimit = (int)Limit; 
-                    //AxelChart1.Waveform.StackMode = true;
-                    nSamples = AxelChart1.Waveform.SizeLimit;
-                }
-                AxelChart1.SamplingPeriod = period;
-                AxelChart1.Running = true;
-                AxelChart1.Clear();
-
-                AxelChart1.remoteArg = "freq: " + (1 / period).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
-                AxelChart1.Waveform.logger.Enabled = true;
-                axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
+                ADC24(down, period, TimeMode, Limit);
             }
         }
 
@@ -332,7 +343,6 @@ namespace Axel_hub
                         if (ucScan1.remoteMode != RemoteMode.Free)
                         {
                             ucScan1.Abort(false);
-                            ucScan1.remoteMode = RemoteMode.Free; 
                         }
                     }
                     break;

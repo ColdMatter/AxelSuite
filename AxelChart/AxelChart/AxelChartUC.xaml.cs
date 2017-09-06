@@ -194,6 +194,8 @@ namespace AxelChartNS
             logger = new AutoFileLogger();
         }
         public Dictionary<string, double> RefFileStats;
+        private int visualCounter = 0;
+        public int visualCountLimit = 1000;
 
         private bool _stackMode = false;
         public bool StackMode
@@ -204,6 +206,14 @@ namespace AxelChartNS
 
         public AutoFileLogger logger;
         public Stopwatch stopWatch;
+
+        public delegate void RefreshHandler();
+        public event RefreshHandler DoRefresh;
+
+        protected void OnRefresh()
+        {
+            if (DoRefresh != null) DoRefresh();
+        }
 
         private bool _running; 
         public bool Running
@@ -235,7 +245,7 @@ namespace AxelChartNS
 
         public int Fit2Limit()
         {
-            if (TimeMode) // TimeLimit is valid
+            if (TimeMode && (SizeLimit == 0)) // TimeLimit is valid
             {
                 if ((TimeLimit <= 0) || (TimeLimit > 1000)) throw new Exception("Invalid TimeLimit in TimeMode");
                 while ((this[Count-1].X - this[0].X) > TimeLimit)
@@ -250,11 +260,18 @@ namespace AxelChartNS
             return Count;
         }
 
-        private void OnAddPoint()
+        private void OnAddPoint(int pnt_count = 1)
         {
             if (StackMode)
             {
                 Fit2Limit();
+            }
+            if (visualCountLimit == -1) return; // skip Refreshing
+            visualCounter += pnt_count;
+            if (visualCounter > visualCountLimit)
+            {
+                visualCounter = 0;
+                OnRefresh();
             }
         }
 
@@ -262,7 +279,7 @@ namespace AxelChartNS
         {
             base.Add(pnt);
             if (logger.Enabled) logger.log(pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
-            OnAddPoint();
+            OnAddPoint(1);
             return Count;
         }
 
@@ -274,7 +291,7 @@ namespace AxelChartNS
                 {
                     logger.log(pnts[i].X.ToString("G6") + '\t' + pnts[i].Y.ToString("G5")); 
                 }
-            OnAddPoint();
+            OnAddPoint(pnts.Count);
             return Count;
         }
 
@@ -399,14 +416,17 @@ namespace AxelChartNS
         public AxelChartClass()
         {
             InitializeComponent();
-            Waveform = new DataStack();
+            Waveform = new DataStack(true);
 
             Running = false;
             tabSecPlots.SelectedIndex = 1;
             //
             lblRange.Content = "Range = " + curRange.ToString() + " pnts";
+            Waveform.DoRefresh += new DataStack.RefreshHandler(Refresh);
+
             Refresh();
         }
+
         public void Clear(bool andRefresh = true) 
         {
             Waveform.Clear();
@@ -536,7 +556,9 @@ namespace AxelChartNS
                 if (value)
                 {
                     btnPause.Visibility = Visibility.Visible;
-                   // Clear();
+                    if (chkShowFinal.IsChecked.Value) Waveform.visualCountLimit = -1;
+                    else Waveform.visualCountLimit = 1000;
+                    Clear();
                 }
                 else
                 {
@@ -573,7 +595,8 @@ namespace AxelChartNS
 
         public int AddPoint(double X, double Y)
         {
-            return Waveform.Add(new Point(X,Y));          
+            int j = Waveform.Add(new Point(X,Y));
+            return j;        
         }
 
         private void rescaleX(System.Windows.Point[] pntsIn, out System.Windows.Point[] pntsOut)

@@ -160,14 +160,14 @@ namespace Axel_probe
             }
         }
 
-        private double calcAtPos(double pos, int j) // pos - phase; j - seq. number for 2 strobe mode
+        private double calcAtPos(double glPos, int j) // pos - phase; j - seq. number for 2 strobe mode
             // returns drift
         {
             double err;
-            double drift = accelDrift(pos); 
-            ramp.Add(new Point(pos, drift)); 
+            double drift = accelDrift(glPos);
+            ramp.Add(new Point(glPos, drift));
 
-            fringesGenerator(pos, drift);
+            fringesGenerator(glPos, drift);
             DoEvents();
 
             if (chkFollowPID.IsChecked.Value)
@@ -177,7 +177,7 @@ namespace Axel_probe
                     err = SingleAdjust(drift);
                     if (!double.IsNaN(err))
                     {
-                        corr.Add(new Point(pos, err)); corrList.Add(err);
+                        corr.Add(new Point(glPos, err)); corrList.Add(err);
                     }
                 }
                 if (rbDouble.IsChecked.Value)
@@ -185,7 +185,7 @@ namespace Axel_probe
                     err = DoubleAdjust(j, drift);
                     if (!double.IsNaN(err) && ((j % 2) == 1))
                     {
-                        corr.Add(new Point(pos, err)); corrList.Add(err);
+                        corr.Add(new Point(glPos, err)); corrList.Add(err);
                     }
                 }
             }
@@ -421,6 +421,8 @@ namespace Axel_probe
                 case ("repeat"):
                     {
                         if ((crsFringes2 == null) || (crsFringes1 == null)) return false;
+                        if (Convert.ToInt32(mme.prms["strobes"]) == 1) rbSingle.IsChecked = true;
+                        else rbDouble.IsChecked = true;
                         if (rbSingle.IsChecked.Value)
                         {
                             crsFringes2.Visibility = System.Windows.Visibility.Hidden;
@@ -429,12 +431,13 @@ namespace Axel_probe
                         else
                         {
                             crsFringes2.Visibility = System.Windows.Visibility.Visible;
-                            crsFringes1.AxisValue = 3.2;
-                            crsFringes1.AxisValue = 6.3;
+                            crsFringes1.AxisValue = 4.7;
+                            crsFringes2.AxisValue = 7.8;
                             leftLvl = double.NaN; rightLvl = double.NaN;
                         }
                         string groupID = (string)mme.prms["groupID"];
-                        SimpleRepeat(true, 200, groupID);
+                        int cycles = Convert.ToInt32(mme.prms["cycles"]);
+                        SimpleRepeat(true, cycles, groupID);
                     }
                     break;
                 case ("phaseConvert"):
@@ -567,29 +570,30 @@ namespace Axel_probe
             }
             else if (cycles == -1) realCycles = long.MaxValue;
 
-            double A = 0; fringes.Clear(); ramp.Clear(); corr.Clear(); corrList.Clear();
+            double A = 0, frAmpl = 0, drift = 0, pos0, pos1, pos2; 
+            fringes.Clear(); ramp.Clear(); corr.Clear(); corrList.Clear();
             cancelRequest = false;
             for (long j = 0; j < realCycles; j++)
             {   
                 DoEvents();
                 if (cancelRequest) break;
-                double pos = 0, frAmpl = 0, drift = 0;
-
+                pos0 = j * step; 
+                drift = calcAtPos(pos0, (int)j);
                 if (jumbo)
                 {
                     if (rbDouble.IsChecked.Value)
                     {
-                        if ((j % 2) == 0) pos = (double)crsFringes1.AxisValue;
-                        else pos = (double)crsFringes2.AxisValue;
+                        pos1 = (double)crsFringes1.AxisValue + drift;
+                        pos2 = (double)crsFringes2.AxisValue + drift;
+                        frAmpl = Math.Cos(pos1) - Math.Cos(pos2);
+                        log("pos1= " + pos1.ToString("G4") + "; pos2= " + pos2.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
                     }
                     else
-                    {
-                        pos = j * step;
-                        drift = calcAtPos(pos, (int)j);
-                        pos = (double)crsFringes1.AxisValue + drift;
-                        frAmpl = Math.Cos(pos);
-                    }                     
-                    log("pos= " + pos.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                    {                       
+                        pos1 = (double)crsFringes1.AxisValue + drift;
+                        frAmpl = Math.Cos(pos1);
+                        log("pos1= " + pos1.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                   }                     
                 }
                 else
                 {

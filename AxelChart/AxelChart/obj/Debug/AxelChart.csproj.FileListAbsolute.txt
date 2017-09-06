@@ -84,4 +84,3 @@ E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\UtilsLib.dll
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\UtilsLib.pdb
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\System.Threading.Tasks.Dataflow.dll
 E:\VSprojects\AxelSuite\AxelChart\AxelChart\bin\System.Threading.Tasks.Dataflow.xml
-E:\VSprojects\AxelSuite\AxelChart\AxelChart\obj\Debug\AxelChart.csprojResolveAssemblyReference.cache
