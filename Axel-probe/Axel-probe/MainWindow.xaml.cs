@@ -414,8 +414,14 @@ namespace Axel_probe
                 case ("scan"):
                     {
                         MMscan mms = new MMscan();
-                        mms.FromDictionary(mme.prms);
-                        SimpleScan(mms, mms.groupID);
+                        if (mms.FromDictionary(mme.prms)) SimpleScan(mms, mms.groupID);
+                        else
+                        {
+                            MMexec mmj = new MMexec();
+                            remote.sendCommand(mmj.Abort("Axel-probe"));
+                            log("Error in incomming json !");
+                        }
+                            
                     }
                     break;
                 case ("repeat"):
@@ -444,13 +450,16 @@ namespace Axel_probe
                     {
                         log("<< phaseConvert to "+mme.prms["accelVoltage"]);
                         double corr = Convert.ToDouble(mme.prms["accelVoltage"]);
-                        if(rbDouble.IsChecked.Value)
+                        if(rbSingle.IsChecked.Value)
+                        {
+                            crsFringes1.AxisValue = (double)crsFringes1.AxisValue + corr;
+                        }
+                        else
                         {
                             int runID = Convert.ToInt32(mme.prms["runID"]);                           
                             if ((runID % 2) == 0) crsFringes1.AxisValue = (double)crsFringes1.AxisValue + corr;
                             else crsFringes2.AxisValue = (double)crsFringes2.AxisValue + corr;
                         }
-                        else crsFringes1.AxisValue = (double)crsFringes1.AxisValue + corr;
                     }
                     break;
                 case ("abort"):
@@ -581,19 +590,26 @@ namespace Axel_probe
                 drift = calcAtPos(pos0, (int)j);
                 if (jumbo)
                 {
-                    if (rbDouble.IsChecked.Value)
+                    if (rbSingle.IsChecked.Value)
                     {
-                        pos1 = (double)crsFringes1.AxisValue + drift;
-                        pos2 = (double)crsFringes2.AxisValue + drift;
-                        frAmpl = Math.Cos(pos1) - Math.Cos(pos2);
-                        log("pos1= " + pos1.ToString("G4") + "; pos2= " + pos2.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
-                    }
-                    else
-                    {                       
                         pos1 = (double)crsFringes1.AxisValue + drift;
                         frAmpl = Math.Cos(pos1);
                         log("pos1= " + pos1.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
-                   }                     
+                    }
+                    else
+                    {
+                        pos1 = (double)crsFringes1.AxisValue + drift;
+                        pos2 = (double)crsFringes2.AxisValue + drift;
+                        if ((j % 2) == 0)
+                        {
+                            frAmpl = Math.Cos(pos1);
+                        }
+                        else
+                        {
+                            frAmpl = Math.Cos(pos2);
+                        }
+                        log("pos1= " + pos1.ToString("G4") + "; pos2= " + pos2.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                    }                     
                 }
                 else
                 {

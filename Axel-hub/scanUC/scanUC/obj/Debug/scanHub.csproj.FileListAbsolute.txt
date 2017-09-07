@@ -16,3 +16,4 @@ E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\UtilsLib.dll
 E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\Newtonsoft.Json.dll
 E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\Newtonsoft.Json.pdb
 E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\bin\Newtonsoft.Json.xml
+E:\VSprojects\AxelSuite\Axel-hub\scanUC\scanUC\obj\Debug\scanHub.csprojResolveAssemblyReference.cache
