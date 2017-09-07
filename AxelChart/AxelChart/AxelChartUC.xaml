@@ -99,44 +99,30 @@
                                         <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <GroupBox Header="Chart opts" Height="124" Margin="0,0,-0.429,0">
-                                    <StackPanel Margin="0,0,0.429,-4" Orientation="Vertical">
-                                        <GroupBox x:Name="gbAxesX" Header=" X axes " Margin="0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="58" Width="115">
-                                            <WrapPanel Margin="0,-1,-1.143,0" Height="76" VerticalAlignment="Top">
-                                                <RadioButton x:Name="rbPoints" Content="Point" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh"/>
-                                                <RadioButton x:Name="rbSec" Content="[sec]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" IsChecked="True" Click="Refresh"/>
-                                                <RadioButton x:Name="rbMiliSec" Content="[ms]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh"/>
-                                                <RadioButton x:Name="rbMicroSec" Content="[us]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Width="42" Click="Refresh" Margin="0,3,0,0"/>
-                                            </WrapPanel>
 
-                                        </GroupBox>
-                                        <GroupBox Header=" Draw each point " Margin="0,0,0,2" FontSize="12" Width="115" HorizontalAlignment="Left" VerticalAlignment="Top">
-                                            <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="40,0,0,0" VerticalAlignment="Top" Width="55" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Left" RenderTransformOrigin="1.571,-0.081"/>
-                                        </GroupBox>
-                                        <CheckBox x:Name="chkShowFinal" Content="Show Final (remote) " Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,0.5" IsChecked="True" Visibility="Hidden">
-                                            <CheckBox.RenderTransform>
-                                                <TransformGroup>
-                                                    <ScaleTransform/>
-                                                    <SkewTransform/>
-                                                    <RotateTransform Angle="0.629"/>
-                                                    <TranslateTransform/>
-                                                </TransformGroup>
-                                            </CheckBox.RenderTransform>
-                                        </CheckBox>
-
-                                    </StackPanel>
-
-                                </GroupBox>
                             </StackPanel>
 
                         </GroupBox>
+                        <GroupBox Header="Chart opts" Grid.Column="1" Height="177" Margin="0.286,0,0,0" HorizontalAlignment="Left" Width="157" VerticalAlignment="Top" FontSize="13">
+                            <StackPanel Margin="0,0,-1.857,-3.857" Orientation="Vertical">
+                                <GroupBox x:Name="gbAxesX" Header=" X axes " HorizontalAlignment="Left" VerticalAlignment="Top" Height="58" Width="137">
+                                    <WrapPanel Margin="0,-1,-1.143,0" Height="76" VerticalAlignment="Top">
+                                        <RadioButton x:Name="rbPoints" Content="Point" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh"/>
+                                        <RadioButton x:Name="rbSec" Content="[sec]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" IsChecked="True" Click="Refresh"/>
+                                        <RadioButton x:Name="rbMiliSec" Content="[ms]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh"/>
+                                        <RadioButton x:Name="rbMicroSec" Content="[us]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Width="42" Click="Refresh" Margin="0,3,0,0"/>
+                                    </WrapPanel>
 
+                                </GroupBox>
+                                <GroupBox Header=" Draw each point " Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="40,0,0,0" VerticalAlignment="Top" Width="55" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Left" RenderTransformOrigin="1.571,-0.081"/>
+                                </GroupBox>
+                                <CheckBox x:Name="chkShowFinal" Content="Show Final (remote) " Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                            </StackPanel>
+                        </GroupBox>
                     </Grid>
                 </TabItem>
-
-
             </TabControl>
         </Grid>
-
     </Grid>
 </UserControl>

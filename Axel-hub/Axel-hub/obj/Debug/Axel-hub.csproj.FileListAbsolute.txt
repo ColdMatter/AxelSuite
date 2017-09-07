@@ -84,3 +84,6 @@ C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debu
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.exe.licenses
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\UtilsLib.dll
 E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\AxelChart.dll
+E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\Newtonsoft.Json.dll
+E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\Newtonsoft.Json.pdb
+E:\VSprojects\AxelSuite\Axel-hub\Axel-hub\bin\Newtonsoft.Json.xml

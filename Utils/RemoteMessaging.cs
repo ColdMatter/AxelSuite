@@ -321,7 +321,7 @@ namespace RemoteMessagingNS
         public void TestInit()
         {
             groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-            sParam = "frng";
+            sParam = "prm";
             sFrom = 0;
             sTo = 4*3.14;
             sBy = 0.1;
@@ -335,13 +335,23 @@ namespace RemoteMessagingNS
             dict["to"] = sTo;
             dict["by"] = sBy;
         }
-        public void FromDictionary(Dictionary<string, object> dict)
+        public bool FromDictionary(Dictionary<string, object> dict)
         {
-            groupID = (string)dict["groupID"];
-            sParam = (string)dict["param"];
-            sFrom = (double)dict["from"];
-            sTo = (double)dict["to"];
-            sBy = (double)dict["by"];
+            if (!string.IsNullOrEmpty((string)dict["groupID"])) groupID = (string)dict["groupID"];
+            else return false;
+            if (!string.IsNullOrEmpty((string)dict["param"])) sParam = (string)dict["param"];
+            else return false;
+            try
+            {
+                sFrom = (double)dict["from"];
+                sTo = (double)dict["to"];
+                sBy = (double)dict["by"];
+            }
+            catch (InvalidCastException e)
+            {
+                return false;
+            }  
+            return true;
         }
     }
 }

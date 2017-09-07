@@ -24,7 +24,7 @@
                     <ComboBoxItem Content="period [ms]" FontWeight="Bold"/>
                     <ComboBoxItem Content="External sync" Foreground="#FFB20505" Visibility="Hidden"/>
                 </ComboBox>
-                <TextBox x:Name="tbDigitValue" Height="23" TextWrapping="Wrap" Text="2000" Margin="5,0,0,0" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Right" Width="93" RenderTransformOrigin="0.509,-1.547"/>
+                <TextBox x:Name="tbDigitValue" Height="23" TextWrapping="Wrap" Text="200" Margin="5,0,0,0" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Right" Width="93" RenderTransformOrigin="0.509,-1.547"/>
             </StackPanel>
         </GroupBox>
         <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="0,4.571,10,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
@@ -40,12 +40,12 @@
             </TabItem>
             <TabItem x:Name="tabBufferSizeLimit_" Header="Buffer Size Limit">
                 <Grid>
-                    <ComboBox x:Name="cbSizeEndless" HorizontalAlignment="Left" Height="22" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="0">
+                    <ComboBox x:Name="cbSizeEndless" HorizontalAlignment="Left" Height="22" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
                     <Label Content="Buffer size:" HorizontalAlignment="Left" Margin="57,37,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.286,5.143" TextWrapping="Wrap" Text="1500" VerticalAlignment="Bottom" Width="102" FontSize="14"/>
+                    <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.286,5.143" TextWrapping="Wrap" Text="500" VerticalAlignment="Bottom" Width="102" FontSize="14"/>
                 </Grid>
             </TabItem>
 
