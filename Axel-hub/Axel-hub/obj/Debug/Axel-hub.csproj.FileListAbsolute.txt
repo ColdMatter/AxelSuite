@@ -64,7 +64,6 @@ C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debu
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\obj\Debug\Axel-hub.pdb
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\bin\Axel-hub.exe
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\bin\Axel-hub.pdb
-C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\bin\AxelChart.dll
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\bin\DataStructures.dll
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\bin\scanHub.dll
 C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-hub\Axel-hub\bin\UtilsLib.dll

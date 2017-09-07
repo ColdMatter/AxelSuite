@@ -137,6 +137,8 @@ namespace Axel_hub
                 log("<< "+json, Brushes.Green.Color);
                 ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                 ucScan1.SendJson(json);
+                //TODO Check scan mode works correctly with MM
+                return;
 
                 if (ucScan1.remoteMode == RemoteMode.Free) return; // abort mission
                 tabLowPlots.SelectedIndex = 1;

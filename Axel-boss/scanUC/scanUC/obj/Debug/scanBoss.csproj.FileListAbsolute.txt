@@ -14,3 +14,11 @@ E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss_MarkupCompile
 E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.g.resources
 E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.Properties.Resources.resources
 E:\VSprojects\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.dll.licenses
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.csprojResolveAssemblyReference.cache
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.baml
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanUC.g.cs
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss_MarkupCompile.cache
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.g.resources
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.Properties.Resources.resources
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.csproj.GenerateResource.Cache
+C:\Users\Navigator\Dropbox\PhDWork\Software\AxelSuite\Axel-boss\scanUC\scanUC\obj\Debug\scanBoss.dll.licenses
