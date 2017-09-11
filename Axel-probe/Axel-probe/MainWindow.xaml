@@ -13,11 +13,11 @@
             <GroupBox Header="Acceleration/Phase Drift" Height="205" Margin="0,0,0,0">
                 <Grid Margin="0,0,0,0">
                     <Label Content="Range [m/s^2]" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndRange" HorizontalAlignment="Left" Height="23" Margin="144,43,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="2" KeyDown="ndRange_KeyDown"/>
+                    <ni:NumericTextBoxDouble x:Name="ndRange" HorizontalAlignment="Left" Height="23" Margin="144,43,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="2" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
                     <Label Content="Sweep Period [rel.unit]" HorizontalAlignment="Left" Margin="10,67,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndPeriod" HorizontalAlignment="Left" Height="23" Margin="144,71,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="20" KeyDown="ndRange_KeyDown"/>
+                    <ni:NumericTextBoxDouble x:Name="ndPeriod" HorizontalAlignment="Left" Height="23" Margin="144,71,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="20" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
                     <Label Content="Step [rel.unit]" HorizontalAlignment="Left" Margin="10,96,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndStep" HorizontalAlignment="Left" Height="23" Margin="144,99,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="0.2" KeyDown="ndRange_KeyDown"/>
+                    <ni:NumericTextBoxDouble x:Name="ndStep" HorizontalAlignment="Left" Height="23" Margin="144,99,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="0.2" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
                     <Button x:Name="btnRun" Content="R U N" HorizontalAlignment="Right" Margin="0,0,8,5" VerticalAlignment="Bottom" Width="80" Height="39" FontWeight="Bold" Foreground="#FF1C9005" Click="btnRun_Click" IsDefault="True"/>
                     <ComboBox x:Name="cbFinite" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top" Width="99" SelectedIndex="0">
                         <ComboBoxItem Content="Finite"/>

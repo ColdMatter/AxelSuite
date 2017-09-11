@@ -49,14 +49,17 @@ namespace Axel_hub
     /// </summary>
     public partial class MainWindow: Window
     {
-        bool jumboScanFlag = true;
+        bool jumboScanFlag = false;
         bool jumboRepeatFlag = true;
-        bool jumboADC24Flag = false;
+        bool jumboADC24Flag = true;
 
         scanClass ucScan1;
         int nSamples = 1500; 
         private AxelMems axelMems = null;
         Random rnd = new Random();
+        DataStack stackN1 = new DataStack(true);
+        DataStack stackN2 = new DataStack(true);
+        DataStack stackNtot = new DataStack(true);
         private List<Point> _fringePoints = new List<Point>();
         public MainWindow()
         {
@@ -69,6 +72,7 @@ namespace Axel_hub
             ucScan1.Start += new scanClass.StartHandler(DoStart);
             ucScan1.Remote += new scanClass.RemoteHandler(DoRemote);
             ucScan1.FileRef += new scanClass.FileRefHandler(DoRefFile);
+            AxelChart1.Waveform.TimeSeriesMode = false;
 
             axelMems = new AxelMems();
             axelMems.Acquire += new AxelMems.AcquireHandler(DoAcquire);
@@ -89,6 +93,7 @@ namespace Axel_hub
             rangeOfText1.Text = printOut + "\n";
             rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
             tbLog.ScrollToEnd();
+
         }
 
         public void DoEvents()
@@ -116,7 +121,7 @@ namespace Axel_hub
             return mms;
         }
 
-        private void ADC24(bool down, double period, bool TimeMode, double Limit)
+        private void ADC24(bool down, double period, bool TimeLimitMode, double Limit)
         {
             if (!down) // user cancel
             {
@@ -127,8 +132,8 @@ namespace Axel_hub
                 return;
             }
 
-            AxelChart1.Waveform.TimeMode = TimeMode;
-            if (TimeMode)
+            AxelChart1.Waveform.TimeLimitMode = TimeLimitMode;
+            if (TimeLimitMode)
             {
                 AxelChart1.Waveform.TimeLimit = Limit;
                 nSamples = (int)(Limit / period);
@@ -165,55 +170,10 @@ namespace Axel_hub
                 lastGrpExe = new MMexec();
                 lastGrpExe.mmexec = "test_drive";
                 lastGrpExe.sender = "Axel-hub";
-<<<<<<< HEAD
-
-                tabLowPlots.SelectedIndex = 0;
-                lastGrpExe.cmd = "scan";
-                lastGrpExe.id = rnd.Next(int.MaxValue);
-                lastScan = jumboScan();
-                lastScan.ToDictionary(ref lastGrpExe.prms);
-
-                string json = JsonConvert.SerializeObject(lastGrpExe);
-                log("<< "+json, Brushes.Green.Color);
-                ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
-                ucScan1.SendJson(json);
-                //TODO Check scan mode works correctly with MM
-                return;
-
-                if (ucScan1.remoteMode == RemoteMode.Free) return; // abort mission
-                tabLowPlots.SelectedIndex = 1;
-                lastGrpExe.cmd = "repeat";
-                lastGrpExe.id = rnd.Next(int.MaxValue);
-                lastGrpExe.prms.Clear();
-                lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-                lastGrpExe.prms["cycles"] = 100;
-                json = JsonConvert.SerializeObject(lastGrpExe);
-                log("<< " + json, Brushes.Blue.Color);
-
-                ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
-                ucScan1.SendJson(json);
-
-                if(ucScan1.remoteMode != RemoteMode.Free) ucScan1.bbtnStart_Click(null, null); // reset
-                ucScan1.remoteMode = RemoteMode.Free;
-            }
-            else
-            {
-                if (!down) // user cancel
-                {
-                    AxelChart1.Running = false; 
-                    axelMems.StopAqcuisition();
-                    AxelChart1.Waveform.logger.Enabled = false;
-                    return;
-                }
-                Random random = new Random();
-
-                AxelChart1.Waveform.TimeMode = TimeMode;            
-                if (TimeMode)
-=======
-                
+               
                 if(jumboScanFlag) 
->>>>>>> dfd61a3629f960f08c14fac684cab30ae3959d71
                 {
+                    Clear();
                     tabLowPlots.SelectedIndex = 0;
                     lastGrpExe.cmd = "scan";
                     lastGrpExe.id = rnd.Next(int.MaxValue);
@@ -228,12 +188,13 @@ namespace Axel_hub
                 }
                 if(jumboRepeatFlag) 
                 {
+                    Clear();
                     tabLowPlots.SelectedIndex = 1;
                     lastGrpExe.cmd = "repeat";
                     lastGrpExe.id = rnd.Next(int.MaxValue);
                     lastGrpExe.prms.Clear();
                     lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-                    lastGrpExe.prms["cycles"] = 100;
+                    lastGrpExe.prms["cycles"] = -1;
                     if (rbSingle.IsChecked.Value) lastGrpExe.prms["strobes"] = 1;
                     else lastGrpExe.prms["strobes"] = 2;
                 
@@ -245,10 +206,12 @@ namespace Axel_hub
                 }
                 if(jumboADC24Flag) ADC24(down, 0.001, false, 200);
 
-                ucScan1.Abort(false); // reset
+                log("Jumbo succession is RUNNING !", Brushes.Green.Color);
+                //ucScan1.Abort(false); // reset
             }
             else
             {
+                Clear(true, false, false);
                 ADC24(down, period, TimeMode, Limit);
             }
         }
@@ -337,6 +300,9 @@ namespace Axel_hub
                         signalDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
+                    stackN1.AddPoint(NTot - N2); stackN2.AddPoint(N2); stackNtot.AddPoint(NTot);
+                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; graphNs.Data[2] = stackNtot; 
+
                     xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
                     foreach (double yVal in (double[])mme.prms["B2"])
                     {
@@ -349,10 +315,8 @@ namespace Axel_hub
                         backgroundDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
-                    Point[] pA, pB;
-                    pA = signalDataStack.ToArray();
-                    pB = backgroundDataStack.ToArray();
-                    graphSignal.DataSource = new List<Point[]>() {pA, pB};
+                    graphSignal.Data[0] = signalDataStack;
+                    graphSignal.Data[1] = backgroundDataStack;
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
                     if (lastGrpExe.cmd.Equals("scan")) // title command
                     {
@@ -399,6 +363,7 @@ namespace Axel_hub
                         lastGrpExe = mme.Clone();
                         if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Repeat;
                         tabLowPlots.SelectedIndex = 1;
+                        Clear();
                     }
                     break;
                 case ("scan"):
@@ -413,6 +378,7 @@ namespace Axel_hub
                         lastGrpExe = mme.Clone();
                         if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
                         tabLowPlots.SelectedIndex = 0;
+                        chkN1_Checked(null, null);
                     }
                     break;
                 case ("abort"):
@@ -568,21 +534,39 @@ namespace Axel_hub
             }     
         }
 
-        private void rbSingle_Checked(object sender, RoutedEventArgs e)
+        private void Clear(bool Top = true, bool Middle = true, bool Low = true)
         {
-          /*  if ((crsFringes2 == null) || (crsFringes1 == null)) return;
-            if (rbSingle.IsChecked.Value)
+            if (Top) AxelChart1.Clear();
+            if (Middle)
             {
-                crsFringes2.Visibility = System.Windows.Visibility.Hidden;
-                crsFringes1.AxisValue = 7.85;
+                stackN1.Clear(); stackN2.Clear(); stackNtot.Clear();   
+                lboxNB.Items.Clear();
             }
-            else
+            if (Low)
             {
-                crsFringes2.Visibility = System.Windows.Visibility.Visible;
-                crsFringes1.AxisValue = 4.71;
-                crsFringes1.AxisValue = 7.85;
-                leftLvl = double.NaN; rightLvl = double.NaN;
-            }*/
+                if (!Utils.isNull(srsFringes)) srsFringes.Clear();
+                if (!Utils.isNull(srsMotAccel)) srsMotAccel.Clear();
+                if (!Utils.isNull(srsCorr)) srsCorr.Clear();
+            }
+        }
+
+        private void chkN1_Checked(object sender, RoutedEventArgs e)
+        {
+            if (plotN1 != null)
+            {
+                if (chkN1.IsChecked.Value) plotN1.Visibility = System.Windows.Visibility.Visible;
+                else plotN1.Visibility = System.Windows.Visibility.Hidden;
+            }
+            if (plotN2 != null)
+            {
+                if (chkN2.IsChecked.Value) plotN2.Visibility = System.Windows.Visibility.Visible;
+                else plotN2.Visibility = System.Windows.Visibility.Hidden;
+            }
+            if (plotNtot != null)
+            {
+                if (chkNtot.IsChecked.Value) plotNtot.Visibility = System.Windows.Visibility.Visible;
+                else plotNtot.Visibility = System.Windows.Visibility.Hidden;
+            }
         }
     }
 }

@@ -15,7 +15,6 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
 using RemoteMessagingNS;
-using Newtonsoft.Json;
 using UtilsNS;
 
 namespace scanHub
@@ -372,7 +371,7 @@ namespace scanHub
 
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
-             remote = new RemoteMessaging(/*"Axel Probe");*/"MOTMaster2");
+             remote = new RemoteMessaging("Axel Probe"); //MOTMaster2");
              remote.Enabled = false;
              remote.OnReceive += MessageHandler;
              remote.ActiveComm += OnActiveComm;

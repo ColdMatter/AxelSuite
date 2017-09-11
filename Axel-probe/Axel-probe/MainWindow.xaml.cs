@@ -33,6 +33,9 @@ namespace Axel_probe
         ChartCollection<double> signalN, signalB;
         List<double> iStack, dStack, corrList;
         bool cancelRequest = false;
+        DispatcherTimer dispatcherTimer;
+        int jumboCycles; string jumboGroupID;
+        double driftRange, driftPeriod, driftStep;
         RemoteMessaging remote;
         string remoteDoubleFormat = "G4";
         Random rnd = new Random();
@@ -40,6 +43,13 @@ namespace Axel_probe
         public MainWindow()
         {
             InitializeComponent();
+
+            driftRange = ndRange.Value; driftPeriod = ndPeriod.Value; driftStep = ndStep.Value;
+
+            dispatcherTimer = new DispatcherTimer(DispatcherPriority.Send);
+            dispatcherTimer.Tick += dispatcherTimer_Tick;
+            dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+
             
             fringes = new ChartCollection<Point>();
             grFringes.DataSource = fringes;
@@ -378,12 +388,12 @@ namespace Axel_probe
             if (!chkRemoteEnabled.IsChecked.Value) return;
             if (active)
             {
-                grpRemote.Foreground = Brushes.DarkGreen;
+                grpRemote.Foreground = Brushes.Green;
                 grpRemote.Header = "Remote - is ready <->";
             }
             else
             {
-                grpRemote.Foreground = Brushes.DarkRed;
+                grpRemote.Foreground = Brushes.Red;
                 grpRemote.Header = "Remote - problem -X-";
             }
                 
@@ -420,8 +430,7 @@ namespace Axel_probe
                             MMexec mmj = new MMexec();
                             remote.sendCommand(mmj.Abort("Axel-probe"));
                             log("Error in incomming json !");
-                        }
-                            
+                        }                            
                     }
                     break;
                 case ("repeat"):
@@ -441,9 +450,10 @@ namespace Axel_probe
                             crsFringes2.AxisValue = 7.8;
                             leftLvl = double.NaN; rightLvl = double.NaN;
                         }
-                        string groupID = (string)mme.prms["groupID"];
-                        int cycles = Convert.ToInt32(mme.prms["cycles"]);
-                        SimpleRepeat(true, cycles, groupID);
+                        jumboGroupID = (string)mme.prms["groupID"];
+                        jumboCycles = Convert.ToInt32(mme.prms["cycles"]);
+
+                        dispatcherTimer.Start();
                     }
                     break;
                 case ("phaseConvert"):
@@ -558,6 +568,18 @@ namespace Axel_probe
             }               
         }
 
+        private async void SimpleRepeatAsync(bool jumbo, int cycles, string groupID)
+        {
+            // This method runs asynchronously.
+            await Task.Run(() => SimpleRepeat(jumbo, cycles, groupID));
+        }
+
+        private void dispatcherTimer_Tick(object sender, EventArgs e)
+        {
+            dispatcherTimer.Stop();
+            SimpleRepeat(true, jumboCycles, jumboGroupID);
+        }
+
         private void SimpleRepeat(bool jumbo, int cycles, string groupID)
         {
             MMexec md = new MMexec();
@@ -571,11 +593,9 @@ namespace Axel_probe
             double b2 = 1; double btot = 3; double bg = 0;
 
             long realCycles = cycles;
-            double prd = ndPeriod.Value; // simulation settings
-            double step = ndStep.Value;
             if(jumbo)
             {
-                realCycles = (long)(prd/step);
+                realCycles = (long)(driftPeriod/driftStep);
             }
             else if (cycles == -1) realCycles = long.MaxValue;
 
@@ -586,7 +606,7 @@ namespace Axel_probe
             {   
                 DoEvents();
                 if (cancelRequest) break;
-                pos0 = j * step; 
+                pos0 = j * driftStep; 
                 drift = calcAtPos(pos0, (int)j);
                 if (jumbo)
                 {
@@ -691,7 +711,12 @@ namespace Axel_probe
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
                 log(msg);
             }
+        }
 
+        private void ndRange_ValueChanged(object sender, ValueChangedEventArgs<double> e)
+        {
+            if ((ndRange == null) || (ndPeriod == null) || (ndStep == null)) return;
+            driftRange = ndRange.Value; driftPeriod = ndPeriod.Value; driftStep = ndStep.Value; 
         }
      }
 }

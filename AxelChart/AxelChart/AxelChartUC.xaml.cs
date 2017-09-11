@@ -188,7 +188,7 @@ namespace AxelChartNS
         public DataStack(bool stackMode = false) : base() 
         {
             _stackMode = stackMode;
-            SizeLimit = 100000;
+            SizeLimit = 10000;
             TimeLimit = 1;
             stopWatch = new Stopwatch();
             logger = new AutoFileLogger();
@@ -196,6 +196,7 @@ namespace AxelChartNS
         public Dictionary<string, double> RefFileStats;
         private int visualCounter = 0;
         public int visualCountLimit = 1000;
+        public int generalIdx = 0;
 
         private bool _stackMode = false;
         public bool StackMode
@@ -203,6 +204,7 @@ namespace AxelChartNS
             get { return _stackMode; }
             set { _stackMode = value; }
         }
+
 
         public AutoFileLogger logger;
         public Stopwatch stopWatch;
@@ -226,26 +228,34 @@ namespace AxelChartNS
                 else stopWatch.Stop();
             }
         }
-        public int SizeLimit { get; set; }
-        private bool timeMode = true;
+        public int SizeLimit 
+        { 
+            get; set; 
+        }
+        
+        public bool TimeSeriesMode
+        {
+            get; set; 
+         }
+        private bool _TimeLimitMode = true;
 
-        public bool TimeMode  // if true TimeLimit is valid and vice versa for SizeLimit 
+        public bool TimeLimitMode  // if true TimeLimit is valid and vice versa for SizeLimit 
         {
             get
             {
-                return timeMode;
+                return _TimeLimitMode;
             }
             set 
             {
                 if(Running) throw new Exception("Cannot change mode while the DataStack is Running");
-                timeMode = value;
+                _TimeLimitMode = value;
             }
         }
         public double TimeLimit { get; set; }
 
         public int Fit2Limit()
         {
-            if (TimeMode && (SizeLimit == 0)) // TimeLimit is valid
+            if (TimeLimitMode && (SizeLimit == 0)) // TimeLimit is valid and NO SizeLimit
             {
                 if ((TimeLimit <= 0) || (TimeLimit > 1000)) throw new Exception("Invalid TimeLimit in TimeMode");
                 while ((this[Count-1].X - this[0].X) > TimeLimit)
@@ -258,6 +268,12 @@ namespace AxelChartNS
                     RemoveAt(0);
             }            
             return Count;
+        }
+
+        public new void Clear()
+        {
+            base.Clear();
+            generalIdx = 0;
         }
 
         private void OnAddPoint(int pnt_count = 1)
@@ -281,6 +297,17 @@ namespace AxelChartNS
             if (logger.Enabled) logger.log(pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
             OnAddPoint(1);
             return Count;
+        }
+
+        public int AddPoint(double Y, double X = double.NaN) 
+        {
+            double x = X;
+            if (double.IsNaN(X))
+            {
+                x = generalIdx; generalIdx += 1;
+                TimeSeriesMode = false;
+            }
+            return Add(new Point(x, Y));
         }
 
         public new int AddRange(List<Point> pnts)
@@ -318,7 +345,7 @@ namespace AxelChartNS
             DataStack rslt = new DataStack(StackMode);
             for (int i = 0; i < Count; i++)
                 rslt.Add(new Point(this[i].X + offsetX, this[i].Y + offsetY));
-            rslt.TimeMode = TimeMode;
+            rslt.TimeLimitMode = TimeLimitMode;
             rslt.Running = Running;
             rslt.TimeLimit = TimeLimit;
             rslt.SizeLimit = SizeLimit;
@@ -417,15 +444,18 @@ namespace AxelChartNS
         {
             InitializeComponent();
             Waveform = new DataStack(true);
+            Waveform.SizeLimit = (int)seStackDepth.Value;
 
             Running = false;
             tabSecPlots.SelectedIndex = 1;
             //
-            lblRange.Content = "Range = " + curRange.ToString() + " pnts";
+            lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
             Waveform.DoRefresh += new DataStack.RefreshHandler(Refresh);
+            Waveform.TimeSeriesMode = false;// !rbPoints.IsChecked.Value;
 
             Refresh();
         }
+        public int GetStackDepth() { return (int)seStackDepth.Value; }
 
         public void Clear(bool andRefresh = true) 
         {
@@ -456,28 +486,6 @@ namespace AxelChartNS
                   typeof(AxelChartClass),
                   new PropertyMetadata("")
               );
-
-/*        private string _refInfo = String.Empty;
-        public string refInfo
-        {
-            get
-            {
-                return (string)GetValue(refInfoProperty);
-            }
-            set
-            {
-                SetValue(refInfoProperty, value);
-                
-            }
-        }
-        // Using a DependencyProperty as the backing store for refFile.  
-        public static readonly DependencyProperty refInfoProperty
-            = DependencyProperty.Register(
-                  "refInfo",
-                  typeof(string),
-                  typeof(AxelChartClass),
-                  new PropertyMetadata("")
-              );*/
 
         public double SamplingPeriod
         {
@@ -593,12 +601,6 @@ namespace AxelChartNS
             return null;
         }
 
-        public int AddPoint(double X, double Y)
-        {
-            int j = Waveform.Add(new Point(X,Y));
-            return j;        
-        }
-
         private void rescaleX(System.Windows.Point[] pntsIn, out System.Windows.Point[] pntsOut)
         {
             pntsOut = pntsIn; 
@@ -629,7 +631,7 @@ namespace AxelChartNS
             }
         }
 
-        private int curRange = 4096;
+        private int curRange = 256;
         private bool pauseFlag = false;
         public void Refresh()
         {
@@ -644,6 +646,9 @@ namespace AxelChartNS
                 graphScroll.DataSource = null; graphOverview.DataSource = null; graphPower.DataSource = null; graphHisto.DataSource = null;
                 return;
             }
+            if (Waveform.TimeSeriesMode) rbSec.IsChecked = true;
+            else rbPoints.IsChecked = true;  
+
             System.Windows.Point[] pA, pB;
             int each = (int)seShowFreq.Value;
             Waveform.CopyEach(each, out pA);
@@ -737,14 +742,14 @@ namespace AxelChartNS
         private void btnZoomOut_Click(object sender, RoutedEventArgs e)
         {
             curRange = (int)(curRange * 2);
-            lblRange.Content = "Range = " + curRange.ToString() + " pnts";
+            lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
             Refresh();
         }
 
         private void btnZoomIn_Click(object sender, RoutedEventArgs e)
         {
             if (curRange > 2) curRange = (int)(curRange / 2);
-            lblRange.Content = "Range = " + curRange.ToString() + " pnts";
+            lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
             Refresh();
         }
 
@@ -863,6 +868,12 @@ namespace AxelChartNS
                 rslt.Add(new Point(centerValues[i], histo[i]));
             }
             return rslt;
+        }
+
+        private void seStackDepth_ValueChanged(object sender, ValueChangedEventArgs<double> e)
+        {
+            if ((seStackDepth == null) || (Waveform == null)) return;
+            Waveform.SizeLimit = (int)seStackDepth.Value;
         }
 
     }

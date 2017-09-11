@@ -43,16 +43,57 @@
                         <Grid Margin="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="391*"/>
+                                <ColumnDefinition Width="391*"/>
                                 <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
-                            <ListBox x:Name="lboxNB" Grid.Column="1" Margin="0" Grid.ColumnSpan="1" FontSize="13">
+                            <Grid Grid.Column="0" Margin="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="26"/>
+                                    <RowDefinition Height="70*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                    <CheckBox x:Name="chkN1" Content="N1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked"/>
+                                    <CheckBox x:Name="chkN2" Content="N2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked"/>
+                                    <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked"/>
+                                    <Label x:Name="lbInfo1" Content="Info:" Margin="8,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="173"/>
+                                </StackPanel>
+                                <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" >
+                                    <ni:Graph.Plots>
+                                        <ni:Plot x:Name="plotN1" Label="N1">
+                                            <ni:PlotRendererGroup>
+                                                <ni:LinePlotRenderer Stroke="Green"/>
+                                                <ni:PointPlotRenderer Fill="Green" Size="3,3"/>
+                                            </ni:PlotRendererGroup>
+                                        </ni:Plot>
+                                        <ni:Plot x:Name="plotNtot" Label="Ntot">
+                                            <ni:PlotRendererGroup>
+                                                <ni:LinePlotRenderer Stroke="#FF800600"/>
+                                                <ni:PointPlotRenderer Fill="#FF800C00" Stroke="#FF8A0404" Size="3,3"/>
+                                            </ni:PlotRendererGroup>
+                                        </ni:Plot>
+                                        <ni:Plot x:Name="plotN2" Label="Ntot">
+                                            <ni:PlotRendererGroup>
+                                                <ni:LinePlotRenderer Stroke="#FF061BCA"/>
+                                                <ni:PointPlotRenderer Fill="#FF0762C6" Stroke="#FF0A51BD"  Size="3,3"/>
+                                            </ni:PlotRendererGroup>
+                                        </ni:Plot>
+                                    </ni:Graph.Plots>
+                                    <ni:Graph.SelectionFill>
+                                        <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                                    </ni:Graph.SelectionFill>
+                                </ni:Graph>
+                            </Grid>
+
+                            <ListBox x:Name="lboxNB" Grid.Column="2" Margin="0" Grid.ColumnSpan="1" FontSize="13">
                                 <ListBoxItem Content="N2"/>
                                 <ListBoxItem Content="NTot"/>
                                 <ListBoxItem Content="B2"/>
                                 <ListBoxItem Content="BTot"/>
                                 <ListBoxItem Content="Bg"/>
                             </ListBox>
-                            <Grid Grid.Column="0" Margin="0">
+                            <GridSplitter x:Name="splitSignal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
+
+                            <Grid Grid.Column="1" Margin="0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="26"/>
                                     <RowDefinition Height="70*"/>
@@ -70,8 +111,8 @@
                                         <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                                     </ni:Graph.SelectionFill>
                                 </ni:Graph>
-                                <ni:GraphInteractionPalette Grid.Row="0" x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}" Margin="10,4,565,0"/>
-                                <Label x:Name="lbInfo" Content="Info:" HorizontalAlignment="Left" Margin="216,0,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Height="31" Width="560" FontSize="13"/>
+                                <ni:GraphInteractionPalette Grid.Row="0" x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}" Margin="10,4,189,0" Grid.RowSpan="2"/>
+                                <Label x:Name="lbInfo" Content="Info:" Margin="216,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="173"/>
                             </Grid>
                         </Grid>
                     </TabItem>
@@ -205,7 +246,7 @@
                             <GroupBox x:Name="groupStatFringes" Header=" Statistics " Margin="0" Grid.Column="2" FontSize="12">
                                 <Grid Margin="0">
                                     <Label Content="REM:" HorizontalAlignment="Left" Margin="9,8,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.529,0.182"/>
-                                    <TextBox x:Name="tbRemFringes" HorizontalAlignment="Left" Height="23" Margin="51,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="529"/>
+                                    <TextBox x:Name="tbRemFringes" HorizontalAlignment="Left" Height="23" Margin="51,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="394"/>
                                 </Grid>
                             </GroupBox>
                             <GroupBox Header="Jumbo Scan params" Margin="0,0,5.143,0">
@@ -216,8 +257,6 @@
                                     <ni:NumericTextBoxDouble x:Name="numTo" HorizontalAlignment="Left" Height="23" Margin="57,44,0,0" VerticalAlignment="Top" Width="67" Value="12.56"/>
                                     <Label Content="By" HorizontalAlignment="Left" Margin="10,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165"/>
                                     <ni:NumericTextBoxDouble x:Name="numBy" HorizontalAlignment="Left" Height="23" Margin="57,74,0,0" VerticalAlignment="Top" Width="67" Value="0.1"/>
-                                    <Label Content="Scan Parameter" HorizontalAlignment="Left" Margin="10,102,0,0" VerticalAlignment="Top" Width="111"/>
-                                    <ComboBox HorizontalAlignment="Left" Margin="14,136,0,0" VerticalAlignment="Top" Width="110"/>
                                 </Grid>
                             </GroupBox>
 
@@ -237,8 +276,8 @@
                         <CheckBox x:Name="chkFollowPID" Content="Follow" HorizontalAlignment="Left" Margin="10,106,0,0" VerticalAlignment="Top" IsChecked="True" RenderTransformOrigin="0.5,0.5"/>
                         <GroupBox Header="Strobes" HorizontalAlignment="Left" Margin="0,126,0,0" VerticalAlignment="Top" Height="67" Width="103">
                             <StackPanel Margin="0,0,0.429,-12.714">
-                                <RadioButton x:Name="rbSingle" Content="Single(down)" Margin="0,5,0,0" IsChecked="True" Checked="rbSingle_Checked"/>
-                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0" Checked="rbSingle_Checked"/>
+                                <RadioButton x:Name="rbSingle" Content="Single(down)" Margin="0,5,0,0" IsChecked="True" />
+                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0" />
                             </StackPanel>
                         </GroupBox>
                     </Grid>
