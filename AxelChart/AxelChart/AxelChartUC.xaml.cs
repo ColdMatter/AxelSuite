@@ -188,7 +188,9 @@ namespace AxelChartNS
         public DataStack(bool stackMode = false) : base() 
         {
             _stackMode = stackMode;
-            SizeLimit = 10000;
+            TimeLimitMode = false;
+            TimeSeriesMode = false;
+            SizeLimit = 1000;
             TimeLimit = 1;
             stopWatch = new Stopwatch();
             logger = new AutoFileLogger();
@@ -237,7 +239,7 @@ namespace AxelChartNS
         {
             get; set; 
          }
-        private bool _TimeLimitMode = true;
+        private bool _TimeLimitMode = false;
 
         public bool TimeLimitMode  // if true TimeLimit is valid and vice versa for SizeLimit 
         {
@@ -654,19 +656,7 @@ namespace AxelChartNS
             Waveform.CopyEach(each, out pA);
             rescaleX(pA, out pB);
 
-            if (rbPoints.IsChecked.Value)
-            {
-                if (curRange >= Waveform.Count)
-                {                
-                    ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(0, curRange);
-                }
-                else
-                {
-                    double l = Waveform.Count; 
-                    ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(l - curRange, l);
-                }
-            }
-            else
+            if (Waveform.TimeSeriesMode)
             {
                 int k = 0;
                 if (rbSec.IsChecked.Value) k = 1;
@@ -683,6 +673,11 @@ namespace AxelChartNS
                     double l = Waveform[Waveform.Count - 1].X;
                     ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(k * (l - curRange * SamplingPeriod), k * l);
                 }
+            }
+            else
+            {
+                double x = Waveform[Waveform.Count].X; 
+                ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(x - curRange, x);
             }
 
             graphScroll.DataSource = pB;

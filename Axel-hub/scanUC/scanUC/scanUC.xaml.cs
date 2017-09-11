@@ -371,7 +371,14 @@ namespace scanHub
 
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
-             remote = new RemoteMessaging("Axel Probe"); //MOTMaster2");
+             string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
+             string partner = "";
+             switch (computerName) 
+             {
+                 case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
+                 case "DESKTOP-U334RMA": partner = "Axel Probe"; break;
+             }
+             remote = new RemoteMessaging(partner); 
              remote.Enabled = false;
              remote.OnReceive += MessageHandler;
              remote.ActiveComm += OnActiveComm;

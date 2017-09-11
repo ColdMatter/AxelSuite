@@ -52,10 +52,12 @@
                                     <RowDefinition Height="70*"/>
                                 </Grid.RowDefinitions>
                                 <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                    <CheckBox x:Name="chkN1" Content="N1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked"/>
-                                    <CheckBox x:Name="chkN2" Content="N2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked"/>
-                                    <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked"/>
-                                    <Label x:Name="lbInfo1" Content="Info:" Margin="8,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="173"/>
+                                    <CheckBox x:Name="chkN1" Content="N1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" FontWeight="Bold" Foreground="#FF01B31C"/>
+                                    <CheckBox x:Name="chkN2" Content="N2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FF1A5DCF" FontWeight="Bold"/>
+                                    <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
+                                    <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFF99411" FontWeight="Bold"/>
+                                    <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
+                                    <Label x:Name="lbInfo1" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="135"/>
                                 </StackPanel>
                                 <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" >
                                     <ni:Graph.Plots>
@@ -67,14 +69,26 @@
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotNtot" Label="Ntot">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="#FF800600"/>
-                                                <ni:PointPlotRenderer Fill="#FF800C00" Stroke="#FF8A0404" Size="3,3"/>
+                                                <ni:LinePlotRenderer Stroke="#FF0E43C7"/>
+                                                <ni:PointPlotRenderer Fill="#FF0E43C7" Stroke="#FF0E43C7" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotN2" Label="Ntot">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="#FF061BCA"/>
-                                                <ni:PointPlotRenderer Fill="#FF0762C6" Stroke="#FF0A51BD"  Size="3,3"/>
+                                                <ni:LinePlotRenderer Stroke="#FFCA1006"/>
+                                                <ni:PointPlotRenderer Fill="#FFCA1006" Stroke="#FFCA1006"  Size="3,3"/>
+                                            </ni:PlotRendererGroup>
+                                        </ni:Plot>
+                                        <ni:Plot x:Name="plotRN1" Label="rN1">
+                                            <ni:PlotRendererGroup>
+                                                <ni:LinePlotRenderer Stroke="#FF8B04B7"/>
+                                                <ni:PointPlotRenderer Fill="#FF7B09C3" Stroke="#FF9E11B2" Size="3,3"/>
+                                            </ni:PlotRendererGroup>
+                                        </ni:Plot>
+                                        <ni:Plot x:Name="plotRN2" Label="rN2">
+                                            <ni:PlotRendererGroup>
+                                                <ni:LinePlotRenderer Stroke="#FFFFB903"/>
+                                                <ni:PointPlotRenderer Fill="#FFFFB903" Stroke="#FFFFB903" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                     </ni:Graph.Plots>

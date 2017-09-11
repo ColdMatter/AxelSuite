@@ -51,7 +51,7 @@ namespace Axel_hub
     {
         bool jumboScanFlag = false;
         bool jumboRepeatFlag = true;
-        bool jumboADC24Flag = true;
+        bool jumboADC24Flag = false;
 
         scanClass ucScan1;
         int nSamples = 1500; 
@@ -59,6 +59,8 @@ namespace Axel_hub
         Random rnd = new Random();
         DataStack stackN1 = new DataStack(true);
         DataStack stackN2 = new DataStack(true);
+        DataStack stackRN1 = new DataStack(true);
+        DataStack stackRN2 = new DataStack(true);
         DataStack stackNtot = new DataStack(true);
         private List<Point> _fringePoints = new List<Point>();
         public MainWindow()
@@ -242,7 +244,7 @@ namespace Axel_hub
 
         private MMexec lastGrpExe; private MMscan lastScan; 
         private double strbLeft = 0, strbRight = 0;
-        ChartCollection<Point> srsFringes = null; ChartCollection<Point> srsMotAccel = null; ChartCollection<Point> srsCorr = null;
+        DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null;
         // remote MM call
         public void DoRemote(string json) // from TotalCount to 1
         {
@@ -254,11 +256,11 @@ namespace Axel_hub
                     log(json);
                     if (Convert.ToInt32(mme.prms["runID"]) == 0)
                     {
-                        if (Utils.isNull(srsFringes)) srsFringes = new ChartCollection<Point>();
+                        if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);
                         else srsFringes.Clear();
-                        if (Utils.isNull(srsMotAccel)) srsMotAccel = new ChartCollection<Point>();
+                        if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(true);
                         else srsMotAccel.Clear();
-                        if (Utils.isNull(srsCorr)) srsCorr = new ChartCollection<Point>();
+                        if (Utils.isNull(srsCorr)) srsCorr = new DataStack(true);
                         else srsCorr.Clear();
 
                         if (lastGrpExe.cmd.Equals("scan")) lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
@@ -301,7 +303,9 @@ namespace Axel_hub
                         xVal++;
                     }
                     stackN1.AddPoint(NTot - N2); stackN2.AddPoint(N2); stackNtot.AddPoint(NTot);
-                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; graphNs.Data[2] = stackNtot; 
+                    stackRN1.AddPoint((NTot - N2)/NTot); stackRN2.AddPoint(N2/NTot); 
+                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; graphNs.Data[2] = stackNtot;
+                    graphNs.Data[3] = stackRN1; graphNs.Data[4] = stackRN2;
 
                     xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
                     foreach (double yVal in (double[])mme.prms["B2"])
@@ -320,7 +324,7 @@ namespace Axel_hub
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
                     if (lastGrpExe.cmd.Equals("scan")) // title command
                     {
-                        srsFringes.Append(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
+                        srsFringes.Add(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
                         graphFringes.DataSource = srsFringes;
                     }
                     if (lastGrpExe.cmd.Equals("repeat")) // title command
@@ -337,7 +341,6 @@ namespace Axel_hub
                             log("strbLeft: " + strbLeft.ToString("G3") + "; strbRight: " + strbRight.ToString("G3"));
                         }
                         corr = PID(debalance);
-
                         if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
                             mme.sender = "Axel-hub";
@@ -349,8 +352,8 @@ namespace Axel_hub
                             if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
                         }
 
-                        srsMotAccel.Append(new Point(runID, debalance));
-                        srsCorr.Append(new Point(runID, corr));
+                        srsMotAccel.Add(new Point(runID, debalance));
+                        srsCorr.Add(new Point(runID, corr));
                         graphAccelTrend.Data[0] = srsMotAccel;
                         graphAccelTrend.Data[1] = srsCorr; //   new List<ChartCollection<Point>>() {, };
                     }
@@ -561,6 +564,16 @@ namespace Axel_hub
             {
                 if (chkN2.IsChecked.Value) plotN2.Visibility = System.Windows.Visibility.Visible;
                 else plotN2.Visibility = System.Windows.Visibility.Hidden;
+            }
+            if (plotRN1 != null)
+            {
+                if (chkRN1.IsChecked.Value) plotRN1.Visibility = System.Windows.Visibility.Visible;
+                else plotRN1.Visibility = System.Windows.Visibility.Hidden;
+            }
+            if (plotRN2 != null)
+            {
+                if (chkRN2.IsChecked.Value) plotRN2.Visibility = System.Windows.Visibility.Visible;
+                else plotRN2.Visibility = System.Windows.Visibility.Hidden;
             }
             if (plotNtot != null)
             {
