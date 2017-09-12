@@ -441,13 +441,13 @@ namespace Axel_probe
                         if (rbSingle.IsChecked.Value)
                         {
                             crsFringes2.Visibility = System.Windows.Visibility.Hidden;
-                            crsFringes1.AxisValue = 7.8;
+                            crsFringes1.AxisValue = (double)mme.prms["strobe1"];
                         }
                         else
                         {
                             crsFringes2.Visibility = System.Windows.Visibility.Visible;
-                            crsFringes1.AxisValue = 4.7;
-                            crsFringes2.AxisValue = 7.8;
+                            crsFringes1.AxisValue = (double)mme.prms["strobe1"];
+                            crsFringes2.AxisValue = (double)mme.prms["strobe2"];
                             leftLvl = double.NaN; rightLvl = double.NaN;
                         }
                         jumboGroupID = (string)mme.prms["groupID"];

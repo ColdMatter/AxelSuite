@@ -155,6 +155,28 @@ namespace Axel_hub
             
             axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
         }
+
+        private void jumboRepeat(int cycles, double strobe1, double strobe2)
+        {
+            Clear();
+            tabLowPlots.SelectedIndex = 1;
+            lastGrpExe.cmd = "repeat";
+            lastGrpExe.id = rnd.Next(int.MaxValue);
+            lastGrpExe.prms.Clear();
+            lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            lastGrpExe.prms["cycles"] = cycles;
+            lastGrpExe.prms["strobe1"] = strobe1;
+            lastGrpExe.prms["strobe2"] = strobe2;
+            if (rbSingle.IsChecked.Value) lastGrpExe.prms["strobes"] = 1;
+            else lastGrpExe.prms["strobes"] = 2;
+
+            string jsonR = JsonConvert.SerializeObject(lastGrpExe);
+            log("<< " + jsonR, Brushes.Blue.Color);
+
+            ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
+            ucScan1.SendJson(jsonR);
+        }
+ 
         
         // main ADC call
         public void DoStart(bool jumbo, bool down, double period, bool TimeMode, double Limit)
@@ -190,26 +212,9 @@ namespace Axel_hub
                 }
                 if(jumboRepeatFlag) 
                 {
-                    Clear();
-                    tabLowPlots.SelectedIndex = 1;
-                    lastGrpExe.cmd = "repeat";
-                    lastGrpExe.id = rnd.Next(int.MaxValue);
-                    lastGrpExe.prms.Clear();
-                    lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-                    lastGrpExe.prms["cycles"] = -1;
-                    if (rbSingle.IsChecked.Value) lastGrpExe.prms["strobes"] = 1;
-                    else lastGrpExe.prms["strobes"] = 2;
-                
-                    string jsonR = JsonConvert.SerializeObject(lastGrpExe);
-                    log("<< " + jsonR, Brushes.Blue.Color);
-
-                    ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
-                    ucScan1.SendJson(jsonR);
+                    btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
+                    Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
                 }
-                if(jumboADC24Flag) ADC24(down, 0.001, false, 200);
-
-                log("Jumbo succession is RUNNING !", Brushes.Green.Color);
-                //ucScan1.Abort(false); // reset
             }
             else
             {
@@ -218,6 +223,22 @@ namespace Axel_hub
             }
         }
 
+        private void btnConfirmStrobes_Click(object sender, RoutedEventArgs e)
+        {
+            int cycles = 100;
+            if (jumboScanFlag) jumboRepeat(cycles, (double)crsStrobe1.AxisValue, (double)crsStrobe2.AxisValue);
+            else
+            {
+                rbSingle_Checked(null, null);
+                if (rbSingle.IsChecked.Value) jumboRepeat(cycles, 7.8, -1);
+                else jumboRepeat(cycles, 4.7, 7.8);
+            }
+      
+            if(jumboADC24Flag) ADC24(true, 0.001, false, 200);
+
+            btnConfirmStrobes.Visibility = System.Windows.Visibility.Hidden;
+            log("Jumbo succession is RUNNING !", Brushes.Green.Color);
+        }
         public void DoAcquire(List<Point> dt, out bool next)
         {
             next = (ucScan1.EndlessMode() && ucScan1.Running);
@@ -581,5 +602,17 @@ namespace Axel_hub
                 else plotNtot.Visibility = System.Windows.Visibility.Hidden;
             }
         }
+
+        private void rbSingle_Checked(object sender, RoutedEventArgs e)
+        {
+            crsStrobe1.AxisValue = 2;
+            if (rbSingle.IsChecked.Value) crsStrobe2.Visibility = System.Windows.Visibility.Hidden;
+            else
+            {
+                crsStrobe2.Visibility = System.Windows.Visibility.Visible;
+                crsStrobe2.AxisValue = 5;
+            }
+        }
+
     }
 }

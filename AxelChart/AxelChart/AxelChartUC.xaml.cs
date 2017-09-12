@@ -648,7 +648,10 @@ namespace AxelChartNS
                 graphScroll.DataSource = null; graphOverview.DataSource = null; graphPower.DataSource = null; graphHisto.DataSource = null;
                 return;
             }
-            if (Waveform.TimeSeriesMode) rbSec.IsChecked = true;
+            if (Waveform.TimeSeriesMode)
+            {
+                if (rbPoints.IsChecked.Value) rbSec.IsChecked = true;
+            }
             else rbPoints.IsChecked = true;  
 
             System.Windows.Point[] pA, pB;
@@ -676,7 +679,7 @@ namespace AxelChartNS
             }
             else
             {
-                double x = Waveform[Waveform.Count].X; 
+                double x = Waveform[Waveform.Count-1].X; 
                 ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(x - curRange, x);
             }
 
@@ -798,12 +801,17 @@ namespace AxelChartNS
                     }
                 }
                 Waveform.OpenPair(fn);
-                if (String.IsNullOrEmpty(remoteArg)) SamplingPeriod = (Waveform.pointXs()[99] - Waveform.pointXs()[0]) / 100;
+                if (String.IsNullOrEmpty(remoteArg))
+                {
+                    SamplingPeriod = (Waveform.pointXs()[99] - Waveform.pointXs()[0]) / 100;
+                }
                 else
                 {
-                    Dictionary<string, object> remotePrms = JsonConvert.DeserializeObject < Dictionary<string, object>>(remoteArg);
+                    Dictionary<string, object> remotePrms = JsonConvert.DeserializeObject<Dictionary<string, object>>(remoteArg);
                     SamplingPeriod = (double)remotePrms["SamplingPeriod"];
                 }
+                Waveform.TimeSeriesMode = !(Utils.InRange(SamplingPeriod, 0.99, 1.01));  // sampling with 1 Hz is reserved for 
+
               //  tbLog.AppendText("Count= " + Waveform.Count.ToString() + "\n");
               //  tbLog.AppendText("Sampling period= " + SamplingPeriod.ToString("G3") + "\n");
               //  tbLog.AppendText("^^^^^^^^^^^^^^^^^^^\n");
