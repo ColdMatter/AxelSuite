@@ -76,15 +76,15 @@
             </Grid>
 
         </GroupBox>
-        <GridSplitter Grid.Column="2" HorizontalAlignment="Left" Margin="0" Width="5"/>
+        <GridSplitter Grid.Column="2" HorizontalAlignment="Left" Margin="0" Width="5" Background="#FFE3E0E0"/>
         <Grid Grid.Column="1" Margin="20,0,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="366*"/>
                 <RowDefinition Height="309*"/>
                 <RowDefinition Height="337*"/>
             </Grid.RowDefinitions>
-            <GridSplitter HorizontalAlignment="Stretch" Height="4" Margin="0,0.143,-0.286,0" Grid.Row="2" VerticalAlignment="Top" Background="#FFE4F0E1"/>
-            <GridSplitter HorizontalAlignment="Stretch" Height="5" Margin="0,0.286,-0.286,0" Grid.Row="1" VerticalAlignment="Top" Background="#FFFAF9DA"/>
+            <GridSplitter HorizontalAlignment="Stretch" Height="7" Margin="0,0.143,-0.286,0" Grid.Row="2" VerticalAlignment="Top" Background="#FFE4F0E1"/>
+            <GridSplitter HorizontalAlignment="Stretch" Height="7" Margin="0,0.286,-0.286,0" Grid.Row="1" VerticalAlignment="Top" Background="#FFFAF9DA" MouseDoubleClick="GridSplitter_MouseDoubleClick"/>
             <ni:Graph x:Name="grRslt" Margin="0,2.143,-0.286,0" Grid.Row="2" Interactions="Pan, Zoom" SelectionFill="#15C8C828" SelectionStroke="#FFFF9F00" DefaultInteraction="Pan">
                 <ni:Graph.Plots>
                     <ni:Plot VerticalScale="{Binding ElementName=yAxis1}" Label="Plot 1">
@@ -109,7 +109,7 @@
                     <ColumnDefinition Width="321*"/>
                 </Grid.ColumnDefinitions>
 
-                <ni:Graph x:Name="graphNs" Margin="0,0,0,0" Grid.Column="1">
+                <ni:Graph x:Name="graphNs" Margin="85,0,0,0.286" Grid.ColumnSpan="2">
                     <ni:Graph.Plots>
                         <ni:Plot Label="Plot 1">
                             <ni:PointPlotRenderer Fill="#FFEA3232"/>

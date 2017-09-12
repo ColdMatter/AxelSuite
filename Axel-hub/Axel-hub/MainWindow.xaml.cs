@@ -325,8 +325,8 @@ namespace Axel_hub
                     }
                     stackN1.AddPoint(NTot - N2); stackN2.AddPoint(N2); stackNtot.AddPoint(NTot);
                     stackRN1.AddPoint((NTot - N2)/NTot); stackRN2.AddPoint(N2/NTot); 
-                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; graphNs.Data[2] = stackNtot;
-                    graphNs.Data[3] = stackRN1; graphNs.Data[4] = stackRN2;
+                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; 
+                    graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
 
                     xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
                     foreach (double yVal in (double[])mme.prms["B2"])
@@ -611,6 +611,17 @@ namespace Axel_hub
             {
                 crsStrobe2.Visibility = System.Windows.Visibility.Visible;
                 crsStrobe2.AxisValue = 5;
+            }
+        }
+
+        double hiddenTopHeight = 200;
+        private void splitterTop_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (gridRight.RowDefinitions[0].Height.Value < 5)  gridRight.RowDefinitions[0].Height = new GridLength(Math.Min(230,hiddenTopHeight));
+            else
+            {
+                hiddenTopHeight = gridRight.RowDefinitions[0].Height.Value;
+                gridRight.RowDefinitions[0].Height = new GridLength(3);
             }
         }
 
