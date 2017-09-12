@@ -84,7 +84,7 @@
                 <RowDefinition Height="337*"/>
             </Grid.RowDefinitions>
             <GridSplitter HorizontalAlignment="Stretch" Height="7" Margin="0,0.143,-0.286,0" Grid.Row="2" VerticalAlignment="Top" Background="#FFE4F0E1"/>
-            <GridSplitter HorizontalAlignment="Stretch" Height="7" Margin="0,0.286,-0.286,0" Grid.Row="1" VerticalAlignment="Top" Background="#FFFAF9DA" MouseDoubleClick="GridSplitter_MouseDoubleClick"/>
+            <GridSplitter HorizontalAlignment="Stretch" Height="7" Margin="0,0.286,-0.286,0" Grid.Row="1" VerticalAlignment="Top" Background="#FFFAF9DA"/>
             <ni:Graph x:Name="grRslt" Margin="0,2.143,-0.286,0" Grid.Row="2" Interactions="Pan, Zoom" SelectionFill="#15C8C828" SelectionStroke="#FFFF9F00" DefaultInteraction="Pan">
                 <ni:Graph.Plots>
                     <ni:Plot VerticalScale="{Binding ElementName=yAxis1}" Label="Plot 1">

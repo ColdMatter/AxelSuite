@@ -770,8 +770,8 @@ namespace AxelChartNS
             if (Waveform.Count == 0) throw new Exception("No data to be saved");
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".abf"; // Default file extension
-            dlg.Filter = "Axel Boss File (.abf)|*.abf|"+"Axel Hib File (.ahf)|*.ahf"; // Filter files by extension
+            dlg.DefaultExt = ".ahf"; // Default file extension
+            dlg.Filter = "Axel Hib File (.ahf)|*.ahf"+"Axel Boss File (.abf)|*.abf|"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -824,7 +824,7 @@ namespace AxelChartNS
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
             dlg.DefaultExt = ".abf"; // Default file extension
-            dlg.Filter = "Axel Boss File (.abf)|*.abf|Axel Track File (.log)|*.log"; // Filter files by extension
+            dlg.Filter = "Axel Hib File (.ahf)|*.ahf" + "Axel Boss File (.abf)|*.abf|"; ; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -879,5 +879,9 @@ namespace AxelChartNS
             Waveform.SizeLimit = (int)seStackDepth.Value;
         }
 
+        private void btnClear_Click(object sender, RoutedEventArgs e)
+        {
+            Clear();
+        }
     }
 }

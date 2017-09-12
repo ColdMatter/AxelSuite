@@ -718,10 +718,5 @@ namespace Axel_probe
             if ((ndRange == null) || (ndPeriod == null) || (ndStep == null)) return;
             driftRange = ndRange.Value; driftPeriod = ndPeriod.Value; driftStep = ndStep.Value; 
         }
-
-        private void GridSplitter_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-
-        }
      }
 }

@@ -49,8 +49,8 @@ namespace Axel_hub
     /// </summary>
     public partial class MainWindow: Window
     {
-        bool jumboScanFlag = false;
-        bool jumboRepeatFlag = true;
+        bool jumboScanFlag = true;
+        bool jumboRepeatFlag = false;
         bool jumboADC24Flag = false;
 
         scanClass ucScan1;
@@ -266,6 +266,8 @@ namespace Axel_hub
         private MMexec lastGrpExe; private MMscan lastScan; 
         private double strbLeft = 0, strbRight = 0;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null;
+        DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
+
         // remote MM call
         public void DoRemote(string json) // from TotalCount to 1
         {
@@ -308,8 +310,8 @@ namespace Axel_hub
                         lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
                     }
                     double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
-                    DataStack signalDataStack = new DataStack();
-                    DataStack backgroundDataStack = new DataStack();
+                    signalDataStack = new DataStack();
+                    backgroundDataStack = new DataStack();
 
                     int xVal = 0; double N2 = ((double[])mme.prms["N2"]).Average();
                     foreach (double yVal in (double[])mme.prms["N2"])
@@ -346,7 +348,7 @@ namespace Axel_hub
                     if (lastGrpExe.cmd.Equals("scan")) // title command
                     {
                         srsFringes.Add(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
-                        graphFringes.DataSource = srsFringes;
+                        graphFringes.Data[0] = srsFringes;
                     }
                     if (lastGrpExe.cmd.Equals("repeat")) // title command
                     {
@@ -450,71 +452,145 @@ namespace Axel_hub
         {
         }
         #region File operation 
-        public bool Open(string fn)
+        public bool OpenSignal(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
-            AxelChart1.Open(fn);
-            AxelChart1.Refresh();
 
-            int ext = 0; tbRem.Text = "";
+            Clear(false, true, false);
             foreach (string line in File.ReadLines(fn))
             {
                 if (line.Contains("#Rem="))
                 {
-                    tbRem.Text = line.Substring(5);                    
+                    tbRemSignal.Text = line.Substring(5); lbInfoSignal.Content = tbRemSignal.Text;                 
                 }
             }
-            if (ext < 1) MessageBox.Show("Some internal extensions are missing in <" + fn + ">.");
-
+            string[] ns; int i, j = 0; double d; 
+            foreach (string line in File.ReadLines(fn))
+            {
+                if (line[0] == '#') continue; //skip comments/service info
+                ns = line.Split('\t');
+                if (!int.TryParse(ns[0], out i)) throw new Exception("Wrong double at line " + j.ToString());
+                if (!double.TryParse(ns[1], out d)) throw new Exception("Wrong double at line " + j.ToString());
+                stackN1.Add(new Point(i,d));
+                if (!double.TryParse(ns[2], out d)) throw new Exception("Wrong double at line " + j.ToString());
+                stackN2.Add(new Point(i, d));
+                if (!double.TryParse(ns[3], out d)) throw new Exception("Wrong double at line " + j.ToString());
+                stackRN1.Add(new Point(i, d));
+                if (!double.TryParse(ns[4], out d)) throw new Exception("Wrong double at line " + j.ToString());
+                stackRN2.Add(new Point(i, d));
+                if (!double.TryParse(ns[5], out d)) throw new Exception("Wrong double at line " + j.ToString());
+                stackNtot.Add(new Point(i, d));                
+                j++;
+            }
+            graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
+            graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
             log("Open> " + fn);
-            return (ext == 1);
+            return true;
         }
 
-        private void btnOpen_Click(object sender, RoutedEventArgs e)
+        private void btnOpenSignal_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".abf"; // Default file extension
-            dlg.Filter = "Axel Boss File (.abf)|*.abf"; // Filter files by extension
+            dlg.DefaultExt = ".ahs"; // Default file extension
+            dlg.Filter = "Axel Hub Signal (.ahs)|*.ahs"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
 
             // Process save file dialog box results
-            if (result == true) Open(dlg.FileName);
+            if (result == true) OpenSignal(dlg.FileName);
         }
 
-        public void Save(string fn) 
+        public void SaveSignal(string fn) 
         {
+            if (stackN1.Count == 0)
+            {
+                MessageBox.Show("Error: No data to be saved");
+                return;
+            }
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
-            if (AxelChart1.remoteArg == string.Empty) throw new Exception("No remote arguments in upper chart");
-            file.WriteLine("#" + AxelChart1.remoteArg);
-            
-            if (!String.IsNullOrEmpty(tbRem.Text)) file.WriteLine("#Rem=" + tbRem.Text);
-            for (int i = 0; i < AxelChart1.Waveform.Count; i++)
-                file.WriteLine(AxelChart1.Waveform[i].X.ToString() + "\t" + AxelChart1.Waveform[i].Y.ToString());
+            if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
+
+            for (int i = 0; i < stackN1.Count; i++)
+                file.WriteLine(i.ToString() + "\t" + stackN1[i].Y.ToString("G4") + "\t" + stackN2[i].Y.ToString("G4")
+                    + "\t" + stackRN1[i].Y.ToString("G4") + "\t" + stackRN2[i].Y.ToString("G4") + "\t" + stackNtot[i].Y.ToString("G4"));
             file.Close();
             log("Save> " + fn);
         }
 
-        private void btnSaveAs_Click(object sender, RoutedEventArgs e)
+        private void btnSaveSignalAs_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".abf"; // Default file extension
-            dlg.Filter = "Axel Boss File (.abf)|*.abf"; // Filter files by extension
+            dlg.DefaultExt = ".ahs"; // Default file extension
+            dlg.Filter = "Axel Hub Signal (.ahs)|*.ahs"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
-            if (result == true) Save(dlg.FileName);
+            if (result == true) SaveSignal(dlg.FileName);
         }
 
-        private void btnClear_Click(object sender, RoutedEventArgs e)
+        public void OpenPair(string fn, ref DataStack ds)
         {
-            tbRem.Text = "";
-            AxelChart1.Clear();
-            AxelChart1.Refresh();
+            if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
+            if (Utils.isNull(ds)) ds = new DataStack(); ds.Clear();
+            int j = 0;
+            double X, Y;
+            string[] pair;
+            foreach (string line in File.ReadLines(fn))
+            {
+                if (line[0] == '#') continue; //skip comments/service info
+                pair = line.Split('\t');
+                if (!double.TryParse(pair[0], out X)) throw new Exception("Wrong double at line " + j.ToString());
+                if (!double.TryParse(pair[1], out Y)) throw new Exception("Wrong double at line " + j.ToString());
+                ds.Add(new Point(X, Y));
+                j++;
+            }
         }
+
+        public void SavePair(string fn, DataStack ds)
+        {
+            System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
+            for (int i = 0; i < ds.Count; i++)
+                file.WriteLine(ds[i].X.ToString("G5") + "\t" + ds[i].Y.ToString("G5"));
+            file.Close();
+        }
+
+        private void btnOpenFringes_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.FileName = ""; // Default file name
+            dlg.DefaultExt = ".ahf"; // Default file extension
+            dlg.Filter = "Axel Hub File (.ahf)|*.ahf"; // Filter files by extension
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+
+            // Process save file dialog box results
+            if (result == true) OpenPair(dlg.FileName, ref srsFringes);
+            graphFringes.DataSource = srsFringes;
+        }
+
+        private void btnSaveFringesAs_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = ""; // Default file name
+            dlg.DefaultExt = ".ahf"; // Default file extension
+            dlg.Filter = "Axel Hub File (.ahf)|*.ahf"; // Filter files by extension
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true) SavePair(dlg.FileName, srsFringes);
+        }
+
+        private void btnClearAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender == btnClearSignal) Clear(false, true, false);
+            if (sender == btnClearAll) Clear();
+            if (sender == btnClearFringes) Clear(false, false, true);
+        }
+
         #endregion
 
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -523,25 +599,20 @@ namespace Axel_hub
             frmAxelHub.Height = SystemParameters.WorkArea.Height;  
             frmAxelHub.Left = SystemParameters.WorkArea.Width * 0.3;
             frmAxelHub.Width = SystemParameters.WorkArea.Width * 0.7;
-            tabSecPlots.SelectedIndex = 0;
         }
 
+        double middlePlotHeight = 230;
         private void tabSecPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            double d = ActualHeight / 2 - 6; 
-            if (d < 25) return;
-            if ((tabSecPlots.SelectedIndex == 0) || (Utils.isNull(sender)))
+            if (Utils.isNull(sender)) tabSecPlots.SelectedIndex = 0;
+            if (tabSecPlots.SelectedIndex == 0)
             {
-                rowUpperChart.Height = new GridLength(d, GridUnitType.Star);
-                rowMiddleChart.Height = new GridLength(30, GridUnitType.Star);
-                rowLowerChart.Height = new GridLength(d, GridUnitType.Star);
+                middlePlotHeight = rowMiddleChart.Height.Value;
+                rowMiddleChart.Height = new GridLength(35);
             }
             else
             {
-                int mh = 150;
-                rowUpperChart.Height = new GridLength(d-mh/2, GridUnitType.Star);
-                rowMiddleChart.Height = new GridLength(mh, GridUnitType.Star);
-                rowLowerChart.Height = new GridLength(d-mh/2, GridUnitType.Star);                
+                if (rowMiddleChart.Height.Value < 38) rowMiddleChart.Height = new GridLength(Math.Min(230,middlePlotHeight), GridUnitType.Star);
             }
         }
 
@@ -558,15 +629,22 @@ namespace Axel_hub
             }     
         }
 
-        private void Clear(bool Top = true, bool Middle = true, bool Low = true)
+        private void Clear(bool Top = true, bool Middle = true, bool Bottom = true)
         {
-            if (Top) AxelChart1.Clear();
+            if (Top)
+            {
+                AxelChart1.Clear();
+                AxelChart1.Refresh(); 
+            }
             if (Middle)
             {
-                stackN1.Clear(); stackN2.Clear(); stackNtot.Clear();   
+                tbRemSignal.Text = "";
+                stackN1.Clear(); stackN2.Clear(); stackRN1.Clear(); stackRN2.Clear(); stackNtot.Clear();
+                if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
+                if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
                 lboxNB.Items.Clear();
             }
-            if (Low)
+            if (Bottom)
             {
                 if (!Utils.isNull(srsFringes)) srsFringes.Clear();
                 if (!Utils.isNull(srsMotAccel)) srsMotAccel.Clear();
@@ -614,16 +692,16 @@ namespace Axel_hub
             }
         }
 
-        double hiddenTopHeight = 200;
+        double hiddenTopHeight = 230;
         private void splitterTop_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (gridRight.RowDefinitions[0].Height.Value < 5)  gridRight.RowDefinitions[0].Height = new GridLength(Math.Min(230,hiddenTopHeight));
+            if (rowUpperChart.Height.Value < 5) rowUpperChart.Height = new GridLength(Math.Min(230, hiddenTopHeight), GridUnitType.Star);
             else
             {
-                hiddenTopHeight = gridRight.RowDefinitions[0].Height.Value;
-                gridRight.RowDefinitions[0].Height = new GridLength(3);
+                hiddenTopHeight = rowUpperChart.Height.Value;
+                rowUpperChart.Height = new GridLength(3);
             }
         }
-
+ 
     }
 }

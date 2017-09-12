@@ -57,7 +57,7 @@
                                     <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFF99411" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
-                                    <Label x:Name="lbInfo1" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="135"/>
+                                    <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="135"/>
                                 </StackPanel>
                                 <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" >
                                     <ni:Graph.Plots>
@@ -168,22 +168,23 @@
                                 <ColumnDefinition Width="145"/>
                                 <ColumnDefinition Width="607*"/>
                             </Grid.ColumnDefinitions>
-                            <GroupBox Grid.Column="0" Header="Data" Margin="0,0,0,0" FontSize="12">
+                            <GroupBox Grid.Column="0" Header="Signal Data" Margin="0,0,0,0" FontSize="12">
                                 <StackPanel Margin="0,3,0,0">
                                     <GroupBox Header="Files" Height="92" Margin="0,0,-0.143,0">
                                         <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpen" Content="Open..." Margin="3,5,5,0" Click="btnOpen_Click"/>
-                                            <Button x:Name="btnSaveAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveAs_Click"/>
+                                            <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click"/>
+                                            <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveSignalAs_Click"/>
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClear" Content="Clear All" Margin="12,10,7,0" Click="btnClear_Click"/>
+                                    <Button x:Name="btnClearSignal" Content="Clear Signal" Margin="12,10,7,0" Click="btnClearAll_Click"/>
+                                    <Button x:Name="btnClearAll" Content="Clear ALL" Margin="12,10,7,0" Click="btnClearAll_Click"/>
                                 </StackPanel>
 
                             </GroupBox>
                             <GroupBox x:Name="groupStat" Header=" Statistics " Margin="0" Grid.Column="1" FontSize="12">
                                 <Grid Margin="0">
                                     <Label Content="REM:" HorizontalAlignment="Left" Margin="9,8,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.529,0.182"/>
-                                    <TextBox x:Name="tbRem" HorizontalAlignment="Left" Height="23" Margin="51,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="625"/>
+                                    <TextBox x:Name="tbRemSignal" HorizontalAlignment="Left" Height="23" Margin="51,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="625"/>
                                 </Grid>
                             </GroupBox>
 
@@ -208,8 +209,11 @@
                                     <ni:MultiPlotCursor x:Name="crsStrobe2" Label="multiPlotCursor2"/>
                                 </ni:Graph.Children>
                                 <ni:Graph.Plots>
-                                    <ni:Plot Label="Plot 1">
-                                        <ni:LinePlotRenderer/>
+                                    <ni:Plot Label="Fringes">
+                                        <ni:PlotRendererGroup>
+                                            <ni:LinePlotRenderer Stroke="#FF01A493"/>
+                                            <ni:PointPlotRenderer Fill="#FF01A493" Stroke="#FF01A493" Size="3,3"/>
+                                        </ni:PlotRendererGroup>
                                     </ni:Plot>
                                 </ni:Graph.Plots>
                                 <ni:Graph.SelectionFill>
@@ -249,15 +253,15 @@
                                 <ColumnDefinition Width="145"/>
                                 <ColumnDefinition Width="607*"/>
                             </Grid.ColumnDefinitions>
-                            <GroupBox Grid.Column="1" Header="Data" Margin="0,0,0,0" FontSize="12">
+                            <GroupBox Grid.Column="1" Header="Fringes Data" Margin="0,0,0,0" FontSize="12">
                                 <StackPanel Margin="0,3,0,0">
                                     <GroupBox Header="Files" Height="92" Margin="0,0,-0.143,0">
                                         <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,5,5,0" />
-                                            <Button x:Name="btnSaveAsFringes" Content="Save As..." Margin="3,10,5,0" />
+                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,5,5,0" Click="btnOpenFringes_Click" />
+                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveFringesAs_Click" />
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClearFringes" Content="Clear All" Margin="12,10,7,0" />
+                                    <Button x:Name="btnClearFringes" Content="Clear Fringes" Margin="12,10,7,0" Click="btnClearAll_Click" />
                                 </StackPanel>
 
                             </GroupBox>

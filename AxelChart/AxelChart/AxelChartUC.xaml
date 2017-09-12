@@ -99,6 +99,7 @@
                                         <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click"/>
                                     </StackPanel>
                                 </GroupBox>
+                                <Button x:Name="btnClear" Content="Clear" Margin="5,5,10,0" Click="btnClear_Click"/>
 
                             </StackPanel>
 

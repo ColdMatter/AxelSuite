@@ -38,7 +38,7 @@
                     <Label Content="sec" HorizontalAlignment="Right" Margin="0,32,10,7" VerticalAlignment="Bottom"/>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="tabBufferSizeLimit_" Header="Buffer Size Limit">
+            <TabItem x:Name="tabBufferSizeLimit_" Header=" Size Limit ">
                 <Grid>
                     <ComboBox x:Name="cbSizeEndless" HorizontalAlignment="Left" Height="22" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
