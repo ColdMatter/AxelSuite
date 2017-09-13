@@ -185,7 +185,7 @@ namespace AxelChartNS
     /// </summary>
     public class DataStack : List<System.Windows.Point>
     {
-        public DataStack(bool stackMode = false) : base() 
+        public DataStack(bool stackMode = true) : base() 
         {
             _stackMode = stackMode;
             TimeLimitMode = false;
