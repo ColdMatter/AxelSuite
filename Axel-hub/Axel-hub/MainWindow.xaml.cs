@@ -263,8 +263,8 @@ namespace Axel_hub
             }
         }
 
-        private MMexec lastGrpExe; private MMscan lastScan; 
-        private double strbLeft = 0, strbRight = 0;
+        private MMexec lastGrpExe; private MMscan lastScan;
+        private double strbLeft = 0, strbRight = 0, signalYmin = 10, signalYmax = 0;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
@@ -279,14 +279,12 @@ namespace Axel_hub
                     log(json);
                     if (Convert.ToInt32(mme.prms["runID"]) == 0)
                     {
-                        if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);
-                        else srsFringes.Clear();
+                        if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);                        
                         if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(true);
-                        else srsMotAccel.Clear();
                         if (Utils.isNull(srsCorr)) srsCorr = new DataStack(true);
-                        else srsCorr.Clear();
+                        Clear();
 
-                        if (lastGrpExe.cmd.Equals("scan")) lbInfoFrng.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
+                        if (lastGrpExe.cmd.Equals("scan")) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
                            ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
                         if (lastGrpExe.cmd.Equals("repeat")) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
 
@@ -325,10 +323,6 @@ namespace Axel_hub
                         signalDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
-                    stackN1.AddPoint(NTot - N2); stackN2.AddPoint(N2); stackNtot.AddPoint(NTot);
-                    stackRN1.AddPoint((NTot - N2)/NTot); stackRN2.AddPoint(N2/NTot); 
-                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; 
-                    graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
 
                     xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
                     foreach (double yVal in (double[])mme.prms["B2"])
@@ -344,7 +338,21 @@ namespace Axel_hub
                     }
                     graphSignal.Data[0] = signalDataStack;
                     graphSignal.Data[1] = backgroundDataStack;
+                    // readjust Y axis
+                    double mn = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
+                    signalYmin = Math.Min(mn, signalYmin);
+                    double mx = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
+                    signalYmax = Math.Max(mx, signalYmax);
+                    signalYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
+
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
+                    // corrected with background
+                    double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
+                    stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
+                    stackRN1.AddPoint(cN1/cNtot); stackRN2.AddPoint(cN2/cNtot); 
+                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; 
+                    graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
+
                     if (lastGrpExe.cmd.Equals("scan")) // title command
                     {
                         srsFringes.Add(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
@@ -374,7 +382,6 @@ namespace Axel_hub
 
                             if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
                         }
-
                         srsMotAccel.Add(new Point(runID, debalance));
                         srsCorr.Add(new Point(runID, corr));
                         graphAccelTrend.Data[0] = srsMotAccel;
@@ -389,6 +396,7 @@ namespace Axel_hub
                         lastGrpExe = mme.Clone();
                         if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Repeat;
                         tabLowPlots.SelectedIndex = 1;
+                        chkN1_Checked(null, null);
                         Clear();
                     }
                     break;
@@ -405,6 +413,7 @@ namespace Axel_hub
                         if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
                         tabLowPlots.SelectedIndex = 0;
                         chkN1_Checked(null, null);
+                        Clear();
                     }
                     break;
                 case ("abort"):
@@ -457,16 +466,13 @@ namespace Axel_hub
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
 
             Clear(false, true, false);
+            string[] ns; int i, j = 0; double d; 
             foreach (string line in File.ReadLines(fn))
             {
                 if (line.Contains("#Rem="))
                 {
-                    tbRemSignal.Text = line.Substring(5); lbInfoSignal.Content = tbRemSignal.Text;                 
+                    tbRemSignal.Text = line.Substring(5); lbInfoSignal.Content = tbRemSignal.Text;
                 }
-            }
-            string[] ns; int i, j = 0; double d; 
-            foreach (string line in File.ReadLines(fn))
-            {
                 if (line[0] == '#') continue; //skip comments/service info
                 ns = line.Split('\t');
                 if (!int.TryParse(ns[0], out i)) throw new Exception("Wrong double at line " + j.ToString());
@@ -511,7 +517,7 @@ namespace Axel_hub
             }
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
-
+             
             for (int i = 0; i < stackN1.Count; i++)
                 file.WriteLine(i.ToString() + "\t" + stackN1[i].Y.ToString("G4") + "\t" + stackN2[i].Y.ToString("G4")
                     + "\t" + stackRN1[i].Y.ToString("G4") + "\t" + stackRN2[i].Y.ToString("G4") + "\t" + stackNtot[i].Y.ToString("G4"));
@@ -538,8 +544,13 @@ namespace Axel_hub
             int j = 0;
             double X, Y;
             string[] pair;
+
             foreach (string line in File.ReadLines(fn))
             {
+                if (line.Contains("#Rem="))
+                {
+                    ds.rem = line.Substring(6,255); 
+                }
                 if (line[0] == '#') continue; //skip comments/service info
                 pair = line.Split('\t');
                 if (!double.TryParse(pair[0], out X)) throw new Exception("Wrong double at line " + j.ToString());
@@ -552,6 +563,7 @@ namespace Axel_hub
         public void SavePair(string fn, DataStack ds)
         {
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
+            if (!ds.rem.Equals("")) file.WriteLine("#rem " + ds.rem);
             for (int i = 0; i < ds.Count; i++)
                 file.WriteLine(ds[i].X.ToString("G5") + "\t" + ds[i].Y.ToString("G5"));
             file.Close();
@@ -570,6 +582,8 @@ namespace Axel_hub
             // Process save file dialog box results
             if (result == true) OpenPair(dlg.FileName, ref srsFringes);
             graphFringes.DataSource = srsFringes;
+            lbInfoFringes.Content = srsFringes.rem;
+            tbRemFringes.Text = srsFringes.rem;
         }
 
         private void btnSaveFringesAs_Click(object sender, RoutedEventArgs e)
@@ -581,14 +595,19 @@ namespace Axel_hub
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
+            srsFringes.rem = tbRemFringes.Text;
+            if (srsFringes.rem.Equals("")) srsFringes.rem = (string)lbInfoFringes.Content;
             if (result == true) SavePair(dlg.FileName, srsFringes);
         }
 
         private void btnClearAll_Click(object sender, RoutedEventArgs e)
         {
-            if (sender == btnClearSignal) Clear(false, true, false);
-            if (sender == btnClearAll) Clear();
-            if (sender == btnClearFringes) Clear(false, false, true);
+            if (sender == btnClearSignal) 
+                Clear(false, true, false);
+            if (sender == btnClearAll) 
+                Clear();
+            if (sender == btnClearFringes) 
+                Clear(false, false, true);
         }
 
         #endregion
@@ -643,10 +662,16 @@ namespace Axel_hub
                 if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
                 if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
                 lboxNB.Items.Clear();
+                signalYmin = 10; signalYmax = 0;
             }
             if (Bottom)
             {
-                if (!Utils.isNull(srsFringes)) srsFringes.Clear();
+                if (!Utils.isNull(srsFringes))
+                {
+                    srsFringes.Clear();
+                    graphFringes.Data[0] = srsFringes;
+                }
+                    
                 if (!Utils.isNull(srsMotAccel)) srsMotAccel.Clear();
                 if (!Utils.isNull(srsCorr)) srsCorr.Clear();
             }
@@ -702,6 +727,18 @@ namespace Axel_hub
                 rowUpperChart.Height = new GridLength(3);
             }
         }
- 
+
+        
+        private void graphSignal_SourceUpdated(object sender, DataTransferEventArgs e)
+        {
+        }
+
+        private void graphSignal_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        private void graphSignal_TargetUpdated(object sender, DataTransferEventArgs e)
+        {
+        }
     }
 }

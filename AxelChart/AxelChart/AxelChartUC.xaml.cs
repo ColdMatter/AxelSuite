@@ -185,7 +185,7 @@ namespace AxelChartNS
     /// </summary>
     public class DataStack : List<System.Windows.Point>
     {
-        public DataStack(bool stackMode = false) : base() 
+        public DataStack(bool stackMode = true): base() 
         {
             _stackMode = stackMode;
             TimeLimitMode = false;
@@ -195,6 +195,7 @@ namespace AxelChartNS
             stopWatch = new Stopwatch();
             logger = new AutoFileLogger();
         }
+        public string rem { get; set; }
         public Dictionary<string, double> RefFileStats;
         private int visualCounter = 0;
         public int visualCountLimit = 1000;
@@ -206,7 +207,6 @@ namespace AxelChartNS
             get { return _stackMode; }
             set { _stackMode = value; }
         }
-
 
         public AutoFileLogger logger;
         public Stopwatch stopWatch;
@@ -276,6 +276,8 @@ namespace AxelChartNS
         {
             base.Clear();
             generalIdx = 0;
+            rem = "";
+            System.GC.Collect();
         }
 
         private void OnAddPoint(int pnt_count = 1)
