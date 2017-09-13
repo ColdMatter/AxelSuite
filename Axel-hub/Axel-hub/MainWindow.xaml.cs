@@ -146,14 +146,14 @@ namespace Axel_hub
                 //AxelChart1.Waveform.StackMode = true;
                 nSamples = AxelChart1.Waveform.SizeLimit;
             }
-            AxelChart1.SamplingPeriod = period;
+            AxelChart1.SamplingPeriod = 1/axelMems.RealConvRate(1/period);
             AxelChart1.Running = true;
             AxelChart1.Clear();
-            AxelChart1.remoteArg = "freq: " + (1 / period).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
+            AxelChart1.remoteArg = "freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
             AxelChart1.Waveform.SizeLimit = nSamples;
             AxelChart1.Waveform.logger.Enabled = false;
-            
-            axelMems.StartAqcuisition(nSamples, 1 / period); // sync acquisition
+
+            axelMems.StartAqcuisition(nSamples, 1 / AxelChart1.SamplingPeriod); // sync acquisition
         }
 
         private void jumboRepeat(int cycles, double strobe1, double strobe2)
@@ -218,7 +218,7 @@ namespace Axel_hub
             }
             else
             {
-                Clear(true, false, false);
+                if(down) Clear(true, false, false);
                 ADC24(down, period, TimeMode, Limit);
             }
         }
@@ -295,12 +295,11 @@ namespace Axel_hub
 
                     string endBit = ""; int runID = 0;
                     runID = Convert.ToInt32(mme.prms["runID"]);
-                    if(lastGrpExe.cmd.Equals("scan")) endBit = ";  cur.value: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
+                    if(lastGrpExe.cmd.Equals("scan")) endBit = ";  cur.X: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
 
                     if (lastGrpExe.cmd.Equals("repeat")) endBit = ";  runID: " + runID.ToString();
                   
-                    lbInfo.Content = "last group cmd: " + lastGrpExe.cmd + ";  groupID: " + lastGrpExe.prms["groupID"] +
-                                     ";  runID: "+ mme.prms["runID"]+ endBit;
+                    lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: "+ mme.prms["runID"]+ endBit;
                     Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
                     lboxNB.Items.Clear();
                     foreach (var item in avgs)
@@ -339,11 +338,12 @@ namespace Axel_hub
                     graphSignal.Data[0] = signalDataStack;
                     graphSignal.Data[1] = backgroundDataStack;
                     // readjust Y axis
-                    double mn = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
-                    signalYmin = Math.Min(mn, signalYmin);
-                    double mx = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
-                    signalYmax = Math.Max(mx, signalYmax);
-                    signalYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
+                    if (!chkManualAxis.IsChecked.Value)
+                    {
+                        signalYmin = Math.Min(Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min()), signalYmin);
+                        signalYmax = Math.Max(Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max()), signalYmax);
+                        signalYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
+                    }
 
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
                     // corrected with background
@@ -517,10 +517,10 @@ namespace Axel_hub
             }
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
-             
+            file.WriteLine("index\tN1\tN2\tRN1\tRN2\tNTot\tXAxis");  
             for (int i = 0; i < stackN1.Count; i++)
-                file.WriteLine(i.ToString() + "\t" + stackN1[i].Y.ToString("G4") + "\t" + stackN2[i].Y.ToString("G4")
-                    + "\t" + stackRN1[i].Y.ToString("G4") + "\t" + stackRN2[i].Y.ToString("G4") + "\t" + stackNtot[i].Y.ToString("G4"));
+                file.WriteLine(i.ToString() + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + stackRN1[i].Y.ToString("G7") + 
+                                              "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7") + "\t" + srsFringes[i].X.ToString("G7"));
             file.Close();
             log("Save> " + fn);
         }
@@ -726,19 +726,6 @@ namespace Axel_hub
                 hiddenTopHeight = rowUpperChart.Height.Value;
                 rowUpperChart.Height = new GridLength(3);
             }
-        }
-
-        
-        private void graphSignal_SourceUpdated(object sender, DataTransferEventArgs e)
-        {
-        }
-
-        private void graphSignal_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-        }
-
-        private void graphSignal_TargetUpdated(object sender, DataTransferEventArgs e)
-        {
         }
     }
 }

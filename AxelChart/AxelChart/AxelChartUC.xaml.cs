@@ -326,22 +326,20 @@ namespace AxelChartNS
             return Count;
         }
 
-        public void CopyEach(int each, out System.Windows.Point[] pntsArr) // skip some points for visual speed
+        public List<Point> CopyEach(int each) // skip some points for visual speed
         {
-            if (each == 1)
+            List<Point> pntsList;
+            if (each < 2)
             {
-                pntsArr = ToArray(); 
-                return;
+                pntsList = this.Clone() as List<Point>;
+                return pntsList;
             }
-            int japrx = (int)(Count / each) + 1;
-            pntsArr = new System.Windows.Point[japrx];
-            int j = 0;
+            pntsList = new List<Point>(); 
             for( int i = 0; i < Count; i = i + each)
             {
-                pntsArr[j] = this[i];
-                j++;
+                pntsList.Add(this[i]);
             }
-            if (j < japrx) Array.Resize<System.Windows.Point>(ref pntsArr, j);
+            return pntsList;
         }
 
         public DataStack Clone(double offsetX = 0, double offsetY = 0)
@@ -350,6 +348,7 @@ namespace AxelChartNS
             for (int i = 0; i < Count; i++)
                 rslt.Add(new Point(this[i].X + offsetX, this[i].Y + offsetY));
             rslt.TimeLimitMode = TimeLimitMode;
+            rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
             rslt.TimeLimit = TimeLimit;
             rslt.SizeLimit = SizeLimit;
@@ -605,34 +604,26 @@ namespace AxelChartNS
             return null;
         }
 
-        private void rescaleX(System.Windows.Point[] pntsIn, out System.Windows.Point[] pntsOut)
+        private List<Point> rescaleX(List<Point> pntsIn)
         {
-            pntsOut = pntsIn; 
             if (rbPoints.IsChecked.Value)
-            {               
-                for (int i = 0; i < Waveform.Count; i++)
-                {
-                    pntsOut[i].X = i;
-                }
-                return;
-            }
-            if (rbSec.IsChecked.Value) return; // default X (sec or custom)
-            if (rbMiliSec.IsChecked.Value)
             {
-                for (int i = 0; i < Waveform.Count; i++)
-                {
-                    pntsOut[i].X = 1000 * pntsOut[i].X;
-                }
-                return;
+                if (Waveform.TimeSeriesMode) throw new Exception("Wrong (time series) mode for natural point series");
+                return Waveform.Clone() as List<Point>;
             }
-            if (rbMicroSec.IsChecked.Value)
+            // internally x must be in sec
+            if (!Waveform.TimeSeriesMode) throw new Exception("Wrong (natural) mode for time series");
+            if (rbSec.IsChecked.Value) return Waveform.Clone() as List<Point>;
+            
+            List<Point> pntsOut = Waveform.Clone() as List<Point>;
+            double factor = 1;
+            if (rbMiliSec.IsChecked.Value) factor = 1000;
+            if (rbMicroSec.IsChecked.Value) factor = 1000000;
+            for (int i = 0; i < Waveform.Count; i++)
             {
-                for (int i = 0; i < Waveform.Count; i++)
-                {
-                    pntsOut[i].X = 1000000 * pntsOut[i].X;
-                }
-                return;
+                pntsOut.Add(new Point(factor * pntsIn[i].X, pntsIn[i].Y));
             }
+            return pntsOut;
         }
 
         private int curRange = 256;
@@ -656,10 +647,9 @@ namespace AxelChartNS
             }
             else rbPoints.IsChecked = true;  
 
-            System.Windows.Point[] pA, pB;
-            int each = (int)seShowFreq.Value;
-            Waveform.CopyEach(each, out pA);
-            rescaleX(pA, out pB);
+            List<Point> pA, pB;
+            pA = Waveform.CopyEach((int)seShowFreq.Value);
+            pB = rescaleX(pA);
 
             if (Waveform.TimeSeriesMode)
             {
@@ -685,13 +675,13 @@ namespace AxelChartNS
                 ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(x - curRange, x);
             }
 
-            graphScroll.DataSource = pB;
+            graphScroll.Data[0] = pB;
             double[] Ys;
             List<System.Windows.Point> pl = new List<System.Windows.Point>();
             switch (tabSecPlots.SelectedIndex) 
             {
                 case 0: break; // disable
-                case 1: graphOverview.DataSource = pB;
+                case 1: graphOverview.Data[0] = pB;
                         break;
                 case 2: Ys = Waveform.pointYs();
                         double df;
@@ -705,9 +695,9 @@ namespace AxelChartNS
                             if ((i * df) < 0.5) continue; // cut off level
                             pl.Add(new System.Windows.Point(i * df, ps[i])); 
                         }                        
-                        graphPower.DataSource = pl;
+                        graphPower.Data[0] = pl;
                         break;
-                case 3: graphHisto.DataSource = Histogram(Waveform);
+                case 3: graphHisto.Data[0] = Histogram(Waveform);
                         break;
                 case 4: break; // opts / stats
             }
@@ -720,7 +710,7 @@ namespace AxelChartNS
         }
   
         private double defaultRowRatio = 0;
-        private double hiddenHeight = 22;
+        private double hiddenHeight = 25;
 
         private void tabSecPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

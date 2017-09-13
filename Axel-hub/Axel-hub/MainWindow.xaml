@@ -42,8 +42,8 @@
                     <TabItem x:Name="tabSignal" Header="Signal" Width="100" Height="28">
                         <Grid Margin="0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="391*"/>
-                                <ColumnDefinition Width="391*"/>
+                                <ColumnDefinition Width="200*"/>
+                                <ColumnDefinition Width="100*"/>
                                 <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" Margin="0">
@@ -57,7 +57,7 @@
                                     <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFF99411" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
-                                    <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="135"/>
+                                    <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="393"/>
                                 </StackPanel>
                                 <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" >
                                     <ni:Graph.Plots>
@@ -98,13 +98,6 @@
                                 </ni:Graph>
                             </Grid>
 
-                            <ListBox x:Name="lboxNB" Grid.Column="2" Margin="0" Grid.ColumnSpan="1" FontSize="13">
-                                <ListBoxItem Content="N2"/>
-                                <ListBoxItem Content="NTot"/>
-                                <ListBoxItem Content="B2"/>
-                                <ListBoxItem Content="BTot"/>
-                                <ListBoxItem Content="Bg"/>
-                            </ListBox>
                             <GridSplitter x:Name="splitSignal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
 
                             <Grid Grid.Column="1" Margin="0">
@@ -114,7 +107,7 @@
                                 </Grid.RowDefinitions>
                                 <ni:Graph x:Name="graphSignal" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" >
                                     <ni:Graph.Axes>
-                                        <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical"/>
+                                        <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical" Adjuster="None"/>
                                     </ni:Graph.Axes>
                                     <ni:Graph.Plots>
                                         <ni:Plot Label="Plot 1">
@@ -128,9 +121,18 @@
                                         <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                                     </ni:Graph.SelectionFill>
                                 </ni:Graph>
-                                <ni:GraphInteractionPalette Grid.Row="0" x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}" Margin="10,4,189,0" Grid.RowSpan="2"/>
-                                <Label x:Name="lbInfo" Content="Info:" Margin="216,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" HorizontalAlignment="Left" Width="173"/>
+                                <ni:GraphInteractionPalette Grid.Row="0" x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}" Margin="10,4,0,0" Grid.RowSpan="2"/>
                             </Grid>
+                            <StackPanel Grid.Column="2" Margin="0,0,0,0">
+                                <ListBox x:Name="lboxNB" FontSize="13" Height="124" Margin="0">
+                                    <ListBoxItem Content="N2"/>
+                                    <ListBoxItem Content="NTot"/>
+                                    <ListBoxItem Content="B2"/>
+                                    <ListBoxItem Content="BTot"/>
+                                    <ListBoxItem Content="Bg"/>
+                                </ListBox>
+                                <CheckBox x:Name="chkManualAxis" Margin="1,6,0,0" FontSize="12" Content="Manual Y Axis"/>
+                            </StackPanel>
                         </Grid>
                     </TabItem>
 
