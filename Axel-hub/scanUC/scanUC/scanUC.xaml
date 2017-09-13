@@ -28,7 +28,7 @@
             </StackPanel>
         </GroupBox>
         <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="0,4.571,10,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
-            <TabItem x:Name="tabTimeLimit" Header="Time Limit">
+            <TabItem x:Name="tabTimeLimit" Header="Time Limit" Height="26">
                 <Grid Margin="0,1,0.429,-0.857">
                     <TextBox x:Name="tbTimeLimit" HorizontalAlignment="Right" Height="23" Margin="0,0,40.428,7" TextWrapping="Wrap" Text="3" VerticalAlignment="Bottom" Width="74" FontSize="14"/>
                     <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
@@ -38,7 +38,7 @@
                     <Label Content="sec" HorizontalAlignment="Right" Margin="0,32,10,7" VerticalAlignment="Bottom"/>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="tabBufferSizeLimit_" Header="Size Limit">
+            <TabItem x:Name="tabBufferSizeLimit_" Header="Size Limit" Height="26">
                 <Grid>
                     <ComboBox x:Name="cbSizeEndless" HorizontalAlignment="Left" Height="22" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
@@ -49,7 +49,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem x:Name="tabRemote_" Header="Remote">
+            <TabItem x:Name="tabRemote" Header=" Remote " Height="26">
                 <Grid>
                     <Label x:Name="lbMode" Content="Mode(stage):" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
                     <Label x:Name="lbFringePrm" Content="Fringe Prm:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>

@@ -113,6 +113,9 @@
                                     <RowDefinition Height="70*"/>
                                 </Grid.RowDefinitions>
                                 <ni:Graph x:Name="graphSignal" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" >
+                                    <ni:Graph.Axes>
+                                        <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical"/>
+                                    </ni:Graph.Axes>
                                     <ni:Graph.Plots>
                                         <ni:Plot Label="Plot 1">
                                             <ni:PointPlotRenderer Fill="#FFF92727"/>
@@ -202,7 +205,7 @@
                     <TabItem x:Name="tabFringes" Header="Fringes" Width="100" Height="28">
                         <Grid>
                             <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
-                            <Label x:Name="lbInfoFrng" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="532" FontSize="13"/>
+                            <Label x:Name="lbInfoFringes" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="532" FontSize="13"/>
                             <ni:Graph x:Name="graphFringes" Margin="3,30,0.286,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Grid.ColumnSpan="2" DefaultInteraction="Pan" Interactions="Pan, Zoom">
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor x:Name="crsStrobe1" Label="multiPlotCursor1"/>

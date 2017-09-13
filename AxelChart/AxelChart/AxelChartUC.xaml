@@ -34,9 +34,9 @@
 
         </Grid>
         <Grid Grid.Row="1">
-            <TabControl x:Name="tabSecPlots" Margin="0,0,0.429,0.429" SelectionChanged="tabSecPlots_SelectionChanged" SelectedIndex="1" FontSize="14">
-                <TabItem Header=" Hide " Height="22"/>
-                <TabItem x:Name="tabOverview" Header="Overview" Width="100" Height="22">
+            <TabControl x:Name="tabSecPlots" Margin="0,3,0.429,0.429" SelectionChanged="tabSecPlots_SelectionChanged" SelectedIndex="1" FontSize="14">
+                <TabItem Header=" Hide " Height="24"/>
+                <TabItem x:Name="tabOverview" Header="Overview" Width="100" Height="24">
                     <Grid>
                         <ni:GraphInteractionPalette x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="25" Margin="28,5,0.571,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphOverview}" TabIndex="217" ScrollViewer.CanContentScroll="True">
                             <ni:GraphInteractionPalette.BindingGroup>
@@ -52,7 +52,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="tabPower" Header="Power Spec." Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="22">
+                <TabItem x:Name="tabPower" Header="Power Spec." Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
                     <Grid x:Name="gridPower">
                         <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphPower}"/>
                         <ni:Graph x:Name="graphPower" Margin="3,28,-0.429,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" SelectionStroke="#FFFBFB42" DefaultInteraction="Pan" Interactions="Zoom" Focusable="False" MouseDoubleClick="graphOverview_MouseDoubleClick">
@@ -71,7 +71,7 @@
 
                     </Grid>
                 </TabItem>
-                <TabItem Header="Histogram" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="22">
+                <TabItem Header="Histogram" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
                     <Grid>
                         <ni:GraphInteractionPalette x:Name="interactionHisto" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphHisto}"/>
                         <ni:Graph x:Name="graphHisto" Margin="3,30,-0.429,0" FontSize="12" PlotAreaMargin="Auto,1,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick">
@@ -85,7 +85,7 @@
                         <Button x:Name="btnCpyPic3" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="21"/>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Opts/Stats" Height="22" VerticalAlignment="Top" Margin="0">
+                <TabItem Header="Opts/Stats" Height="24" VerticalAlignment="Top" Margin="0">
                     <Grid Margin="0,0,-0.429,-4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -99,7 +99,7 @@
                                         <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button x:Name="btnClear" Content="Clear" Margin="5,5,10,0" Click="btnClear_Click"/>
+                                <Button x:Name="btnClear" Content="Clear" Margin="10,5,10.143,0" Click="btnClear_Click"/>
 
                             </StackPanel>
 
