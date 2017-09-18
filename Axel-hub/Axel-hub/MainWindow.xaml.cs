@@ -123,7 +123,7 @@ namespace Axel_hub
             return mms;
         }
 
-        private void ADC24(bool down, double period, bool TimeLimitMode, double Limit)
+        private void ADC24(bool down, double period, int sizeLimit)
         {
             if (!down) // user cancel
             {
@@ -133,26 +133,17 @@ namespace Axel_hub
                 log("User ABORT !!!", Brushes.Red.Color);
                 return;
             }
-
-            AxelChart1.Waveform.TimeLimitMode = TimeLimitMode;
-            if (TimeLimitMode)
-            {
-                AxelChart1.Waveform.TimeLimit = Limit;
-                nSamples = (int)(Limit / period);
-            }
-            else
-            {
-                AxelChart1.Waveform.SizeLimit = (int)Limit;
-                //AxelChart1.Waveform.StackMode = true;
-                nSamples = AxelChart1.Waveform.SizeLimit;
-            }
+            AxelChart1.Clear();
+            AxelChart1.Waveform.StackMode = true;
+            nSamples = sizeLimit;
             AxelChart1.SamplingPeriod = 1/axelMems.RealConvRate(1/period);
             AxelChart1.Running = true;
-            AxelChart1.Clear();
+           
             AxelChart1.remoteArg = "freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
-            AxelChart1.Waveform.SizeLimit = nSamples;
             AxelChart1.Waveform.logger.Enabled = false;
 
+            if (AxelChart1.Waveform.TimeSeriesMode) axelMems.TimingMode = AxelMems.TimingModes.byStopwatch;
+            else axelMems.TimingMode = AxelMems.TimingModes.byNone;
             axelMems.StartAqcuisition(nSamples, 1 / AxelChart1.SamplingPeriod); // sync acquisition
         }
 
@@ -179,7 +170,7 @@ namespace Axel_hub
  
         
         // main ADC call
-        public void DoStart(bool jumbo, bool down, double period, bool TimeMode, double Limit)
+        public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
         {
             if (jumbo)
             {
@@ -219,7 +210,7 @@ namespace Axel_hub
             else
             {
                 if(down) Clear(true, false, false);
-                ADC24(down, period, TimeMode, Limit);
+                ADC24(down, period, sizeLimit);
             }
         }
 
@@ -234,7 +225,7 @@ namespace Axel_hub
                 else jumboRepeat(cycles, 4.7, 7.8);
             }
       
-            if(jumboADC24Flag) ADC24(true, 0.001, false, 200);
+            if(jumboADC24Flag) ADC24(true, 0.001, 200);
 
             btnConfirmStrobes.Visibility = System.Windows.Visibility.Hidden;
             log("Jumbo succession is RUNNING !", Brushes.Green.Color);
@@ -265,7 +256,7 @@ namespace Axel_hub
 
         private MMexec lastGrpExe; private MMscan lastScan;
         private double strbLeft = 0, strbRight = 0, signalYmin = 10, signalYmax = 0;
-        DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null;
+        DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
         // remote MM call
@@ -282,6 +273,7 @@ namespace Axel_hub
                         if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);                        
                         if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(true);
                         if (Utils.isNull(srsCorr)) srsCorr = new DataStack(true);
+                        if (Utils.isNull(srsMems)) srsMems = new DataStack(true);
                         Clear();
 
                         if (lastGrpExe.cmd.Equals("scan")) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
@@ -347,15 +339,25 @@ namespace Axel_hub
 
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
                     // corrected with background
-                    double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
-                    stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
-                    stackRN1.AddPoint(cN1/cNtot); stackRN2.AddPoint(cN2/cNtot); 
+                    double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2; 
+                    double currX = 1;
+                    if (lastGrpExe.cmd.Equals("scan"))
+                    {
+                        currX = lastScan.sFrom + runID * lastScan.sBy;
+                        stackN1.Add(new Point(currX,cN1)); stackN2.Add(new Point(currX,cN2)); stackNtot.Add(new Point(currX,cNtot));
+                        stackRN1.Add(new Point(currX,cN1 / cNtot)); stackRN2.Add(new Point(currX,cN2 / cNtot)); 
+                    }
+                    if (lastGrpExe.cmd.Equals("repeat"))
+                    {
+                        stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
+                        stackRN1.AddPoint(cN1/cNtot); stackRN2.AddPoint(cN2/cNtot); 
+                    }
                     graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; 
                     graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
 
                     if (lastGrpExe.cmd.Equals("scan")) // title command
                     {
-                        srsFringes.Add(new Point((lastScan.sFrom + runID * lastScan.sBy), asymmetry));
+                        srsFringes.Add(new Point(currX, asymmetry));
                         graphFringes.Data[0] = srsFringes;
                     }
                     if (lastGrpExe.cmd.Equals("repeat")) // title command
@@ -374,6 +376,15 @@ namespace Axel_hub
                         corr = PID(debalance);
                         if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
+                            if (AxelChart1.Running && jumboADC24Flag)
+                            {
+                                double start = double.NaN, mn, dsp;
+                                if (AxelChart1.Waveform.statsByTime(start, 0.2, out mn, out dsp))
+                                {
+                                    srsMems.Add(new Point(runID, mn));
+                                    graphAccelTrend.Data[2] = srsMems; 
+                                }                                   
+                            }
                             mme.sender = "Axel-hub";
                             mme.cmd = "phaseConvert";
                             mme.prms.Clear();
@@ -381,11 +392,11 @@ namespace Axel_hub
                             mme.prms["accelVoltage"] = corr.ToString("G6");
 
                             if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
-                        }
-                        srsMotAccel.Add(new Point(runID, debalance));
-                        srsCorr.Add(new Point(runID, corr));
-                        graphAccelTrend.Data[0] = srsMotAccel;
-                        graphAccelTrend.Data[1] = srsCorr; //   new List<ChartCollection<Point>>() {, };
+                            srsCorr.Add(new Point(runID, corr));
+                            graphAccelTrend.Data[1] = srsCorr;
+                       }
+                       srsMotAccel.Add(new Point(runID, debalance));                       
+                       graphAccelTrend.Data[0] = srsMotAccel;
                     }
                     DoEvents();
                 }            
@@ -466,26 +477,30 @@ namespace Axel_hub
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
 
             Clear(false, true, false);
-            string[] ns; int i, j = 0; double d; 
+            string[] ns; int j = 0; double x,d; 
             foreach (string line in File.ReadLines(fn))
             {
+                if(line.Contains("#{"))
+                {
+                    lastGrpExe = JsonConvert.DeserializeObject<MMexec>(line.Substring(1));
+                }
                 if (line.Contains("#Rem="))
                 {
                     tbRemSignal.Text = line.Substring(5); lbInfoSignal.Content = tbRemSignal.Text;
                 }
                 if (line[0] == '#') continue; //skip comments/service info
                 ns = line.Split('\t');
-                if (!int.TryParse(ns[0], out i)) throw new Exception("Wrong double at line " + j.ToString());
+                if (!double.TryParse(ns[0], out x)) throw new Exception("Wrong double at line " + j.ToString());
                 if (!double.TryParse(ns[1], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackN1.Add(new Point(i,d));
+                stackN1.Add(new Point(x,d));
                 if (!double.TryParse(ns[2], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackN2.Add(new Point(i, d));
+                stackN2.Add(new Point(x, d));
                 if (!double.TryParse(ns[3], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackRN1.Add(new Point(i, d));
+                stackRN1.Add(new Point(x, d));
                 if (!double.TryParse(ns[4], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackRN2.Add(new Point(i, d));
+                stackRN2.Add(new Point(x, d));
                 if (!double.TryParse(ns[5], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackNtot.Add(new Point(i, d));                
+                stackNtot.Add(new Point(x, d));                
                 j++;
             }
             graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
@@ -516,10 +531,11 @@ namespace Axel_hub
                 return;
             }
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
+            if(!Utils.isNull(lastGrpExe)) file.WriteLine("#"+JsonConvert.SerializeObject(lastGrpExe));
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
-            file.WriteLine("index\tN1\tN2\tRN1\tRN2\tNTot\tXAxis");  
+            file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot");  
             for (int i = 0; i < stackN1.Count; i++)
-                file.WriteLine(i.ToString() + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + stackRN1[i].Y.ToString("G7") + 
+                file.WriteLine(stackN1[i].X.ToString("G7") + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + stackRN1[i].Y.ToString("G7") + 
                                               "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7") + "\t" + srsFringes[i].X.ToString("G7"));
             file.Close();
             log("Save> " + fn);
@@ -725,6 +741,15 @@ namespace Axel_hub
             {
                 hiddenTopHeight = rowUpperChart.Height.Value;
                 rowUpperChart.Height = new GridLength(3);
+            }
+        }
+
+        private void graphNs_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+            {
+                if (e.Key == Key.C)
+                { AxelChart1.btnCpyPic_Click(sender, null); }
             }
         }
     }

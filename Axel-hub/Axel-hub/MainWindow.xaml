@@ -59,7 +59,10 @@
                                     <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
                                     <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="393"/>
                                 </StackPanel>
-                                <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" >
+                                <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" >
+                                    <ni:Graph.Children>
+                                        <ni:MultiPlotCursor Label="multiPlotCursor1"/>
+                                    </ni:Graph.Children>
                                     <ni:Graph.Plots>
                                         <ni:Plot x:Name="plotN1" Label="N1">
                                             <ni:PlotRendererGroup>
@@ -233,14 +236,23 @@
                             <ni:GraphInteractionPalette x:Name="interatctionGenTrend" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="640" FontSize="13"/>
                             <ni:Graph x:Name="graphAccelTrend" Margin="3,30,0.143,-0.143" Grid.ColumnSpan="2" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom">
+                                <ni:Graph.Children>
+                                    <ni:MultiPlotCursor Label="multiPlotCursor2"/>
+                                </ni:Graph.Children>
                                 <ni:Graph.Plots>
-                                    <ni:Plot Label="Plot 1">
-                                        <ni:LinePlotRenderer Stroke="#FF7B0606" StrokeThickness="1.5"/>
-                                    </ni:Plot>
-                                    <ni:Plot Label="Plot 2">
+                                    <ni:Plot x:Name="plotMotAccel" Label="MOTaccel">
                                         <ni:PlotRendererGroup>
-                                            <ni:LinePlotRenderer Stroke="Green"/>
-                                            <ni:PointPlotRenderer Fill="Green" Size="3,3"/>
+                                            <ni:LinePlotRenderer Stroke="#FF074BF4"/>
+                                            <ni:PointPlotRenderer Fill="#FF0AF9CE" Stroke="#FF074BF4" Size="3,3"/>
+                                        </ni:PlotRendererGroup>
+                                    </ni:Plot>
+                                    <ni:Plot x:Name="plotCorr" Label="Corrections">
+                                        <ni:BarPlotRenderer BarWidth="0.35" Fill="#FF07B484" Stroke="#FF07B484"/>
+                                    </ni:Plot>
+                                    <ni:Plot x:Name="plotMems" Label="scrollPlot">
+                                        <ni:PlotRendererGroup>
+                                            <ni:LinePlotRenderer Stroke="#FFFAD74B" StrokeThickness="2"/>
+                                            <ni:PointPlotRenderer Fill="#FFF5040C" Stroke="#FFFAD74B" Size="3,3"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
                                 </ni:Graph.Plots>

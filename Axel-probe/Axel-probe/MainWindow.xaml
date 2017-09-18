@@ -51,7 +51,7 @@
                     <ni:NumericTextBoxDouble x:Name="ndBreathePeriod" HorizontalAlignment="Left" Height="23" Margin="126,54,0,0" VerticalAlignment="Top" Width="78" RenderTransformOrigin="0.501,-0.217" Value="20"/>
                 </Grid>
             </GroupBox>
-            <GroupBox Header="Visuals" Height="70" Margin="0,5,0.143,0">
+            <GroupBox Header="Visuals and (scan/repeat)" Height="70" Margin="0,5,0.143,0">
                 <Grid Margin="0,0,-0.286,-0.143">
                     <Label Content="Delay [ms]" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
                     <ni:NumericTextBoxDouble x:Name="ndDelay" HorizontalAlignment="Left" Height="23" Margin="124,18,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="200"/>

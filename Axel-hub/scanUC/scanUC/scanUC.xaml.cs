@@ -194,12 +194,12 @@ namespace scanHub
             }
         }
 
-        public delegate void StartHandler(bool jumbo, bool down, double period, bool TimeMode, double Limit);
+        public delegate void StartHandler(bool jumbo, bool down, double period, int sizeLimit);
         public event StartHandler Start;
 
-        protected void OnStart(bool jumbo, bool down, double period, bool TimeMode, double Limit)
+        protected void OnStart(bool jumbo, bool down, double period, int sizeLimit)
         {
-            if(Start != null) Start(jumbo, down, period, TimeMode, Limit);
+            if(Start != null) Start(jumbo, down, period, sizeLimit);
         }
 
         public delegate void RemoteHandler(string msg);
@@ -286,19 +286,18 @@ namespace scanHub
             bool down = Running;
             bbtnStart.Value = down;
             double period = GetSamplingPeriod(); // sampling rate in sec
-            int plannedTime = 0; // [s]
+            int sizeLimit = 0; // [s]
 
             double Limit = 1;
-            bool TimeMode = (tabControl.SelectedIndex == 0);
-            if (TimeMode)
+            if (tabControl.SelectedIndex == 0)
             {
                 if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
-                plannedTime = (int)Limit;
+                sizeLimit = (int)(Limit / period);
             }
             else
             {
                 if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
-                plannedTime = (int)(Limit * period);
+                sizeLimit = (int)Limit;
             }
             if (EndlessMode())
             {
@@ -309,12 +308,12 @@ namespace scanHub
             else
             {
                 lbTimeLeft.Visibility = System.Windows.Visibility.Visible;
-                totalTime = new TimeSpan(0, 0, plannedTime);
+                totalTime = new TimeSpan(0, 0, (int)(sizeLimit * period));
                 currentTime = new TimeSpan(0, 0, 0);
             }
             DoEvents();
 
-            OnStart(jumbo, down, period, TimeMode, Limit); // the last three are valid only in non-jumbo mode with down = true
+            OnStart(jumbo, down, period, sizeLimit); // the last three are valid only in non-jumbo mode with down = true
          }
 
         public void Abort(bool local) // the origin of Abort is local or remote
@@ -325,7 +324,7 @@ namespace scanHub
             else bbtnStart.Content = "Start";
             Running = false;
             bbtnStart.Value = false;
-            OnStart(jumbo, false, 0, false, 0);
+            OnStart(jumbo, false, 0, 0);
             if (local)
             {
                 MMexec mme = new MMexec();
@@ -360,7 +359,6 @@ namespace scanHub
                      bbtnStart.Content = "Jumbo Run";
                      remoteMode = RemoteMode.Free;
                  }  
-                     
              }
              else
              {

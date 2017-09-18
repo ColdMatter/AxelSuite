@@ -491,9 +491,10 @@ namespace Axel_probe
 										
             A						        A				
             1						        -1		*/
-        private void SingleShot(double A, // A = 1 .. -1
+        private bool SingleShot(double A, // A = 1 .. -1
                                 ref MMexec mme) // group template
         {
+            bool rslt = false;
             double ntot = 5; double b2 = 1; double btot = 3; double bg = 0;
             double n2 = (1-A)*(ntot-btot)/2 + b2;   // n2 = 1 .. 3 / A = 1 .. -1              
 
@@ -536,10 +537,12 @@ namespace Axel_probe
                 mme.prms["Bg"] = srsBg.ToArray();
                 mme.id = rnd.Next(int.MaxValue);
                 string msg = JsonConvert.SerializeObject(mme);
-                remote.sendCommand(msg);
+                rslt = remote.sendCommand(msg);
                 mme.prms["runID"] = (int)mme.prms["runID"]+1;
                 log(msg.Substring(1,80)+"...");
             }
+            return rslt;
+
         } 
         
         private void SimpleScan(MMscan mms, string groupID)
@@ -556,7 +559,7 @@ namespace Axel_probe
 
             cancelRequest = false; double A = 0;  fringes.Clear();           
             for (double ph = mms.sFrom; ph <= mms.sTo; ph += mms.sBy)
-            { 
+            {
                 DoEvents();
                 if (cancelRequest) break;
                 n2 = Math.Sin(ph)+2;  // n2 = 1 .. 3
@@ -564,7 +567,7 @@ namespace Axel_probe
                 fringes.Add(new Point(ph, A)); 
 
                 System.Threading.Thread.Sleep((int)ndDelay.Value);
-                SingleShot(A, ref md);
+                if (!SingleShot(A, ref md)) break; 
             }               
         }
 
@@ -638,7 +641,7 @@ namespace Axel_probe
                     fringes.Add(new Point(j, A));
                 }
                 System.Threading.Thread.Sleep((int)ndDelay.Value);
-                SingleShot(frAmpl, ref md);
+                if (!SingleShot(frAmpl, ref md)) break;
             }
         }
 

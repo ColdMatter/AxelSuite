@@ -213,7 +213,7 @@ namespace AxelHMemsNS
                             }
                             lastCount += waveform[actChn].Samples.Count; // total count marker
                             break;
-                       case (TimingModes.byStopwatch): // time markers from Stopwatch, samplePer -> (time makers diff) / nSamples 
+                       case (TimingModes.byStopwatch): // time markers from Stopwatch, samplePer -> (time makers diff) / nSamples (recommended)
                             ts = sw.Elapsed.TotalSeconds;
                             prd = (ts - lastTime) / waveform[actChn].Samples.Count;
                             for (int sample = 0; sample < waveform[actChn].Samples.Count; ++sample)
