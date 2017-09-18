@@ -59,7 +59,7 @@
                                     <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
                                     <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="393"/>
                                 </StackPanel>
-                                <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" >
+                                <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
                                     <ni:Graph.Children>
                                         <ni:MultiPlotCursor Label="multiPlotCursor1"/>
                                     </ni:Graph.Children>
@@ -104,11 +104,7 @@
                             <GridSplitter x:Name="splitSignal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
 
                             <Grid Grid.Column="1" Margin="0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="26"/>
-                                    <RowDefinition Height="70*"/>
-                                </Grid.RowDefinitions>
-                                <ni:Graph x:Name="graphSignal" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" >
+                                <ni:Graph x:Name="graphSignal"  Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" >
                                     <ni:Graph.Axes>
                                         <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical" Adjuster="None"/>
                                     </ni:Graph.Axes>
@@ -124,7 +120,6 @@
                                         <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                                     </ni:Graph.SelectionFill>
                                 </ni:Graph>
-                                <ni:GraphInteractionPalette Grid.Row="0" x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}" Margin="10,4,0,0" Grid.RowSpan="2"/>
                             </Grid>
                             <StackPanel Grid.Column="2" Margin="0,0,0,0">
                                 <ListBox x:Name="lboxNB" FontSize="13" Height="124" Margin="0">
@@ -211,7 +206,7 @@
                         <Grid>
                             <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoFringes" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="532" FontSize="13"/>
-                            <ni:Graph x:Name="graphFringes" Margin="3,30,0.286,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Grid.ColumnSpan="2" DefaultInteraction="Pan" Interactions="Pan, Zoom">
+                            <ni:Graph x:Name="graphFringes" Margin="3,30,0.286,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Grid.ColumnSpan="2" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick">
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor x:Name="crsStrobe1" Label="multiPlotCursor1"/>
                                     <ni:MultiPlotCursor x:Name="crsStrobe2" Label="multiPlotCursor2"/>
@@ -220,7 +215,7 @@
                                     <ni:Plot Label="Fringes">
                                         <ni:PlotRendererGroup>
                                             <ni:LinePlotRenderer Stroke="#FF01A493"/>
-                                            <ni:PointPlotRenderer Fill="#FF01A493" Stroke="#FF01A493" Size="3,3"/>
+                                            <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF01A493" Size="3,3"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
                                 </ni:Graph.Plots>
@@ -235,7 +230,7 @@
                         <Grid>
                             <ni:GraphInteractionPalette x:Name="interatctionGenTrend" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="640" FontSize="13"/>
-                            <ni:Graph x:Name="graphAccelTrend" Margin="3,30,0.143,-0.143" Grid.ColumnSpan="2" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom">
+                            <ni:Graph x:Name="graphAccelTrend" Margin="3,30,0.143,-0.143" Grid.ColumnSpan="2" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick">
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor Label="multiPlotCursor2"/>
                                 </ni:Graph.Children>

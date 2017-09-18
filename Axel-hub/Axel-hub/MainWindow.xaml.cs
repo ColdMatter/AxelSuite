@@ -91,10 +91,16 @@ namespace Axel_hub
             else printOut = txt.Substring(0,80)+"..."; //
             
             Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
-            TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
-            rangeOfText1.Text = printOut + "\n";
-            rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
-            tbLog.ScrollToEnd();
+            Application.Current.Dispatcher.BeginInvoke(
+              DispatcherPriority.Background,
+              new Action(() => 
+              {
+                while (tbLog.Document.Blocks.Count > 500) tbLog.Document.Blocks.Remove(tbLog.Document.Blocks.ElementAt(0));
+                TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
+                rangeOfText1.Text = printOut + "\n";
+                rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
+                tbLog.ScrollToEnd();
+              }));
 
         }
 
@@ -142,7 +148,7 @@ namespace Axel_hub
             AxelChart1.remoteArg = "freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
             AxelChart1.Waveform.logger.Enabled = false;
 
-            if (AxelChart1.Waveform.TimeSeriesMode) axelMems.TimingMode = AxelMems.TimingModes.byStopwatch;
+            if (AxelChart1.Waveform.TimeSeriesMode) axelMems.TimingMode = AxelMems.TimingModes.byADCtimer;
             else axelMems.TimingMode = AxelMems.TimingModes.byNone;
             axelMems.StartAqcuisition(nSamples, 1 / AxelChart1.SamplingPeriod); // sync acquisition
         }
@@ -751,6 +757,11 @@ namespace Axel_hub
                 if (e.Key == Key.C)
                 { AxelChart1.btnCpyPic_Click(sender, null); }
             }
+        }
+
+        private void graphNs_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            (sender as Graph).ResetZoomPan();
         }
     }
 }

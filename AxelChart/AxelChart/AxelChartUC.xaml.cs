@@ -689,8 +689,8 @@ namespace AxelChartNS
                 double x = Waveform[Waveform.Count-1].X; 
                 ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(x - curRange, x);
             }
-
-            graphScroll.Data[0] = pB;
+            Application.Current.Dispatcher.BeginInvoke(
+              DispatcherPriority.ApplicationIdle, new Action(() => { graphScroll.Data[0] = pB; }));
             double[] Ys;
             List<System.Windows.Point> pl = new List<System.Windows.Point>();
             switch (tabSecPlots.SelectedIndex) 
@@ -728,7 +728,7 @@ namespace AxelChartNS
         }
   
         private double defaultRowRatio = 0;
-        private double hiddenHeight = 25;
+        private double hiddenHeight = 28;
 
         private void tabSecPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
