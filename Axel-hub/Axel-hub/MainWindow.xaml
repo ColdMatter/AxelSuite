@@ -67,31 +67,31 @@
                                         <ni:Plot x:Name="plotN1" Label="N1">
                                             <ni:PlotRendererGroup>
                                                 <ni:LinePlotRenderer Stroke="Green"/>
-                                                <ni:PointPlotRenderer Fill="Green" Size="3,3"/>
+                                                <ni:PointPlotRenderer Fill="#FFA9FCA9" Size="3,3" Stroke="Green"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotN2" Label="Ntot">
                                             <ni:PlotRendererGroup>
                                                 <ni:LinePlotRenderer Stroke="#FF061BCA"/>
-                                                <ni:PointPlotRenderer Fill="#FF061BCA" Stroke="#FF061BCA"  Size="3,3"/>
+                                                <ni:PointPlotRenderer Fill="#FF95EDF2" Stroke="#FF061BCA"  Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotRN1" Label="rN1">
                                             <ni:PlotRendererGroup>
                                                 <ni:LinePlotRenderer Stroke="#FF8B04B7"/>
-                                                <ni:PointPlotRenderer Fill="#FF7B09C3" Stroke="#FF9E11B2" Size="3,3"/>
+                                                <ni:PointPlotRenderer Fill="#FFEDD4FD" Stroke="#FF9E11B2" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotRN2" Label="rN2">
                                             <ni:PlotRendererGroup>
                                                 <ni:LinePlotRenderer Stroke="#FFFF8C03"/>
-                                                <ni:PointPlotRenderer Fill="#FFFF8C03" Stroke="#FFFF8C03" Size="3,3"/>
+                                                <ni:PointPlotRenderer Fill="#FFFEDFB9" Stroke="#FFFF8C03" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotNtot" Label="Ntot">
                                             <ni:PlotRendererGroup>
                                                 <ni:LinePlotRenderer Stroke="#FFC02409"/>
-                                                <ni:PointPlotRenderer Fill="#FFC02409" Stroke="#FFC02409" Size="3,3"/>
+                                                <ni:PointPlotRenderer Fill="#FFF9C0B6" Stroke="#FFC02409" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                     </ni:Graph.Plots>
@@ -110,10 +110,10 @@
                                     </ni:Graph.Axes>
                                     <ni:Graph.Plots>
                                         <ni:Plot Label="Plot 1">
-                                            <ni:PointPlotRenderer Fill="#FFF92727"/>
+                                            <ni:PointPlotRenderer Fill="#FFFFA3A3" Stroke="Red" Size="4,4"/>
                                         </ni:Plot>
                                         <ni:Plot Label="Plot 2">
-                                            <ni:PointPlotRenderer Fill="#FF5B4EFD"/>
+                                            <ni:PointPlotRenderer Fill="#FF8AE6FD" Stroke="#FF1456FD" Size="4,4"/>
                                         </ni:Plot>
                                     </ni:Graph.Plots>
                                     <ni:Graph.SelectionFill>
@@ -122,6 +122,7 @@
                                 </ni:Graph>
                             </Grid>
                             <StackPanel Grid.Column="2" Margin="0,0,0,0">
+                                <CheckBox x:Name="chkManualAxis" Margin="1,2,0,5" FontSize="12" Content="Manual Y Axis" RenderTransformOrigin="0.514,-8.657"/>
                                 <ListBox x:Name="lboxNB" FontSize="13" Height="124" Margin="0">
                                     <ListBoxItem Content="N2"/>
                                     <ListBoxItem Content="NTot"/>
@@ -129,7 +130,8 @@
                                     <ListBoxItem Content="BTot"/>
                                     <ListBoxItem Content="Bg"/>
                                 </ListBox>
-                                <CheckBox x:Name="chkManualAxis" Margin="1,6,0,0" FontSize="12" Content="Manual Y Axis"/>
+                                <CheckBox x:Name="chkBackgroung" Margin="1,7,0,0" FontSize="12" Content="- Backgroung" RenderTransformOrigin="0.514,-8.657" IsChecked="True"/>
+                                <CheckBox x:Name="chkDarkcurrent" Margin="1,2,0,5" FontSize="12" Content="- Dark Current" RenderTransformOrigin="0.514,-8.657" IsChecked="True"/>
                             </StackPanel>
                         </Grid>
                     </TabItem>
@@ -214,7 +216,7 @@
                                 <ni:Graph.Plots>
                                     <ni:Plot Label="Fringes">
                                         <ni:PlotRendererGroup>
-                                            <ni:LinePlotRenderer Stroke="#FF01A493"/>
+                                            <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.5"/>
                                             <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF01A493" Size="3,3"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
@@ -266,25 +268,31 @@
                                 <ColumnDefinition Width="607*"/>
                             </Grid.ColumnDefinitions>
                             <GroupBox Grid.Column="1" Header="Fringes Data" Margin="0,0,0,0" FontSize="12">
-                                <StackPanel Margin="0,3,0,0">
-                                    <GroupBox Header="Files" Height="92" Margin="0,0,-0.143,0">
+                                <StackPanel Margin="0,0,0,0">
+                                    <GroupBox Header="Files" Height="73" Margin="0,0,-0.286,0">
                                         <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,5,5,0" Click="btnOpenFringes_Click" />
-                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveFringesAs_Click" />
+                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" />
+                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" />
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClearFringes" Content="Clear Fringes" Margin="12,10,7,0" Click="btnClearAll_Click" />
+                                    <Button x:Name="btnClearFringes" Content="Clear Fringes" Margin="12,4,7,0" Click="btnClearAll_Click" />
+                                    <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
+                                    <TextBox x:Name="tbRemFringes" Margin="0,1,-0.286,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="63"/>
                                 </StackPanel>
 
                             </GroupBox>
                             <GroupBox x:Name="groupStatFringes" Header=" Statistics " Margin="0" Grid.Column="2" FontSize="12">
                                 <Grid Margin="0">
-                                    <Label Content="REM:" HorizontalAlignment="Left" Margin="9,8,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.529,0.182"/>
-                                    <TextBox x:Name="tbRemFringes" HorizontalAlignment="Left" Height="23" Margin="51,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="394"/>
+                                    <Label Content="K" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="ndK" HorizontalAlignment="Left" Height="23" Margin="41,13,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
+                                    <Label Content="T" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="ndT" HorizontalAlignment="Left" Height="23" Margin="41,41,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
+                                    <Label Content="MM" HorizontalAlignment="Left" Margin="10,75,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="ndMM" HorizontalAlignment="Left" Height="23" Margin="41,78,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
                                 </Grid>
                             </GroupBox>
                             <GroupBox Header="Jumbo Scan params" Margin="0,0,5.143,0">
-                                <Grid Margin="0,0,-0.286,-0.143">
+                                <Grid Margin="0,0,0,0">
                                     <Label Content="From" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top"/>
                                     <ni:NumericTextBoxDouble x:Name="numFrom" HorizontalAlignment="Left" Height="23" Margin="57,13,0,0" VerticalAlignment="Top" Width="67"/>
                                     <Label Content="To" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top"/>

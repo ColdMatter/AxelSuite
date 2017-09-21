@@ -45,7 +45,7 @@
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
                     <Label Content="Buffer size:" HorizontalAlignment="Left" Margin="57,37,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.286,5.143" TextWrapping="Wrap" Text="500" VerticalAlignment="Bottom" Width="102" FontSize="14"/>
+                    <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.286,5.143" TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="102" FontSize="14"/>
                 </Grid>
             </TabItem>
 
@@ -69,8 +69,8 @@
             </Image.RenderTransform>
         </Image>
         <ProgressBar x:Name="progressBar" Grid.Row="4" HorizontalAlignment="Left" Height="25" Margin="0,1.571,0,0" VerticalAlignment="Top" Width="249" Background="#FFF1F0F0" Foreground="#FFB8D9BE" />
-        <Label x:Name="lbTimeElapsed" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" VerticalAlignment="Top" Height="25" Width="40" Margin="10,1.571,0,0"/>
-        <Label x:Name="lbTimeLeft" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" Margin="207,1.571,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.466,0" Height="25" Width="40"/>
+        <Label x:Name="lbTimeElapsed" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="75" Margin="10,0,0,0" FontSize="13" Foreground="#FF017973" FontWeight="Bold"/>
+        <Label x:Name="lbTimeLeft" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" Margin="180,1.571,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.466,0" Height="25" Width="67" Foreground="#FF016F06"/>
         <Label x:Name="lblStatus" Grid.Row="0"  Content="Status:" HorizontalAlignment="Left" Height="28" Margin="0,-4,0,0" VerticalAlignment="Top" Width="254" FontSize="14" RenderTransformOrigin="0.5,0.5" Foreground="#FF1B7F11"/>
     </Grid>
 </UserControl>

@@ -34,7 +34,6 @@ namespace Axel_probe
         List<double> iStack, dStack, corrList;
         bool cancelRequest = false;
         DispatcherTimer dispatcherTimer;
-        int jumboCycles; string jumboGroupID;
         double driftRange, driftPeriod, driftStep;
         RemoteMessaging remote;
         string remoteDoubleFormat = "G4";
@@ -168,14 +167,15 @@ namespace Axel_probe
                 sp += Math.PI / 200;
                 //if ((k % 10) == 0) { DoEvents(); k++; }
             }
+            grFringes.DataSource = fringes;
         }
 
-        private double calcAtPos(double glPos, int j) // pos - phase; j - seq. number for 2 strobe mode
+        private double calcAtPos(bool jumbo, double glPos, bool odd) // pos - phase; j - seq. number for 2 strobe mode
             // returns drift
         {
             double err;
             double drift = accelDrift(glPos);
-            ramp.Add(new Point(glPos, drift));
+            if (jumbo) ramp.Add(new Point(glPos, drift));
 
             fringesGenerator(glPos, drift);
             DoEvents();
@@ -185,15 +185,15 @@ namespace Axel_probe
                 if (rbSingle.IsChecked.Value)
                 {
                     err = SingleAdjust(drift);
-                    if (!double.IsNaN(err))
+                    if (!double.IsNaN(err) && jumbo)
                     {
                         corr.Add(new Point(glPos, err)); corrList.Add(err);
                     }
                 }
                 if (rbDouble.IsChecked.Value)
                 {
-                    err = DoubleAdjust(j, drift);
-                    if (!double.IsNaN(err) && ((j % 2) == 1))
+                    err = DoubleAdjust(!odd, drift);
+                    if (!double.IsNaN(err) && odd && jumbo)
                     {
                         corr.Add(new Point(glPos, err)); corrList.Add(err);
                     }
@@ -233,7 +233,7 @@ namespace Axel_probe
                 pos = 0; j = 0;  
                 while ((pos < (ndPeriod.Value + 0.0001)) && !stopRequest)
                 {
-                    drift = calcAtPos(pos, j);
+                    drift = calcAtPos(true, pos, (j % 2) == 1);
                     pos += step; j++;
                     do
                     {
@@ -292,7 +292,7 @@ namespace Axel_probe
             {
                 log("Error: index cannot be found"); return double.NaN;
             }          
-            if (!chkRemoteEnabled.IsChecked.Value)
+            if (!remote.Enabled)
             {
                 double corr = PID(fringes[curIdx].Y);
                 crsFringes1.AxisValue = curX + corr;
@@ -303,10 +303,10 @@ namespace Axel_probe
         }
 
         double leftLvl = double.NaN, rightLvl = double.NaN;
-        private double DoubleAdjust(int idx, double drift) // return error in fringe position/phase
+        private double DoubleAdjust(bool even, double drift) // return error in fringe position/phase
         {
             int curIdx1, curIdx2; double cx, curX1, curX2;
-            if ((idx % 2) == 0) // even
+            if (even) // even
             {
                 curX1 = (double)crsFringes1.AxisValue;
                 curIdx1 = getIfringe(curX1);
@@ -327,7 +327,7 @@ namespace Axel_probe
                 }
                 rightLvl = fringes[curIdx2].Y;
             }
-            if (!chkRemoteEnabled.IsChecked.Value)
+            if (!remote.Enabled)
             {   
                 double corr = PID(leftLvl - rightLvl);
                 crsFringes1.AxisValue = (double)crsFringes1.AxisValue + corr; // adjust left
@@ -383,9 +383,10 @@ namespace Axel_probe
             remote.Enabled = chkRemoteEnabled.IsChecked.Value;
         }
 
+        private MMexec lastGrpExe;
         private void DoActiveComm(bool active)
         {
-            if (!chkRemoteEnabled.IsChecked.Value) return;
+            if (!remote.Enabled) return;
             if (active)
             {
                 grpRemote.Foreground = Brushes.Green;
@@ -424,7 +425,8 @@ namespace Axel_probe
                 case ("scan"):
                     {
                         MMscan mms = new MMscan();
-                        if (mms.FromDictionary(mme.prms)) SimpleScan(mms, mms.groupID);
+                        lastGrpExe = mme.Clone();
+                        if (mms.FromDictionary(mme.prms)) dispatcherTimer.Start();
                         else
                         {
                             MMexec mmj = new MMexec();
@@ -450,9 +452,7 @@ namespace Axel_probe
                             crsFringes2.AxisValue = (double)mme.prms["strobe2"];
                             leftLvl = double.NaN; rightLvl = double.NaN;
                         }
-                        jumboGroupID = (string)mme.prms["groupID"];
-                        jumboCycles = Convert.ToInt32(mme.prms["cycles"]);
-
+                        lastGrpExe = mme.Clone();
                         dispatcherTimer.Start();
                     }
                     break;
@@ -542,45 +542,62 @@ namespace Axel_probe
                 log(msg.Substring(1,80)+"...");
             }
             return rslt;
-
         } 
         
-        private void SimpleScan(MMscan mms, string groupID)
+        private void SimpleScan(MMscan mms)
         {
             MMexec md = new MMexec();
             md.mmexec = "";
             md.cmd = "shotData";
             md.sender = "Axel-probe";
-            md.prms["groupID"] = groupID;
+            md.prms["groupID"] = mms.groupID;
             md.prms["runID"] = 0;
 
             double n2 = 1; double ntot = 5; // n2 = 1 .. 3 / A = 1 .. -1              
             double b2 = 1; double btot = 3; double bg = 0;
 
-            cancelRequest = false; double A = 0;  fringes.Clear();           
-            for (double ph = mms.sFrom; ph <= mms.sTo; ph += mms.sBy)
+            cancelRequest = false; double A = 0;  fringes.Clear();
+            for (double ph = mms.sFrom; ph < mms.sTo + 0.01 * mms.sBy; ph += mms.sBy)
             {
                 DoEvents();
-                if (cancelRequest) break;
                 n2 = Math.Sin(ph)+2;  // n2 = 1 .. 3
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 fringes.Add(new Point(ph, A)); 
 
                 System.Threading.Thread.Sleep((int)ndDelay.Value);
+                log(ph.ToString());
+                if (Utils.InRange(ph, mms.sTo - 0.99 * mms.sBy, mms.sTo + 0.99 * mms.sBy) || cancelRequest)
+                {
+                    md.prms["last"] = 1;
+                }
                 if (!SingleShot(A, ref md)) break; 
+                if (cancelRequest) break;
             }               
         }
 
-        private async void SimpleRepeatAsync(bool jumbo, int cycles, string groupID)
+ /*       private async void SimpleRepeatAsync(bool jumbo, int cycles, string groupID)
         {
             // This method runs asynchronously.
             await Task.Run(() => SimpleRepeat(jumbo, cycles, groupID));
-        }
+        }*/
 
         private void dispatcherTimer_Tick(object sender, EventArgs e)
         {
             dispatcherTimer.Stop();
-            SimpleRepeat(true, jumboCycles, jumboGroupID);
+            crsFringes1.Visibility = System.Windows.Visibility.Visible;
+            if (rbDouble.IsChecked.Value) crsFringes2.Visibility = System.Windows.Visibility.Visible;
+            if(lastGrpExe.cmd.Equals("scan")) 
+            {
+                MMscan mms = new MMscan();
+                if (mms.FromDictionary(lastGrpExe.prms)) SimpleScan(mms);
+            }
+            if(lastGrpExe.cmd.Equals("repeat")) 
+            {
+                string jumboGroupID = (string)lastGrpExe.prms["groupID"];
+                int jumboCycles = Convert.ToInt32(lastGrpExe.prms["cycles"]);
+ 
+                SimpleRepeat(true, jumboCycles, jumboGroupID);
+            }
         }
 
         private void SimpleRepeat(bool jumbo, int cycles, string groupID)
@@ -598,21 +615,30 @@ namespace Axel_probe
             long realCycles = cycles;
             if(jumbo)
             {
+                if (cycles == -1) realCycles = long.MaxValue;
+            }
+            else
+            {
                 realCycles = (long)(driftPeriod/driftStep);
             }
-            else if (cycles == -1) realCycles = long.MaxValue;
-
-            double A = 0, frAmpl = 0, drift = 0, pos0, pos1, pos2; 
-            fringes.Clear(); ramp.Clear(); corr.Clear(); corrList.Clear();
-            cancelRequest = false;
+                
+            double A = 0, frAmpl = 0, drift = 0, pos0, pos1, pos2;
+            ramp.Clear(); corr.Clear(); corrList.Clear();
+            cancelRequest = false; int smallLoop = (int)(driftPeriod/driftStep);
+            int i = -1;
             for (long j = 0; j < realCycles; j++)
             {   
-                DoEvents();
-                if (cancelRequest) break;
-                pos0 = j * driftStep; 
-                drift = calcAtPos(pos0, (int)j);
+                DoEvents();                
                 if (jumbo)
                 {
+                    if (j % smallLoop == 0)
+                    {
+                        i = 0;
+                        ramp.Clear(); corr.Clear();
+                    }
+                    else i += 1;
+                    pos0 = i * driftStep;                   
+                    drift = calcAtPos(jumbo, pos0, (i % 2) == 1);
                     if (rbSingle.IsChecked.Value)
                     {
                         pos1 = (double)crsFringes1.AxisValue + drift;
@@ -632,16 +658,25 @@ namespace Axel_probe
                             frAmpl = Math.Cos(pos2);
                         }
                         log("pos1= " + pos1.ToString("G4") + "; pos2= " + pos2.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
-                    }                     
+                    }   
+                    
                 }
-                else
+                else // simple repeat
                 {
                     n2 = 1 + rnd.Next(200) / 100.0; // random from 1 to 3
                     A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
-                    fringes.Add(new Point(j, A));
+                    ramp.Add(new Point(j, A));
+                    //pos0 = j * driftStep;
+                    drift = calcAtPos(jumbo, A, (j % 2) == 1);
+                    frAmpl = A;
                 }
                 System.Threading.Thread.Sleep((int)ndDelay.Value);
+                if ((j == (realCycles - 1)) || cancelRequest)
+                {
+                    md.prms["last"] = 1;
+                }
                 if (!SingleShot(frAmpl, ref md)) break;
+                if (cancelRequest) break;
             }
         }
 
@@ -653,21 +688,20 @@ namespace Axel_probe
             mm.cmd = "scan";
             mm.id = rnd.Next(int.MaxValue);
             mm.sender = "Axel-probe";
-            string groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
             mm.id = rnd.Next(int.MaxValue);
 
             MMscan mms = new MMscan();            
             mms.TestInit();
-            mms.groupID = groupID;
+            mms.groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
             mms.ToDictionary(ref mm.prms);
 
-            if (chkRemoteEnabled.IsChecked.Value) // title command
+            if (remote.Enabled) // title command
             {
                 msg = JsonConvert.SerializeObject(mm);
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
                 log(msg);
             }
-            SimpleScan(mms, groupID); 
+            SimpleScan(mms); 
         }
 
         private void btnRepeat_Click(object sender, RoutedEventArgs e)
@@ -680,14 +714,14 @@ namespace Axel_probe
             int cycles = 200;
             mm.prms["cycles"] = cycles;
             string groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-            mm.prms["groupID"] = groupID;
-
-            if (chkRemoteEnabled.IsChecked.Value) // title command
+            mm.prms["groupID"] = groupID;           
+            if (remote.Enabled) // title command
             {
                 msg = JsonConvert.SerializeObject(mm);
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
                 log(msg);
             }
+            crsFringes1.Visibility = System.Windows.Visibility.Hidden; crsFringes2.Visibility = System.Windows.Visibility.Hidden;
             SimpleRepeat(false, cycles, groupID);
         }
 
@@ -706,9 +740,8 @@ namespace Axel_probe
             MMexec mm = new MMexec();
             mm.cmd = "abort";
             mm.mmexec = "abort_and_save_yourself!!!";
-            mm.sender = "Axel-probe";
-
-            if (chkRemoteEnabled.IsChecked.Value) // title command
+            mm.sender = "Axel-probe";            
+            if (remote.Enabled) // title command
             {
                 msg = JsonConvert.SerializeObject(mm);
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");

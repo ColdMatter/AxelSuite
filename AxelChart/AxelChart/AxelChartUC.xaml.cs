@@ -339,7 +339,8 @@ namespace AxelChartNS
         public int indexByX(double X, bool smart = true)
         {
             int idx = -1;
-            if ((Count == 0) || !Utils.InRange(X, First.X, Last.X)) return idx;
+            if (Count == 0) return idx; 
+            if (!Utils.InRange(X, First.X, Last.X)) return idx;
             if (smart && (Last.X > First.X))// assuming equidistant and increasing seq.
             {
                 double prd = (Last.X - First.X) / Count;
@@ -353,13 +354,13 @@ namespace AxelChartNS
                     break;
                 }
             }
-            return idx;     
+            return Utils.EnsureRange(idx,-1,Count-1);     
         }
 
         public bool statsByIdx(int FromIdx, int ToIdx, out double Mean, out double stDev)
         {
             Mean = double.NaN; stDev = double.NaN;
-            if (!Utils.InRange(FromIdx, 0, Count) || !Utils.InRange(ToIdx, 0, Count) || (FromIdx >= ToIdx)) return false;
+            if (!Utils.InRange(FromIdx, 0, Count-1) || !Utils.InRange(ToIdx, 0, Count-1) || (FromIdx >= ToIdx)) return false;
             double[] arr = new double[ToIdx - FromIdx +1];
             for (int i=FromIdx; i<=ToIdx; i++)
             {
@@ -374,7 +375,7 @@ namespace AxelChartNS
             // moment is last, duration is backwards
         {
             Mean = double.NaN; stDev = double.NaN;
-            //if (!TimeSeriesMode) return false;
+            if (Count == 0) return false;
             if(startingPoint > Last.X) return false;
             double moment;
             if (double.IsNaN(startingPoint)) moment = Last.X; // the last recorded - make sense for short buffers
@@ -608,8 +609,8 @@ namespace AxelChartNS
                   typeof(AxelChartClass),
                   new PropertyMetadata(false)
               );
-        
-        public void DoEvents()
+
+        public void DoEvents() // use it with caution (or better not), risk to introduce GUI freezing
         {
             DispatcherFrame frame = new DispatcherFrame();
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
@@ -690,7 +691,7 @@ namespace AxelChartNS
                 ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(x - curRange, x);
             }
             Application.Current.Dispatcher.BeginInvoke(
-              DispatcherPriority.ApplicationIdle, new Action(() => { graphScroll.Data[0] = pB; }));
+              DispatcherPriority.Background, new Action(() => { graphScroll.Data[0] = pB; }));
             double[] Ys;
             List<System.Windows.Point> pl = new List<System.Windows.Point>();
             switch (tabSecPlots.SelectedIndex) 
@@ -717,7 +718,7 @@ namespace AxelChartNS
                         break;
                 case 4: break; // opts / stats
             }
-            DoEvents();
+            //DoEvents();
             if (btnPause.Foreground == Brushes.Black) btnPause.Foreground = Brushes.Navy;
             else btnPause.Foreground = Brushes.Black;;
             while (pauseFlag) 

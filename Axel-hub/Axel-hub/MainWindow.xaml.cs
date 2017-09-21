@@ -38,6 +38,7 @@ using AxelChartNS;
 using Newtonsoft.Json.Linq;
 using UtilsNS;
 using RemoteMessagingNS;
+using System.Windows.Markup;
 //using DS345NS;
 
 
@@ -49,9 +50,9 @@ namespace Axel_hub
     /// </summary>
     public partial class MainWindow: Window
     {
-        bool jumboScanFlag = true;
-        bool jumboRepeatFlag = false;
-        bool jumboADC24Flag = false;
+        bool jumboScanFlag = false;
+        bool jumboRepeatFlag = true;
+        bool jumboADC24Flag = true;
 
         scanClass ucScan1;
         int nSamples = 1500; 
@@ -95,16 +96,25 @@ namespace Axel_hub
               DispatcherPriority.Background,
               new Action(() => 
               {
-                while (tbLog.Document.Blocks.Count > 500) tbLog.Document.Blocks.Remove(tbLog.Document.Blocks.ElementAt(0));
-                TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
-                rangeOfText1.Text = printOut + "\n";
+                TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentStart, tbLog.Document.ContentEnd);
+                string tx = rangeOfText1.Text;
+                int len = tx.Length; int maxLen = 10000; // the number of chars kept
+                if (len > (2 * maxLen)) // when it exceeds twice the maxLen
+                {
+                    tx = tx.Substring(maxLen);
+                    var paragraph = new Paragraph();
+                    paragraph.Inlines.Add(new Run(tx));
+                    tbLog.Document.Blocks.Clear();
+                    tbLog.Document.Blocks.Add(paragraph);
+                }
+                rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
+                rangeOfText1.Text = Utils.RemoveLineEndings(printOut) + "\r";
                 rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
                 tbLog.ScrollToEnd();
               }));
-
         }
 
-        public void DoEvents()
+        public void DoEvents() // use it with caution (or better not), risk to introduce GUI freezing
         {
             DispatcherFrame frame = new DispatcherFrame();
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
@@ -139,6 +149,7 @@ namespace Axel_hub
                 log("User ABORT !!!", Brushes.Red.Color);
                 return;
             }
+            if (AxelChart1.Running) AxelChart1.Running = false;
             AxelChart1.Clear();
             AxelChart1.Waveform.StackMode = true;
             nSamples = sizeLimit;
@@ -150,7 +161,7 @@ namespace Axel_hub
 
             if (AxelChart1.Waveform.TimeSeriesMode) axelMems.TimingMode = AxelMems.TimingModes.byADCtimer;
             else axelMems.TimingMode = AxelMems.TimingModes.byNone;
-            axelMems.StartAqcuisition(nSamples, 1 / AxelChart1.SamplingPeriod); // sync acquisition
+            axelMems.StartAqcuisition(nSamples, 1 / AxelChart1.SamplingPeriod); // async acquisition
         }
 
         private void jumboRepeat(int cycles, double strobe1, double strobe2)
@@ -173,7 +184,6 @@ namespace Axel_hub
             ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
             ucScan1.SendJson(jsonR);
         }
- 
         
         // main ADC call
         public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
@@ -191,8 +201,8 @@ namespace Axel_hub
                 lastGrpExe = new MMexec();
                 lastGrpExe.mmexec = "test_drive";
                 lastGrpExe.sender = "Axel-hub";
-               
-                if(jumboScanFlag) 
+
+                if (jumboScanFlag)
                 {
                     Clear();
                     tabLowPlots.SelectedIndex = 0;
@@ -202,16 +212,13 @@ namespace Axel_hub
                     lastScan.ToDictionary(ref lastGrpExe.prms);
 
                     string json = JsonConvert.SerializeObject(lastGrpExe);
-                    log("<< "+json, Brushes.Green.Color);
+                    log("<< " + json, Brushes.Green.Color);
                     ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                     ucScan1.SendJson(json);
+
                     if (ucScan1.remoteMode == RemoteMode.Free) return;  // abort mission
                 }
-                if(jumboRepeatFlag) 
-                {
-                    btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
-                    Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
-                }
+                else btnConfirmStrobes_Click(null, null);
             }
             else
             {
@@ -222,7 +229,7 @@ namespace Axel_hub
 
         private void btnConfirmStrobes_Click(object sender, RoutedEventArgs e)
         {
-            int cycles = 100;
+            int cycles = -1;
             if (jumboScanFlag) jumboRepeat(cycles, (double)crsStrobe1.AxisValue, (double)crsStrobe2.AxisValue);
             else
             {
@@ -236,6 +243,7 @@ namespace Axel_hub
             btnConfirmStrobes.Visibility = System.Windows.Visibility.Hidden;
             log("Jumbo succession is RUNNING !", Brushes.Green.Color);
         }
+
         public void DoAcquire(List<Point> dt, out bool next)
         {
             next = (ucScan1.EndlessMode() && ucScan1.Running);
@@ -250,7 +258,6 @@ namespace Axel_hub
             else AxelChart1.Waveform.AddRange(dt);
             //log(AxelChart1.Waveform.logger.bufferSize.ToString());
 
-            DoEvents();
             if (!next)
             {
                 AxelChart1.Running = false;
@@ -274,17 +281,19 @@ namespace Axel_hub
                 case("shotData"):
                 { 
                     log(json);
+                    bool scanMode = lastGrpExe.cmd.Equals("scan");
+                    bool repeatMode = lastGrpExe.cmd.Equals("repeat");
                     if (Convert.ToInt32(mme.prms["runID"]) == 0)
                     {
                         if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);                        
                         if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(true);
                         if (Utils.isNull(srsCorr)) srsCorr = new DataStack(true);
                         if (Utils.isNull(srsMems)) srsMems = new DataStack(true);
-                        Clear();
+                        Clear(); 
 
-                        if (lastGrpExe.cmd.Equals("scan")) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
+                        if (scanMode) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
                            ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
-                        if (lastGrpExe.cmd.Equals("repeat")) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
+                        if (repeatMode) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
 
                     }
                     string s1 = (string)lastGrpExe.prms["groupID"];
@@ -293,9 +302,9 @@ namespace Axel_hub
 
                     string endBit = ""; int runID = 0;
                     runID = Convert.ToInt32(mme.prms["runID"]);
-                    if(lastGrpExe.cmd.Equals("scan")) endBit = ";  cur.X: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
+                    if(scanMode) endBit = ";  cur.X: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
 
-                    if (lastGrpExe.cmd.Equals("repeat")) endBit = ";  runID: " + runID.ToString();
+                    if (repeatMode) endBit = ";  runID: " + runID.ToString();
                   
                     lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: "+ mme.prms["runID"]+ endBit;
                     Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
@@ -304,7 +313,7 @@ namespace Axel_hub
                     {
                         lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
                     }
-                    double asymmetry = MOTMasterDataConverter.Asymmetry(avgs);
+                    double asymmetry = MOTMasterDataConverter.Asymmetry(avgs, chkBackgroung.IsChecked.Value, chkDarkcurrent.IsChecked.Value);
                     signalDataStack = new DataStack();
                     backgroundDataStack = new DataStack();
 
@@ -338,8 +347,12 @@ namespace Axel_hub
                     // readjust Y axis
                     if (!chkManualAxis.IsChecked.Value)
                     {
-                        signalYmin = Math.Min(Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min()), signalYmin);
-                        signalYmax = Math.Max(Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max()), signalYmax);
+                        double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
+                        d = Math.Floor(10 * d) / 10;
+                        signalYmin = Math.Min(d, signalYmin);
+                        d = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
+                        d = Math.Ceiling(10 * d) / 10;
+                        signalYmax = Math.Max(d, signalYmax);
                         signalYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
                     }
 
@@ -347,13 +360,13 @@ namespace Axel_hub
                     // corrected with background
                     double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2; 
                     double currX = 1;
-                    if (lastGrpExe.cmd.Equals("scan"))
+                    if (scanMode)
                     {
                         currX = lastScan.sFrom + runID * lastScan.sBy;
                         stackN1.Add(new Point(currX,cN1)); stackN2.Add(new Point(currX,cN2)); stackNtot.Add(new Point(currX,cNtot));
                         stackRN1.Add(new Point(currX,cN1 / cNtot)); stackRN2.Add(new Point(currX,cN2 / cNtot)); 
                     }
-                    if (lastGrpExe.cmd.Equals("repeat"))
+                    if (repeatMode)
                     {
                         stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
                         stackRN1.AddPoint(cN1/cNtot); stackRN2.AddPoint(cN2/cNtot); 
@@ -361,25 +374,13 @@ namespace Axel_hub
                     graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; 
                     graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
 
-                    if (lastGrpExe.cmd.Equals("scan")) // title command
+                    if (scanMode) 
                     {
                         srsFringes.Add(new Point(currX, asymmetry));
                         graphFringes.Data[0] = srsFringes;
                     }
-                    if (lastGrpExe.cmd.Equals("repeat")) // title command
+                    if (repeatMode) 
                     {
-                        if (rbSingle.IsChecked.Value)
-                        {
-                            debalance = asymmetry;
-                        }
-                        else // double strobe
-                        {
-                            if ((runID % 2) == 0) strbLeft = asymmetry;
-                            else strbRight = asymmetry;
-                            debalance = strbRight - strbLeft;
-                            log("strbLeft: " + strbLeft.ToString("G3") + "; strbRight: " + strbRight.ToString("G3"));
-                        }
-                        corr = PID(debalance);
                         if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
                             if (AxelChart1.Running && jumboADC24Flag)
@@ -391,20 +392,45 @@ namespace Axel_hub
                                     graphAccelTrend.Data[2] = srsMems; 
                                 }                                   
                             }
-                            mme.sender = "Axel-hub";
-                            mme.cmd = "phaseConvert";
-                            mme.prms.Clear();
-                            mme.prms["runID"] = runID;
-                            mme.prms["accelVoltage"] = corr.ToString("G6");
-
-                            if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
-                            srsCorr.Add(new Point(runID, corr));
-                            graphAccelTrend.Data[1] = srsCorr;
+                            if (rbSingle.IsChecked.Value)
+                            {
+                                debalance = asymmetry;
+                            }
+                            else // double strobe
+                            {
+                                if ((runID % 2) == 0) strbLeft = asymmetry;
+                                else strbRight = asymmetry;
+                                debalance = strbRight - strbLeft;
+                                log("strbLeft: " + strbLeft.ToString("G3") + "; strbRight: " + strbRight.ToString("G3"));
+                            }
+                            if (chkFollowPID.IsChecked.Value)
+                            {
+                                corr = PID(debalance);
+                                mme.sender = "Axel-hub";
+                                mme.cmd = "phaseConvert";
+                                mme.prms.Clear();
+                                mme.prms["runID"] = runID;
+                                mme.prms["accelVoltage"] = corr.ToString("G6");
+                                if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
+                            
+                                srsCorr.Add(new Point(runID, corr));
+                                graphAccelTrend.Data[1] = srsCorr;
+                            }
                        }
-                       srsMotAccel.Add(new Point(runID, debalance));                       
+                       srsMotAccel.Add(new Point(runID, asymmetry));                       
                        graphAccelTrend.Data[0] = srsMotAccel;
                     }
-                    DoEvents();
+                    if (scanMode && jumboRepeatFlag)
+                    {
+                        if (mme.prms.ContainsKey("last"))
+                        {
+                            if ((Int64)mme.prms["last"] == 1)
+                            {
+                                btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
+                                Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
+                            }
+                        }
+                    }
                 }            
                     break;
                 case ("repeat"):
@@ -763,5 +789,5 @@ namespace Axel_hub
         {
             (sender as Graph).ResetZoomPan();
         }
-    }
+     }
 }

@@ -73,7 +73,7 @@ namespace scanHub
         public void OnRealSampling(double _realSampling) 
         {
             realSampling = _realSampling;
-            groupDigit.Header = " Conversion rate (" + realSampling.ToString() + " [Hz])"; DoEvents();
+            groupDigit.Header = " Conversion rate (" + realSampling.ToString() + " [Hz])"; 
         }  
 
         private void dispatcherTimer_Tick(object sender, EventArgs e)
@@ -91,11 +91,10 @@ namespace scanHub
                 progress = 100 * (currentTime.TotalSeconds / totalTime.TotalSeconds);
             }
             progressBar.Value = progress;
-            DoEvents();
-        }    
-    
-        public void DoEvents()
-        {
+        }
+
+        public void DoEvents() // use it with caution (or better not), risk to introduce GUI freezing
+        { 
             DispatcherFrame frame = new DispatcherFrame();
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
                 new DispatcherOperationCallback(ExitFrame), frame);
@@ -112,7 +111,7 @@ namespace scanHub
         {
             if (Utils.isNull(lblStatus)) return;
             lblStatus.Content = ">> " + sts;
-            DoEvents();
+            // DoEvents();
         }
 
         public bool Running
@@ -311,7 +310,6 @@ namespace scanHub
                 totalTime = new TimeSpan(0, 0, (int)(sizeLimit * period));
                 currentTime = new TimeSpan(0, 0, 0);
             }
-            DoEvents();
 
             OnStart(jumbo, down, period, sizeLimit); // the last three are valid only in non-jumbo mode with down = true
          }

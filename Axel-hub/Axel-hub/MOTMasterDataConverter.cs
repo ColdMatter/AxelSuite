@@ -28,7 +28,7 @@ namespace Axel_hub
             Dictionary<string,object>tempDict = new Dictionary<string, object>(); 
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID") tempDict[key] = data.prms[key];
+                if (key == "runID" || key == "groupID" || key == "last") tempDict[key] = data.prms[key];
                 else
                 {
                     var rawData = (JArray) data.prms[key];

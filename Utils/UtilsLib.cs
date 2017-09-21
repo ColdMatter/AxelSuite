@@ -19,11 +19,15 @@ namespace UtilsNS
 
         public static double EnsureRange(double Value, double MinValue, double MaxValue)
         {
-            return Math.Max(Math.Min(Value, MaxValue), MinValue);
+            if (Value < MinValue) return MinValue;
+            if (Value > MaxValue) return MaxValue;
+            return Value;
         }
         public static int EnsureRange(int Value, int MinValue, int MaxValue)
         {
-            return Math.Max(Math.Min(Value, MaxValue), MinValue);
+            if (Value < MinValue) return MinValue;
+            if (Value > MaxValue) return MaxValue;
+            return Value;
         }
         public static bool InRange(double Value, double MinValue, double MaxValue)
         {
@@ -41,6 +45,18 @@ namespace UtilsNS
         public static double formatDouble(double d, string format) 
         {
             return Convert.ToDouble(d.ToString(format));
+        }
+
+        public static string RemoveLineEndings(string value)
+        {
+            if (String.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+            string lineSeparator = ((char)0x2028).ToString();
+            string paragraphSeparator = ((char)0x2029).ToString();
+
+            return value.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty).Replace(lineSeparator, string.Empty).Replace(paragraphSeparator, string.Empty);
         }
 
         [DllImport("user32.dll", SetLastError=true)]
