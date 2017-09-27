@@ -291,14 +291,16 @@
                                     <ni:NumericTextBoxDouble x:Name="ndMM" HorizontalAlignment="Left" Height="23" Margin="41,78,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
                                 </Grid>
                             </GroupBox>
-                            <GroupBox Header="Jumbo Scan params" Margin="0,0,5.143,0">
+                            <GroupBox Header="Jumbo parameters" Margin="0,0,5.143,0">
                                 <Grid Margin="0,0,0,0">
                                     <Label Content="From" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top"/>
                                     <ni:NumericTextBoxDouble x:Name="numFrom" HorizontalAlignment="Left" Height="23" Margin="57,13,0,0" VerticalAlignment="Top" Width="67"/>
                                     <Label Content="To" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top"/>
                                     <ni:NumericTextBoxDouble x:Name="numTo" HorizontalAlignment="Left" Height="23" Margin="57,44,0,0" VerticalAlignment="Top" Width="67" Value="12.56"/>
                                     <Label Content="By" HorizontalAlignment="Left" Margin="10,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165"/>
-                                    <ni:NumericTextBoxDouble x:Name="numBy" HorizontalAlignment="Left" Height="23" Margin="57,74,0,0" VerticalAlignment="Top" Width="67" Value="0.1"/>
+                                    <ni:NumericTextBoxDouble x:Name="numBy" HorizontalAlignment="Left" Height="23" Margin="57,74,0,0" VerticalAlignment="Top" Width="67" Value="0.1" Range="0, Infinity, System.Double"/>
+                                    <Label Content="Cycles" HorizontalAlignment="Left" Margin="4,126,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165"/>
+                                    <ni:NumericTextBoxDouble x:Name="numCycles" HorizontalAlignment="Left" Height="23" Margin="57,129,0,0" VerticalAlignment="Top" Width="67" Value="10"/>
                                 </Grid>
                             </GroupBox>
 

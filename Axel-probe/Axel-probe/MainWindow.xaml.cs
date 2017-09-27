@@ -49,7 +49,6 @@ namespace Axel_probe
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
 
-            
             fringes = new ChartCollection<Point>();
             grFringes.DataSource = fringes;
 
@@ -93,6 +92,9 @@ namespace Axel_probe
         {
             if (!chkLog.IsChecked.Value) return;
             tbLog.AppendText(txt + "\r\n");
+            string text = tbLog.Text;
+            int maxLen = 10000;
+            if (text.Length > 2 * maxLen) tbLog.Text = text.Substring(maxLen);
             tbLog.Focus();
             tbLog.CaretIndex = tbLog.Text.Length;
             tbLog.ScrollToEnd();
@@ -157,27 +159,27 @@ namespace Axel_probe
             return drift;
         }
 
-        private void fringesGenerator(double pos, double drift)
+        private void fringesGenerator(double driftPos, double drift)
         {
             double sp = 0; //k = 0;
             fringes.Clear();
             while ((sp < 4 * Math.PI) && !stopRequest)
             {
-                fringes.Add(new Point(sp, Breathing(pos) + Math.Cos(sp + drift) + Gauss()));
+                fringes.Add(new Point(sp, Breathing(driftPos) + Math.Cos(sp + drift) + Gauss()));
                 sp += Math.PI / 200;
                 //if ((k % 10) == 0) { DoEvents(); k++; }
             }
             grFringes.DataSource = fringes;
         }
 
-        private double calcAtPos(bool jumbo, double glPos, bool odd) // pos - phase; j - seq. number for 2 strobe mode
+        private double calcAtPos(bool jumbo, double driftPos, bool odd) // glPos - phase; odd - odd/even number for 2 strobe mode
             // returns drift
         {
             double err;
-            double drift = accelDrift(glPos);
-            if (jumbo) ramp.Add(new Point(glPos, drift));
+            double drift = accelDrift(driftPos); // 
+            if (jumbo) ramp.Add(new Point(driftPos, drift));
 
-            fringesGenerator(glPos, drift);
+            fringesGenerator(driftPos, drift);
             DoEvents();
 
             if (chkFollowPID.IsChecked.Value)
@@ -187,7 +189,7 @@ namespace Axel_probe
                     err = SingleAdjust(drift);
                     if (!double.IsNaN(err) && jumbo)
                     {
-                        corr.Add(new Point(glPos, err)); corrList.Add(err);
+                        corr.Add(new Point(driftPos, err)); corrList.Add(err);
                     }
                 }
                 if (rbDouble.IsChecked.Value)
@@ -195,7 +197,7 @@ namespace Axel_probe
                     err = DoubleAdjust(!odd, drift);
                     if (!double.IsNaN(err) && odd && jumbo)
                     {
-                        corr.Add(new Point(glPos, err)); corrList.Add(err);
+                        corr.Add(new Point(driftPos, err)); corrList.Add(err);
                     }
                 }
             }
@@ -242,8 +244,7 @@ namespace Axel_probe
                     System.Threading.Thread.Sleep((int)ndDelay.Value);
                 }                
                 if (corrList.Count > 0)
-                    log("Aver=" + corrList.Average().ToString("G4") + 
-                        "; StDev= " + Statistics.StandardDeviation(corrList.ToArray()).ToString("G4") + "\n====================");
+                    log("Aver=" + corrList.Average().ToString("G4") + "; StDev= " + Statistics.StandardDeviation(corrList.ToArray()).ToString("G4") + "\n====================");
             } while ((cbFinite.SelectedIndex == 1) && !stopRequest);
             btnRun.Content = "R U N"; btnRun.Foreground = Brushes.DarkGreen;
         }
@@ -397,9 +398,6 @@ namespace Axel_probe
                 grpRemote.Foreground = Brushes.Red;
                 grpRemote.Header = "Remote - problem -X-";
             }
-                
-         //  if (active) Console.WriteLine("Remote - is ready <->");
-         //   else Console.WriteLine("Remote - problem -X-");
         }
 
         private void btnCommCheck_Click(object sender, RoutedEventArgs e)        
@@ -437,7 +435,7 @@ namespace Axel_probe
                     break;
                 case ("repeat"):
                     {
-                        if ((crsFringes2 == null) || (crsFringes1 == null)) return false;
+                        if ((crsFringes1 == null) || (crsFringes2 == null)) return false;
                         if (Convert.ToInt32(mme.prms["strobes"]) == 1) rbSingle.IsChecked = true;
                         else rbDouble.IsChecked = true;
                         if (rbSingle.IsChecked.Value)
@@ -540,6 +538,10 @@ namespace Axel_probe
                 rslt = remote.sendCommand(msg);
                 mme.prms["runID"] = (int)mme.prms["runID"]+1;
                 log(msg.Substring(1,80)+"...");
+                do
+                {
+                    DoEvents();
+                } while (chkPause.IsChecked.Value);
             }
             return rslt;
         } 
@@ -560,7 +562,7 @@ namespace Axel_probe
             for (double ph = mms.sFrom; ph < mms.sTo + 0.01 * mms.sBy; ph += mms.sBy)
             {
                 DoEvents();
-                n2 = Math.Sin(ph)+2;  // n2 = 1 .. 3
+                n2 = -Math.Cos(ph)+2;  // n2 = 1 .. 3
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 fringes.Add(new Point(ph, A)); 
 
@@ -620,9 +622,8 @@ namespace Axel_probe
             else
             {
                 realCycles = (long)(driftPeriod/driftStep);
-            }
-                
-            double A = 0, frAmpl = 0, drift = 0, pos0, pos1, pos2;
+            }               
+            double A = 0, frAmpl = 0, drift = 0, pos0, pos1 = 0, pos2 = 0, xPos1 = 0, xPos2 = 0;
             ramp.Clear(); corr.Clear(); corrList.Clear();
             cancelRequest = false; int smallLoop = (int)(driftPeriod/driftStep);
             int i = -1;
@@ -638,7 +639,7 @@ namespace Axel_probe
                     }
                     else i += 1;
                     pos0 = i * driftStep;                   
-                    drift = calcAtPos(jumbo, pos0, (i % 2) == 1);
+                    drift = calcAtPos(jumbo, pos0, (i % 2) == 1); // 
                     if (rbSingle.IsChecked.Value)
                     {
                         pos1 = (double)crsFringes1.AxisValue + drift;
@@ -666,7 +667,6 @@ namespace Axel_probe
                     n2 = 1 + rnd.Next(200) / 100.0; // random from 1 to 3
                     A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                     ramp.Add(new Point(j, A));
-                    //pos0 = j * driftStep;
                     drift = calcAtPos(jumbo, A, (j % 2) == 1);
                     frAmpl = A;
                 }

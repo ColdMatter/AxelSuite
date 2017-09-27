@@ -52,7 +52,7 @@ namespace Axel_hub
     {
         bool jumboScanFlag = false;
         bool jumboRepeatFlag = true;
-        bool jumboADC24Flag = true;
+        bool jumboADC24Flag = false;
 
         scanClass ucScan1;
         int nSamples = 1500; 
@@ -229,7 +229,7 @@ namespace Axel_hub
 
         private void btnConfirmStrobes_Click(object sender, RoutedEventArgs e)
         {
-            int cycles = -1;
+            int cycles = (int)numCycles.Value;
             if (jumboScanFlag) jumboRepeat(cycles, (double)crsStrobe1.AxisValue, (double)crsStrobe2.AxisValue);
             else
             {
@@ -279,8 +279,7 @@ namespace Axel_hub
             switch(mme.cmd)
             {
                 case("shotData"):
-                { 
-                    log(json);
+                {
                     bool scanMode = lastGrpExe.cmd.Equals("scan");
                     bool repeatMode = lastGrpExe.cmd.Equals("repeat");
                     if (Convert.ToInt32(mme.prms["runID"]) == 0)
@@ -290,7 +289,6 @@ namespace Axel_hub
                         if (Utils.isNull(srsCorr)) srsCorr = new DataStack(true);
                         if (Utils.isNull(srsMems)) srsMems = new DataStack(true);
                         Clear(); 
-
                         if (scanMode) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
                            ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
                         if (repeatMode) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
@@ -302,11 +300,16 @@ namespace Axel_hub
 
                     string endBit = ""; int runID = 0;
                     runID = Convert.ToInt32(mme.prms["runID"]);
-                    if(scanMode) endBit = ";  cur.X: "+(lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
-
-                    if (repeatMode) endBit = ";  runID: " + runID.ToString();
-                  
-                    lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: "+ mme.prms["runID"]+ endBit;
+                    if(scanMode) endBit = ";  scanX = " + (lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
+                    lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: "+ runID.ToString() + endBit;
+                    if (chkVerbatim.IsChecked.Value) log(json);
+                    else 
+                    {
+                        string msg = ">SHOT #"+runID.ToString()+"; grpID: " + mme.prms["groupID"] ;
+                        log(msg, Brushes.DarkGreen.Color);
+                        if(scanMode) log(endBit, Brushes.DarkBlue.Color);
+                        if (mme.prms.ContainsKey("last")) log(">LAST SHOT", Brushes.DarkRed.Color); 
+                    }
                     Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
                     lboxNB.Items.Clear();
                     foreach (var item in avgs)
@@ -457,6 +460,19 @@ namespace Axel_hub
                         tabLowPlots.SelectedIndex = 0;
                         chkN1_Checked(null, null);
                         Clear();
+                    }
+                    break;
+                case ("message"):
+                    {
+                        string txt = (string)mme.prms["text"];
+                        int errCode = -1;
+                        if (mme.prms.ContainsKey("error")) errCode = Convert.ToInt32(mme.prms["error"]);                        
+                        if(txt.Contains("Error") || (errCode > -1))
+                        { 
+                            log("!!! "+txt, Brushes.Red.Color);
+                            if (errCode > -1) log("Error code: "+errCode.ToString(), Brushes.Red.Color);
+                        }
+                        else log("! "+txt, Brushes.DarkOrange.Color);
                     }
                     break;
                 case ("abort"):
