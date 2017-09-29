@@ -50,7 +50,7 @@ namespace Axel_hub
     /// </summary>
     public partial class MainWindow: Window
     {
-        bool jumboScanFlag = false;
+        bool jumboScanFlag = true;
         bool jumboRepeatFlag = true;
         bool jumboADC24Flag = false;
 
@@ -216,7 +216,7 @@ namespace Axel_hub
                     ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                     ucScan1.SendJson(json);
 
-                    if (ucScan1.remoteMode == RemoteMode.Free) return;  // abort mission
+                    if (ucScan1.remoteMode == RemoteMode.Free) return;  // end mission
                 }
                 else btnConfirmStrobes_Click(null, null);
             }
@@ -232,7 +232,7 @@ namespace Axel_hub
             int cycles = (int)numCycles.Value;
             if (jumboScanFlag) jumboRepeat(cycles, (double)crsStrobe1.AxisValue, (double)crsStrobe2.AxisValue);
             else
-            {
+            {   // no scan to pick from
                 rbSingle_Checked(null, null);
                 if (rbSingle.IsChecked.Value) jumboRepeat(cycles, 7.8, -1);
                 else jumboRepeat(cycles, 4.7, 7.8);
@@ -308,7 +308,11 @@ namespace Axel_hub
                         string msg = ">SHOT #"+runID.ToString()+"; grpID: " + mme.prms["groupID"] ;
                         log(msg, Brushes.DarkGreen.Color);
                         if(scanMode) log(endBit, Brushes.DarkBlue.Color);
-                        if (mme.prms.ContainsKey("last")) log(">LAST SHOT", Brushes.DarkRed.Color); 
+                        if (mme.prms.ContainsKey("last"))
+                        {
+                            log(">LAST SHOT", Brushes.DarkRed.Color);
+                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat) ucScan1.Abort(false);
+                        }                             
                     }
                     Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
                     lboxNB.Items.Clear();
@@ -406,7 +410,7 @@ namespace Axel_hub
                                 debalance = strbRight - strbLeft;
                                 log("strbLeft: " + strbLeft.ToString("G3") + "; strbRight: " + strbRight.ToString("G3"));
                             }
-                            if (chkFollowPID.IsChecked.Value)
+                            if ((chkFollowPID.IsChecked.Value) && (ucScan1.remoteMode == RemoteMode.Simple_Repeat))
                             {
                                 corr = PID(debalance);
                                 mme.sender = "Axel-hub";
@@ -423,14 +427,24 @@ namespace Axel_hub
                        srsMotAccel.Add(new Point(runID, asymmetry));                       
                        graphAccelTrend.Data[0] = srsMotAccel;
                     }
-                    if (scanMode && jumboRepeatFlag)
+                    if (scanMode && (ucScan1.remoteMode == RemoteMode.Jumbo_Scan) && jumboRepeatFlag)
                     {
                         if (mme.prms.ContainsKey("last"))
                         {
-                            if ((Int64)mme.prms["last"] == 1)
+                            if (Convert.ToInt32(mme.prms["last"]) == 1)
                             {
                                 btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
                                 Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
+                            }
+                        }
+                    }
+                    if ((ucScan1.remoteMode == RemoteMode.Simple_Scan) || (ucScan1.remoteMode == RemoteMode.Simple_Repeat))
+                    {
+                        if (mme.prms.ContainsKey("last"))
+                        {
+                            if (Convert.ToInt32(mme.prms["last"]) == 1)
+                            {
+                                ucScan1.remoteMode = RemoteMode.Free;
                             }
                         }
                     }

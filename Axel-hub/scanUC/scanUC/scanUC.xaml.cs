@@ -93,25 +93,10 @@ namespace scanHub
             progressBar.Value = progress;
         }
 
-        public void DoEvents() // use it with caution (or better not), risk to introduce GUI freezing
-        { 
-            DispatcherFrame frame = new DispatcherFrame();
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
-                new DispatcherOperationCallback(ExitFrame), frame);
-            Dispatcher.PushFrame(frame);
-        }
-
-        public object ExitFrame(object f)
-        {
-            ((DispatcherFrame)f).Continue = false;
-            return null;
-        }
-
         private void Status(string sts)
         {
             if (Utils.isNull(lblStatus)) return;
             lblStatus.Content = ">> " + sts;
-            // DoEvents();
         }
 
         public bool Running
@@ -310,15 +295,14 @@ namespace scanHub
                 totalTime = new TimeSpan(0, 0, (int)(sizeLimit * period));
                 currentTime = new TimeSpan(0, 0, 0);
             }
-
             OnStart(jumbo, down, period, sizeLimit); // the last three are valid only in non-jumbo mode with down = true
          }
 
-        public void Abort(bool local) // the origin of Abort is local or remote
+        public void Abort(bool local) // the origin of Abort is (local) or (remote / end sequence)
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
             remoteMode = RemoteMode.Free;
-            if (jumbo) bbtnStart.Content = "Jumbo Run";
+            if (tabControl.SelectedIndex == 2) bbtnStart.Content = "Jumbo Run"; // remote tab
             else bbtnStart.Content = "Start";
             Running = false;
             bbtnStart.Value = false;

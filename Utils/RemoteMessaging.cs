@@ -162,19 +162,21 @@ namespace RemoteMessagingNS
             }
         }
 
+        private bool lastConnection = false;
         public bool CheckConnection()
         {
             bool back = sendCommand("ping");
             if (back)
             {
-                for (int i = 0; i<200; i++)
+                for (int i = 0; i < 200; i++)
                 {
                     Thread.Sleep(10);
                     if (lastRcvMsg.Equals("pong")) break;
                 }
             }
             back = back && (lastRcvMsg.Equals("pong"));
-            OnActiveComm(back);
+            if (lastConnection != back) OnActiveComm(back); // fire only if the state has been changed
+            lastConnection = back;
             return back;
         }
 
@@ -253,11 +255,7 @@ namespace RemoteMessagingNS
         public string cmd { get; set; }
         public int id { get; set; }
         public Dictionary<string, object> prms;
-        public MMexec()
-        {
-            id = rnd.Next(int.MaxValue);
-            prms = new Dictionary<string, object>();
-        }
+ 
         public MMexec(string Caption = "", string Sender = "", string Command = "", int ID = -1)
         {
             mmexec = Caption;
