@@ -353,7 +353,7 @@ namespace scanHub
          {
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
              string partner = "MOTMaster2";
-          /*   switch (computerName) 
+     /*        switch (computerName) 
              {
                  case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
                  case "DESKTOP-U334RMA": partner = "Axel Probe"; break;

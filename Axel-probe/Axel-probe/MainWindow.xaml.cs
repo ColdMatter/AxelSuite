@@ -454,10 +454,10 @@ namespace Axel_probe
                         dispatcherTimer.Start();
                     }
                     break;
-                case ("phaseConvert"):
+                case ("phaseAdjust"):
                     {
-                        log("<< phaseConvert to "+mme.prms["accelVoltage"]);
-                        double corr = Convert.ToDouble(mme.prms["accelVoltage"]);
+                        log("<< phaseAdjust to "+mme.prms["phaseCorrection"]);
+                        double corr = Convert.ToDouble(mme.prms["phaseCorrection"]);
                         if(rbSingle.IsChecked.Value)
                         {
                             crsFringes1.AxisValue = (double)crsFringes1.AxisValue + corr;

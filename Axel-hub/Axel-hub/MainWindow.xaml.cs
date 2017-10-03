@@ -410,15 +410,15 @@ namespace Axel_hub
                                 debalance = strbRight - strbLeft;
                                 log("strbLeft: " + strbLeft.ToString("G3") + "; strbRight: " + strbRight.ToString("G3"));
                             }
-                            if ((chkFollowPID.IsChecked.Value) && (ucScan1.remoteMode == RemoteMode.Simple_Repeat))
+                            if ((chkFollowPID.IsChecked.Value) && (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat))
                             {
                                 corr = PID(debalance);
                                 mme.sender = "Axel-hub";
-                                mme.cmd = "phaseConvert";
+                                mme.cmd = "phaseAdjust";
                                 mme.prms.Clear();
                                 mme.prms["runID"] = runID;
-                                mme.prms["accelVoltage"] = corr.ToString("G6");
-                                if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseConvert !!!", Brushes.Red.Color);   
+                                mme.prms["phaseCorrection"] = corr.ToString("G6");
+                                if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseAdjust !!!", Brushes.Red.Color);   
                             
                                 srsCorr.Add(new Point(runID, corr));
                                 graphAccelTrend.Data[1] = srsCorr;
