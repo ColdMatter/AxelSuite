@@ -14,7 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
-using RemoteMessagingNS;
+//using RemoteMessagingNS;
 using UtilsNS;
 
 namespace scanHub
@@ -39,7 +39,7 @@ namespace scanHub
     public partial class scanClass : UserControl
     {
         public delegate void NewMessageDelegate(string NewMessage);
-        private RemoteMessaging remote;
+        
         private double realSampling;
 
         TimeSpan totalTime, currentTime;
@@ -60,9 +60,11 @@ namespace scanHub
             //Status("Ready to go ");
         }
 
-        public bool SendJson(string json)
+        public bool SendJson(string json, bool async = false)
         {
-            return remote.sendCommand(json);
+            int delay = 0;
+            if (async) delay = 100;
+            return remote.sendCommand(json, delay);
         }
 
         public void SetFringeParams(FringeParams fp)
@@ -92,7 +94,6 @@ namespace scanHub
             }
             progressBar.Value = progress;
         }
-
         private void Status(string sts)
         {
             if (Utils.isNull(lblStatus)) return;
@@ -126,6 +127,15 @@ namespace scanHub
             }
         }
 
+        // Using a DependencyProperty as the backing store for Running.  
+        public static readonly DependencyProperty RunningProperty
+            = DependencyProperty.Register(
+                  "Running",
+                  typeof(bool),
+                  typeof(scanClass),
+                  new PropertyMetadata(false)
+              );
+
         public bool EndlessMode()
         {
             if (tabControl.SelectedIndex == 0) return (cbTimeEndless.SelectedIndex == 1);
@@ -142,22 +152,25 @@ namespace scanHub
                 tabControl.IsEnabled = (value == RemoteMode.Free);
             }
         }
-
-        // Using a DependencyProperty as the backing store for Running.  
-        public static readonly DependencyProperty RunningProperty
-            = DependencyProperty.Register(
-                  "Running",
-                  typeof(bool),
-                  typeof(scanClass),
-                  new PropertyMetadata(false)
-              );
-
         public static readonly DependencyProperty remoteModeProperty
             = DependencyProperty.Register(
                   "remoteMode",
                   typeof(RemoteMode),
                   typeof(scanClass),
                   new PropertyMetadata(RemoteMode.Free)
+              );
+
+        public RemoteMessagingNS.RemoteMessaging remote
+        {
+            get { return (RemoteMessagingNS.RemoteMessaging)GetValue(remoteProperty); }
+            set { SetValue(remoteProperty, value); }
+        }
+        public static readonly DependencyProperty remoteProperty
+            = DependencyProperty.Register(
+                  "remote",
+                  typeof(RemoteMessagingNS.RemoteMessaging),
+                  typeof(scanClass),
+                  new PropertyMetadata(null)
               );
 
         int TotalCycleCount = 0;
@@ -167,7 +180,7 @@ namespace scanHub
         {
             try
             {
-                bool back = false;
+                bool back = true;
                 OnRemote(message);
                 return back;
             }
@@ -179,32 +192,46 @@ namespace scanHub
         }
 
         public delegate void StartHandler(bool jumbo, bool down, double period, int sizeLimit);
-        public event StartHandler Start;
+        public event StartHandler OnStart;
 
-        protected void OnStart(bool jumbo, bool down, double period, int sizeLimit)
+        protected void StartEvent(bool jumbo, bool down, double period, int sizeLimit)
         {
-            if(Start != null) Start(jumbo, down, period, sizeLimit);
+            if(OnStart != null) OnStart(jumbo, down, period, sizeLimit);
         }
 
         public delegate void RemoteHandler(string msg);
-        public event RemoteHandler Remote;
+        public event RemoteHandler OnRemote;
 
-        protected void OnRemote(string msg)
+        protected void RemoteEvent(string msg)
         {
-            if (Remote != null) Remote(msg);
+            if (OnRemote != null) OnRemote(msg);
         }
 
         public delegate void FileRefHandler(string FN, bool stats);
-        public event FileRefHandler FileRef;
+        public event FileRefHandler OnFileRef;
 
-        protected void OnFileRef(string FN, bool stats)
+        protected void FileRefEvent(string FN, bool stats)
         {
-            if (FileRef != null) FileRef(FN, stats);
+            if (OnFileRef != null) OnFileRef(FN, stats);
+        }
+
+        public delegate void LogHandler(string txt, Color? clr = null);
+        public event LogHandler OnLog;
+
+        protected void LogEvent(string txt, Color? clr = null)
+        {
+            if (OnLog != null) OnLog(txt, clr);
+        }
+
+        protected void OnAsyncSend(bool OK, string json2send)
+        {
+            if (!OK) LogEvent("Error sending -> " + json2send, Brushes.Red.Color);
+            //else LogEvent("sending OK -> " + json2send);
         }
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("     Axel Hub v1.0 \n   by Teodor Krastev \nfor Imperial College, London, UK", "About");
+            MessageBox.Show("           Axel Hub v1.3 \n         by Teodor Krastev \nfor Imperial College, London, UK", "About");
         }
 
         private double GetSamplingPeriod()
@@ -232,7 +259,7 @@ namespace scanHub
         
         public void bbtnStart_Click(object sender, RoutedEventArgs e)
         {
-            if (Start == null) return;
+            if (OnStart == null) return;
             bool jumbo = false;
             switch ((string)bbtnStart.Content)
             {
@@ -309,7 +336,7 @@ namespace scanHub
             OnStart(jumbo, false, 0, 0);
             if (local)
             {
-                MMexec mme = new MMexec();
+                RemoteMessagingNS.MMexec mme = new RemoteMessagingNS.MMexec();
                 SendJson(mme.Abort("Axel-hub"));
             }
         }
@@ -353,15 +380,16 @@ namespace scanHub
          {
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
              string partner = "MOTMaster2";
-     /*        switch (computerName) 
+        /*     switch (computerName) 
              {
                  case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
                  case "DESKTOP-U334RMA": partner = "Axel Probe"; break;
              }*/
-             remote = new RemoteMessaging(partner); 
+             remote = new RemoteMessagingNS.RemoteMessaging(partner); 
              remote.Enabled = false;
              remote.OnReceive += MessageHandler;
              remote.ActiveComm += OnActiveComm;
+             remote.OnAsyncSent += OnAsyncSend;
 
              string[] args = Environment.GetCommandLineArgs(); 
              if (args.Length > 1) 

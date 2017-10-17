@@ -13,14 +13,14 @@ using Newtonsoft.Json;
 
 namespace RemoteMessagingNS
 {
-    class RemoteMessaging
+    public class RemoteMessaging
     {
         public string partner { get; private set; }
         private IntPtr windowHandle;
         public string lastRcvMsg { get; private set; }
         public string lastSndMsg { get; private set; }
         public List<string> msgLog;
-        public System.Windows.Threading.DispatcherTimer dTimer = null;
+        public DispatcherTimer dTimer, sTimer;
         private int _autoCheckPeriod = 10; // sec
         public int autoCheckPeriod
         {
@@ -44,6 +44,11 @@ namespace RemoteMessagingNS
             dTimer.Tick += new EventHandler(dTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, autoCheckPeriod);
             dTimer.Start();
+
+            sTimer = new DispatcherTimer(DispatcherPriority.Send);
+            sTimer.Tick += new EventHandler(sTimer_Tick);
+            sTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+
         }
         private void ResetTimer()
         {
@@ -109,9 +114,34 @@ namespace RemoteMessagingNS
             return hwnd;
         }
 
-        public bool sendCommand(string msg)
+        private string json2send = "";
+        private bool lastSentOK = true;
+        private void sTimer_Tick(object sender, EventArgs e)
+        {
+            sTimer.Stop();
+            if (json2send == "") throw new Exception("no message to be sent"); 
+            lastSentOK = sendCommand(json2send);
+            AsyncSent(lastSentOK,json2send);
+        }
+
+        public delegate void AsyncSentHandler(bool OK, string json2send);
+        public event AsyncSentHandler OnAsyncSent;
+        protected void AsyncSent(bool OK, string json2send)
+        {
+            if (OnAsyncSent != null) OnAsyncSent(OK, json2send);
+        }
+
+        public bool sendCommand(string msg, int delay = 0)
         {
             if (!Enabled) return false;
+            if (delay > 0)
+            {
+                sTimer.Interval = new TimeSpan(0, 0, 0, 0, delay);
+                json2send = msg;
+                sTimer.Start();
+                return true;
+            }
+
             // Find the target window handle.
             IntPtr hTargetWnd = NativeMethod.FindWindow(null, partner);
             if (hTargetWnd == IntPtr.Zero)
@@ -294,7 +324,7 @@ namespace RemoteMessagingNS
         }
     }
 
-    struct MMscan
+    public struct MMscan
     {
         public string groupID;
         public string sParam;

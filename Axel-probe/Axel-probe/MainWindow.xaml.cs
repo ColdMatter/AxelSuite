@@ -468,6 +468,7 @@ namespace Axel_probe
                             if ((runID % 2) == 0) crsFringes1.AxisValue = (double)crsFringes1.AxisValue + corr;
                             else crsFringes2.AxisValue = (double)crsFringes2.AxisValue + corr;
                         }
+                        wait4adjust = false;                      
                     }
                     break;
                 case ("abort"):
@@ -602,6 +603,7 @@ namespace Axel_probe
             }
         }
 
+        bool wait4adjust = false;
         private void SimpleRepeat(bool jumbo, int cycles, string groupID)
         {
             MMexec md = new MMexec();
@@ -628,9 +630,9 @@ namespace Axel_probe
             cancelRequest = false; int smallLoop = (int)(driftPeriod/driftStep);
             int i = -1;
             for (long j = 0; j < realCycles; j++)
-            {   
+            {
                 DoEvents();                
-                if (jumbo)
+                if (jumbo) // jumbo repeat
                 {
                     if (j % smallLoop == 0)
                     {
@@ -644,7 +646,7 @@ namespace Axel_probe
                     {
                         pos1 = (double)crsFringes1.AxisValue + drift;
                         frAmpl = Math.Cos(pos1);
-                        log("pos1= " + pos1.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                        log("# pos1= " + pos1.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
                     }
                     else
                     {
@@ -658,9 +660,16 @@ namespace Axel_probe
                         {
                             frAmpl = Math.Cos(pos2);
                         }
-                        log("pos1= " + pos1.ToString("G4") + "; pos2= " + pos2.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                        log("# pos1= " + pos1.ToString("G4") + "; pos2= " + pos2.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
                     }   
-                    
+                    wait4adjust = true;
+                    if (!SingleShot(frAmpl, ref md)) break;
+                    while (wait4adjust)
+                    {
+                        Thread.Sleep((int)ndDelay.Value);
+                        DoEvents();
+                    }
+                    Thread.Sleep((int)ndDelay.Value);
                 }
                 else // simple repeat
                 {
@@ -670,12 +679,12 @@ namespace Axel_probe
                     drift = calcAtPos(jumbo, A, (j % 2) == 1);
                     frAmpl = A;
                 }
-                System.Threading.Thread.Sleep((int)ndDelay.Value);
+                
                 if ((j == (realCycles - 1)) || cancelRequest)
                 {
                     md.prms["last"] = 1;
                 }
-                if (!SingleShot(frAmpl, ref md)) break;
+                Thread.Sleep((int)ndDelay.Value);
                 if (cancelRequest) break;
             }
         }

@@ -72,9 +72,11 @@ namespace Axel_hub
             gridLeft.Children.Add(ucScan1);
             ucScan1.Height = 266; ucScan1.VerticalAlignment = System.Windows.VerticalAlignment.Top; 
 
-            ucScan1.Start += new scanClass.StartHandler(DoStart);
-            ucScan1.Remote += new scanClass.RemoteHandler(DoRemote);
-            ucScan1.FileRef += new scanClass.FileRefHandler(DoRefFile);
+            ucScan1.OnStart += new scanClass.StartHandler(DoStart);
+            ucScan1.OnRemote += new scanClass.RemoteHandler(DoRemote);
+            ucScan1.OnFileRef += new scanClass.FileRefHandler(DoRefFile);
+            ucScan1.OnLog += new scanClass.LogHandler(log);
+            
             AxelChart1.Waveform.TimeSeriesMode = false;
 
             axelMems = new AxelMems();
@@ -282,6 +284,7 @@ namespace Axel_hub
                 {
                     bool scanMode = lastGrpExe.cmd.Equals("scan");
                     bool repeatMode = lastGrpExe.cmd.Equals("repeat");
+                    bool middleSection = (tabSecPlots.SelectedIndex != 0);
                     if (Convert.ToInt32(mme.prms["runID"]) == 0)
                     {
                         if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);                        
@@ -292,7 +295,6 @@ namespace Axel_hub
                         if (scanMode) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
                            ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
                         if (repeatMode) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
-
                     }
                     string s1 = (string)lastGrpExe.prms["groupID"];
                     if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID"); 
@@ -302,27 +304,36 @@ namespace Axel_hub
                     runID = Convert.ToInt32(mme.prms["runID"]);
                     if(scanMode) endBit = ";  scanX = " + (lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
                     lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: "+ runID.ToString() + endBit;
-                    if (chkVerbatim.IsChecked.Value) log(json);
+                    if (chkVerbatim.IsChecked.Value) log("("+json.Length.ToString()+") "+json);
                     else 
                     {
-                        string msg = ">SHOT #"+runID.ToString()+"; grpID: " + mme.prms["groupID"] ;
+                        string msg = ">SHOT #"+runID.ToString()+"; grpID: " + mme.prms["groupID"];
                         log(msg, Brushes.DarkGreen.Color);
                         if(scanMode) log(endBit, Brushes.DarkBlue.Color);
                         if (mme.prms.ContainsKey("last"))
                         {
                             log(">LAST SHOT", Brushes.DarkRed.Color);
-                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat) ucScan1.Abort(false);
+                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                            {
+                                ucScan1.Abort(false);
+                                lastGrpExe.Clear();
+                            }
                         }                             
                     }
                     Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
-                    lboxNB.Items.Clear();
-                    foreach (var item in avgs)
+                    if (middleSection)
                     {
-                        lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
+                        lboxNB.Items.Clear();
+                        foreach (var item in avgs)
+                        {
+                            lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
+                        }
                     }
                     double asymmetry = MOTMasterDataConverter.Asymmetry(avgs, chkBackgroung.IsChecked.Value, chkDarkcurrent.IsChecked.Value);
-                    signalDataStack = new DataStack();
-                    backgroundDataStack = new DataStack();
+                    if (Utils.isNull(signalDataStack)) signalDataStack = new DataStack();
+                    else signalDataStack.Clear();
+                    if (Utils.isNull(backgroundDataStack)) backgroundDataStack = new DataStack();
+                    else backgroundDataStack.Clear();
 
                     int xVal = 0; double N2 = ((double[])mme.prms["N2"]).Average();
                     foreach (double yVal in (double[])mme.prms["N2"])
@@ -349,8 +360,11 @@ namespace Axel_hub
                         backgroundDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
-                    graphSignal.Data[0] = signalDataStack;
-                    graphSignal.Data[1] = backgroundDataStack;
+                    if (middleSection)
+                    {
+                        graphSignal.Data[0] = signalDataStack;
+                        graphSignal.Data[1] = backgroundDataStack;
+                    }
                     // readjust Y axis
                     if (!chkManualAxis.IsChecked.Value)
                     {
@@ -366,21 +380,26 @@ namespace Axel_hub
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
                     // corrected with background
                     double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2; 
-                    double currX = 1;
+                    double currX = 1;                   
                     if (scanMode)
                     {
                         currX = lastScan.sFrom + runID * lastScan.sBy;
-                        stackN1.Add(new Point(currX,cN1)); stackN2.Add(new Point(currX,cN2)); stackNtot.Add(new Point(currX,cNtot));
-                        stackRN1.Add(new Point(currX,cN1 / cNtot)); stackRN2.Add(new Point(currX,cN2 / cNtot)); 
+                        if (middleSection)
+                        { 
+                            stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
+                            stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
+                        }
                     }
-                    if (repeatMode)
+                    if (middleSection)
                     {
-                        stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
-                        stackRN1.AddPoint(cN1/cNtot); stackRN2.AddPoint(cN2/cNtot); 
+                        if (repeatMode)
+                        {
+                            stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
+                            stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot);
+                        }
+                        graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
+                        graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
                     }
-                    graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2; 
-                    graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
-
                     if (scanMode) 
                     {
                         srsFringes.Add(new Point(currX, asymmetry));
@@ -418,8 +437,7 @@ namespace Axel_hub
                                 mme.prms.Clear();
                                 mme.prms["runID"] = runID;
                                 mme.prms["phaseCorrection"] = corr.ToString("G6");
-                                if(!ucScan1.SendJson(JsonConvert.SerializeObject(mme))) log("Error sending phaseAdjust !!!", Brushes.Red.Color);   
-                            
+                                ucScan1.SendJson(JsonConvert.SerializeObject(mme), true); 
                                 srsCorr.Add(new Point(runID, corr));
                                 graphAccelTrend.Data[1] = srsCorr;
                             }
