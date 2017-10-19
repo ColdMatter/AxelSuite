@@ -64,6 +64,9 @@ namespace Axel_hub
         DataStack stackRN2 = new DataStack(true);
         DataStack stackNtot = new DataStack(true);
         private List<Point> _fringePoints = new List<Point>();
+
+        OptionsWindow Options; 
+
         public MainWindow()
         {
             InitializeComponent();
@@ -84,6 +87,7 @@ namespace Axel_hub
             axelMems.RealSampling += new AxelMems.RealSamplingHandler(ucScan1.OnRealSampling);
 
             iStack = new List<double>(); dStack = new List<double>();
+            Options = new OptionsWindow();
         }
 
         private void log(string txt, Color? clr = null)
@@ -836,6 +840,19 @@ namespace Axel_hub
         private void graphNs_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             (sender as Graph).ResetZoomPan();
+        }
+
+        private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if(Utils.isNull(Options)) Options = new OptionsWindow();
+            Options.Show();
+        }
+
+        private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Options.genOptions.Save();
+            Options.Close();
+            e.Cancel = false;
         }
      }
 }

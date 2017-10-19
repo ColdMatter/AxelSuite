@@ -38,8 +38,6 @@ namespace scanHub
     /// </summary>
     public partial class scanClass : UserControl
     {
-        public delegate void NewMessageDelegate(string NewMessage);
-        
         private double realSampling;
 
         TimeSpan totalTime, currentTime;

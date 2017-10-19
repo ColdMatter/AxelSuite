@@ -6,7 +6,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace Axel_boss
+namespace Axel_hub
 {
     /// <summary>
     /// Interaction logic for App.xaml
