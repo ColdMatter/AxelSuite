@@ -103,8 +103,10 @@ namespace UtilsNS
     {
         public string header = ""; // that will be put as a file first line with # in front of it
         List<string> buffer;
-        public int bufferLimit = 2560;
+        public int bufferLimit = 256;
+        private int bufferCharLimit = 256000;
         public int bufferSize { get { return buffer.Count; } }
+        public int bufferCharSize { get; set; }
         public bool writing { get; private set; }
         public bool missingData { get; private set; }
         Stopwatch stw;
@@ -112,6 +114,7 @@ namespace UtilsNS
         public AutoFileLogger(string Filename = "")
         {
             _AutoSaveFileName = Filename;
+            bufferCharSize = 0;
             buffer = new List<string>();
             stw = new Stopwatch();
         }
@@ -119,20 +122,20 @@ namespace UtilsNS
         public int log(List<string> newItems)
         {
             if (!Enabled) return buffer.Count;
-            buffer.AddRange(newItems);
-            if (buffer.Count > bufferLimit) Flush();
+            foreach (string newItem in newItems) log(newItem);
             return buffer.Count;
         }
 
         public int log(string newItem)
         {
             if (!Enabled) return buffer.Count;
-            buffer.Add(newItem);
-            if (buffer.Count > bufferLimit) Flush();
+            buffer.Add(newItem); bufferCharSize += newItem.Length;
+            if ((buffer.Count > bufferLimit) || (bufferCharSize > bufferCharLimit)) Flush();
             return buffer.Count;
         }
         public void DropLastChar()
         {
+            if (buffer.Count == 0) return;
             string lastItem = buffer[buffer.Count - 1];
             buffer[buffer.Count - 1] = lastItem.Substring(0, lastItem.Length - 1);
         }
@@ -152,7 +155,7 @@ namespace UtilsNS
             {
                 strBuffer += buffer[i] + "\n";
             }
-            buffer.Clear();
+            buffer.Clear(); bufferCharSize = 0;
             ConsoleLine("0h: " + stw.ElapsedMilliseconds.ToString());
             var task = Task.Run(() => FileWriteAsync(AutoSaveFileName, strBuffer, true));
             return task;
@@ -160,10 +163,11 @@ namespace UtilsNS
 
         private async Task FileWriteAsync(string filePath, string messaage, bool append = true)
         {
+            FileStream stream = null;
             try
             {
-                using (FileStream stream = new FileStream(filePath, append ? FileMode.Append : FileMode.Create, FileAccess.Write,
-                                                                                               FileShare.None, 65536, true))
+                stream = new FileStream(filePath, append ? FileMode.Append : FileMode.Create, FileAccess.Write,
+                                                                                               FileShare.None, 65536, true);
                 using (StreamWriter sw = new StreamWriter(stream))
                 {
                     writing = true;
@@ -175,8 +179,12 @@ namespace UtilsNS
             }
             catch (IOException e)
             {
-                Console.WriteLine(">> IOException - " + e.Message);
+                ConsoleLine(">> IOException - " + e.Message);
                 missingData = true;
+            }
+            finally
+            {
+                if (stream != null) stream.Dispose();
             }
         }
 
@@ -235,5 +243,6 @@ namespace UtilsNS
         }
     }
     #endregion
+
 
 }

@@ -374,6 +374,11 @@ namespace scanHub
              }
          }
 
+         private void btnCheckComm_Click(object sender, RoutedEventArgs e)
+         {
+             remote.CheckConnection();
+         }
+
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
@@ -396,10 +401,5 @@ namespace scanHub
                 if (args[1].Equals("-remote")) tabControl.SelectedIndex = 2;
              }    
          }
-
-         private void btnCheckComm_Click(object sender, RoutedEventArgs e)
-         {
-             remote.CheckConnection();
-         }
-    }
+     }
 }

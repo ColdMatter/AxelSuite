@@ -100,9 +100,10 @@
                     <Grid Margin="0,0,-0.429,-4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
-                            <ColumnDefinition/>
+                            <ColumnDefinition Width="81*"/>
+                            <ColumnDefinition Width="221*"/>
                         </Grid.ColumnDefinitions>
-                        <GroupBox x:Name="grpData" Grid.Column="0" Header=" Data " Margin="0,1,9.714,0" FontSize="12">
+                        <GroupBox x:Name="grpData" Grid.Column="0" Header=" Data " Margin="0,1,9.714,0.429" FontSize="12">
                             <StackPanel Margin="0,3,0,0">
                                 <GroupBox Header="Files" Height="81" Margin="0,0,-0.143,0">
                                     <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
@@ -134,6 +135,16 @@
                                 </GroupBox>
                                 <CheckBox x:Name="chkVisualUpdate" Content="Vis. update (depth)" Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True"/>
                             </StackPanel>
+                        </GroupBox>
+                        <GroupBox Grid.Column="2" Header="Current value" HorizontalAlignment="Left" Margin="9.571,10,0,0" VerticalAlignment="Top" Height="62" Width="246">
+                            <Grid Margin="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="115*"/>
+                                    <ColumnDefinition Width="119*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label x:Name="lbCurrMean" Grid.Column="0" Content="0.0" HorizontalAlignment="Left" Margin="10,1,0,0" VerticalAlignment="Center" FontSize="18" Background="#FFFEFFFE" Foreground="#FF296F1C" Width="95"/>
+                                <Label x:Name="lbCurrDisp" Grid.Column="1" Content="+/- 0.0" HorizontalAlignment="Left" Margin="10.143,1,0,0.429" VerticalAlignment="Center" FontSize="18" Background="#FFFEFEFF" Foreground="#FF1C466F" Width="109"/>
+                            </Grid>
                         </GroupBox>
                     </Grid>
                 </TabItem>
