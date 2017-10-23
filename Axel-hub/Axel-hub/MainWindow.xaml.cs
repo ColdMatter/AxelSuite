@@ -276,6 +276,7 @@ namespace Axel_hub
         public void DoRemote(string json) // from TotalCount to 1
         {
             MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
+            if (lastGrpExe == null) lastGrpExe = mme;
             switch(mme.cmd)
             {
                 case("shotData"):
@@ -283,7 +284,7 @@ namespace Axel_hub
                     log(json);
                     bool scanMode = lastGrpExe.cmd.Equals("scan");
                     bool repeatMode = lastGrpExe.cmd.Equals("repeat");
-                    if (Convert.ToInt32(mme.prms["runID"]) == 0)
+                    if (Convert.ToInt32(mme.prms["runID"]) == 1)
                     {
                         if (Utils.isNull(srsFringes)) srsFringes = new DataStack(true);                        
                         if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(true);
@@ -562,6 +563,7 @@ namespace Axel_hub
                 MessageBox.Show("Error: No data to be saved");
                 return;
             }
+            //TODO Change this to add mean and standard deviation values
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
             if(!Utils.isNull(lastGrpExe)) file.WriteLine("#"+JsonConvert.SerializeObject(lastGrpExe));
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
