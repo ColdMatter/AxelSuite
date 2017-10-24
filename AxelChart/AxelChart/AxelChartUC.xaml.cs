@@ -493,14 +493,14 @@ namespace AxelChartNS
             return null;
         }
 
-        private List<Point> rescaleX(List<Point> pntsIn)
+        private List<Point> rescaleX(List<Point> pntsIn) // ???
         {
             if (rbPoints.IsChecked.Value)
             {
                 if (Waveform.TimeSeriesMode) throw new Exception("Wrong (time series) mode for natural point series");
                 return Waveform.Clone() as List<Point>;
             }
-            // internally x must be in sec
+            // internally x must be in sec !!!
             if (!Waveform.TimeSeriesMode) throw new Exception("Wrong (natural) mode for time series");
             if (rbSec.IsChecked.Value) return Waveform.Clone() as List<Point>;
             
@@ -588,14 +588,19 @@ namespace AxelChartNS
                 case 4: if (chkVisualUpdate.IsChecked.Value) // opts / stats
                         {
                             double mn = Waveform.pointYs().Average(); double dsp = Waveform.pointSDevY();
-
                             //if (Waveform.statsByTime(double.NaN, double.NaN, out mn, out dsp))
                             {
                                 Application.Current.Dispatcher.BeginInvoke(
                                  DispatcherPriority.Background,
                                  new Action(() =>
                                  {
-                                     lbCurrMean.Content = mn.ToString("G7"); lbCurrDisp.Content = "+/- "+dsp.ToString("G7");
+                                     lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
+                                     double k = 1000;
+                                     lbMean.Items[1] = (k*mn).ToString("G7"); lbStDev.Items[1] = (k*dsp).ToString("G7"); // mV
+                                     k = 1e-3 / 6.00012;
+                                     lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
+                                     k = 1.235976e-3 / 6.00012;
+                                     lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // ug
                                  }));
                             }
                         }
@@ -795,10 +800,7 @@ namespace AxelChartNS
 
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
-            //Clear(true);
-            double m, d;
-            Waveform.statsByTime(4,0.9,out m,out d);
-            MessageBox.Show(m.ToString() + " / " + d.ToString());
+            Clear(true);
         }
 
         private void graphOverview_KeyDown(object sender, KeyEventArgs e)

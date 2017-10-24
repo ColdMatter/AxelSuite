@@ -14,7 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
-//using RemoteMessagingNS;
+using RemoteMessagingNS;
 using UtilsNS;
 
 namespace scanHub
@@ -179,7 +179,7 @@ namespace scanHub
             try
             {
                 bool back = true;
-                OnRemote(message);
+                RemoteEvent(message);
                 return back;
             }
             catch (Exception ex)
@@ -388,11 +388,11 @@ namespace scanHub
                  case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
                  case "DESKTOP-U334RMA": partner = "Axel Probe"; break;
              }*/
-             remote = new RemoteMessagingNS.RemoteMessaging(partner); 
+             remote = new RemoteMessaging(partner); 
              remote.Enabled = false;
-             remote.OnReceive += MessageHandler;
-             remote.ActiveComm += OnActiveComm;
-             remote.OnAsyncSent += OnAsyncSend;
+             remote.OnReceive += new RemoteMessaging.RemoteHandler(MessageHandler);
+             remote.ActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
+             remote.OnAsyncSent += new RemoteMessaging.AsyncSentHandler(OnAsyncSend);
 
              string[] args = Environment.GetCommandLineArgs(); 
              if (args.Length > 1) 

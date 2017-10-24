@@ -61,6 +61,9 @@
                                     <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="393"/>
                                 </StackPanel>
                                 <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
+                                    <ni:Graph.Axes>
+                                        <ni:AxisDouble x:Name="NsYaxis" Orientation="Vertical" Adjuster="None"/>
+                                    </ni:Graph.Axes>
                                     <ni:Graph.Children>
                                         <ni:MultiPlotCursor Label="multiPlotCursor1">
                                             <ni:MultiPlotCursor.ValuePresenter>

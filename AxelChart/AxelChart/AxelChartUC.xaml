@@ -136,14 +136,31 @@
                                 <CheckBox x:Name="chkVisualUpdate" Content="Vis. update (depth)" Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True"/>
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="6,10,0,0" VerticalAlignment="Top" Height="62" Width="300">
+                        <GroupBox Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="6,10,0,0" VerticalAlignment="Top" Height="177" Width="369">
                             <Grid Margin="0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="145"/>
-                                    <ColumnDefinition Width="155"/>
+                                    <ColumnDefinition Width="158.857"/>
+                                    <ColumnDefinition Width="153.714"/>
+                                    <ColumnDefinition Width="45.714"/>
                                 </Grid.ColumnDefinitions>
-                                <Label x:Name="lbCurrMean" Grid.Column="0" Content="0.0" HorizontalAlignment="Left" Margin="0,1,0,0" VerticalAlignment="Center" FontSize="18" Background="#FFFEFFFE" Foreground="#FF296F1C" Width="149"/>
-                                <Label x:Name="lbCurrDisp" Content="+/- 0.0" HorizontalAlignment="Left" Margin="145,1,0,0.429" VerticalAlignment="Center" FontSize="18" Background="#FFFEFEFF" Foreground="#FF1C466F" Width="144" Grid.ColumnSpan="2"/>
+                                <ListBox x:Name="lbMean" Grid.Column="0" Margin="0,0,0,0" FontSize="18">
+                                    <ListBoxItem Content="0.0"/>
+                                    <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
+                                    <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
+                                    <ListBoxItem Foreground="#FF008A77" Content="0.0"/>
+                                </ListBox>
+                                <ListBox x:Name="lbStDev" Grid.Column="1" Margin="0.143,0,0,0" FontSize="18" Grid.ColumnSpan="2">
+                                    <ListBoxItem Content="0.0"/>
+                                    <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
+                                    <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
+                                    <ListBoxItem Foreground="#FF008A77" Content="0.0"/>
+                                </ListBox>
+                                <ListBox x:Name="lbUnits" Grid.Column="2" Margin="0,0,0,0" FontSize="18">
+                                    <ListBoxItem Content="V"/>
+                                    <ListBoxItem Foreground="#FF0C7304" Content="mV"/>
+                                    <ListBoxItem Foreground="#FF0044AF" Content="uA"/>
+                                    <ListBoxItem Foreground="#FF008A77" Content="ug"/>
+                                </ListBox>
                             </Grid>
                         </GroupBox>
                     </Grid>

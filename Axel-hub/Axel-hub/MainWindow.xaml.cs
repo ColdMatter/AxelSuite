@@ -286,6 +286,7 @@ namespace Axel_hub
             {
                 case("shotData"):
                 {
+                    if(Utils.isNull(lastGrpExe)) throw new Exception("Wrong sequence of MMexec's");
                     bool scanMode = lastGrpExe.cmd.Equals("scan");
                     bool repeatMode = lastGrpExe.cmd.Equals("repeat");
                     bool middleSection = (tabSecPlots.SelectedIndex != 0);
@@ -394,6 +395,23 @@ namespace Axel_hub
                             stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
                         }
                     }
+                    if (!chkManualAxis.IsChecked.Value)
+                    {                      
+                        List<double> ld = new List<double>();
+                        ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
+                        ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
+                        double d = ld.Min();
+                        d = Math.Floor(10 * d) / 10;
+                        signalYmin = d; // Math.Min(d, signalYmin);
+                        ld.Clear();
+                        ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
+                        ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
+                        d = ld.Max();
+                        d = Math.Ceiling(10 * d) / 10;
+                        signalYmax = d; //Math.Max(d, signalYmax);
+                        NsYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
+                    }
+
                     if (middleSection)
                     {
                         if (repeatMode)
@@ -484,7 +502,8 @@ namespace Axel_hub
                     break;
                 case ("scan"):
                     {
-                        log(json, Brushes.DarkGreen.Color);                       
+                        log(json, Brushes.DarkGreen.Color);
+                        if (Utils.isNull(lastScan)) lastScan = new MMscan();
                         if (!lastScan.FromDictionary(mme.prms))
                         {
                             log("Error in incomming json", Brushes.Red.Color);
