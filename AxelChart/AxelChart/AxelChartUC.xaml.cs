@@ -205,7 +205,8 @@ namespace AxelChartNS
             if (smart && (Last.X > First.X))// assuming equidistant and increasing seq.
             {
                 double prd = (Last.X - First.X) / Count;
-                return (int)Math.Round((X - First.X) / prd);
+                int j = (int)Math.Round((X - First.X) / prd);
+                return Utils.EnsureRange(j, 0, Count - 1);   
             }
             for (int i = 0; i < Count; i++)
             {
@@ -237,12 +238,19 @@ namespace AxelChartNS
         {
             Mean = double.NaN; stDev = double.NaN;
             if (Count == 0) return false;
-            if(startingPoint > Last.X) return false;
+            if ((double.IsNaN(startingPoint)) && (double.IsNaN(duration)))
+            {
+                return statsByIdx(0, Count-1, out Mean, out stDev);
+            }
             double moment;
             if (double.IsNaN(startingPoint)) moment = Last.X; // the last recorded - make sense for short buffers
             else moment = startingPoint;
+            if(startingPoint > Last.X) return false;
             int ToIdx = indexByX(moment); if (ToIdx == -1) return false;
+
+            if (double.IsNaN(duration)) return false;
             int FromIdx = indexByX(moment-duration); if (FromIdx == -1) return false;
+
             return statsByIdx(FromIdx, ToIdx, out Mean, out stDev);
         }
 
@@ -579,10 +587,16 @@ namespace AxelChartNS
                         break;
                 case 4: if (chkVisualUpdate.IsChecked.Value) // opts / stats
                         {
-                            double mn,dsp;
-                            Waveform.statsByTime(double.NaN, 1, out mn, out dsp);
+                            double mn = Waveform.pointYs().Average(); double dsp = Waveform.pointSDevY();
+
+                            //if (Waveform.statsByTime(double.NaN, double.NaN, out mn, out dsp))
                             {
-                                lbCurrMean.Content = mn.ToString("G7"); lbCurrDisp.Content = dsp.ToString("G7"); 
+                                Application.Current.Dispatcher.BeginInvoke(
+                                 DispatcherPriority.Background,
+                                 new Action(() =>
+                                 {
+                                     lbCurrMean.Content = mn.ToString("G7"); lbCurrDisp.Content = "+/- "+dsp.ToString("G7");
+                                 }));
                             }
                         }
                         break; 
