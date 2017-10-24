@@ -46,7 +46,7 @@
                                 <BindingGroup/>
                             </ni:GraphInteractionPalette.BindingGroup>
                         </ni:GraphInteractionPalette>
-                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown" PlotAreaMouseLeftButtonDown="graphOverview_PlotAreaMouseLeftButtonDown">
+                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown"> <!--PlotAreaMouseLeftButtonDown="graphOverview_PlotAreaMouseLeftButtonDown"-->
                             <ni:Graph.Plots>
                                 <ni:Plot x:Name="plotOverview" Label="plotOverview">
                                     <ni:PlotRendererGroup>
