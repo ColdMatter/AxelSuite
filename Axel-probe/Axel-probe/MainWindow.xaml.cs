@@ -36,7 +36,7 @@ namespace Axel_probe
         DispatcherTimer dispatcherTimer;
         double driftRange, driftPeriod, driftStep;
         RemoteMessaging remote;
-        string remoteDoubleFormat = "G4";
+        string remoteDoubleFormat = "G12";
         Random rnd = new Random();
 
         public MainWindow()
@@ -510,10 +510,10 @@ namespace Axel_probe
             List<Double> srsBg = new List<Double>();
             signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
             signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear(); 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < 3000; i++)
             {
                 d = n2 + Gauss01() / scl;
-                lboxNB.Items[0] = "N2 = " + d.ToString("G4");
+                lboxNB.Items[0] = "N2 = " + d.ToString(remoteDoubleFormat);
                 srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
                 d = ntot + Gauss01() / scl;
                 srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));

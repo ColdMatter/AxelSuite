@@ -13,13 +13,29 @@ using Newtonsoft.Json;
 
 namespace RemoteMessagingNS
 {
+    public class memLog: List<string>
+    {          
+        public bool Enabled = true;
+        private int bufferLimit;
+        public memLog(int depth = 32): base()
+        {
+            bufferLimit = depth;
+        } 
+        public void log(string txt) 
+        {
+            if (!Enabled) return;
+            Add(txt);
+            while (Count > bufferLimit) RemoveAt(0);
+        }
+    }
     public class RemoteMessaging
     {
         public string partner { get; private set; }
         private IntPtr windowHandle;
         public string lastRcvMsg { get; private set; }
         public string lastSndMsg { get; private set; }
-        public List<string> msgLog;
+        public memLog Log;
+
         public DispatcherTimer dTimer, sTimer;
         private int _autoCheckPeriod = 10; // sec
         public int autoCheckPeriod
@@ -37,7 +53,7 @@ namespace RemoteMessagingNS
             HwndSource hwndSource = HwndSource.FromHwnd(windowHandle);
             hwndSource.AddHook(new HwndSourceHook(WndProc));
 
-            msgLog = new List<string>();
+            Log = new memLog(); Log.Enabled = false; // for debug use 
             lastRcvMsg = ""; lastSndMsg = "";
 
             dTimer = new System.Windows.Threading.DispatcherTimer();
@@ -48,7 +64,6 @@ namespace RemoteMessagingNS
             sTimer = new DispatcherTimer(DispatcherPriority.Send);
             sTimer.Tick += new EventHandler(sTimer_Tick);
             sTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-
         }
         private void ResetTimer()
         {
@@ -93,7 +108,7 @@ namespace RemoteMessagingNS
                     if (msgID == 666)
                     {
                         lastRcvMsg = myStruct.Message;
-                        msgLog.Add("R: " + lastRcvMsg);
+                        Log.log("R: " + lastRcvMsg);
                         ResetTimer();
                         switch (lastRcvMsg) 
                         {
@@ -181,7 +196,7 @@ namespace RemoteMessagingNS
                 }
                 else
                 {
-                    lastSndMsg = msg; msgLog.Add("S: " + lastSndMsg);
+                    lastSndMsg = msg; Log.log("S: " + lastSndMsg);
                     ResetTimer(); 
                 }
                 return true;
@@ -324,19 +339,69 @@ namespace RemoteMessagingNS
         }
     }
 
-    public struct MMscan
+    public class MMscan
     {
         public string groupID;
         public string sParam;
         public double sFrom;
         public double sTo;
         public double sBy;
+        public double Value;
+
+        public bool Check()
+        {
+            if ((sFrom == sTo) || (sBy == 0) || (Math.Abs(sBy) > Math.Abs(sTo - sFrom))) return false;
+            if ((sBy > 0) && (sFrom > sTo)) return false;
+            if ((sBy < 0) && (sFrom < sTo)) return false;
+            return true;
+        }
+
+        public MMscan NextInChain = null;
+        public bool Next()
+        {
+            bool NextValue = false;
+            if (NextInChain != null)
+            {
+                NextValue = NextInChain.Next();
+            }
+            if (NextValue) return true;
+            else
+            {
+                Value += sBy;
+                if (Value > sTo)
+                {
+                    Value = sFrom;
+                    return false;
+                }
+                else return true;
+            }
+        }
+
+        public string AsString
+        {
+            get { return sParam + "\t" + sFrom.ToString("G6") + " .. " + sTo.ToString("G6") + "; " + sBy.ToString("G6"); }
+            set
+            {
+                if (value == null) return;
+                if (value == "")
+                {
+                    TestInit(); return;
+                }
+                string[] parts = value.Split('\t'); sParam = parts[0];
+                string ss = parts[1]; int j = ss.IndexOf(".."); if (j == -1) return;
+                parts[0] = ss.Substring(0, j); parts[1] = ss.Substring(j + 2);
+                sFrom = Convert.ToDouble(parts[0]);
+                parts = parts[1].Split(';'); sTo = Convert.ToDouble(parts[0]);
+                sBy = Convert.ToDouble(parts[1]);
+            }
+        }
+
         public void TestInit()
         {
             groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
             sParam = "prm";
             sFrom = 0;
-            sTo = 4*3.14;
+            sTo = 4 * 3.14;
             sBy = 0.1;
         }
         public void ToDictionary(ref Dictionary<string, object> dict)
@@ -363,7 +428,7 @@ namespace RemoteMessagingNS
             catch (InvalidCastException e)
             {
                 return false;
-            }  
+            }
             return true;
         }
     }

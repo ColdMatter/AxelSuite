@@ -38,145 +38,6 @@ using UtilsNS;
 
 namespace AxelChartNS
 {
-    #region async file logger
-    /// <summary>
-    /// Async data storage device 
-    /// first you set the full path of the file, if - not, it will save in data dir under date-time filename
-    /// when you want the logging to start you set Enabled to true
-    /// at the end you set Enabled to false (that will flush the buffer to HD)
-    /// </summary>
-    public class AutoFileLogger 
-    {
-        public string header = ""; // that will be put as a file first line with # in front of it
-        List<string> buffer;
-        public int bufferLimit = 2560;
-        public int bufferSize { get { return buffer.Count; } }
-        public bool writing { get; private set; }
-        public bool missingData { get; private set; }
-        Stopwatch stw;
-
-        public AutoFileLogger(string Filename = "")
-        {
-            _AutoSaveFileName = Filename;
-            buffer = new List<string>();
-            stw = new Stopwatch();
-        }
-
-        public int log(List<string> newItems)
-        {
-            if (!Enabled) return buffer.Count;
-            buffer.AddRange(newItems);
-            if (buffer.Count > bufferLimit) Flush();
-            return buffer.Count;
-        }
-
-        public int log(string newItem)
-        {
-            if (!Enabled) return buffer.Count;
-            buffer.Add(newItem);
-            if (buffer.Count > bufferLimit) Flush();
-            return buffer.Count;
-        }
-
-        private void ConsoleLine(string txt)
-        {
-            #if DEBUG
-            Console.WriteLine(txt);
-            #endif
-        }
- 
-        public Task Flush() // do not forget to flush when exit (OR switch Enabled Off)
-        {
-            if (buffer.Count == 0) return null;
-            string strBuffer = ""; 
-            for (int i=0; i<buffer.Count; i++)
-            {
-                strBuffer += buffer[i] + "\n";
-            }           
-            buffer.Clear();
-            ConsoleLine("0h: " + stw.ElapsedMilliseconds.ToString());
-            var task = Task.Run(() => FileWriteAsync(AutoSaveFileName, strBuffer, true));
-            return task;
-        }
-
-        private async Task FileWriteAsync(string filePath, string messaage, bool append = true)
-        {
-            try 
-            {
-                using (FileStream stream = new FileStream(filePath, append ? FileMode.Append : FileMode.Create, FileAccess.Write,
-                                                                                               FileShare.None, 65536, true))
-                using (StreamWriter sw = new StreamWriter(stream))
-                {
-                    writing = true;
-                    ConsoleLine("1k: "+stw.ElapsedMilliseconds.ToString());
-                    await sw.WriteAsync(messaage);
-                    ConsoleLine("2p: " + stw.ElapsedMilliseconds.ToString());
-                    writing = false;
-                }
-            }
-            catch (IOException e)
-            {
-                Console.WriteLine(">> IOException - "+e.Message);
-                missingData = true; 
-            }
-        }
-
-        private bool _Enabled = false;
-        public bool Enabled 
-        {
-            get { return _Enabled; }       
-            set
-            {
-                if (value == _Enabled) return;
-                if (value && !_Enabled) // when it goes from false to true
-                {
-                    string dir = "";
-                    if (!_AutoSaveFileName.Equals("")) dir = Directory.GetParent(_AutoSaveFileName).FullName;
-                    if (!Directory.Exists(dir)) 
-                        _AutoSaveFileName = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + ".ahf"; //axel hub file
-
-                    string hdr = "";
-                    if (header != "") hdr = "# " + header+"\n";
-                    var task = Task.Run(() => FileWriteAsync(AutoSaveFileName, hdr, false));
-
-                    task.Wait();
-                    writing = false;
-                    missingData = false;
-                    stw.Start();
-                    _Enabled = true;
-                }
-                if (!value && _Enabled) // when it goes from true to false
-                {
-                    while (writing)
-                    {
-                        Thread.Sleep(100);
-                    }
-                    Task task = Flush();
-                    if(task != null) task.Wait();
-                    if (missingData) System.Windows.MessageBox.Show("Some data maybe missing from the log");
-                    stw.Reset();
-                    header = "";
-                    _Enabled = false;
-                }   
-             }     
-        }
-        
-        private string _AutoSaveFileName = "";
-        public string AutoSaveFileName
-        {
-            get 
-            {
-                return _AutoSaveFileName;
-            }
-            set 
-            { 
-                if(_Enabled) throw new Exception("Logger.Enabled must be Off when you set AutoSaveFileName.");
-                _AutoSaveFileName = value; 
-            }
-        }
-    }
-    #endregion
-
     #region DataStack - data storage for AxelChart
     /// <summary>
     /// You (developer) need to set TimeMode and one of SizeLimit or TimeLimit
@@ -344,7 +205,8 @@ namespace AxelChartNS
             if (smart && (Last.X > First.X))// assuming equidistant and increasing seq.
             {
                 double prd = (Last.X - First.X) / Count;
-                return (int)Math.Round((X - First.X) / prd);
+                int j = (int)Math.Round((X - First.X) / prd);
+                return Utils.EnsureRange(j, 0, Count - 1);   
             }
             for (int i = 0; i < Count; i++)
             {
@@ -376,12 +238,19 @@ namespace AxelChartNS
         {
             Mean = double.NaN; stDev = double.NaN;
             if (Count == 0) return false;
-            if(startingPoint > Last.X) return false;
+            if ((double.IsNaN(startingPoint)) && (double.IsNaN(duration)))
+            {
+                return statsByIdx(0, Count-1, out Mean, out stDev);
+            }
             double moment;
             if (double.IsNaN(startingPoint)) moment = Last.X; // the last recorded - make sense for short buffers
             else moment = startingPoint;
+            if(startingPoint > Last.X) return false;
             int ToIdx = indexByX(moment); if (ToIdx == -1) return false;
+
+            if (double.IsNaN(duration)) return false;
             int FromIdx = indexByX(moment-duration); if (FromIdx == -1) return false;
+
             return statsByIdx(FromIdx, ToIdx, out Mean, out stDev);
         }
 
@@ -716,7 +585,21 @@ namespace AxelChartNS
                         break;
                 case 3: graphHisto.Data[0] = Histogram(Waveform);
                         break;
-                case 4: break; // opts / stats
+                case 4: if (chkVisualUpdate.IsChecked.Value) // opts / stats
+                        {
+                            double mn = Waveform.pointYs().Average(); double dsp = Waveform.pointSDevY();
+
+                            //if (Waveform.statsByTime(double.NaN, double.NaN, out mn, out dsp))
+                            {
+                                Application.Current.Dispatcher.BeginInvoke(
+                                 DispatcherPriority.Background,
+                                 new Action(() =>
+                                 {
+                                     lbCurrMean.Content = mn.ToString("G7"); lbCurrDisp.Content = "+/- "+dsp.ToString("G7");
+                                 }));
+                            }
+                        }
+                        break; 
             }
             //DoEvents();
             if (btnPause.Foreground == Brushes.Black) btnPause.Foreground = Brushes.Navy;
