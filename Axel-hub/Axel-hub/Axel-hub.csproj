@@ -58,10 +58,6 @@
     <ApplicationIcon>rocket1.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AxelChart, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AxelChart\AxelChart\bin\AxelChart.dll</HintPath>
-    </Reference>
     <Reference Include="DataStructures">
       <HintPath>..\..\..\EDMSuite\MotMaster2\bin\Nav\DataStructures.dll</HintPath>
     </Reference>
@@ -184,6 +180,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="TripleBar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\AxelChart\AxelChart\AxelChart.csproj">
+      <Project>{c8285db3-de2f-4b3b-b79a-454b4c4c2828}</Project>
+      <Name>AxelChart</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

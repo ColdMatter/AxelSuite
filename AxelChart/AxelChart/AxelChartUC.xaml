@@ -46,7 +46,7 @@
                                 <BindingGroup/>
                             </ni:GraphInteractionPalette.BindingGroup>
                         </ni:GraphInteractionPalette>
-                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown">
+                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown"> <!--PlotAreaMouseLeftButtonDown="graphOverview_PlotAreaMouseLeftButtonDown"-->
                             <ni:Graph.Plots>
                                 <ni:Plot x:Name="plotOverview" Label="plotOverview">
                                     <ni:PlotRendererGroup>
@@ -59,7 +59,7 @@
                                 <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                             </ni:Graph.SelectionFill>
                         </ni:Graph>
-                        <Button x:Name="btnCpyPic1" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="21"/>
+                        <Button x:Name="btnCpyPic1" Content="Copy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="21"/>
                     </Grid>
                 </TabItem>
 

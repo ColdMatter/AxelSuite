@@ -502,7 +502,7 @@ namespace Axel_hub
                     break;
                 case ("scan"):
                     {
-                        log(json, Brushes.DarkGreen.Color);
+                        log(json, Brushes.DarkGreen.Color);                       
                         if (Utils.isNull(lastScan)) lastScan = new MMscan();
                         if (!lastScan.FromDictionary(mme.prms))
                         {
@@ -633,13 +633,14 @@ namespace Axel_hub
                 MessageBox.Show("Error: No data to be saved");
                 return;
             }
+            //TODO Change this to add mean and standard deviation values
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
             if(!Utils.isNull(lastGrpExe)) file.WriteLine("#"+JsonConvert.SerializeObject(lastGrpExe));
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
             file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot");  
             for (int i = 0; i < stackN1.Count; i++)
                 file.WriteLine(stackN1[i].X.ToString("G7") + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + stackRN1[i].Y.ToString("G7") + 
-                                              "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7") + "\t" + srsFringes[i].X.ToString("G7"));
+                                              "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7"));
             file.Close();
             log("Save> " + fn);
         }

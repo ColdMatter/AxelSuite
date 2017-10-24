@@ -39,9 +39,11 @@ namespace Axel_hub
         {
             InitializeComponent();
             genOptions = new GeneralOptions();
-
-            string fileJson = File.ReadAllText(Utils.configPath + "genOptions.cfg");
-            genOptions = JsonConvert.DeserializeObject<GeneralOptions>(fileJson);
+            if (File.Exists(Utils.configPath + "genOptions.cfg"))
+            {
+                string fileJson = File.ReadAllText(Utils.configPath + "genOptions.cfg");
+                genOptions = JsonConvert.DeserializeObject<GeneralOptions>(fileJson);
+            }
         }
 
         public GeneralOptions genOptions;
