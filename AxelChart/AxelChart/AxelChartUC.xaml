@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
-        Height="420.571" Width="790">
+        Height="414.929" Width="790">
     <Grid x:Name="gridRight" Margin="0,0,-0.714,0.571" Grid.ColumnSpan="2">
         <Grid.RowDefinitions>
             <RowDefinition MinHeight="5" Height="9*"/>
@@ -46,7 +46,8 @@
                                 <BindingGroup/>
                             </ni:GraphInteractionPalette.BindingGroup>
                         </ni:GraphInteractionPalette>
-                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown"> <!--PlotAreaMouseLeftButtonDown="graphOverview_PlotAreaMouseLeftButtonDown"-->
+                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown">
+                            <!--PlotAreaMouseLeftButtonDown="graphOverview_PlotAreaMouseLeftButtonDown"-->
                             <ni:Graph.Plots>
                                 <ni:Plot x:Name="plotOverview" Label="plotOverview">
                                     <ni:PlotRendererGroup>
@@ -136,7 +137,7 @@
                                 <CheckBox x:Name="chkVisualUpdate" Content="Vis. update (depth)" Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True"/>
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="6,10,0,0" VerticalAlignment="Top" Height="177" Width="369">
+                        <GroupBox Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="6,10,0,0" VerticalAlignment="Top" Height="175" Width="369">
                             <Grid Margin="0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="158.857"/>
@@ -148,23 +149,39 @@
                                     <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
                                     <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
                                     <ListBoxItem Foreground="#FF008A77" Content="0.0"/>
+                                    <ListBoxItem Foreground="#FFA12D20" Content="# 0"/>
                                 </ListBox>
-                                <ListBox x:Name="lbStDev" Grid.Column="1" Margin="0.143,0,0,0" FontSize="18" Grid.ColumnSpan="2">
+                                <ListBox x:Name="lbStDev" Grid.Column="1" Margin="0.143,0,0,0" FontSize="18" Grid.ColumnSpan="1">
                                     <ListBoxItem Content="0.0"/>
                                     <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
                                     <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
                                     <ListBoxItem Foreground="#FF008A77" Content="0.0"/>
+                                    <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
                                 </ListBox>
                                 <ListBox x:Name="lbUnits" Grid.Column="2" Margin="0,0,0,0" FontSize="18">
                                     <ListBoxItem Content="V"/>
                                     <ListBoxItem Foreground="#FF0C7304" Content="mV"/>
                                     <ListBoxItem Foreground="#FF0044AF" Content="uA"/>
-                                    <ListBoxItem Foreground="#FF008A77" Content="ug"/>
+                                    <ListBoxItem Foreground="#FF008A77" Content="mg"/>
+                                    <ListBoxItem Foreground="#FFA12D20" Content="SD"/>
                                 </ListBox>
                             </Grid>
                         </GroupBox>
+                        <Label Content="Time slice [ms]" Grid.Column="2" HorizontalAlignment="Left" Margin="10,187,0,0" VerticalAlignment="Top"/>
+                        <ni:NumericTextBoxDouble x:Name="ntbTimeSlice" Grid.Column="2" HorizontalAlignment="Left" Height="23" Margin="120,191,0,0" VerticalAlignment="Top" Width="70" Range="0, Infinity, System.Double" Value="100">
+                            <ni:NumericTextBoxDouble.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform/>
+                                    <SkewTransform/>
+                                    <RotateTransform Angle="-0.148"/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </ni:NumericTextBoxDouble.RenderTransform>
+                        </ni:NumericTextBoxDouble>
+                        <CheckBox x:Name="chkResultsLog" Grid.Column="2" Content="Log results [mg]" Margin="215,193,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="119" Height="17"/>
                     </Grid>
                 </TabItem>
+
             </TabControl>
         </Grid>
     </Grid>

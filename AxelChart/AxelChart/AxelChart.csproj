@@ -113,10 +113,6 @@
     <Resource Include="Properties\minus1.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Axel-hub\scanUC\scanUC\scanHub.csproj">
-      <Project>{ec092afa-ec88-499d-9932-0a0273f4bf87}</Project>
-      <Name>scanHub</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Utils\UtilsLib.csproj">
       <Project>{a377a708-96b9-4569-bc22-0187d647611e}</Project>
       <Name>UtilsLib</Name>

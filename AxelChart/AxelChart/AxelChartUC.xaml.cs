@@ -342,9 +342,10 @@ namespace AxelChartNS
             Waveform.DoRefresh += new DataStack.RefreshHandler(Refresh);
             //rbPoints.IsChecked = true;
             Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
-
+            resultStack = new DataStack();
             Refresh();
         }
+        private DataStack resultStack;
         public int GetStackDepth() { return (int)seStackDepth.Value; }
 
         public void Clear(bool andRefresh = true) 
@@ -466,6 +467,12 @@ namespace AxelChartNS
                     Refresh(null, null);
                 }
                 if (Running == value) return;
+                resultStack.logger.Enabled = value && chkResultsLog.IsChecked.Value;
+                if (value)
+                {
+                    if (resultStack.logger.Enabled) resultStack.logger.log("#StDev\tmean");
+                    resultStack.Clear();
+                } 
                 SetValue(RunningProperty, value);
             }
         }
@@ -587,8 +594,9 @@ namespace AxelChartNS
                         break;
                 case 4: if (chkVisualUpdate.IsChecked.Value) // opts / stats
                         {
-                            double mn = Waveform.pointYs().Average(); double dsp = Waveform.pointSDevY();
-                            //if (Waveform.statsByTime(double.NaN, double.NaN, out mn, out dsp))
+                            double mn; double dsp;
+                            //mn = Waveform.pointYs().Average(); dsp = Waveform.pointSDevY();
+                            if (Waveform.statsByTime(double.NaN, ntbTimeSlice.Value / 1000, out mn, out dsp))
                             {
                                 Application.Current.Dispatcher.BeginInvoke(
                                  DispatcherPriority.Background,
@@ -600,7 +608,9 @@ namespace AxelChartNS
                                      k = 1e-3 / 6.00012;
                                      lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
                                      k = 1.235976e-3 / 6.00012;
-                                     lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // ug
+                                     lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // mg
+                                     resultStack.AddPoint(k * mn, k * dsp);
+                                     lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDevY().ToString("G7");
                                  }));
                             }
                         }
