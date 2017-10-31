@@ -45,7 +45,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="200*"/>
                                 <ColumnDefinition Width="100*"/>
-                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" Margin="0">
                                 <Grid.RowDefinitions>
@@ -58,18 +58,18 @@
                                     <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFF99411" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
-                                    <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="393"/>
+                                    <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="273"/>
                                 </StackPanel>
                                 <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
                                     <ni:Graph.Axes>
                                         <ni:AxisDouble x:Name="NsYaxis" Orientation="Vertical" Adjuster="None"/>
                                     </ni:Graph.Axes>
                                     <ni:Graph.Children>
-                                        <ni:MultiPlotCursor Label="multiPlotCursor1">
+                                        <ni:MultiPlotCursor x:Name="NsCursor" Label="multiPlotCursor1">
                                             <ni:MultiPlotCursor.ValuePresenter>
                                                 <ni:ValueFormatterGroup>
                                                     <ni:ValueFormatterGroup.DefaultFormatter>
-                                                        <ni:GeneralValueFormatter Format="{x:Null}" ShortFormat="G7"/>
+                                                        <ni:GeneralValueFormatter Format="{x:Null}" ShortFormat="G3"/>
                                                     </ni:ValueFormatterGroup.DefaultFormatter>
                                                 </ni:ValueFormatterGroup>
                                             </ni:MultiPlotCursor.ValuePresenter>

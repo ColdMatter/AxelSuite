@@ -54,6 +54,7 @@ namespace Axel_hub
         bool jumboRepeatFlag = true;
         bool jumboADC24Flag = false;
 
+        Modes modes;
         scanClass ucScan1;
         int nSamples = 1500; 
         private AxelMems axelMems = null;
@@ -70,6 +71,7 @@ namespace Axel_hub
         public MainWindow()
         {
             InitializeComponent();
+            OpenDefaultModes();
             tabSecPlots.SelectedIndex = 1;
             ucScan1 = new scanClass();
             gridLeft.Children.Add(ucScan1);
@@ -274,7 +276,7 @@ namespace Axel_hub
         }
 
         private MMexec lastGrpExe; private MMscan lastScan;
-        private double strbLeft = 0, strbRight = 0, signalYmin = 10, signalYmax = 0;
+        private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = 0, signalYmin = 10, signalYmax = 0;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
@@ -331,7 +333,7 @@ namespace Axel_hub
                         lboxNB.Items.Clear();
                         foreach (var item in avgs)
                         {
-                            lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
+                            lboxNB.Items.Add(string.Format("{0}: {1:" + Options.genOptions.SignalTablePrec + "}", item.Key, item.Value));
                         }
                     }
                     double asymmetry = MOTMasterDataConverter.Asymmetry(avgs, chkBackgroung.IsChecked.Value, chkDarkcurrent.IsChecked.Value);
@@ -402,14 +404,14 @@ namespace Axel_hub
                         ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
                         double d = ld.Min();
                         d = Math.Floor(10 * d) / 10;
-                        signalYmin = d; // Math.Min(d, signalYmin);
+                        NsYmin = Math.Min(d, NsYmin);
                         ld.Clear();
                         ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
                         ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
                         d = ld.Max();
                         d = Math.Ceiling(10 * d) / 10;
-                        signalYmax = d; //Math.Max(d, signalYmax);
-                        NsYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
+                        NsYmax = Math.Max(d, NsYmax);
+                        NsYaxis.Range = new Range<double>(NsYmin - 0.2, NsYmax + 0.2);
                     }
 
                     if (middleSection)
@@ -865,14 +867,87 @@ namespace Axel_hub
         private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if(Utils.isNull(Options)) Options = new OptionsWindow();
-            Options.Show();
+            if(!Utils.isNull(sender)) Options.Show();
+            NsCursor.ValuePresenter = new ValueFormatterGroup(" — ", new GeneralValueFormatter("0.00"))
+            {
+                ValueFormatters = { new GeneralValueFormatter(Options.genOptions.SignalCursorPrec) }
+            };
         }
 
+        private void OpenDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
+        {
+            if (File.Exists(Utils.configPath + "Defaults.cfg"))
+            {
+                string fileJson = File.ReadAllText(Utils.configPath + "Defaults.cfg");
+                modes = JsonConvert.DeserializeObject<Modes>(fileJson);
+            }
+            else
+                modes = new Modes();
+
+            if (Top)
+            {
+
+            }
+            if (Middle)
+            {
+                chkManualAxis.IsChecked = modes.ManualYAxis;
+                chkBackgroung.IsChecked = modes.Background;
+                chkDarkcurrent.IsChecked = modes.DarkCurrent;
+                chkN1.IsChecked = modes.N1;
+                chkN2.IsChecked= modes.N2;
+                chkRN1.IsChecked = modes.RN1;
+                chkRN2.IsChecked = modes.RN2;
+                chkNtot.IsChecked = modes.Ntot;
+            }
+            if (Bottom)
+            {
+
+            }
+        }
+
+        private void SaveDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
+        {
+            if (Top)
+            {
+
+            }
+            if (Middle)
+            {
+                modes.ManualYAxis = chkManualAxis.IsChecked.Value;
+                modes.Background = chkBackgroung.IsChecked.Value;
+                modes.DarkCurrent = chkDarkcurrent.IsChecked.Value;
+                modes.N1 = chkN1.IsChecked.Value;
+                modes.N2 = chkN2.IsChecked.Value;
+                modes.RN1 = chkRN1.IsChecked.Value;
+                modes.RN2 = chkRN2.IsChecked.Value;
+                modes.Ntot = chkNtot.IsChecked.Value;
+            }
+            if (Bottom)
+            {
+
+            }
+            modes.Save();
+        }
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask))
+            {
+                //Save the currently open sequence to a default location
+                MessageBoxResult result = MessageBox.Show("Axel-hub is closing. \nDo you want to save the modes? ...or cancel closing?", "    Save Defaults", MessageBoxButton.YesNoCancel);
+                if (result == MessageBoxResult.Yes)
+                {
+                    SaveDefaultModes();
+                    //SaveSequence_Click(sender, null);
+                }
+                else if (result == MessageBoxResult.Cancel)
+                {
+                    //List<SequenceStep> steps = sequenceControl.sequenceDataGrid.ItemsSource.Cast<SequenceStep>().ToList();
+                    e.Cancel = true;
+                }
+            }
+            if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.save)) SaveDefaultModes();
             Options.genOptions.Save();
             Options.Close();
-            e.Cancel = false;
         }
      }
 }
