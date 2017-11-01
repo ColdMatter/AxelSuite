@@ -276,7 +276,7 @@ namespace Axel_hub
         }
 
         private MMexec lastGrpExe; private MMscan lastScan;
-        private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = 0, signalYmin = 10, signalYmax = 0;
+        private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
@@ -373,7 +373,7 @@ namespace Axel_hub
                         graphSignal.Data[1] = backgroundDataStack;
                     }
                     // readjust Y axis
-                    if (!chkManualAxis.IsChecked.Value)
+                    if (!chkManualAxis.IsChecked.Value) // signal
                     {
                         double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
                         d = Math.Floor(10 * d) / 10;
@@ -397,22 +397,6 @@ namespace Axel_hub
                             stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
                         }
                     }
-                    if (!chkManualAxis.IsChecked.Value)
-                    {                      
-                        List<double> ld = new List<double>();
-                        ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
-                        ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
-                        double d = ld.Min();
-                        d = Math.Floor(10 * d) / 10;
-                        NsYmin = Math.Min(d, NsYmin);
-                        ld.Clear();
-                        ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
-                        ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
-                        d = ld.Max();
-                        d = Math.Ceiling(10 * d) / 10;
-                        NsYmax = Math.Max(d, NsYmax);
-                        NsYaxis.Range = new Range<double>(NsYmin - 0.2, NsYmax + 0.2);
-                    }
 
                     if (middleSection)
                     {
@@ -420,6 +404,22 @@ namespace Axel_hub
                         {
                             stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
                             stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot);
+                        }
+                        if (!chkManualAxis.IsChecked.Value) // Ns
+                        {                      
+                            List<double> ld = new List<double>();
+                            ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
+                            ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
+                            double d = ld.Min();
+                            d = Math.Floor(10 * d) / 10;
+                            NsYmin = Math.Min(d, NsYmin);
+                            ld.Clear();
+                            ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
+                            ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
+                            d = ld.Max();
+                            d = Math.Ceiling(10 * d) / 10;
+                            NsYmax = Math.Max(d, NsYmax);
+                            NsYaxis.Range = new Range<double>(NsYmin - 0.2, NsYmax + 0.2);
                         }
                         graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
                         graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
@@ -504,15 +504,15 @@ namespace Axel_hub
                     break;
                 case ("scan"):
                     {
-                        log(json, Brushes.DarkGreen.Color);                       
+                        log(json, Brushes.DarkGreen.Color);
+                        lastGrpExe = mme.Clone();                       
                         if (Utils.isNull(lastScan)) lastScan = new MMscan();
                         if (!lastScan.FromDictionary(mme.prms))
                         {
                             log("Error in incomming json", Brushes.Red.Color);
                             ucScan1.Abort(true);
                             return;
-                        }
-                        lastGrpExe = mme.Clone();
+                        }                        
                         if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
                         tabLowPlots.SelectedIndex = 0;
                         chkN1_Checked(null, null);
@@ -784,7 +784,8 @@ namespace Axel_hub
                 if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
                 if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
                 lboxNB.Items.Clear();
-                signalYmin = 10; signalYmax = 0;
+                signalYmin = 10; signalYmax = -10;
+                NsYmin = 10; NsYmax = -10;
             }
             if (Bottom)
             {
@@ -883,7 +884,6 @@ namespace Axel_hub
             }
             else
                 modes = new Modes();
-
             if (Top)
             {
 
@@ -928,6 +928,7 @@ namespace Axel_hub
             }
             modes.Save();
         }
+
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask))
