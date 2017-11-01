@@ -274,7 +274,7 @@ namespace Axel_hub
         }
 
         private MMexec lastGrpExe; private MMscan lastScan;
-        private double strbLeft = 0, strbRight = 0, signalYmin = 10, signalYmax = 0;
+        private double strbLeft = 0, strbRight = 0, signalYmin = 0, signalYmax = 0;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
@@ -395,22 +395,7 @@ namespace Axel_hub
                             stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
                         }
                     }
-                    if (!chkManualAxis.IsChecked.Value)
-                    {                      
-                        List<double> ld = new List<double>();
-                        ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
-                        ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
-                        double d = ld.Min();
-                        d = Math.Floor(10 * d) / 10;
-                        signalYmin = d; // Math.Min(d, signalYmin);
-                        ld.Clear();
-                        ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
-                        ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
-                        d = ld.Max();
-                        d = Math.Ceiling(10 * d) / 10;
-                        signalYmax = d; //Math.Max(d, signalYmax);
-                        NsYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
-                    }
+
 
                     if (middleSection)
                     {
@@ -466,6 +451,22 @@ namespace Axel_hub
                        }
                        srsMotAccel.Add(new Point(runID, asymmetry));                       
                        graphAccelTrend.Data[0] = srsMotAccel;
+                    }
+                    if (!chkManualAxis.IsChecked.Value)
+                    {
+                        List<double> ld = new List<double>();
+                        ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min());
+                        ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
+                        double d = ld.Min();
+                        d = Math.Floor(10 * d) / 10;
+                        signalYmin = d; // Math.Min(d, signalYmin);
+                        ld.Clear();
+                        ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
+                        ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
+                        d = ld.Max();
+                        d = Math.Ceiling(10 * d) / 10;
+                        signalYmax = d; //Math.Max(d, signalYmax);
+                        NsYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
                     }
                     if (scanMode && (ucScan1.remoteMode == RemoteMode.Jumbo_Scan) && jumboRepeatFlag)
                     {
