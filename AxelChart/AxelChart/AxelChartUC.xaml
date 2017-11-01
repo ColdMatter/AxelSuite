@@ -137,7 +137,7 @@
                                 <CheckBox x:Name="chkVisualUpdate" Content="Vis. update (depth)" Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True"/>
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="6,10,0,0" VerticalAlignment="Top" Height="175" Width="369">
+                        <GroupBox x:Name="grpCurrValue" Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="6,10,0,0" VerticalAlignment="Top" Height="175" Width="369" Foreground="Black">
                             <Grid Margin="0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="158.857"/>
@@ -168,7 +168,7 @@
                             </Grid>
                         </GroupBox>
                         <Label Content="Time slice [ms]" Grid.Column="2" HorizontalAlignment="Left" Margin="10,187,0,0" VerticalAlignment="Top"/>
-                        <ni:NumericTextBoxDouble x:Name="ntbTimeSlice" Grid.Column="2" HorizontalAlignment="Left" Height="23" Margin="120,191,0,0" VerticalAlignment="Top" Width="70" Range="0, Infinity, System.Double" Value="100">
+                        <ni:NumericTextBoxDouble x:Name="ntbTimeSlice" Grid.Column="2" HorizontalAlignment="Left" Height="23" Margin="115,189,0,0" VerticalAlignment="Top" Width="70" Range="0, Infinity, System.Double" Value="100">
                             <ni:NumericTextBoxDouble.RenderTransform>
                                 <TransformGroup>
                                     <ScaleTransform/>
@@ -178,7 +178,7 @@
                                 </TransformGroup>
                             </ni:NumericTextBoxDouble.RenderTransform>
                         </ni:NumericTextBoxDouble>
-                        <CheckBox x:Name="chkResultsLog" Grid.Column="2" Content="Log results [mg]" Margin="215,193,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="119" Height="17"/>
+                        <CheckBox x:Name="chkResultsLog" Grid.Column="2" Content="Log results [mg]" Margin="205,193,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="119" Height="17"/>
                     </Grid>
                 </TabItem>
 

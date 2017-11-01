@@ -7,19 +7,26 @@
             <RowDefinition Height="250*"/>
             <RowDefinition Height="46"/>
         </Grid.RowDefinitions>
-        <TabControl x:Name="tabCtrl" Margin="0,0,0.143,45.286" Grid.Row="0" Grid.RowSpan="2" >
+        <TabControl x:Name="tabCtrl" Margin="0,0,0.286,45.286" Grid.Row="0" Grid.RowSpan="2" >
             <TabItem x:Name="tiOptions" Header="Gereral Options" Width="170">
                 <Grid Margin="0,-5,-0.571,5.143">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="164*"/>
-                        <RowDefinition Height="385*"/>
+                        <RowDefinition Height="104*"/>
+                        <RowDefinition Height="165*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Shown Number Presicion" Margin="0,10,210.142,139.571" Grid.RowSpan="2">
+                    <GroupBox Header="Shown Number Presicion" Grid.Row="0" Margin="10,10,200.571,0">
                         <Grid Margin="0,0,0.429,0.143">
                             <Label Content="Signal cursor label" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
                             <Label Content="Signal summary table" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top"/>
                             <TextBox x:Name="tbSignalCursorPrec" HorizontalAlignment="Left" Height="23" Margin="133,10,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
-                            <TextBox x:Name="tbSignalTablePrec" HorizontalAlignment="Left" Height="23" Margin="133,36,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
+                            <TextBox x:Name="tbSignalTablePrec" HorizontalAlignment="Left" Height="23" Margin="134,39,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Save modes/params on exit" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="212" Margin="10,5,0,0">
+                        <Grid>
+                            <RadioButton x:Name="rbSaveSeqYes" Content="Save" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" Height="15" Width="55" RenderTransformOrigin="-2.119,0.79"/>
+                            <RadioButton x:Name="rbSaveSeqAsk" Content="Ask" HorizontalAlignment="Left" Margin="72,0,0,0" VerticalAlignment="Center" IsChecked="True" Height="15" Width="38"/>
+                            <RadioButton x:Name="rbSaveSeqNo" Content="No save" HorizontalAlignment="Left" Margin="130,0,0,0" VerticalAlignment="Center" RenderTransformOrigin="-0.184,-0.833" Height="15" Width="61" />
                         </Grid>
                     </GroupBox>
                 </Grid>

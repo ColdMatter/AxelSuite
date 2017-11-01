@@ -20,6 +20,10 @@ namespace Axel_hub
 {
     public class GeneralOptions
     {
+        public enum SaveModes { save, ask, nosave }
+
+        public SaveModes saveModes;
+
         public string SignalCursorPrec { get; set; }
         public string SignalTablePrec { get; set; }
 
@@ -27,6 +31,29 @@ namespace Axel_hub
         {
             string fileJson = JsonConvert.SerializeObject(this);
             File.WriteAllText(Utils.configPath + "genOptions.cfg", fileJson);
+        }
+    }
+
+    public class Modes
+    {
+        // Top
+
+        // Middle
+        public bool ManualYAxis { get; set; }
+        public bool Background { get; set; }
+        public bool DarkCurrent { get; set; }
+        public bool N1 { get; set; }
+        public bool N2 { get; set; }
+        public bool RN1 { get; set; }
+        public bool RN2 { get; set; }
+        public bool Ntot { get; set; }
+        
+        // Bottom
+
+        public void Save()
+        {
+            string fileJson = JsonConvert.SerializeObject(this);
+            File.WriteAllText(Utils.configPath + "Defaults.cfg", fileJson);
         }
     }
 
@@ -52,6 +79,10 @@ namespace Axel_hub
             genOptions.SignalCursorPrec = tbSignalCursorPrec.Text;
             genOptions.SignalTablePrec = tbSignalTablePrec.Text;
 
+            if (rbSaveSeqYes.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.save;
+            if (rbSaveSeqAsk.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.ask;
+            if (rbSaveSeqNo.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.nosave;
+
             Hide();
         }
 
@@ -59,6 +90,10 @@ namespace Axel_hub
         {
             tbSignalCursorPrec.Text = genOptions.SignalCursorPrec;
             tbSignalTablePrec.Text = genOptions.SignalTablePrec;
+
+            rbSaveSeqYes.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.save);
+            rbSaveSeqAsk.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask);
+            rbSaveSeqNo.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.nosave);
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)

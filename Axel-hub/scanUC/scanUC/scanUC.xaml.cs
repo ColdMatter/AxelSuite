@@ -39,6 +39,7 @@ namespace scanHub
     public partial class scanClass : UserControl
     {
         private double realSampling;
+        private string ArrangedPartner = "MOTMaster2"; 
 
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
@@ -382,12 +383,13 @@ namespace scanHub
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
-             string partner = "MOTMaster2";
-        /*     switch (computerName) 
-             {
-                 case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
-                 case "DESKTOP-U334RMA": partner = "Axel Probe"; break;
-             }*/
+             string partner = ArrangedPartner;
+             if(partner == "")
+                 switch (computerName) 
+                 {
+                     case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
+                     case "DESKTOP-U334RMA": partner = "Axel Probe"; break;
+                 }
              remote = new RemoteMessaging(partner); 
              remote.Enabled = false;
              remote.OnReceive += new RemoteMessaging.RemoteHandler(MessageHandler);

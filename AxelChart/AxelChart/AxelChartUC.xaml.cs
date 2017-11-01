@@ -604,15 +604,17 @@ namespace AxelChartNS
                                  {
                                      lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
                                      double k = 1000;
-                                     lbMean.Items[1] = (k*mn).ToString("G7"); lbStDev.Items[1] = (k*dsp).ToString("G7"); // mV
-                                     k = 1e-3 / 6.00012;
+                                     lbMean.Items[1] = (k * mn).ToString("G7"); lbStDev.Items[1] = (k * dsp).ToString("G7"); // mV
+                                     k = 1e6 / 6000.12;
                                      lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
-                                     k = 1.235976e-3 / 6.00012;
+                                     k = 1.235976e6 / 6000.12;
                                      lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // mg
                                      resultStack.AddPoint(k * mn, k * dsp);
                                      lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDevY().ToString("G7");
+                                     ntbTimeSlice.Background = Brushes.White;
                                  }));
                             }
+                            else ntbTimeSlice.Background = Brushes.Red;
                         }
                         break; 
             }

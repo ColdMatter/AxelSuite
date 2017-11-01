@@ -54,6 +54,7 @@ namespace Axel_hub
         bool jumboRepeatFlag = true;
         bool jumboADC24Flag = false;
 
+        Modes modes;
         scanClass ucScan1;
         int nSamples = 1500; 
         private AxelMems axelMems = null;
@@ -70,6 +71,7 @@ namespace Axel_hub
         public MainWindow()
         {
             InitializeComponent();
+            OpenDefaultModes();
             tabSecPlots.SelectedIndex = 1;
             ucScan1 = new scanClass();
             gridLeft.Children.Add(ucScan1);
@@ -331,7 +333,7 @@ namespace Axel_hub
                         lboxNB.Items.Clear();
                         foreach (var item in avgs)
                         {
-                            lboxNB.Items.Add(string.Format("{0}: {1:F2}",item.Key,item.Value));
+                            lboxNB.Items.Add(string.Format("{0}: {1:" + Options.genOptions.SignalTablePrec + "}", item.Key, item.Value));
                         }
                     }
                     double asymmetry = MOTMasterDataConverter.Asymmetry(avgs, chkBackgroung.IsChecked.Value, chkDarkcurrent.IsChecked.Value);
@@ -371,7 +373,7 @@ namespace Axel_hub
                         graphSignal.Data[1] = backgroundDataStack;
                     }
                     // readjust Y axis
-                    if (!chkManualAxis.IsChecked.Value)
+                    if (!chkManualAxis.IsChecked.Value) // signal
                     {
                         double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
                         d = Math.Floor(10 * d) / 10;
@@ -396,13 +398,28 @@ namespace Axel_hub
                         }
                     }
 
-
                     if (middleSection)
                     {
                         if (repeatMode)
                         {
                             stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
                             stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot);
+                        }
+                        if (!chkManualAxis.IsChecked.Value) // Ns
+                        {                      
+                            List<double> ld = new List<double>();
+                            ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
+                            ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
+                            double d = ld.Min();
+                            d = Math.Floor(10 * d) / 10;
+                            NsYmin = Math.Min(d, NsYmin);
+                            ld.Clear();
+                            ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
+                            ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
+                            d = ld.Max();
+                            d = Math.Ceiling(10 * d) / 10;
+                            NsYmax = Math.Max(d, NsYmax);
+                            NsYaxis.Range = new Range<double>(NsYmin - 0.2, NsYmax + 0.2);
                         }
                         graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
                         graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
@@ -452,22 +469,6 @@ namespace Axel_hub
                        srsMotAccel.Add(new Point(runID, asymmetry));                       
                        graphAccelTrend.Data[0] = srsMotAccel;
                     }
-                    if (!chkManualAxis.IsChecked.Value)
-                    {
-                        List<double> ld = new List<double>();
-                        ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min());
-                        ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
-                        double d = ld.Min();
-                        d = Math.Floor(10 * d) / 10;
-                        signalYmin = d; // Math.Min(d, signalYmin);
-                        ld.Clear();
-                        ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
-                        ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
-                        d = ld.Max();
-                        d = Math.Ceiling(10 * d) / 10;
-                        signalYmax = d; //Math.Max(d, signalYmax);
-                        NsYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
-                    }
                     if (scanMode && (ucScan1.remoteMode == RemoteMode.Jumbo_Scan) && jumboRepeatFlag)
                     {
                         if (mme.prms.ContainsKey("last"))
@@ -504,6 +505,7 @@ namespace Axel_hub
                 case ("scan"):
                     {
                         log(json, Brushes.DarkGreen.Color);                       
+                        lastGrpExe = mme.Clone();                       
                         if (Utils.isNull(lastScan)) lastScan = new MMscan();
                         if (!lastScan.FromDictionary(mme.prms))
                         {
@@ -511,7 +513,6 @@ namespace Axel_hub
                             ucScan1.Abort(true);
                             return;
                         }
-                        lastGrpExe = mme.Clone();
                         if (!mme.sender.Equals("Axel-hub")) ucScan1.remoteMode = RemoteMode.Simple_Scan;
                         tabLowPlots.SelectedIndex = 0;
                         chkN1_Checked(null, null);
@@ -783,7 +784,8 @@ namespace Axel_hub
                 if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
                 if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
                 lboxNB.Items.Clear();
-                signalYmin = 10; signalYmax = 0;
+                signalYmin = 10; signalYmax = -10;
+                NsYmin = 10; NsYmax = -10;
             }
             if (Bottom)
             {
@@ -866,14 +868,87 @@ namespace Axel_hub
         private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if(Utils.isNull(Options)) Options = new OptionsWindow();
-            Options.Show();
+            if(!Utils.isNull(sender)) Options.Show();
+            NsCursor.ValuePresenter = new ValueFormatterGroup(" — ", new GeneralValueFormatter("0.00"))
+            {
+                ValueFormatters = { new GeneralValueFormatter(Options.genOptions.SignalCursorPrec) }
+            };
+        }
+
+        private void OpenDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
+        {
+            if (File.Exists(Utils.configPath + "Defaults.cfg"))
+            {
+                string fileJson = File.ReadAllText(Utils.configPath + "Defaults.cfg");
+                modes = JsonConvert.DeserializeObject<Modes>(fileJson);
+            }
+            else
+                modes = new Modes();
+            if (Top)
+            {
+
+            }
+            if (Middle)
+            {
+                chkManualAxis.IsChecked = modes.ManualYAxis;
+                chkBackgroung.IsChecked = modes.Background;
+                chkDarkcurrent.IsChecked = modes.DarkCurrent;
+                chkN1.IsChecked = modes.N1;
+                chkN2.IsChecked= modes.N2;
+                chkRN1.IsChecked = modes.RN1;
+                chkRN2.IsChecked = modes.RN2;
+                chkNtot.IsChecked = modes.Ntot;
+            }
+            if (Bottom)
+            {
+
+            }
+        }
+
+        private void SaveDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
+        {
+            if (Top)
+            {
+
+            }
+            if (Middle)
+            {
+                modes.ManualYAxis = chkManualAxis.IsChecked.Value;
+                modes.Background = chkBackgroung.IsChecked.Value;
+                modes.DarkCurrent = chkDarkcurrent.IsChecked.Value;
+                modes.N1 = chkN1.IsChecked.Value;
+                modes.N2 = chkN2.IsChecked.Value;
+                modes.RN1 = chkRN1.IsChecked.Value;
+                modes.RN2 = chkRN2.IsChecked.Value;
+                modes.Ntot = chkNtot.IsChecked.Value;
+            }
+            if (Bottom)
+            {
+
+            }
+            modes.Save();
         }
 
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask))
+            {
+                //Save the currently open sequence to a default location
+                MessageBoxResult result = MessageBox.Show("Axel-hub is closing. \nDo you want to save the modes? ...or cancel closing?", "    Save Defaults", MessageBoxButton.YesNoCancel);
+                if (result == MessageBoxResult.Yes)
+                {
+                    SaveDefaultModes();
+                    //SaveSequence_Click(sender, null);
+                }
+                else if (result == MessageBoxResult.Cancel)
+                {
+                    //List<SequenceStep> steps = sequenceControl.sequenceDataGrid.ItemsSource.Cast<SequenceStep>().ToList();
+                    e.Cancel = true;
+                }
+            }
+            if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.save)) SaveDefaultModes();
             Options.genOptions.Save();
             Options.Close();
-            e.Cancel = false;
         }
      }
 }
