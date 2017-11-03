@@ -28,9 +28,9 @@
         </Grid>
         <Grid x:Name="gridRight" Grid.Column="1" Margin="0">
             <Grid.RowDefinitions>
-                <RowDefinition x:Name="rowUpperChart" MinHeight="3" Height="120*"/>
-                <RowDefinition x:Name="rowMiddleChart" MinHeight="30" Height="100*"/>
-                <RowDefinition x:Name="rowLowerChart" MinHeight="100" Height="100*"/>
+                <RowDefinition x:Name="rowUpperChart" MinHeight="3" Height="270"/>
+                <RowDefinition x:Name="rowMiddleChart" MinHeight="30" Height="250"/>
+                <RowDefinition x:Name="rowLowerChart" MinHeight="100" Height="150*"/>
             </Grid.RowDefinitions>
             <GridSplitter x:Name="splitterTop" HorizontalAlignment="Stretch" Height="6" Grid.Row="1" VerticalAlignment="Top" Margin="0,1.143,0,0" Background="#FFFFFEBD" MouseDoubleClick="splitterTop_MouseDoubleClick"/>
             <GridSplitter x:Name="splitDown" HorizontalAlignment="Stretch" Height="6" Grid.Row="2" VerticalAlignment="Top" Margin="0,1.143,0,0" Background="#FFDDFCD4" MouseDoubleClick="splitDown_MouseDoubleClick"/>
@@ -56,7 +56,7 @@
                                     <CheckBox x:Name="chkN1" Content="N1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" FontWeight="Bold" Foreground="#FF01B31C"/>
                                     <CheckBox x:Name="chkN2" Content="N2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FF1A5DCF" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
-                                    <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFF99411" FontWeight="Bold"/>
+                                    <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFE78302" FontWeight="Bold"/>
                                     <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
                                     <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="273"/>
                                 </StackPanel>
@@ -78,31 +78,31 @@
                                     <ni:Graph.Plots>
                                         <ni:Plot x:Name="plotN1" Label="N1">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="Green"/>
+                                                <ni:LinePlotRenderer Stroke="Green" StrokeThickness="1.3"/>
                                                 <ni:PointPlotRenderer Fill="#FFA9FCA9" Size="3,3" Stroke="Green"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotN2" Label="Ntot">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="#FF061BCA"/>
+                                                <ni:LinePlotRenderer Stroke="#FF061BCA" StrokeThickness="1.3"/>
                                                 <ni:PointPlotRenderer Fill="#FF95EDF2" Stroke="#FF061BCA"  Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotRN1" Label="rN1">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="#FF8B04B7"/>
+                                                <ni:LinePlotRenderer Stroke="#FF8B04B7" StrokeThickness="1.3"/>
                                                 <ni:PointPlotRenderer Fill="#FFEDD4FD" Stroke="#FF9E11B2" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotRN2" Label="rN2">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="#FFFF8C03"/>
-                                                <ni:PointPlotRenderer Fill="#FFFEDFB9" Stroke="#FFFF8C03" Size="3,3"/>
+                                                <ni:LinePlotRenderer Stroke="#FFE78302" StrokeThickness="1.3"/>
+                                                <ni:PointPlotRenderer Fill="#FFFEDFB9" Stroke="#FFD47605" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
                                         <ni:Plot x:Name="plotNtot" Label="Ntot">
                                             <ni:PlotRendererGroup>
-                                                <ni:LinePlotRenderer Stroke="#FFC02409"/>
+                                                <ni:LinePlotRenderer Stroke="#FFC02409" StrokeThickness="1.3"/>
                                                 <ni:PointPlotRenderer Fill="#FFF9C0B6" Stroke="#FFC02409" Size="3,3"/>
                                             </ni:PlotRendererGroup>
                                         </ni:Plot>
@@ -228,8 +228,8 @@
                                 <ni:Graph.Plots>
                                     <ni:Plot Label="Fringes">
                                         <ni:PlotRendererGroup>
-                                            <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.5"/>
-                                            <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF01A493" Size="3,3"/>
+                                            <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.8"/>
+                                            <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF037D70" Size="3,3"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
                                 </ni:Graph.Plots>
@@ -251,7 +251,7 @@
                                 <ni:Graph.Plots>
                                     <ni:Plot x:Name="plotMotAccel" Label="MOTaccel">
                                         <ni:PlotRendererGroup>
-                                            <ni:LinePlotRenderer Stroke="#FF074BF4"/>
+                                            <ni:LinePlotRenderer Stroke="#FF074BF4" StrokeThickness="1.5"/>
                                             <ni:PointPlotRenderer Fill="#FF0AF9CE" Stroke="#FF074BF4" Size="3,3"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
@@ -260,8 +260,8 @@
                                     </ni:Plot>
                                     <ni:Plot x:Name="plotMems" Label="scrollPlot">
                                         <ni:PlotRendererGroup>
-                                            <ni:LinePlotRenderer Stroke="#FFFAD74B" StrokeThickness="2"/>
-                                            <ni:PointPlotRenderer Fill="#FFF5040C" Stroke="#FFFAD74B" Size="3,3"/>
+                                            <ni:LinePlotRenderer Stroke="#FFF5C70B" StrokeThickness="2"/>
+                                            <ni:PointPlotRenderer Fill="#FFF5C404" Stroke="#FFFB1A10" Size="4,4"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
                                 </ni:Graph.Plots>

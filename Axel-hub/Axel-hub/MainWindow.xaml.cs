@@ -276,7 +276,7 @@ namespace Axel_hub
         }
 
         private MMexec lastGrpExe; private MMscan lastScan;
-        private double strbLeft = 0, strbRight = 0, signalYmin = 0, signalYmax = 0;
+        private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
@@ -749,11 +749,11 @@ namespace Axel_hub
             if (tabSecPlots.SelectedIndex == 0)
             {
                 middlePlotHeight = rowMiddleChart.Height.Value;
-                rowMiddleChart.Height = new GridLength(35);
+                rowMiddleChart.Height = new GridLength(35, GridUnitType.Pixel);
             }
             else
             {
-                if (rowMiddleChart.Height.Value < 38) rowMiddleChart.Height = new GridLength(Math.Min(230,middlePlotHeight), GridUnitType.Star);
+                if (rowMiddleChart.Height.Value < 38) rowMiddleChart.Height = new GridLength(Math.Min(230,middlePlotHeight), GridUnitType.Pixel);
             }
         }
 
@@ -843,11 +843,11 @@ namespace Axel_hub
         double hiddenTopHeight = 230;
         private void splitterTop_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (rowUpperChart.Height.Value < 5) rowUpperChart.Height = new GridLength(Math.Min(230, hiddenTopHeight), GridUnitType.Star);
+            if (rowUpperChart.Height.Value < 5) rowUpperChart.Height = new GridLength(Math.Min(230, hiddenTopHeight), GridUnitType.Pixel);
             else
             {
                 hiddenTopHeight = rowUpperChart.Height.Value;
-                rowUpperChart.Height = new GridLength(3);
+                rowUpperChart.Height = new GridLength(3, GridUnitType.Pixel);
             }
         }
 
