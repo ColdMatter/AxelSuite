@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-track", "Axel-track\Axel-track.csproj", "{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-boss", "Axel-boss\Axel-boss\Axel-boss.csproj", "{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-probe", "Axel-probe\Axel-probe\Axel-probe.csproj", "{9C288394-1DE7-4F48-9D10-1DDE8827D738}"
 EndProject
@@ -14,8 +12,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AxelChart", "AxelChart\AxelChart\AxelChart.csproj", "{C8285DB3-DE2F-4B3B-B79A-454B4C4C2828}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilsLib", "Utils\UtilsLib.csproj", "{A377A708-96B9-4569-BC22-0187D647611E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scanBoss", "Axel-boss\scanUC\scanUC\scanBoss.csproj", "{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scanHub", "Axel-hub\scanUC\scanUC\scanHub.csproj", "{EC092AFA-EC88-499D-9932-0A0273F4BF87}"
 EndProject
@@ -43,14 +39,6 @@ Global
 		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x64.Build.0 = Release|x64
 		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x86.ActiveCfg = Release|x86
 		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x86.Build.0 = Release|x86
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Release|x64.ActiveCfg = Release|Any CPU
-		{9FDC67B7-A355-4D9D-83CD-187E9FE0D6E5}.Release|x86.ActiveCfg = Release|Any CPU
 		{9C288394-1DE7-4F48-9D10-1DDE8827D738}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9C288394-1DE7-4F48-9D10-1DDE8827D738}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C288394-1DE7-4F48-9D10-1DDE8827D738}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -83,14 +71,6 @@ Global
 		{A377A708-96B9-4569-BC22-0187D647611E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A377A708-96B9-4569-BC22-0187D647611E}.Release|x64.ActiveCfg = Release|Any CPU
 		{A377A708-96B9-4569-BC22-0187D647611E}.Release|x86.ActiveCfg = Release|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|x64.ActiveCfg = Release|Any CPU
-		{1FB4D7AD-D169-4B68-A11A-C398186F3C4C}.Release|x86.ActiveCfg = Release|Any CPU
 		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Debug|x64.ActiveCfg = Debug|Any CPU
