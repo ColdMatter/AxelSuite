@@ -45,6 +45,15 @@ namespace RemoteMessagingNS
         }
 
         public bool Enabled = true;
+        public bool Connected { get; private set; }
+        public bool partnerPresent
+        {
+            get
+            {
+                IntPtr hTargetWnd = NativeMethod.FindWindow(null, partner);
+                return (hTargetWnd != IntPtr.Zero);
+            }
+        }
 
         public RemoteMessaging(string Partner)
         {
@@ -89,14 +98,15 @@ namespace RemoteMessagingNS
             else return false;
         }
 
-        public delegate void ActiveCommHandler(bool active);
+        public delegate void ActiveCommHandler(bool active, bool forced);
         public event ActiveCommHandler ActiveComm;
-        protected void OnActiveComm(bool active)
+        protected void OnActiveComm(bool active, bool forced)
         {
-            if (ActiveComm != null) ActiveComm(active);
+            Connected = active;
+            if (ActiveComm != null) ActiveComm(active, forced);
         }
 
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) // receive
         {
             if ((msg == WM_COPYDATA) && Enabled)
             {
@@ -114,7 +124,8 @@ namespace RemoteMessagingNS
                         {
                         case("ping"):
                                 handled = sendCommand("pong");
-                                OnActiveComm(handled);
+                                if (lastConnection != handled) OnActiveComm(handled, false); // fire only if the state has been changed
+                                lastConnection = handled; Connected = handled;
                                 break;
                         case("pong"):
                                 handled = true;                               
@@ -208,7 +219,7 @@ namespace RemoteMessagingNS
         }
 
         private bool lastConnection = false;
-        public bool CheckConnection()
+        public bool CheckConnection(bool forced = false)
         {
             bool back = sendCommand("ping");
             if (back)
@@ -220,8 +231,8 @@ namespace RemoteMessagingNS
                 }
             }
             back = back && (lastRcvMsg.Equals("pong"));
-            if (lastConnection != back) OnActiveComm(back); // fire only if the state has been changed
-            lastConnection = back;
+            if ((lastConnection != back) || forced) OnActiveComm(back, forced); // fire only if the state has been changed
+            lastConnection = back; Connected = back;
             return back;
         }
 

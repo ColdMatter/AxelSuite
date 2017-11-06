@@ -356,7 +356,7 @@ namespace scanHub
              }            
          }
 
-         private void OnActiveComm(bool active)
+         private void OnActiveComm(bool active, bool forced)
          {
              if (active)
              {
