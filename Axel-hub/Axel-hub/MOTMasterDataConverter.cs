@@ -4,21 +4,30 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NationalInstruments.DataInfrastructure.Primitives;
+using NationalInstruments.Analysis.Math;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RemoteMessagingNS;
+using OptionsNS;
 
 namespace Axel_hub
 {
     public static class MOTMasterDataConverter
     {
-        public static Dictionary<string, double> AverageShotSegments(MMexec data)
+        public static Dictionary<string, double> AverageShotSegments(MMexec data, bool initN2)
         {
             var avgs = new Dictionary<string, double>();
             foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg"})
             {
                 var rawData = (double[])data.prms[key];
                 avgs[key] = rawData.Average();
+                if (key.Equals("N2") && initN2)
+                {
+                    double[] seq = new double[rawData.Length];
+                    for (int i =0; i<rawData.Length; i++) { seq[i] = i;}
+                    double[] fit = CurveFit.LinearFit(seq, rawData);
+                    avgs["initN2"] = fit[0];
+                }               
             }
             return avgs;
         }
@@ -40,7 +49,7 @@ namespace Axel_hub
         public static double Asymmetry(MMexec data, bool subtractBackground = true,
             bool subtractDark = true)
         {
-            return Asymmetry(AverageShotSegments(data), subtractBackground, subtractDark);
+            return Asymmetry(AverageShotSegments(data, false), subtractBackground, subtractDark);
         }
 
         public static double Asymmetry(Dictionary<string, double> avgs, bool subtractBackground = true,

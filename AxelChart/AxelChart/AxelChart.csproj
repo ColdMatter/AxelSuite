@@ -81,6 +81,7 @@
     <Compile Include="AxelChartUC.xaml.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OptionsType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

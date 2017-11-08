@@ -39,8 +39,8 @@ using Newtonsoft.Json.Linq;
 using UtilsNS;
 using RemoteMessagingNS;
 using System.Windows.Markup;
-//using DS345NS;
-
+using OptionsNS;
+using OptionsTypeNS;
 
 namespace Axel_hub
 {
@@ -90,6 +90,7 @@ namespace Axel_hub
 
             iStack = new List<double>(); dStack = new List<double>();
             Options = new OptionsWindow();
+            //AxelChart1.InitOptions(ref Options.genOptions, ref modes);
         }
 
         private void log(string txt, Color? clr = null)
@@ -327,7 +328,7 @@ namespace Axel_hub
                             }
                         }                             
                     }
-                    Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme);
+                    Dictionary<string, double> avgs = MOTMasterDataConverter.AverageShotSegments(mme,Options.genOptions.intN2);
                     if (middleSection)
                     {
                         lboxNB.Items.Clear();

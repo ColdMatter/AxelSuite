@@ -135,7 +135,7 @@
                             </Grid>
                             <StackPanel Grid.Column="2" Margin="0,0,0,0">
                                 <CheckBox x:Name="chkManualAxis" Margin="1,2,0,5" FontSize="12" Content="Manual Y Axis" RenderTransformOrigin="0.514,-8.657"/>
-                                <ListBox x:Name="lboxNB" FontSize="13" Height="124" Margin="0">
+                                <ListBox x:Name="lboxNB" FontSize="13" Height="143" Margin="0">
                                     <ListBoxItem Content="N2"/>
                                     <ListBoxItem Content="NTot"/>
                                     <ListBoxItem Content="B2"/>

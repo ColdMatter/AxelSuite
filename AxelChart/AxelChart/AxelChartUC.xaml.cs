@@ -35,6 +35,7 @@ using System.Threading.Tasks.Dataflow;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UtilsNS;
+using OptionsTypeNS;
 
 namespace AxelChartNS
 {
@@ -325,7 +326,7 @@ namespace AxelChartNS
     /// </summary>
     public partial class AxelChartClass : UserControl
     {
-        public AxelChartClass()
+        public AxelChartClass( )
         {
             InitializeComponent();
             Waveform = new DataStack(true);
@@ -340,6 +341,13 @@ namespace AxelChartNS
             Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
             resultStack = new DataStack();
             Refresh();
+        }
+        GeneralOptions genOptions;
+        Modes genModes;
+        public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes)
+        {
+            genOptions = _genOptions;
+            genModes = _genModes;
         }
         private DataStack resultStack;
         public int GetStackDepth() { return (int)seStackDepth.Value; }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO.Pipes;
 using System.Diagnostics;
 
-namespace PipesServerTest
+namespace PipesServerNS
 {
     // Delegate for passing received message back to caller
     public delegate void DelegateMessage(string Reply);

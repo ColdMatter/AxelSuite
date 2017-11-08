@@ -15,48 +15,10 @@ using System.Windows.Shapes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UtilsNS;
+using OptionsTypeNS;
 
-namespace Axel_hub
+namespace OptionsNS
 {
-    public class GeneralOptions
-    {
-        public enum SaveModes { save, ask, nosave }
-
-        public SaveModes saveModes;
-
-        public string SignalCursorPrec { get; set; }
-        public string SignalTablePrec { get; set; }
-
-        public void Save()
-        {
-            string fileJson = JsonConvert.SerializeObject(this);
-            File.WriteAllText(Utils.configPath + "genOptions.cfg", fileJson);
-        }
-    }
-
-    public class Modes
-    {
-        // Top
-
-        // Middle
-        public bool ManualYAxis { get; set; }
-        public bool Background { get; set; }
-        public bool DarkCurrent { get; set; }
-        public bool N1 { get; set; }
-        public bool N2 { get; set; }
-        public bool RN1 { get; set; }
-        public bool RN2 { get; set; }
-        public bool Ntot { get; set; }
-        
-        // Bottom
-
-        public void Save()
-        {
-            string fileJson = JsonConvert.SerializeObject(this);
-            File.WriteAllText(Utils.configPath + "Defaults.cfg", fileJson);
-        }
-    }
-
     /// <summary>
     /// Interaction logic for Options.xaml
     /// </summary>
@@ -78,6 +40,9 @@ namespace Axel_hub
         {
             genOptions.SignalCursorPrec = tbSignalCursorPrec.Text;
             genOptions.SignalTablePrec = tbSignalTablePrec.Text;
+            genOptions.SaveFilePrec = tbSaveFilePrec.Text;
+
+            genOptions.intN2 = chkInitN2.IsChecked.Value;
 
             if (rbSaveSeqYes.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.save;
             if (rbSaveSeqAsk.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.ask;
@@ -90,6 +55,9 @@ namespace Axel_hub
         {
             tbSignalCursorPrec.Text = genOptions.SignalCursorPrec;
             tbSignalTablePrec.Text = genOptions.SignalTablePrec;
+            tbSaveFilePrec.Text = genOptions.SaveFilePrec;
+
+            chkInitN2.IsChecked = genOptions.intN2;
 
             rbSaveSeqYes.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.save);
             rbSaveSeqAsk.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask);
