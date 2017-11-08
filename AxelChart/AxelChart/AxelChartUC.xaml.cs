@@ -89,19 +89,14 @@ namespace AxelChartNS
                 else stopWatch.Stop();
             }
         }
-        public int Depth 
-        { 
-            get; set; 
-        }
+        private const int maxDepth = 1000000;
+        public int Depth { get; set; }
         
-        public bool TimeSeriesMode
-        {
-            get; set; 
-         }
+        public bool TimeSeriesMode { get; set; }
 
         public int Fit2Limit()
         {
-            if ((Depth <= 0) || (Depth > 1E6)) throw new Exception("Invalid SizeLimit in SizeMode (TimeMode = false)");
+            if ((Depth <= 0) || (Depth > maxDepth)) throw new Exception("Invalid SizeLimit in SizeMode (TimeMode = false)");
             while (Count > Depth)
                 RemoveAt(0);
             return Count;
@@ -180,11 +175,11 @@ namespace AxelChartNS
         public DataStack Clone(double offsetX = 0, double offsetY = 0)
         {
             DataStack rslt = new DataStack(StackMode);
-            for (int i = 0; i < Count; i++)
-                rslt.Add(new Point(this[i].X + offsetX, this[i].Y + offsetY));
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
             rslt.Depth = Depth;
+            for (int i = 0; i < Count; i++)
+                rslt.Add(new Point(this[i].X + offsetX, this[i].Y + offsetY));
             return rslt;
         }
 
@@ -299,6 +294,7 @@ namespace AxelChartNS
         public void OpenPair(string fn)
         {
             Clear();
+            //Depth = maxDepth;
             int j = 0;
             double X, Y;
             string[] pair;

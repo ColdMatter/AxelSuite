@@ -221,6 +221,8 @@ namespace RemoteMessagingNS
         private bool lastConnection = false;
         public bool CheckConnection(bool forced = false)
         {
+            if (!Enabled) return false;
+            lastRcvMsg = "";
             bool back = sendCommand("ping");
             if (back)
             {

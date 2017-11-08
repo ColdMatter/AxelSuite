@@ -42,9 +42,15 @@ namespace UtilsNS
             Console.WriteLine("Error: " + errorMsg);
         }
 
-        public static double formatDouble(double d, string format) 
+        public static double formatDouble(double d, string format)
         {
             return Convert.ToDouble(d.ToString(format));
+        }
+        public static double[] formatDouble(double[] d, string format)
+        {
+            double[] da = new double[d.Length];
+            for (int i = 0; i < d.Length; i++) da[i] = Convert.ToDouble(d[i].ToString(format));
+            return da;
         }
 
         public static string RemoveLineEndings(string value)
@@ -59,7 +65,7 @@ namespace UtilsNS
             return value.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty).Replace(lineSeparator, string.Empty).Replace(paragraphSeparator, string.Empty);
         }
 
-        [DllImport("user32.dll", SetLastError=true)]
+        [DllImport("user32.dll", SetLastError = true)]
         static extern int MessageBoxTimeout(IntPtr hwnd, String text, String title, uint type, Int16 wLanguageId, Int32 milliseconds);
         public static void TimedMessageBox(string text, string title = "Information", int milliseconds = 1500)
         {
@@ -70,26 +76,6 @@ namespace UtilsNS
         public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).Parent.FullName).FullName;
         public static string configPath { get { return basePath + "\\Config\\"; } }
         public static string dataPath { get { return basePath + "\\Data\\"; } }
-
- /*       public static void ExecuteBatFile(string batchFN, string arguments = "") // batch file in Config folder
-        {
-            Process proc = null;
-            try
-            {
-                proc = new Process();
-                //proc.StartInfo.WorkingDirectory = configPath;
-                proc.StartInfo.FileName = batchFN;  
-                proc.StartInfo.Arguments = arguments;  
-                proc.StartInfo.CreateNoWindow = false;
-                proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;  //this is for hiding the cmd window...so execution will happen in back ground.
-                proc.Start();
-                proc.WaitForExit(); // waits for the batch excution to end
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Exception Occurred :{0},{1}", ex.Message, ex.StackTrace.ToString());
-            }
-        }*/
     }
 
     #region async file logger
@@ -103,10 +89,10 @@ namespace UtilsNS
     {
         public string header = ""; // that will be put as a file first line with # in front of it
         List<string> buffer;
-        public int bufferLimit = 256;
-        private int bufferCharLimit = 256000;
+        public int bufferLimit = 256; // number of items
+        private int bufferCharLimit = 256000; // the whole byte/char size
         public int bufferSize { get { return buffer.Count; } }
-        public int bufferCharSize { get; set; }
+        public int bufferCharSize { get; private set; }
         public bool writing { get; private set; }
         public bool missingData { get; private set; }
         Stopwatch stw;
