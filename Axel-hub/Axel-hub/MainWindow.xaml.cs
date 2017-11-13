@@ -64,6 +64,9 @@ namespace Axel_hub
         DataStack stackRN1 = new DataStack(true);
         DataStack stackRN2 = new DataStack(true);
         DataStack stackNtot = new DataStack(true);
+        DataStack stackNtot_std = new DataStack(true);
+        DataStack stackN2_std = new DataStack(true);
+        DataStack stackN2_int = new DataStack(true);
         private List<Point> _fringePoints = new List<Point>();
 
         OptionsWindow Options; 
@@ -343,26 +346,26 @@ namespace Axel_hub
                     if (Utils.isNull(backgroundDataStack)) backgroundDataStack = new DataStack();
                     else backgroundDataStack.Clear();
 
-                    int xVal = 0; double N2 = ((double[])mme.prms["N2"]).Average();
+                    int xVal = 0; double N2 = avgs["N2"];
                     foreach (double yVal in (double[])mme.prms["N2"])
                     {
                         signalDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
-                    double NTot = ((double[])mme.prms["NTot"]).Average();
+                    double NTot = avgs["NTot"];
                     foreach (double yVal in (double[])mme.prms["NTot"])
                     {
                         signalDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
 
-                    xVal = 0; double B2 = ((double[])mme.prms["B2"]).Average();
+                    xVal = 0; double B2 = avgs["B2"];
                     foreach (double yVal in (double[])mme.prms["B2"])
                     {
                         backgroundDataStack.Add(new Point(xVal, yVal));
                         xVal++;
                     }
-                    double BTot = ((double[])mme.prms["BTot"]).Average();
+                    double BTot = avgs["BTot"];
                     foreach (double yVal in (double[])mme.prms["BTot"])
                     {
                         backgroundDataStack.Add(new Point(xVal, yVal));
@@ -388,7 +391,10 @@ namespace Axel_hub
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
                     // corrected with background
                     double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2; 
-                    double currX = 1;                   
+                    double currX = 1;
+                    double cN2_std = Math.Sqrt(Math.Pow(avgs["N2_std"],2) + Math.Pow(avgs["B2_std"],2));
+                    double cNtot_std = Math.Sqrt(Math.Pow(avgs["NTot_std"],2) + Math.Pow(avgs["BTot_std"],2));
+                    double cinitN2 = avgs["initN2"] - B2;
                     if (scanMode)
                     {
                         currX = lastScan.sFrom + runID * lastScan.sBy;
@@ -396,6 +402,7 @@ namespace Axel_hub
                         { 
                             stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
                             stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
+                            stackN2_std.Add(new Point(currX, cN2_std)); stackNtot_std.Add(new Point(currX, cNtot_std)); stackN2_int.Add(new Point(currX, cinitN2));
                         }
                     }
 
@@ -404,7 +411,7 @@ namespace Axel_hub
                         if (repeatMode)
                         {
                             stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
-                            stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot);
+                            stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot); stackN2_std.AddPoint(cN2_std); stackN2_int.AddPoint(cinitN2); stackNtot_std.AddPoint(cNtot_std);
                         }
                         if (!chkManualAxis.IsChecked.Value) // Ns
                         {                      
@@ -578,6 +585,7 @@ namespace Axel_hub
         {
         }
         #region File operation 
+        //TODO Change this to add new columns to corresponding datastacks (N2_std, Ntot_std etc) - maybe using a list?
         public bool OpenSignal(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
@@ -606,7 +614,8 @@ namespace Axel_hub
                 if (!double.TryParse(ns[4], out d)) throw new Exception("Wrong double at line " + j.ToString());
                 stackRN2.Add(new Point(x, d));
                 if (!double.TryParse(ns[5], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackNtot.Add(new Point(x, d));                
+                stackNtot.Add(new Point(x, d));     
+
                 j++;
             }
             graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
@@ -636,14 +645,13 @@ namespace Axel_hub
                 MessageBox.Show("Error: No data to be saved");
                 return;
             }
-            //TODO Change this to add mean and standard deviation values
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
             if(!Utils.isNull(lastGrpExe)) file.WriteLine("#"+JsonConvert.SerializeObject(lastGrpExe));
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
-            file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot");  
+            file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tN2_std\tNtot_std\tN2int");  
             for (int i = 0; i < stackN1.Count; i++)
                 file.WriteLine(stackN1[i].X.ToString("G7") + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + stackRN1[i].Y.ToString("G7") + 
-                                              "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7"));
+                                              "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7") + "\t" + stackN2_std[i].Y.ToString("G7") + "\t" + stackNtot_std[i].Y.ToString("G7") + "\t" + stackN2_int[i].Y.ToString("G7"));
             file.Close();
             log("Save> " + fn);
         }
@@ -781,7 +789,7 @@ namespace Axel_hub
             if (Middle)
             {
                 tbRemSignal.Text = "";
-                stackN1.Clear(); stackN2.Clear(); stackRN1.Clear(); stackRN2.Clear(); stackNtot.Clear();
+                stackN1.Clear(); stackN2.Clear(); stackRN1.Clear(); stackRN2.Clear(); stackNtot.Clear(); stackN2_int.Clear(); stackN2_std.Clear(); stackNtot_std.Clear();
                 if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
                 if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
                 lboxNB.Items.Clear();

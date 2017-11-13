@@ -17,10 +17,20 @@ namespace Axel_hub
         public static Dictionary<string, double> AverageShotSegments(MMexec data, bool initN2)
         {
             var avgs = new Dictionary<string, double>();
+            double std = 0.0;
+            double mean = 0.0;
             foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg"})
             {
                 var rawData = (double[])data.prms[key];
-                avgs[key] = rawData.Average();
+                mean = rawData.Average();
+                avgs[key] = mean;
+                std = 0.0;
+                for (int i = 0; i< rawData.Length; i++)
+                {
+                    std += (rawData[i]-mean)*(rawData[i]-mean);
+                }
+                std = Math.Sqrt(std/(rawData.Length-1));
+                avgs[key + "_std"] = std;
                 if (key.Equals("N2") && initN2)
                 {
                     double[] seq = new double[rawData.Length];
