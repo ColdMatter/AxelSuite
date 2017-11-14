@@ -342,11 +342,14 @@ namespace AxelChartNS
             resultStack = new DataStack();
             Refresh();
         }
-        GeneralOptions genOptions;
-        Modes genModes;
+        GeneralOptions genOptions = null;
+        Modes genModes = null;
         public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes)
         {
             genOptions = _genOptions;
+            
+            seStackDepth.Value = _genModes.StackDepth;
+            seShowFreq.Value = _genModes.ShowFreq;
             genModes = _genModes;
         }
         private DataStack resultStack;
@@ -809,9 +812,13 @@ namespace AxelChartNS
         }
 
         private void seStackDepth_ValueChanged(object sender, ValueChangedEventArgs<double> e)
-        {
-            if ((seStackDepth == null) || (Waveform == null)) return;
-            Waveform.Depth = (int)seStackDepth.Value;
+        {   
+            if(Utils.isNull(genModes)) return;
+            genModes.StackDepth = (int)seStackDepth.Value;
+            genModes.ShowFreq = (int)seShowFreq.Value;
+
+            if (Utils.isNull(seStackDepth) || Utils.isNull(Waveform)) return;
+            Waveform.Depth = (int)seStackDepth.Value;            
         }
 
         private void btnClear_Click(object sender, RoutedEventArgs e)
@@ -827,5 +834,5 @@ namespace AxelChartNS
                 { btnCpyPic_Click(sender, null); }
             }
         }
-    }
+     }
 }

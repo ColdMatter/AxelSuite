@@ -21,10 +21,10 @@ namespace Axel_hub
             {
                 var rawData = (double[])data.prms[key];
                 avgs[key] = rawData.Average();
-                if (key.Equals("N2") && initN2)
+                if (key.Equals("N2") && initN2 && (rawData.Length > 0))
                 {
                     double[] seq = new double[rawData.Length];
-                    for (int i =0; i<rawData.Length; i++) { seq[i] = i;}
+                    for (int i = 0; i < rawData.Length; i++) { seq[i] = i; }
                     double[] fit = CurveFit.LinearFit(seq, rawData);
                     avgs["initN2"] = fit[0];
                 }               

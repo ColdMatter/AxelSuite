@@ -108,9 +108,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="..\..\Utils\OptionsType.cs">
-      <Link>OptionsType.cs</Link>
-    </Compile>
     <Compile Include="AxelHMems.cs" />
     <Compile Include="..\..\Utils\RemoteMessaging.cs">
       <Link>RemoteMessaging.cs</Link>

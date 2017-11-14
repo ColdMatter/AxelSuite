@@ -90,7 +90,7 @@ namespace Axel_hub
 
             iStack = new List<double>(); dStack = new List<double>();
             Options = new OptionsWindow();
-            //AxelChart1.InitOptions(ref Options.genOptions, ref modes);
+            AxelChart1.InitOptions(ref Options.genOptions, ref modes);
         }
 
         private void log(string txt, Color? clr = null)
@@ -530,7 +530,7 @@ namespace Axel_hub
                             log("!!! "+txt, Brushes.Red.Color);
                             if (errCode > -1) log("Error code: "+errCode.ToString(), Brushes.Red.Color);
                         }
-                        else log("! "+txt, Brushes.DarkOrange.Color);
+                        else log("! "+txt, Brushes.Coral.Color);
                     }
                     break;
                 case ("abort"):
@@ -876,7 +876,7 @@ namespace Axel_hub
             };
         }
 
-        private void OpenDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
+        private void OpenDefaultModes(bool Middle = true, bool Bottom = true)
         {
             if (File.Exists(Utils.configPath + "Defaults.cfg"))
             {
@@ -885,10 +885,6 @@ namespace Axel_hub
             }
             else
                 modes = new Modes();
-            if (Top)
-            {
-
-            }
             if (Middle)
             {
                 chkManualAxis.IsChecked = modes.ManualYAxis;
@@ -906,12 +902,8 @@ namespace Axel_hub
             }
         }
 
-        private void SaveDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
+        private void SaveDefaultModes(bool Middle = true, bool Bottom = true)
         {
-            if (Top)
-            {
-
-            }
             if (Middle)
             {
                 modes.ManualYAxis = chkManualAxis.IsChecked.Value;
