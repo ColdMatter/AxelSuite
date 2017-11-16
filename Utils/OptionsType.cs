@@ -43,9 +43,10 @@ namespace OptionsTypeNS
         public int ShowFreq { get; set; }
 
         // Middle
-        public bool ManualYAxis { get; set; }
+        public bool ManualYAxisMiddle { get; set; }
         public bool Background { get; set; }
         public bool DarkCurrent { get; set; }
+        public bool StdDev { get; set; }
         public bool N1 { get; set; }
         public bool N2 { get; set; }
         public bool RN1 { get; set; }
@@ -53,6 +54,7 @@ namespace OptionsTypeNS
         public bool Ntot { get; set; }
 
         // Bottom
+        public bool ManualYAxisBottom { get; set; }
 
         public void Save()
         {

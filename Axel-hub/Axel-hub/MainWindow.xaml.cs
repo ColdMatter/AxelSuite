@@ -805,11 +805,11 @@ namespace Axel_hub
             {
                 tbRemSignal.Text = "";
                 stackN1.Clear(); stackN2.Clear(); stackRN1.Clear(); stackRN2.Clear(); stackNtot.Clear();
+                NsYmin = 10; NsYmax = -10;
                 if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
                 if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
-                lboxNB.Items.Clear();
                 signalYmin = 10; signalYmax = -10;
-                NsYmin = 10; NsYmax = -10;
+                lboxNB.Items.Clear();
             }
             if (Bottom)
             {
@@ -898,7 +898,7 @@ namespace Axel_hub
                 ValueFormatters = { new GeneralValueFormatter(Options.genOptions.SignalCursorPrec) }
             };
         }
-
+        #region close and modes
         private void OpenDefaultModes(bool Middle = true, bool Bottom = true)
         {
             if (File.Exists(Utils.configPath + "Defaults.cfg"))
@@ -910,9 +910,10 @@ namespace Axel_hub
                 modes = new Modes();
             if (Middle)
             {
-                chkManualAxisMiddle.IsChecked = modes.ManualYAxis;
+                chkManualAxisMiddle.IsChecked = modes.ManualYAxisMiddle;
                 chkBackgroung.IsChecked = modes.Background;
                 chkDarkcurrent.IsChecked = modes.DarkCurrent;
+                chkStdDev.IsChecked = modes.StdDev;
                 chkN1.IsChecked = modes.N1;
                 chkN2.IsChecked= modes.N2;
                 chkRN1.IsChecked = modes.RN1;
@@ -921,7 +922,7 @@ namespace Axel_hub
             }
             if (Bottom)
             {
-
+                chkManualAxisBottom.IsChecked = modes.ManualYAxisBottom;
             }
         }
 
@@ -929,9 +930,10 @@ namespace Axel_hub
         {
             if (Middle)
             {
-                modes.ManualYAxis = chkManualAxisMiddle.IsChecked.Value;
+                modes.ManualYAxisMiddle = chkManualAxisMiddle.IsChecked.Value;
                 modes.Background = chkBackgroung.IsChecked.Value;
                 modes.DarkCurrent = chkDarkcurrent.IsChecked.Value;
+                modes.StdDev = chkStdDev.IsChecked.Value;
                 modes.N1 = chkN1.IsChecked.Value;
                 modes.N2 = chkN2.IsChecked.Value;
                 modes.RN1 = chkRN1.IsChecked.Value;
@@ -940,7 +942,7 @@ namespace Axel_hub
             }
             if (Bottom)
             {
-
+                modes.ManualYAxisBottom = chkManualAxisBottom.IsChecked.Value;
             }
             modes.Save();
         }
@@ -966,5 +968,6 @@ namespace Axel_hub
             Options.genOptions.Save();
             Options.Close();
         }
-     }
+        #endregion 
+    }
 }
