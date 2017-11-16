@@ -277,7 +277,8 @@ namespace Axel_hub
         }
 
         private MMexec lastGrpExe; private MMscan lastScan;
-        private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10;
+        private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10,
+            fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
         DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
 
@@ -382,7 +383,8 @@ namespace Axel_hub
                         d = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
                         d = Math.Ceiling(10 * d) / 10;
                         signalYmax = Math.Max(d, signalYmax);
-                        signalYaxis.Range = new Range<double>(signalYmin - 0.2, signalYmax + 0.2);
+                        d = (signalYmax - signalYmin) * 0.02;
+                        signalYaxis.Range = new Range<double>(signalYmin - d, signalYmax + d);
                     }
 
                     double A = 1 - 2 * (N2 - B2) / (NTot - BTot), corr, debalance;
@@ -420,7 +422,8 @@ namespace Axel_hub
                             d = ld.Max();
                             d = Math.Ceiling(10 * d) / 10;
                             NsYmax = Math.Max(d, NsYmax);
-                            NsYaxis.Range = new Range<double>(NsYmin - 0.2, NsYmax + 0.2);
+                            d = (NsYmax - NsYmin) * 0.02;
+                            NsYaxis.Range = new Range<double>(NsYmin - d, NsYmax + d);
                         }
                         graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
                         graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
@@ -428,6 +431,16 @@ namespace Axel_hub
                     if (scanMode) 
                     {
                         srsFringes.Add(new Point(currX, asymmetry));
+                        if (!chkManualAxisBottom.IsChecked.Value) // Fringes
+                        {
+                            double d; 
+                            d = Math.Floor(10 * srsFringes.pointYs().Min()) / 10;
+                            fringesYmin = Math.Min(d, fringesYmin);                            
+                            d = Math.Ceiling(10 * srsFringes.pointYs().Max()) / 10;
+                            fringesYmax = Math.Max(d, fringesYmax);
+                            d = (fringesYmax - fringesYmin) * 0.02;
+                            fringesYaxis.Range = new Range<double>(fringesYmin - d, fringesYmax + d);
+                        }
                         graphFringes.Data[0] = srsFringes;
                     }
                     if (repeatMode) 
@@ -467,7 +480,17 @@ namespace Axel_hub
                                 graphAccelTrend.Data[1] = srsCorr;
                             }
                        }
-                       srsMotAccel.Add(new Point(runID, asymmetry));                       
+                       srsMotAccel.Add(new Point(runID, asymmetry));
+                       if (!chkManualAxisBottom.IsChecked.Value) // Accel.Trend
+                       {
+                           double d;
+                           d = Math.Floor(10 * srsMotAccel.pointYs().Min()) / 10;
+                           accelYmin = Math.Min(d, accelYmin);
+                           d = Math.Ceiling(10 * srsMotAccel.pointYs().Max()) / 10;
+                           accelYmax = Math.Max(d, accelYmax);
+                           d = (accelYmax-accelYmin) * 0.02;
+                           accelYaxis.Range = new Range<double>(accelYmin - d, accelYmax + d);
+                       }
                        graphAccelTrend.Data[0] = srsMotAccel;
                     }
                     if (scanMode && (ucScan1.remoteMode == RemoteMode.Jumbo_Scan) && jumboRepeatFlag)
@@ -794,10 +817,10 @@ namespace Axel_hub
                 {
                     srsFringes.Clear();
                     graphFringes.Data[0] = srsFringes;
-                }
-                    
+                }                    
                 if (!Utils.isNull(srsMotAccel)) srsMotAccel.Clear();
                 if (!Utils.isNull(srsCorr)) srsCorr.Clear();
+                fringesYmin = 10; fringesYmax = -10; accelYmin = 10; accelYmax = -10;
             }
         }
 

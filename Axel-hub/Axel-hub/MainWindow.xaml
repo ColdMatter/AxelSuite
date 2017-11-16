@@ -157,7 +157,6 @@
 
                     <TabItem x:Name="tabVelocity" Header="Velocity" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Visibility="Collapsed">
                         <Grid>
-
                             <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.285,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphVelocity}" Grid.ColumnSpan="2"/>
                             <ni:Graph x:Name="graphVelocity" Margin="3,30,-0.285,-0.429" FontSize="12" Grid.ColumnSpan="2" PlotAreaMargin="Auto,2,Auto,Auto">
                                 <ni:Graph.Plots>
@@ -196,12 +195,12 @@
                                 <StackPanel Margin="0,3,0,0">
                                     <GroupBox Header="Files" Height="92" Margin="0,0,-0.143,0">
                                         <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click"/>
-                                            <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveSignalAs_Click"/>
+                                            <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click" Background="#FFF6F6F6"/>
+                                            <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveSignalAs_Click" Background="#FFF6F6F6"/>
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClearSignal" Content="Clear Signal" Margin="12,10,7,0" Click="btnClearAll_Click"/>
-                                    <Button x:Name="btnClearAll" Content="Clear ALL" Margin="12,10,7,0" Click="btnClearAll_Click"/>
+                                    <Button x:Name="btnClearSignal" Content="Clear Signal" Margin="12,10,7,0" Click="btnClearAll_Click" Background="#FFFCFCE3"/>
+                                    <Button x:Name="btnClearAll" Content="Clear ALL" Margin="12,10,7,0" Click="btnClearAll_Click" Background="#FFFCFCE3"/>
                                 </StackPanel>
 
                             </GroupBox>
@@ -228,6 +227,9 @@
                             <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoFringes" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="532" FontSize="13"/>
                             <ni:Graph x:Name="graphFringes" Margin="3,30,0.286,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Grid.ColumnSpan="2" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick">
+                                <ni:Graph.Axes>
+                                    <ni:AxisDouble x:Name="fringesYaxis" Orientation="Vertical" Adjuster="None"/>
+                                </ni:Graph.Axes>
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor x:Name="crsStrobe1" Label="multiPlotCursor1"/>
                                     <ni:MultiPlotCursor x:Name="crsStrobe2" Label="multiPlotCursor2"/>
@@ -252,6 +254,9 @@
                             <ni:GraphInteractionPalette x:Name="interatctionGenTrend" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="640" FontSize="13"/>
                             <ni:Graph x:Name="graphAccelTrend" Margin="3,30,0.143,-0.143" Grid.ColumnSpan="2" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick">
+                                <ni:Graph.Axes>
+                                    <ni:AxisDouble x:Name="accelYaxis" Orientation="Vertical" Adjuster="None"/>
+                                </ni:Graph.Axes>
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor Label="multiPlotCursor2"/>
                                 </ni:Graph.Children>
@@ -288,15 +293,15 @@
                             </Grid.ColumnDefinitions>
                             <GroupBox Grid.Column="1" Header="Fringes Data" Margin="0,0,0,0" FontSize="12">
                                 <StackPanel Margin="0,0,0,0">
-                                    <GroupBox Header="Files" Height="73" Margin="0,0,-0.286,0">
-                                        <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" />
-                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" />
+                                    <GroupBox Header="Files" Height="147" Margin="0,0,-0.286,0">
+                                        <StackPanel Margin="0">
+                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" Background="#FFF6F6F6" />
+                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" Background="#FFF6F6F6" />
+                                            <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
+                                            <TextBox x:Name="tbRemFringes" Margin="0,1,-0.143,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="47"/>
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClearFringes" Content="Clear Fringes/Trend" Margin="12,4,7,0" Click="btnClearAll_Click" />
-                                    <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
-                                    <TextBox x:Name="tbRemFringes" Margin="0,1,-0.286,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="63"/>
+                                    <Button x:Name="btnClearFringes" Content="Clear Fringes/Trend" Margin="12,8,8,0" Click="btnClearAll_Click" Height="23" Background="#FFFCFCE3" />
                                 </StackPanel>
 
                             </GroupBox>
