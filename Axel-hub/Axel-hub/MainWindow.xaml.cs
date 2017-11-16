@@ -374,7 +374,7 @@ namespace Axel_hub
                         graphSignal.Data[1] = backgroundDataStack;
                     }
                     // readjust Y axis
-                    if (!chkManualAxis.IsChecked.Value) // signal
+                    if (!chkManualAxisMiddle.IsChecked.Value) // signal
                     {
                         double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
                         d = Math.Floor(10 * d) / 10;
@@ -406,7 +406,7 @@ namespace Axel_hub
                             stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
                             stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot);
                         }
-                        if (!chkManualAxis.IsChecked.Value) // Ns
+                        if (!chkManualAxisMiddle.IsChecked.Value) // Ns
                         {                      
                             List<double> ld = new List<double>();
                             ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
@@ -887,7 +887,7 @@ namespace Axel_hub
                 modes = new Modes();
             if (Middle)
             {
-                chkManualAxis.IsChecked = modes.ManualYAxis;
+                chkManualAxisMiddle.IsChecked = modes.ManualYAxis;
                 chkBackgroung.IsChecked = modes.Background;
                 chkDarkcurrent.IsChecked = modes.DarkCurrent;
                 chkN1.IsChecked = modes.N1;
@@ -906,7 +906,7 @@ namespace Axel_hub
         {
             if (Middle)
             {
-                modes.ManualYAxis = chkManualAxis.IsChecked.Value;
+                modes.ManualYAxis = chkManualAxisMiddle.IsChecked.Value;
                 modes.Background = chkBackgroung.IsChecked.Value;
                 modes.DarkCurrent = chkDarkcurrent.IsChecked.Value;
                 modes.N1 = chkN1.IsChecked.Value;
