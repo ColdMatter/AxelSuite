@@ -40,7 +40,7 @@ namespace OptionsTypeNS
     {
         // Top
         public int StackDepth { get; set; }
-
+        public int ShowFreq { get; set; }
 
         // Middle
         public bool ManualYAxis { get; set; }

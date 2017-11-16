@@ -113,9 +113,10 @@
                                 </ni:Graph>
                             </Grid>
 
-                            <GridSplitter x:Name="splitSignal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
+                            <GridSplitter x:Name="split1Signal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
+                            <GridSplitter x:Name="split2Signal" HorizontalAlignment="Left" Grid.Column="2" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
 
-                            <Grid Grid.Column="1" Margin="0">
+                            <Grid Grid.Column="1" Margin="3,0,0,0">
                                 <ni:Graph x:Name="graphSignal"  Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" >
                                     <ni:Graph.Axes>
                                         <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical" Adjuster="None"/>
@@ -133,24 +134,29 @@
                                     </ni:Graph.SelectionFill>
                                 </ni:Graph>
                             </Grid>
-                            <StackPanel Grid.Column="2" Margin="0,0,0,0">
-                                <CheckBox x:Name="chkManualAxis" Margin="1,2,0,5" FontSize="12" Content="Manual Y Axis" RenderTransformOrigin="0.514,-8.657"/>
-                                <ListBox x:Name="lboxNB" FontSize="13" Height="143" Margin="0">
+                            <Grid Grid.Column="2" Margin="5,0,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition x:Name="rowUpper" MinHeight="3" Height="130.286"/>
+                                    <RowDefinition x:Name="rowMiddle" MinHeight="30" Height="189.714"/>
+                                </Grid.RowDefinitions>
+                                <CheckBox x:Name="chkManualAxisMiddle" Grid.Row="0" Margin="3,2,0,5.286" FontSize="12" Content="Manual Y Axis" RenderTransformOrigin="0.514,-8.657" Foreground="#FF0E7501"/>
+                                <ListBox x:Name="lboxNB" Grid.Row="0" FontSize="13" Margin="3,19,0,0">
                                     <ListBoxItem Content="N2"/>
                                     <ListBoxItem Content="NTot"/>
                                     <ListBoxItem Content="B2"/>
                                     <ListBoxItem Content="BTot"/>
                                     <ListBoxItem Content="Bg"/>
                                 </ListBox>
-                                <CheckBox x:Name="chkBackgroung" Margin="1,7,0,0" FontSize="12" Content="- Backgroung" RenderTransformOrigin="0.514,-8.657" IsChecked="True"/>
-                                <CheckBox x:Name="chkDarkcurrent" Margin="1,2,0,5" FontSize="12" Content="- Dark Current" RenderTransformOrigin="0.514,-8.657" IsChecked="True"/>
-                            </StackPanel>
+                                <CheckBox x:Name="chkBackgroung" Grid.Row="1" Margin="3,25,0,0" FontSize="12" Content="- Backgroung" IsChecked="True" VerticalAlignment="Top"/>
+                                <CheckBox x:Name="chkDarkcurrent" Grid.Row="1" Margin="3,8,0,5" FontSize="12" Content="- Dark Current" IsChecked="True" VerticalAlignment="Top"/>
+                                <CheckBox x:Name="chkStdDev" Grid.Row="1" Margin="3,43,0,0" FontSize="12" Content="- Std.Dev." IsChecked="True" Height="18" VerticalAlignment="Top"/>
+                                <GridSplitter Height="4" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
+                            </Grid>
                         </Grid>
                     </TabItem>
 
                     <TabItem x:Name="tabVelocity" Header="Velocity" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Visibility="Collapsed">
                         <Grid>
-
                             <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.285,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphVelocity}" Grid.ColumnSpan="2"/>
                             <ni:Graph x:Name="graphVelocity" Margin="3,30,-0.285,-0.429" FontSize="12" Grid.ColumnSpan="2" PlotAreaMargin="Auto,2,Auto,Auto">
                                 <ni:Graph.Plots>
@@ -189,12 +195,12 @@
                                 <StackPanel Margin="0,3,0,0">
                                     <GroupBox Header="Files" Height="92" Margin="0,0,-0.143,0">
                                         <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click"/>
-                                            <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveSignalAs_Click"/>
+                                            <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click" Background="#FFF6F6F6"/>
+                                            <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,10,5,0" Click="btnSaveSignalAs_Click" Background="#FFF6F6F6"/>
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClearSignal" Content="Clear Signal" Margin="12,10,7,0" Click="btnClearAll_Click"/>
-                                    <Button x:Name="btnClearAll" Content="Clear ALL" Margin="12,10,7,0" Click="btnClearAll_Click"/>
+                                    <Button x:Name="btnClearSignal" Content="Clear Signal" Margin="12,10,7,0" Click="btnClearAll_Click" Background="#FFFCFCE3"/>
+                                    <Button x:Name="btnClearAll" Content="Clear ALL" Margin="12,10,7,0" Click="btnClearAll_Click" Background="#FFFCFCE3"/>
                                 </StackPanel>
 
                             </GroupBox>
@@ -221,6 +227,9 @@
                             <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoFringes" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="532" FontSize="13"/>
                             <ni:Graph x:Name="graphFringes" Margin="3,30,0.286,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Grid.ColumnSpan="2" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick">
+                                <ni:Graph.Axes>
+                                    <ni:AxisDouble x:Name="fringesYaxis" Orientation="Vertical" Adjuster="None"/>
+                                </ni:Graph.Axes>
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor x:Name="crsStrobe1" Label="multiPlotCursor1"/>
                                     <ni:MultiPlotCursor x:Name="crsStrobe2" Label="multiPlotCursor2"/>
@@ -245,6 +254,9 @@
                             <ni:GraphInteractionPalette x:Name="interatctionGenTrend" HorizontalAlignment="Stretch" Height="23" Margin="28,5,547.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="236,0,0,0" VerticalAlignment="Top" Height="31" Width="640" FontSize="13"/>
                             <ni:Graph x:Name="graphAccelTrend" Margin="3,30,0.143,-0.143" Grid.ColumnSpan="2" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick">
+                                <ni:Graph.Axes>
+                                    <ni:AxisDouble x:Name="accelYaxis" Orientation="Vertical" Adjuster="None"/>
+                                </ni:Graph.Axes>
                                 <ni:Graph.Children>
                                     <ni:MultiPlotCursor Label="multiPlotCursor2"/>
                                 </ni:Graph.Children>
@@ -281,15 +293,15 @@
                             </Grid.ColumnDefinitions>
                             <GroupBox Grid.Column="1" Header="Fringes Data" Margin="0,0,0,0" FontSize="12">
                                 <StackPanel Margin="0,0,0,0">
-                                    <GroupBox Header="Files" Height="73" Margin="0,0,-0.286,0">
-                                        <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" />
-                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" />
+                                    <GroupBox Header="Files" Height="147" Margin="0,0,-0.286,0">
+                                        <StackPanel Margin="0">
+                                            <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" Background="#FFF6F6F6" />
+                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" Background="#FFF6F6F6" />
+                                            <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
+                                            <TextBox x:Name="tbRemFringes" Margin="0,1,-0.143,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="47"/>
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button x:Name="btnClearFringes" Content="Clear Fringes/Trend" Margin="12,4,7,0" Click="btnClearAll_Click" />
-                                    <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
-                                    <TextBox x:Name="tbRemFringes" Margin="0,1,-0.286,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="63"/>
+                                    <Button x:Name="btnClearFringes" Content="Clear Fringes/Trend" Margin="12,8,8,0" Click="btnClearAll_Click" Height="23" Background="#FFFCFCE3" />
                                 </StackPanel>
 
                             </GroupBox>
@@ -322,7 +334,7 @@
 
 
                 </TabControl>
-                <GroupBox Header="PID feedback" Margin="0,0,0,0" FontSize="12" Grid.Column="1">
+                <GroupBox Header="PID feedback" Margin="0,20,0,0" FontSize="12" Grid.Column="1">
                     <Grid Margin="0,0,0.429,0">
                         <Label Content="kP" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
                         <ni:NumericTextBoxDouble x:Name="ndKP" HorizontalAlignment="Left" Height="23" Margin="41,13,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
@@ -340,6 +352,7 @@
                         <Button x:Name="btnConfirmStrobes" Content="Confirm Strobes" Margin="0,198,0,0" VerticalAlignment="Top" Width="99" Foreground="#FFEB2603" FontWeight="Bold" Visibility="Hidden" Click="btnConfirmStrobes_Click" Height="24"/>
                     </Grid>
                 </GroupBox>
+                <CheckBox x:Name="chkManualAxisBottom" Content="Manual Y Axis" Grid.Column="1" HorizontalAlignment="Left" Margin="8,5,0,0" VerticalAlignment="Top" Foreground="#FF0E7501"/>
 
             </Grid>
 

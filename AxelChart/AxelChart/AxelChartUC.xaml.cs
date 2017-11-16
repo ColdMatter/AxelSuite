@@ -166,7 +166,7 @@ namespace AxelChartNS
                 return pntsList;
             }
             pntsList = new List<Point>(); 
-            for( int i = 0; i < Count; i = i + each)
+            for( int i = 0; i < Count; i += each)
             {
                 pntsList.Add(this[i]);
             }
@@ -292,10 +292,11 @@ namespace AxelChartNS
  
         #region File operations in DataStack
         // standard tab separated x,y file 
-        public void OpenPair(string fn)
+        public bool OpenPair(string fn)
         {
+            bool rslt = true;
             Clear();
-            //Depth = maxDepth;
+            // TODO: to implement Y-only file import
             int j = 0;
             double X, Y;
             string[] pair;
@@ -303,12 +304,15 @@ namespace AxelChartNS
             {
                 if (line[0] == '#') continue; //skip comments/service info
                 pair = line.Split('\t');
-                if (!double.TryParse(pair[0], out X)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(pair[1], out Y)) throw new Exception("Wrong double at line " + j.ToString());
-                Add(new Point(X, Y));
+                if (pair.Length < 2) continue;
+                bool bx = (double.TryParse(pair[0], out X));
+                bool by = (double.TryParse(pair[1], out Y));
+                if (bx && by) Add(new Point(X, Y));
+                rslt = rslt && bx && by;                
                 j++;
             }
             TimeSeriesMode = !((int)Math.Round((Last.X - First.X) / Count) == 1);
+            return rslt;
         }
         
         public void Save(string fn)
@@ -342,11 +346,14 @@ namespace AxelChartNS
             resultStack = new DataStack();
             Refresh();
         }
-        GeneralOptions genOptions;
-        Modes genModes;
+        GeneralOptions genOptions = null;
+        Modes genModes = null;
         public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes)
         {
             genOptions = _genOptions;
+            
+            seStackDepth.Value = _genModes.StackDepth;
+            seShowFreq.Value = _genModes.ShowFreq;
             genModes = _genModes;
         }
         private DataStack resultStack;
@@ -577,8 +584,13 @@ namespace AxelChartNS
             switch (tabSecPlots.SelectedIndex) 
             {
                 case 0: if(!Utils.isNull(graphOverview.Data[0])) graphOverview.Data[0] = null; // disable
-                        break; 
-                case 1: graphOverview.Data[0] = pB;
+                        break;
+                case 1: if (pB.Count > 10000)
+                        {
+                            Utils.TimedMessageBox("The data length is too high (" + pB.Count.ToString() + "). Showing the last 10000 points.");
+                            while (pB.Count > 10000) pB.RemoveAt(0);
+                        }
+                        graphOverview.Data[0] = pB;
                         break;
                 case 2: Ys = Waveform.pointYs();
                         double df;
@@ -705,7 +717,7 @@ namespace AxelChartNS
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
             //Clear();
             string ext = System.IO.Path.GetExtension(fn);
-            if (ext.Equals(".abf") || ext.Equals(".ahf"))
+            //if (ext.Equals(".abf") || ext.Equals(".ahf"))
             {
                 remoteArg = "";
                 foreach (string line in File.ReadLines(fn))
@@ -715,7 +727,7 @@ namespace AxelChartNS
                         remoteArg = line.Substring(1);                    
                     }
                 }
-                Waveform.OpenPair(fn);
+                if (!Waveform.OpenPair(fn)) Utils.TimedMessageBox("Some data might be missing");     
                 if (String.IsNullOrEmpty(remoteArg))
                 {
                     SamplingPeriod = (Waveform.Last.X - Waveform.First.X) / Waveform.Count;
@@ -731,12 +743,11 @@ namespace AxelChartNS
                     if (!rbSec.IsChecked.Value && !rbMiliSec.IsChecked.Value && !rbMicroSec.IsChecked.Value) rbSec.IsChecked = true;
                 }
                 rbPoints.IsChecked = !Waveform.TimeSeriesMode;
-
               //  tbLog.AppendText("Count= " + Waveform.Count.ToString() + "\n");
               //  tbLog.AppendText("Sampling period= " + SamplingPeriod.ToString("G3") + "\n");
               //  tbLog.AppendText("^^^^^^^^^^^^^^^^^^^\n");
             }
-         //OriginalWaveform = Waveform.Clone();
+                
         }
 
         private void btnOpen_Click(object sender, RoutedEventArgs e)
@@ -744,7 +755,7 @@ namespace AxelChartNS
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
             dlg.DefaultExt = ".ahf"; // Default file extension
-            dlg.Filter = "Axel Hub File (.ahf)|*.ahf|" + "Axel Boss File (.abf)|*.abf"; ; // Filter files by extension
+            dlg.Filter = "Axel Hub File (.ahf)|*.ahf|" + "All files (*.*)|*.*"; ; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -809,9 +820,13 @@ namespace AxelChartNS
         }
 
         private void seStackDepth_ValueChanged(object sender, ValueChangedEventArgs<double> e)
-        {
-            if ((seStackDepth == null) || (Waveform == null)) return;
-            Waveform.Depth = (int)seStackDepth.Value;
+        {   
+            if(Utils.isNull(genModes)) return;
+            genModes.StackDepth = (int)seStackDepth.Value;
+            genModes.ShowFreq = (int)seShowFreq.Value;
+
+            if (Utils.isNull(seStackDepth) || Utils.isNull(Waveform)) return;
+            Waveform.Depth = (int)seStackDepth.Value;            
         }
 
         private void btnClear_Click(object sender, RoutedEventArgs e)
@@ -827,5 +842,39 @@ namespace AxelChartNS
                 { btnCpyPic_Click(sender, null); }
             }
         }
-    }
+
+        private void btnCpyDta3_Click(object sender, RoutedEventArgs e)
+        {
+            List<Point> ds = graphHisto.Data[0] as List<Point>;
+            if (ds.Count == 0)
+            {
+                Utils.errorMessage("No data to process.");
+                return;
+            }
+            string ss = "";
+            foreach (Point pnt in ds) 
+            {
+                ss += pnt.X.ToString("G5") + "\t" + pnt.Y.ToString("G5")+"\r";
+            }
+            Clipboard.SetText(ss);
+            Utils.TimedMessageBox("The data is in the clipboard");
+        }
+
+        private void btnCpyDta2_Click(object sender, RoutedEventArgs e)
+        {
+            List<Point> ds = graphPower.Data[0] as List<Point>;
+            if (ds.Count == 0)
+            {
+                Utils.errorMessage("No data to process.");
+                return;
+            }
+            string ss = "";
+            foreach (Point pnt in ds)
+            {
+                ss += pnt.X.ToString("G5") + "\t" + pnt.Y.ToString("G5") + "\r";
+            }
+            Clipboard.SetText(ss);
+            Utils.TimedMessageBox("The data is in the clipboard");
+        }
+     }
 }

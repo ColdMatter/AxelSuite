@@ -64,7 +64,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="tabPower" Header="Power Spec." Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
+                <TabItem x:Name="tabPower" Header="Power Spec." Margin="96.429,0,-96.286,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
                     <Grid x:Name="gridPower">
                         <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphPower}"/>
                         <ni:Graph x:Name="graphPower" Margin="3,28,-0.429,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" SelectionStroke="#FFFBFB42" DefaultInteraction="Pan" Interactions="Zoom" Focusable="False" MouseDoubleClick="graphOverview_MouseDoubleClick">
@@ -79,11 +79,12 @@
                                 <ni:BarPlotRenderer BarWidth="3" Fill="Green" StrokeThickness="1"/>
                             </ni:Graph.DefaultPlotRenderers>
                         </ni:Graph>
-                        <Button x:Name="btnCpyPic2" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="21"/>
+                        <Button x:Name="btnCpyPic2" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="23" Background="#FFF2FAFA"/>
+                        <Button x:Name="btnCpyDta2" Content="Cpy Data" HorizontalAlignment="Left" Margin="322,5,0,0" Width="55" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA" Click="btnCpyDta2_Click"/>
 
                     </Grid>
                 </TabItem>
-                <TabItem Header="Histogram" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
+                <TabItem Header="Histogram" Margin="-97.714,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
                     <Grid>
                         <ni:GraphInteractionPalette x:Name="interactionHisto" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphHisto}"/>
                         <ni:Graph x:Name="graphHisto" Margin="3,30,-0.429,0" FontSize="12" PlotAreaMargin="Auto,1,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick">
@@ -94,7 +95,8 @@
                                 <ni:BarPlotRenderer Fill="#FF006F80"/>
                             </ni:Graph.DefaultPlotRenderers>
                         </ni:Graph>
-                        <Button x:Name="btnCpyPic3" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="21"/>
+                        <Button x:Name="btnCpyPic3" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA"/>
+                        <Button x:Name="btnCpyDta3" Content="Cpy Data" HorizontalAlignment="Left" Margin="322,5,0,0" Width="55" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA" Click="btnCpyDta3_Click"/>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Opts/Stats" Height="24" VerticalAlignment="Top" Margin="0">
@@ -106,16 +108,16 @@
                         </Grid.ColumnDefinitions>
                         <GroupBox x:Name="grpData" Grid.Column="0" Header=" Data " Margin="0,1,9.714,0.429" FontSize="12">
                             <StackPanel Margin="0,3,0,0">
-                                <GroupBox Header="Files" Height="81" Margin="0,0,-0.143,0">
-                                    <StackPanel HorizontalAlignment="Left" Height="75" Margin="0" VerticalAlignment="Top" Width="124">
-                                        <Button x:Name="btnOpen" Content="Open..." Margin="5,5,10,0" Click="btnOpen_Click"/>
-                                        <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click"/>
+                                <GroupBox Header="Files" Height="163" Margin="0,0,0.143,0" VerticalAlignment="Top">
+                                    <StackPanel Margin="0" Width="124">
+                                        <Button x:Name="btnOpen" Content="Open..." Margin="5,5,10,0" Click="btnOpen_Click" Background="#FFF6F6F6" VerticalAlignment="Top"/>
+                                        <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click" Background="#FFF6F6F6"/>
+                                        <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
+                                        <TextBox x:Name="tbRemFile" Margin="1,1,7,4" TextWrapping="Wrap" VerticalAlignment="Top" Height="57"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button x:Name="btnClear" Content="Clear" Margin="10,5,10.143,0" Click="btnClear_Click"/>
-
+                                <Button x:Name="btnClear" Content="Clear" Margin="10,5,10.143,0" Click="btnClear_Click" Background="#FFFCFCE3" BorderBrush="#FF61605F"/>
                             </StackPanel>
-
                         </GroupBox>
                         <GroupBox Header="Chart opts" Grid.Column="1" Height="207" Margin="0.286,0,0,0" HorizontalAlignment="Left" Width="157" VerticalAlignment="Top" FontSize="13">
                             <StackPanel Margin="0,0,-1.857,-33.857" Orientation="Vertical">
@@ -129,7 +131,7 @@
 
                                 </GroupBox>
                                 <GroupBox Header=" Draw each ... point " Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top">
-                                    <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="40,0,7,0" VerticalAlignment="Center" Width="55" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081"/>
+                                    <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="40,0,7,0" VerticalAlignment="Center" Width="55" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" ValueChanged="seStackDepth_ValueChanged"/>
                                 </GroupBox>
                                 <GroupBox Header="Keep last pnts (depth)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50">
                                     <ni:NumericTextBoxDouble x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 1000000, System.Double" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" ValueChanged="seStackDepth_ValueChanged" FontSize="13" Interval="100"/>

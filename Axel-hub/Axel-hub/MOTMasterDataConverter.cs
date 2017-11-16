@@ -34,7 +34,7 @@ namespace Axel_hub
                 if (key.Equals("N2") && initN2)
                 {
                     double[] seq = new double[rawData.Length];
-                    for (int i =0; i<rawData.Length; i++) { seq[i] = i;}
+                    for (int i = 0; i < rawData.Length; i++) { seq[i] = i; }
                     double[] fit = CurveFit.LinearFit(seq, rawData);
                     avgs["initN2"] = fit[0];
                 }               
