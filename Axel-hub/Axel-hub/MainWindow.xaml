@@ -113,8 +113,8 @@
                                 </ni:Graph>
                             </Grid>
 
-                            <GridSplitter x:Name="split1Signal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
-                            <GridSplitter x:Name="split2Signal" HorizontalAlignment="Left" Grid.Column="2" Margin="0,0,0,0" Background="#FFEFFDFA" ResizeDirection="Columns" Width="4"/>
+                            <GridSplitter x:Name="split1Signal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFE5FFFA" ResizeDirection="Columns" Width="4"/>
+                            <GridSplitter x:Name="split2Signal" HorizontalAlignment="Left" Grid.Column="2" Margin="0,0,0,0" Background="#FFE5FFFA" ResizeDirection="Columns" Width="4"/>
 
                             <Grid Grid.Column="1" Margin="3,0,0,0">
                                 <ni:Graph x:Name="graphSignal"  Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" >
@@ -150,7 +150,7 @@
                                 <CheckBox x:Name="chkBackgroung" Grid.Row="1" Margin="3,25,0,0" FontSize="12" Content="- Backgroung" IsChecked="True" VerticalAlignment="Top"/>
                                 <CheckBox x:Name="chkDarkcurrent" Grid.Row="1" Margin="3,8,0,5" FontSize="12" Content="- Dark Current" IsChecked="True" VerticalAlignment="Top"/>
                                 <CheckBox x:Name="chkStdDev" Grid.Row="1" Margin="3,43,0,0" FontSize="12" Content="- Std.Dev." IsChecked="True" Height="18" VerticalAlignment="Top"/>
-                                <GridSplitter Height="4" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
+                                <GridSplitter Height="4" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="#FFE3E4E4"/>
                             </Grid>
                         </Grid>
                     </TabItem>
