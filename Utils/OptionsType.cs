@@ -28,6 +28,7 @@ namespace OptionsTypeNS
         public string SignalTablePrec { get; set; }
         public string SaveFilePrec { get; set; }
         public bool intN2 { get; set; }
+        public int visualDataLength { get; set; }
 
         public void Save()
         {

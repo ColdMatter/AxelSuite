@@ -47,11 +47,12 @@ namespace AxelChartNS
     /// </summary>
     public class DataStack : List<System.Windows.Point>
     {
-        public DataStack(bool stackMode = true): base() 
+        public DataStack(int depth = 1000): base() // -1 for Non-Stack mode
         {
-            _stackMode = stackMode;
+            _stackMode = (depth>0);
             TimeSeriesMode = false;
-            Depth = 1000;
+            if (StackMode) Depth = depth;
+            else Depth = 1000;
             stopWatch = new Stopwatch();
             logger = new AutoFileLogger();
         }
@@ -90,7 +91,7 @@ namespace AxelChartNS
                 else stopWatch.Stop();
             }
         }
-        private const int maxDepth = 1000000;
+        public const int maxDepth = 1000000;
         public int Depth { get; set; }
         
         public bool TimeSeriesMode { get; set; }
@@ -108,6 +109,7 @@ namespace AxelChartNS
             base.Clear();
             generalIdx = 0;
             rem = "";
+            Depth = maxDepth;
             System.GC.Collect();
         }
 
@@ -157,15 +159,15 @@ namespace AxelChartNS
             return Count;
         }
 
-        public List<Point> CopyEach(int each) // skip some points for visual speed
+        public DataStack CopyEach(int each) // skip some points for visual speed
         {
-            List<Point> pntsList;
+            DataStack pntsList;
             if (each < 2)
             {
-                pntsList = this.Clone() as List<Point>;
+                pntsList = this.Clone() as DataStack;
                 return pntsList;
             }
-            pntsList = new List<Point>(); 
+            pntsList = new DataStack(DataStack.maxDepth);
             for( int i = 0; i < Count; i += each)
             {
                 pntsList.Add(this[i]);
@@ -175,12 +177,25 @@ namespace AxelChartNS
 
         public DataStack Clone(double offsetX = 0, double offsetY = 0)
         {
-            DataStack rslt = new DataStack(StackMode);
+            int dp;
+            if (StackMode) dp = Depth;
+            else dp = -1;
+            DataStack rslt = new DataStack(dp);
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
-            rslt.Depth = Depth;
             for (int i = 0; i < Count; i++)
                 rslt.Add(new Point(this[i].X + offsetX, this[i].Y + offsetY));
+            return rslt;
+        }
+
+        public DataStack Portion(int lastNPoints)
+        {
+            DataStack rslt = new DataStack(lastNPoints);
+            rslt.TimeSeriesMode = TimeSeriesMode;
+            rslt.Running = Running;
+            int k = Math.Max(0, Count - lastNPoints);
+            for (int i = k; i < Count; i++)
+                rslt.Add(new Point(this[i].X, this[i].Y));
             return rslt;
         }
 
@@ -283,11 +298,26 @@ namespace AxelChartNS
 
         public double pointSDevY(bool relative = false) // in %
         {
-            double average = pointYs().Average();
-            double sumOfSquaresOfDifferences = pointYs().Select(val => (val - average) * (val - average)).Sum();
-            double disp = Math.Sqrt(sumOfSquaresOfDifferences / pointYs().Length);
-            if (relative) return 100 * disp / Math.Abs(average);
+            double disp = Statistics.StandardDeviation(pointYs());
+            //double sumOfSquaresOfDifferences = pointYs().Select(val => (val - average) * (val - average)).Sum();
+            //double disp = Math.Sqrt(sumOfSquaresOfDifferences / pointYs().Length);
+            if (relative) return 100 * disp / Math.Abs(pointYs().Average());
             return disp;            
+        }
+
+        public void importFromArrays(double[] xs, double[] ys)
+        {
+            Clear();
+            if ((xs.Length == 0) || (ys.Length == 0) || (xs.Length != ys.Length))
+            {
+                Utils.TimedMessageBox("Incorrect data!", "Error: ", 2500);
+                return;
+            }
+            Clear();
+            for(int i=0; i<xs.Length; i++)
+            {
+                AddPoint(ys[i],xs[i]);
+            }
         }
  
         #region File operations in DataStack
@@ -333,17 +363,17 @@ namespace AxelChartNS
         public AxelChartClass( )
         {
             InitializeComponent();
-            Waveform = new DataStack(true);
-            Waveform.Depth = (int)seStackDepth.Value;
+            Waveform = new DataStack(DataStack.maxDepth);
+            Waveform.Clear();
 
             Running = false;
             tabSecPlots.SelectedIndex = 1;
             //
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
             Waveform.DoRefresh += new DataStack.RefreshHandler(Refresh);
-            //rbPoints.IsChecked = true;
+            
             Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
-            resultStack = new DataStack();
+            resultStack = new DataStack(DataStack.maxDepth);
             Refresh();
         }
         GeneralOptions genOptions = null;
@@ -359,10 +389,12 @@ namespace AxelChartNS
         private DataStack resultStack;
         public int GetStackDepth() { return (int)seStackDepth.Value; }
 
-        public void Clear(bool andRefresh = true) 
+        public void Clear() 
         {
             Waveform.Clear();
-            if (andRefresh) Refresh();
+            graphScroll.Data[0] = null; graphOverview.Data[0] = null; graphPower.Data[0] = null; graphHisto.Data[0] = null; graphHisto.Data[1] = null;
+            lboxGaussFit.Items.Clear();
+            grpData.Header = "Data";
         }
 
         private string _remoteArg  = String.Empty;
@@ -511,29 +543,35 @@ namespace AxelChartNS
             return null;
         }
 
-        private List<Point> rescaleX(List<Point> pntsIn) // ???
+        private DataStack rescaleX(DataStack pntsIn) 
         {
+            // internally x must be in sec !!!
+            if (rbSec.IsChecked.Value) return pntsIn;
+            DataStack pntsOut = new DataStack(DataStack.maxDepth);
             if (rbPoints.IsChecked.Value)
             {
-                if (Waveform.TimeSeriesMode) throw new Exception("Wrong (time series) mode for natural point series");
-                return Waveform.Clone() as List<Point>;
+                if (!Waveform.TimeSeriesMode) return pntsIn;
+                else
+                {
+                    for (int i = 0; i < pntsIn.Count; i++)
+                    {
+                        pntsOut.Add(new Point(i, pntsIn[i].Y));
+                    }
+                    return pntsOut;
+                }
             }
-            // internally x must be in sec !!!
-            if (!Waveform.TimeSeriesMode) throw new Exception("Wrong (natural) mode for time series");
-            if (rbSec.IsChecked.Value) return Waveform.Clone() as List<Point>;
-            
-            List<Point> pntsOut = Waveform.Clone() as List<Point>;
             double factor = 1;
             if (rbMiliSec.IsChecked.Value) factor = 1000;
             if (rbMicroSec.IsChecked.Value) factor = 1000000;
-            for (int i = 0; i < Waveform.Count; i++)
+            for (int i = 0; i < pntsIn.Count; i++)
             {
                 pntsOut.Add(new Point(factor * pntsIn[i].X, pntsIn[i].Y));
             }
             return pntsOut;
         }
 
-        private int curRange = 256;
+        private int curRange = 256; // number of points shown
+        private const int maxVisual = 10000;
         private bool pauseFlag = false;
         public void Refresh()
         {
@@ -545,103 +583,112 @@ namespace AxelChartNS
             if (Utils.isNull(Waveform)) return;
             if (Waveform.Count == 0)
             {
-                graphScroll.Data[0] = null; graphOverview.Data[0] = null; graphPower.Data[0] = null; graphHisto.Data[0] = null;
+                Clear();
                 return;
             }
             //Console.WriteLine("refresh at " + Waveform.stopWatch.Elapsed.Seconds.ToString());
-            List<Point> pA, pB;
-            pA = Waveform.CopyEach((int)seShowFreq.Value);
-            pB = rescaleX(pA);
 
-            Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
-            if (Waveform.TimeSeriesMode)
+            Mouse.OverrideCursor = Cursors.Wait;
+            try
             {
-                int k = 0;
-                if (rbSec.IsChecked.Value) k = 1;
-                if (rbMiliSec.IsChecked.Value) k = 1000;
-                if (rbMicroSec.IsChecked.Value) k = 1000000; 
- 
-                if (curRange >= Waveform.Count)
+                DataStack pA, pB;
+                pA = Waveform.CopyEach((int)seShowFreq.Value);
+                pB = rescaleX(pA);
+
+                if (!rbPoints.IsChecked.Value) // time
                 {
-                    if (Waveform.Count > 0)
-                        ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(k * Waveform[0].X, k * (Waveform[0].X + curRange * SamplingPeriod));
+                    int k = 0;
+                    if (rbSec.IsChecked.Value) k = 1;
+                    if (rbMiliSec.IsChecked.Value) k = 1000;
+                    if (rbMicroSec.IsChecked.Value) k = 1000000;
+
+                    if (curRange >= pB.Count)
+                    {
+                        if (pB.Count > 0)
+                            ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(k * pB[0].X, k * (pB[0].X + curRange * SamplingPeriod));
+                    }
+                    else
+                    {
+                        double xEnd = pB[pB.Count - 1].X;
+                        ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(k * (xEnd - curRange * SamplingPeriod), k * xEnd);
+                    }
                 }
-                else
+                else // points
                 {
-                    double l = Waveform[Waveform.Count - 1].X;
-                    ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(k * (l - curRange * SamplingPeriod), k * l);
+                    double xEnd = pB[pB.Count-1].X; 
+                    ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(Math.Max(0,xEnd - curRange), xEnd);
                 }
-            }
-            else
-            {
-                double x = Waveform[Waveform.Count-1].X; 
-                ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(x - curRange, x);
-            }
-            Application.Current.Dispatcher.BeginInvoke(
-              DispatcherPriority.Background, new Action(() => { graphScroll.Data[0] = pB; }));
-            double[] Ys;
-            List<System.Windows.Point> pl = new List<System.Windows.Point>();
-            switch (tabSecPlots.SelectedIndex) 
-            {
-                case 0: if(!Utils.isNull(graphOverview.Data[0])) graphOverview.Data[0] = null; // disable
-                        break;
-                case 1: if (pB.Count > 10000)
-                        {
-                            Utils.TimedMessageBox("The data length is too high (" + pB.Count.ToString() + "). Showing the last 10000 points.");
-                            while (pB.Count > 10000) pB.RemoveAt(0);
-                        }
-                        graphOverview.Data[0] = pB;
-                        break;
-                case 2: Ys = Waveform.pointYs();
-                        double df;
-                        double[] ps; //, ampl, phase; 
-                        if (SamplingPeriod == 0) SamplingPeriod = (Waveform.pointXs()[99] - Waveform.pointXs()[0]) / 100;
-                        //Measurements.AmplitudePhaseSpectrum(Ys, false, SamplingPeriod , out ampl, out phase, out df); 
-                        ps = Measurements.AutoPowerSpectrum(Ys, SamplingPeriod, out df);  
-                        int len = Math.Min(ps.Length, 12000);
-                        for (int i = 1; i < len; i++) // skip DC component at position 0
-                        {
-                            if ((i * df) < 0.5) continue; // cut off level
-                            pl.Add(new Point(i * df, ps[i])); 
-                        }                        
-                        graphPower.Data[0] = pl;
-                        break;
-                case 3: graphHisto.Data[0] = Histogram(Waveform);
-                        break;
-                case 4: if (chkVisualUpdate.IsChecked.Value) // opts / stats
-                        {
-                            double mn; double dsp;
-                            //mn = Waveform.pointYs().Average(); dsp = Waveform.pointSDevY();
-                            if (Waveform.statsByTime(double.NaN, ntbTimeSlice.Value / 1000, out mn, out dsp))
+                Application.Current.Dispatcher.BeginInvoke(
+                  DispatcherPriority.Background, new Action(() => { graphScroll.Data[0] = pB; }));
+            
+                switch (tabSecPlots.SelectedIndex) 
+                {
+                    case 0: if(!Utils.isNull(graphOverview.Data[0])) graphOverview.Data[0] = null; // disable
+                            break;
+                    case 1: if (pB.Count > maxVisual) //overview
                             {
-                                Application.Current.Dispatcher.BeginInvoke(
-                                 DispatcherPriority.Background,
-                                 new Action(() =>
-                                 {
-                                     lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
-                                     double k = 1000;
-                                     lbMean.Items[1] = (k * mn).ToString("G7"); lbStDev.Items[1] = (k * dsp).ToString("G7"); // mV
-                                     k = 1e6 / 6000.12;
-                                     lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
-                                     k = 1.235976e6 / 6000.12;
-                                     lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // mg
-                                     resultStack.AddPoint(k * mn, k * dsp);
-                                     lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDevY().ToString("G7");
-                                     ntbTimeSlice.Background = Brushes.White;
-                                 }));
+                                Utils.TimedMessageBox("The data length is too high (" + pB.Count.ToString() + "). Showing the last "+maxVisual.ToString()+" points.");
+                                while (pB.Count > maxVisual) pB.RemoveAt(0);
                             }
-                            else ntbTimeSlice.Background = Brushes.Red;
-                        }
-                        break; 
+                            graphOverview.Data[0] = pB;
+                            break;
+                    case 2: double[] Ys = Waveform.pointYs(); // 
+                            double df;
+                            double[] ps; //, ampl, phase; 
+                            if (SamplingPeriod == 0) SamplingPeriod = (Waveform.pointXs()[99] - Waveform.pointXs()[0]) / 100;
+                            //Measurements.AmplitudePhaseSpectrum(Ys, false, SamplingPeriod , out ampl, out phase, out df); 
+                            ps = Measurements.AutoPowerSpectrum(Ys, SamplingPeriod, out df);  
+                            DataStack pl = new DataStack(DataStack.maxDepth);
+                            int len = Math.Min(ps.Length, 12000);
+                            for (int i = 1; i < len; i++) // skip DC component at position 0
+                            {
+                                if ((i * df) < 0.5) continue; // cut off level
+                                pl.Add(new Point(i * df, ps[i])); 
+                            }                        
+                            graphPower.Data[0] = pl;
+                            break;
+                    case 3: graphHisto.Data[0] = Histogram(Waveform);
+                            break;
+                    case 4: if (chkVisualUpdate.IsChecked.Value) // opts / stats
+                            {
+                                double mn; double dsp;
+                                //mn = Waveform.pointYs().Average(); dsp = Waveform.pointSDevY();
+                                if (Waveform.statsByTime(double.NaN, ntbTimeSlice.Value / 1000, out mn, out dsp))
+                                {
+                                    Application.Current.Dispatcher.BeginInvoke(
+                                     DispatcherPriority.Background,
+                                     new Action(() =>
+                                     {
+                                         lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
+                                         double k = 1000;
+                                         lbMean.Items[1] = (k * mn).ToString("G7"); lbStDev.Items[1] = (k * dsp).ToString("G7"); // mV
+                                         k = 1e6 / 6000.12;
+                                         lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
+                                         k = 1.235976e6 / 6000.12;
+                                         lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // mg
+                                         resultStack.AddPoint(k * mn, k * dsp);
+                                         lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDevY().ToString("G7");
+                                         ntbTimeSlice.Background = Brushes.White;
+                                     }));
+                                }
+                                else ntbTimeSlice.Background = Brushes.Red;
+                            }
+                            break; 
+                }
+                //DoEvents();
+                if (btnPause.Foreground == Brushes.Black) btnPause.Foreground = Brushes.Navy;
+                else btnPause.Foreground = Brushes.Black;;
+                while (pauseFlag) 
+                {
+                    DoEvents();
+                    System.Threading.Thread.Sleep(10);
+                }
             }
-            //DoEvents();
-            if (btnPause.Foreground == Brushes.Black) btnPause.Foreground = Brushes.Navy;
-            else btnPause.Foreground = Brushes.Black;;
-            while (pauseFlag) 
+            finally
             {
-                DoEvents();
-                System.Threading.Thread.Sleep(10);
+                Mouse.OverrideCursor = null;
             }
+
         }
   
         private double defaultRowRatio = 0;
@@ -715,7 +762,7 @@ namespace AxelChartNS
         public void Open(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
-            //Clear();
+            Clear();
             string ext = System.IO.Path.GetExtension(fn);
             //if (ext.Equals(".abf") || ext.Equals(".ahf"))
             {
@@ -727,7 +774,8 @@ namespace AxelChartNS
                         remoteArg = line.Substring(1);                    
                     }
                 }
-                if (!Waveform.OpenPair(fn)) Utils.TimedMessageBox("Some data might be missing");     
+                if (!Waveform.OpenPair(fn)) Utils.TimedMessageBox("Some data might be missing");
+                grpData.Header = "Data pnts: " + Waveform.Count.ToString();
                 if (String.IsNullOrEmpty(remoteArg))
                 {
                     SamplingPeriod = (Waveform.Last.X - Waveform.First.X) / Waveform.Count;
@@ -804,13 +852,14 @@ namespace AxelChartNS
             }
         }
 
-        public DataStack Histogram(DataStack src, int numBins = 100)
+        public DataStack Histogram(DataStack src, int numBins = 200)
         {
             if (src.Count == 0) throw new Exception("No data for the histogram");
-            DataStack rslt = new DataStack();
+            DataStack rslt = new DataStack(DataStack.maxDepth);
             double[] centerValues, Ys;
             Ys = src.pointYs();
-            int[] histo = Statistics.Histogram(Ys, Ys.Min(), Ys.Max(), numBins, out centerValues);
+            double mean = Ys.Average(); double stDev = src.pointSDevY();
+            int[] histo = Statistics.Histogram(Ys, mean - 2.5 * stDev, mean + 2.5 * stDev, numBins, out centerValues);
             if (histo.Length != centerValues.Length) throw new Exception("histogram trouble!");
             for (int i = 0; i < histo.Length; i++)
             {
@@ -831,7 +880,7 @@ namespace AxelChartNS
 
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
-            Clear(true);
+            Clear();
         }
 
         private void graphOverview_KeyDown(object sender, KeyEventArgs e)
@@ -848,7 +897,7 @@ namespace AxelChartNS
             List<Point> ds = graphHisto.Data[0] as List<Point>;
             if (ds.Count == 0)
             {
-                Utils.errorMessage("No data to process.");
+                Utils.TimedMessageBox("No data to process.");
                 return;
             }
             string ss = "";
@@ -865,7 +914,7 @@ namespace AxelChartNS
             List<Point> ds = graphPower.Data[0] as List<Point>;
             if (ds.Count == 0)
             {
-                Utils.errorMessage("No data to process.");
+                Utils.TimedMessageBox("No data to process.");
                 return;
             }
             string ss = "";
@@ -875,6 +924,45 @@ namespace AxelChartNS
             }
             Clipboard.SetText(ss);
             Utils.TimedMessageBox("The data is in the clipboard");
+        }
+
+        private void btnGaussFit_Click(object sender, RoutedEventArgs e)
+        {
+            if ((graphHisto.Data[0] as DataStack) == null) 
+            {
+                Utils.TimedMessageBox("No data to process");
+                return;
+            }
+            DataStack ds = (graphHisto.Data[0] as DataStack);            
+            double[] wg = new double[ds.Count];
+            for (int i = 0; i < wg.Length; i++) wg[i] = 1;
+            double ampl,center,stdDev,res;
+            double[] fitYs = CurveFit.GaussianFit(ds.pointXs(), ds.pointYs(), FitMethod.Bisquare, wg, 0, out ampl, out center, out stdDev, out res);
+
+            lboxGaussFit.Items.Clear();
+            string format = "G7";
+            ListBoxItem lbi = new ListBoxItem(); lbi.Content = "Center= " + center.ToString(format); lbi.Foreground = Brushes.Navy;
+            lboxGaussFit.Items.Add(lbi);
+            lbi = new ListBoxItem(); lbi.Content = "stdDev= " + stdDev.ToString(format); lbi.Foreground = Brushes.Navy;
+            lboxGaussFit.Items.Add(lbi);
+            lbi = new ListBoxItem(); lbi.Content = "Amplitude= " + ampl.ToString(format); lbi.Foreground = Brushes.Navy;
+            lboxGaussFit.Items.Add(lbi);
+            lbi = new ListBoxItem(); lbi.Content = "Residuals= " + res.ToString(format); lbi.Foreground = Brushes.Navy;
+            lboxGaussFit.Items.Add(lbi);
+            lbi = new ListBoxItem(); lbi.Content = "Raw Mean= " + Waveform.pointYs().Average().ToString(format); lbi.Foreground = Brushes.DarkGreen;
+            lboxGaussFit.Items.Add(lbi);
+            lbi = new ListBoxItem(); lbi.Content = "Raw SDev= " + Waveform.pointSDevY().ToString(format); lbi.Foreground = Brushes.DarkGreen;
+            lboxGaussFit.Items.Add(lbi);
+
+            DataStack fit = new DataStack(DataStack.maxDepth);
+            fit.importFromArrays(ds.pointXs(), fitYs);
+            graphHisto.Data[1] = fit;
+        }
+
+        private void horAxisScroll_RangeChanged(object sender, ValueChangedEventArgs<Range<double>> e)
+        {
+            Range<double> oldVal = e.OldValue;
+            Range<double> newVal = e.NewValue;            
         }
      }
 }

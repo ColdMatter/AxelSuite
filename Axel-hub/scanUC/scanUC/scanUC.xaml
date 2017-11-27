@@ -51,7 +51,7 @@
 
             <TabItem x:Name="tabRemote" Header=" Remote " Height="26">
                 <Grid>
-                    <Label x:Name="lbMode" Content="Mode(stage):" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
+                    <Label x:Name="lbMode" Content="Oper.Mode:" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
                     <Label x:Name="lbFringePrm" Content="Fringe Prm:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>
                     <Button x:Name="btnCheckComm" Content="&lt;-&gt; MM2" HorizontalAlignment="Left" Margin="5,7,0,0" VerticalAlignment="Top" Width="67" Click="btnCheckComm_Click"/>
                 </Grid>

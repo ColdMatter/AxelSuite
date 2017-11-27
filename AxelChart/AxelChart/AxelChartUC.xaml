@@ -18,7 +18,7 @@
                 <Label x:Name="lbInfo" Content="Info: " HorizontalAlignment="Left" Margin="10,0,0,-0.143" Width="306"/>
 
             </StackPanel>
-            <ni:Graph x:Name="graphScroll" Margin="0,26,0,0" DefaultInteraction="Pan" PlotAreaMargin="Auto,2,Auto,Auto" ScrollViewer.CanContentScroll="True" MouseDoubleClick="Refresh">
+            <ni:Graph x:Name="graphScroll" Margin="0,26,0,0" DefaultInteraction="Pan" PlotAreaMargin="Auto,Auto,Auto,Auto" ScrollViewer.CanContentScroll="True" MouseDoubleClick="Refresh" Interactions="Pan, Zoom" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" HorizontalScrollBarPosition="Far">
                 <ni:Graph.SelectionFill>
                     <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                 </ni:Graph.SelectionFill>
@@ -31,7 +31,8 @@
                     </ni:Plot>
                 </ni:Graph.Plots>
                 <ni:Graph.Axes>
-                    <ni:AxisDouble Orientation="Horizontal" Adjuster="None" Range="-0.5, 19.5, System.Double"/>
+                    <ni:AxisDouble x:Name="horAxisScroll" Orientation="Horizontal" Adjuster="None" Range="-0.5, 19.5, System.Double" RangeChanged="horAxisScroll_RangeChanged" />
+                    <ni:AxisDouble x:Name="verAxisScroll" Orientation="Vertical" Adjuster="FitVisibleLoosely"/>
                 </ni:Graph.Axes>
             </ni:Graph>
 
@@ -86,8 +87,18 @@
                 </TabItem>
                 <TabItem Header="Histogram" Margin="-97.714,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
                     <Grid>
-                        <ni:GraphInteractionPalette x:Name="interactionHisto" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphHisto}"/>
-                        <ni:Graph x:Name="graphHisto" Margin="3,30,-0.429,0" FontSize="12" PlotAreaMargin="Auto,1,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="73*"/>
+                            <ColumnDefinition Width="180"/>
+                        </Grid.ColumnDefinitions>
+                        <ni:GraphInteractionPalette x:Name="interactionHisto" HorizontalAlignment="Stretch" Height="30" Margin="28,5,116.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphHisto}" Grid.ColumnSpan="2"/>
+                        <ni:Graph x:Name="graphHisto" Margin="3,30,0,0" FontSize="12" PlotAreaMargin="Auto,1,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick">
+                            <ni:Graph.Plots>
+                                <ni:Plot Label="Plot 2"/>
+                                <ni:Plot Label="Plot 3">
+                                    <ni:LinePlotRenderer Stroke="Green" StrokeThickness="2"/>
+                                </ni:Plot>
+                            </ni:Graph.Plots>
                             <ni:Graph.SelectionFill>
                                 <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                             </ni:Graph.SelectionFill>
@@ -97,6 +108,14 @@
                         </ni:Graph>
                         <Button x:Name="btnCpyPic3" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA"/>
                         <Button x:Name="btnCpyDta3" Content="Cpy Data" HorizontalAlignment="Left" Margin="322,5,0,0" Width="55" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA" Click="btnCpyDta3_Click"/>
+                        <GroupBox Grid.Column="1" Header=" Fit Gauss " Margin="4.857,0,0.429,-0.143">
+                            <Grid>
+                                <ListBox x:Name="lboxGaussFit" Margin="0,0,0,0" VerticalAlignment="Top" Height="160">
+                                    
+                                </ListBox>
+                                <Button x:Name="btnGaussFit" Content="F I T" Margin="38,165,40.714,0" VerticalAlignment="Top" Width="75" Background="#FFE3F8F2" Click="btnGaussFit_Click"/>
+                            </Grid>
+                        </GroupBox>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Opts/Stats" Height="24" VerticalAlignment="Top" Margin="0">

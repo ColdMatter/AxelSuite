@@ -24,8 +24,13 @@
                             <TextBox x:Name="tbSaveFilePrec" HorizontalAlignment="Left" Height="23" Margin="134,67,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header=" Misc" Grid.Row="0" Margin="201,10,44.571,5.143">
-                        <CheckBox x:Name="chkInitN2" Content="initN2 in sum. table" HorizontalAlignment="Left" Margin="3,10,0,0" VerticalAlignment="Top" Width="130"/>
+                    <GroupBox Header=" Misc" Grid.Row="0" Margin="196,10,14.571,5.143">
+                        <Grid>
+                            <CheckBox x:Name="chkInitN2" Content="initN2 in sum. table" HorizontalAlignment="Left" Margin="3,10,0,0" VerticalAlignment="Top" Width="130"/>
+                            <Label Content="Visual Data Length" HorizontalAlignment="Left" Margin="0,30,0,0" VerticalAlignment="Top"/>
+                            <TextBox x:Name="tbVisualDataLength" HorizontalAlignment="Left" Height="23" Margin="113,34,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" Width="52"/>
+
+                        </Grid>
                     </GroupBox>
                     <GroupBox Header="Save modes/params on exit" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="212" Margin="10,4.857,0,0">
                         <Grid>

@@ -43,6 +43,7 @@ namespace OptionsNS
             genOptions.SaveFilePrec = tbSaveFilePrec.Text;
 
             genOptions.intN2 = chkInitN2.IsChecked.Value;
+            genOptions.visualDataLength = Convert.ToInt32(tbVisualDataLength.Text);
 
             if (rbSaveSeqYes.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.save;
             if (rbSaveSeqAsk.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.ask;
@@ -58,6 +59,7 @@ namespace OptionsNS
             tbSaveFilePrec.Text = genOptions.SaveFilePrec;
 
             chkInitN2.IsChecked = genOptions.intN2;
+            tbVisualDataLength.Text = genOptions.visualDataLength.ToString();
 
             rbSaveSeqYes.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.save);
             rbSaveSeqAsk.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask);

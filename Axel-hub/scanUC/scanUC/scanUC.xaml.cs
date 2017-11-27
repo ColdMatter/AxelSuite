@@ -25,7 +25,7 @@ namespace scanHub
         Jumbo_Repeat, // repeat as part of Jumbo Run
         Simple_Scan, // scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
-        Free // ungrouped data (default state)
+        Free // no grouping (default state)  
     }
     public struct FringeParams  // = cos(period * t + phase) + offset
     {
@@ -146,7 +146,7 @@ namespace scanHub
             get { return (RemoteMode)GetValue(remoteModeProperty); }
             set
             {
-                lbMode.Content = "Mode(stage): " + value.ToString();
+                lbMode.Content = "Oper.Mode: " + value.ToString();
                 SetValue(remoteModeProperty, value);
                 tabControl.IsEnabled = (value == RemoteMode.Free);
             }
