@@ -385,7 +385,7 @@ namespace Axel_probe
         }
 
         private MMexec lastGrpExe;
-        private void DoActiveComm(bool active)
+        private void DoActiveComm(bool active, bool forced)
         {
             if (!remote.Enabled) return;
             if (active)

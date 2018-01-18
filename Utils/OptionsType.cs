@@ -40,8 +40,9 @@ namespace OptionsTypeNS
     public class Modes
     {
         // Top
-        public int StackDepth { get; set; }
         public int ShowFreq { get; set; }
+        public int RollMean { get; set; }
+        public int StackDepth { get; set; }        
 
         // Middle
         public bool ManualYAxisMiddle { get; set; }

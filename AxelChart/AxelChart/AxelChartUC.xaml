@@ -111,7 +111,7 @@
                         <GroupBox Grid.Column="1" Header=" Fit Gauss " Margin="4.857,0,0.429,-0.143">
                             <Grid>
                                 <ListBox x:Name="lboxGaussFit" Margin="0,0,0,0" VerticalAlignment="Top" Height="160">
-                                    
+
                                 </ListBox>
                                 <Button x:Name="btnGaussFit" Content="F I T" Margin="38,165,40.714,0" VerticalAlignment="Top" Width="75" Background="#FFE3F8F2" Click="btnGaussFit_Click"/>
                             </Grid>
@@ -149,11 +149,14 @@
                                     </WrapPanel>
 
                                 </GroupBox>
-                                <GroupBox Header=" Draw each ... point " Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top">
-                                    <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="40,0,7,0" VerticalAlignment="Center" Width="55" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" ValueChanged="seStackDepth_ValueChanged"/>
+                                <GroupBox Header="Roll.mean(R) Each pnt(V)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Grid>
+                                        <ni:NumericTextBoxDouble x:Name="seRollMean" Height="23" Margin="6,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Left"  ValueChanged="seStackDepth_ValueChanged" />
+                                        <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="75,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Left"  ValueChanged="seStackDepth_ValueChanged" />
+                                    </Grid>
                                 </GroupBox>
                                 <GroupBox Header="Keep last pnts (depth)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50">
-                                    <ni:NumericTextBoxDouble x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 1000000, System.Double" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" ValueChanged="seStackDepth_ValueChanged" FontSize="13" Interval="100"/>
+                                    <ni:NumericTextBoxDouble x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 15000000, System.Double" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" ValueChanged="seStackDepth_ValueChanged" FontSize="13" Interval="100"/>
                                 </GroupBox>
                                 <CheckBox x:Name="chkVisualUpdate" Content="Vis. update (depth)" Height="18" Margin="5,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True"/>
                             </StackPanel>

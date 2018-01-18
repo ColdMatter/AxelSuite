@@ -52,7 +52,7 @@ namespace Axel_hub
     {
         bool jumboScanFlag = true;
         bool jumboRepeatFlag = true;
-        bool jumboADC24Flag = false;
+        bool jumboADC24Flag = true;
 
         Modes modes;
         scanClass ucScan1;
@@ -650,6 +650,7 @@ namespace Axel_hub
                 }
                 if (line[0] == '#') continue; //skip comments/service info
                 ns = line.Split('\t');
+                if (ns.Length < 6) continue;                
                 if (!double.TryParse(ns[0], out x)) throw new Exception("Wrong double at line " + j.ToString());
                 if (!double.TryParse(ns[1], out d)) throw new Exception("Wrong double at line " + j.ToString());
                 stackN1.Add(new Point(x,d));
@@ -661,12 +662,11 @@ namespace Axel_hub
                 stackRN2.Add(new Point(x, d));
                 if (!double.TryParse(ns[5], out d)) throw new Exception("Wrong double at line " + j.ToString());
                 stackNtot.Add(new Point(x, d));                
-
                 j++;
             }
             graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
             graphNs.Data[2] = stackRN1; graphNs.Data[3] = stackRN2; graphNs.Data[4] = stackNtot;
-            log("Open> " + fn);
+            log("Opened> " + fn);
             return true;
         }
 
@@ -696,10 +696,14 @@ namespace Axel_hub
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
             file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tN2_std\tNtot_std\tN2int");  
             for (int i = 0; i < stackN1.Count; i++)
-                file.WriteLine(stackN1[i].X.ToString("G7") + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + stackRN1[i].Y.ToString("G7") + 
-                                              "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7") + "\t" + stackN2_std[i].Y.ToString("G7") + "\t" + stackNtot_std[i].Y.ToString("G7") + "\t" + stackN2_int[i].Y.ToString("G7"));
+            {
+                string ss = stackN1[i].X.ToString("G7") + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + 
+                            stackRN1[i].Y.ToString("G7") + "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7")+ "\t" + stackN2_int[i].Y.ToString("G7"); 
+                if (stackN2_std.Count > i) ss += "\t" + stackN2_std[i].Y.ToString("G7") + "\t" + stackNtot_std[i].Y.ToString("G7");
+                file.WriteLine(ss);
+            }
             file.Close();
-            log("Save> " + fn);
+            log("Saved> " + fn);
         }
 
         private void btnSaveSignalAs_Click(object sender, RoutedEventArgs e)

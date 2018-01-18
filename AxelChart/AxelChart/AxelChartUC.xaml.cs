@@ -91,16 +91,16 @@ namespace AxelChartNS
                 else stopWatch.Stop();
             }
         }
-        public const int maxDepth = 1000000;
+        public const int maxDepth = 15000000;
         public int Depth { get; set; }
         
         public bool TimeSeriesMode { get; set; }
 
         public int Fit2Limit()
         {
-            if ((Depth <= 0) || (Depth > maxDepth)) throw new Exception("Invalid SizeLimit in SizeMode (TimeMode = false)");
-            while (Count > Depth)
-                RemoveAt(0);
+            if ((Depth <= 0) || (Depth > maxDepth)) throw new Exception("Error: Invalid Depth("+Depth.ToString()+") in StackMode!");
+            while ((Count+5) > Depth)
+                RemoveRange(0,10);
             return Count;
         }
 
@@ -130,7 +130,7 @@ namespace AxelChartNS
 
         public new int Add(Point pnt) 
         {
-            base.Add(pnt);
+            base.Add(pnt); 
             if (logger.Enabled) logger.log(pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
             OnAddPoint(1);
             return Count;
@@ -322,25 +322,48 @@ namespace AxelChartNS
  
         #region File operations in DataStack
         // standard tab separated x,y file 
-        public bool OpenPair(string fn)
+        public bool OpenPair(string fn, ref GroupBox header, int rm = 1) // rm - RollMean
         {
             bool rslt = true;
             Clear();
             // TODO: to implement Y-only file import
             int j = 0;
-            double X, Y;
+            double X, Y, od = 0;
             string[] pair;
+            List<double> ld = new List<double>();
+
             foreach (string line in File.ReadLines(fn))
             {
+                j++;
+                if (((j % 1000) == 0) && (header != null))
+                {
+                    header.Header = "Reading: " + (j / 1000).ToString() + " k";
+                    if (!Utils.isNull(Application.Current)) 
+                       Application.Current.Dispatcher.Invoke(DispatcherPriority.Background,
+                                                  new Action(delegate { }));
+                }
                 if (line[0] == '#') continue; //skip comments/service info
                 pair = line.Split('\t');
                 if (pair.Length < 2) continue;
                 bool bx = (double.TryParse(pair[0], out X));
                 bool by = (double.TryParse(pair[1], out Y));
-                if (bx && by) Add(new Point(X, Y));
-                rslt = rslt && bx && by;                
-                j++;
+                if (bx && by)
+                {
+                    if(rm < 2) Add(new Point(X, Y));
+                    else
+                    {
+                        if (ld.Count == 0) od = X;
+                        ld.Add(Y);
+                        if (ld.Count == rm) 
+                        {
+                            Add(new Point(od, ld.Average()));
+                            ld.Clear();
+                        }                       
+                    }
+                }
+                rslt = rslt && bx && by;                               
             }
+            if(Count == 0) throw new Exception("No data !!!");
             TimeSeriesMode = !((int)Math.Round((Last.X - First.X) / Count) == 1);
             return rslt;
         }
@@ -381,9 +404,10 @@ namespace AxelChartNS
         public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes)
         {
             genOptions = _genOptions;
-            
-            seStackDepth.Value = _genModes.StackDepth;
+
+            seRollMean.Value = _genModes.RollMean;
             seShowFreq.Value = _genModes.ShowFreq;
+            seStackDepth.Value = _genModes.StackDepth;
             genModes = _genModes;
         }
         private DataStack resultStack;
@@ -774,7 +798,7 @@ namespace AxelChartNS
                         remoteArg = line.Substring(1);                    
                     }
                 }
-                if (!Waveform.OpenPair(fn)) Utils.TimedMessageBox("Some data might be missing");
+                if (!Waveform.OpenPair(fn, ref grpData, genModes.RollMean)) Utils.TimedMessageBox("Some data might be missing");
                 grpData.Header = "Data pnts: " + Waveform.Count.ToString();
                 if (String.IsNullOrEmpty(remoteArg))
                 {
@@ -871,8 +895,10 @@ namespace AxelChartNS
         private void seStackDepth_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {   
             if(Utils.isNull(genModes)) return;
-            genModes.StackDepth = (int)seStackDepth.Value;
+
+            genModes.RollMean = (int)seRollMean.Value;
             genModes.ShowFreq = (int)seShowFreq.Value;
+            genModes.StackDepth = (int)seStackDepth.Value;
 
             if (Utils.isNull(seStackDepth) || Utils.isNull(Waveform)) return;
             Waveform.Depth = (int)seStackDepth.Value;            
