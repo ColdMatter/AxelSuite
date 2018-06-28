@@ -15,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
 using RemoteMessagingNS;
+using OptionsTypeNS;
 using UtilsNS;
 
 namespace scanHub
@@ -39,7 +40,7 @@ namespace scanHub
     public partial class scanClass : UserControl
     {
         private double realSampling;
-        private string ArrangedPartner = ""; //MOTMaster2"; 
+        private string ArrangedPartner = "";//MOTMaster2"; 
 
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
@@ -58,6 +59,30 @@ namespace scanHub
             tabControl.SelectedIndex = 0;
             //Status("Ready to go ");
         }
+        GeneralOptions genOptions = null;
+        Modes genModes = null;
+        public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes)
+        {
+            genOptions = _genOptions;
+
+            SetSamplingRate(_genModes.SamplingFreq);
+            if (_genModes.TimeLimitMode) cbTimeEndless.SelectedIndex = 1;
+            else cbTimeEndless.SelectedIndex = 0;
+            tbTimeLimit.Text = _genModes.TimeLimit.ToString();
+            if (_genModes.SizeLimitMode) cbSizeEndless.SelectedIndex = 1;
+            else cbSizeEndless.SelectedIndex = 0;
+            tbBifferSize.Text = _genModes.SizeLimit.ToString();
+            genModes = _genModes;
+        }
+
+        public void UpdateModes()
+        {
+            genModes.SamplingFreq = (int)Math.Round(1 / GetSamplingPeriod());
+            genModes.TimeLimitMode = cbTimeEndless.SelectedIndex == 1;
+            genModes.TimeLimit = Convert.ToInt32(tbTimeLimit.Text);
+            genModes.SizeLimitMode = cbSizeEndless.SelectedIndex == 1;
+            genModes.SizeLimit = Convert.ToInt32(tbBifferSize.Text);
+        }
 
         public bool SendJson(string json, bool async = false)
         {
@@ -65,10 +90,21 @@ namespace scanHub
             if (async) delay = 100;
             return remote.sendCommand(json, delay);
         }
+        
+        public void SetActivity(string act)
+        {
+            lbActivity.Content = "Activity: " + act;
+        }
+
+        public void SetSamplingRate(int rate) // rate is in Hz
+        {
+            cbSamplingMode.SelectedIndex = 0;
+            tbSamplingRate.Text = rate.ToString();
+        }
 
         public void SetFringeParams(FringeParams fp)
         {
-            lbFringePrm.Content = "Fringe Prm: per= " + fp.period.ToString()+"; phase= " + fp.phase.ToString()+"; off= " + fp.offset.ToString();
+            lbActivity.Content = "Fringe Prm: per= " + fp.period.ToString() + "; phase= " + fp.phase.ToString() + "; off= " + fp.offset.ToString();
         }
 
         public void OnRealSampling(double _realSampling) 
@@ -121,6 +157,7 @@ namespace scanHub
                     lbTimeElapsed.Content = "...[s]";
                     lbTimeLeft.Content = "...[s]";
                     progressBar.Value = 0;
+                    if(bbtnStart.Content == "Cancel") bbtnStart.Content = "Start";
                 }                
                 SetValue(RunningProperty, value);
             }
@@ -171,9 +208,6 @@ namespace scanHub
                   typeof(scanClass),
                   new PropertyMetadata(null)
               );
-
-        int TotalCycleCount = 0;
-        double TotalCycleTime = 0.0; //[sec]
 
         private bool MessageHandler(string message)
         {
@@ -237,18 +271,18 @@ namespace scanHub
         {
             double freq = 1; // in seconds
             double vl = 0;
-            switch (cbDigitMode.SelectedIndex)
+            switch (cbSamplingMode.SelectedIndex)
             {
-                case 0: if (!double.TryParse(tbDigitValue.Text, out vl)) throw new Exception("Not number for digit. value");  // Hz
+                case 0: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // Hz
                         freq = vl;
                         break;
-                case 1: if (!double.TryParse(tbDigitValue.Text, out vl)) throw new Exception("Not number for digit. value");  // kHz
+                case 1: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // kHz
                         freq = 1000 * vl;
                         break;
-                case 2: if (!double.TryParse(tbDigitValue.Text, out vl)) throw new Exception("Not number for digit. value");  // s
+                case 2: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // s
                         freq = 1 / vl;
                         break;
-                case 3: if (!double.TryParse(tbDigitValue.Text, out vl)) throw new Exception("Not number for digit. value");  // ms
+                case 3: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // ms
                         freq = 1000 / vl;
                         break;
                 case 4: throw new Exception("Not implemented yet");                    
@@ -299,15 +333,19 @@ namespace scanHub
             int sizeLimit = 0; // [s]
 
             double Limit = 1;
-            if (tabControl.SelectedIndex == 0)
+            switch (tabControl.SelectedIndex)
             {
-                if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
-                sizeLimit = (int)(Limit / period);
-            }
-            else
-            {
-                if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
-                sizeLimit = (int)Limit;
+                case 0:
+                    if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
+                    sizeLimit = (int)(Limit / period);
+                    break;
+                case 1:
+                    if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
+                    sizeLimit = (int)Limit;
+                    break;
+                case 2: 
+                    sizeLimit = -1;
+                    break;
             }
             if (EndlessMode())
             {
@@ -388,7 +426,7 @@ namespace scanHub
                  switch (computerName) 
                  {
                      case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
-                     case "DESKTOP-U334RMA": partner = "Axel Probe"; break;
+                     case "DESKTOP-U334RMA": partner = "MOTMaster2"; break; //"Axel Probe"
                  }
              remote = new RemoteMessaging(partner); 
              remote.Enabled = false;

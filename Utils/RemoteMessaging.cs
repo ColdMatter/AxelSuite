@@ -62,7 +62,7 @@ namespace RemoteMessagingNS
             HwndSource hwndSource = HwndSource.FromHwnd(windowHandle);
             hwndSource.AddHook(new HwndSourceHook(WndProc));
 
-            Log = new memLog(); Log.Enabled = false; // for debug use 
+            Log = new memLog(); Log.Enabled = true; // for debug use 
             lastRcvMsg = ""; lastSndMsg = "";
 
             dTimer = new System.Windows.Threading.DispatcherTimer();

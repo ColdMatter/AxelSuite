@@ -27,8 +27,9 @@
                     <GroupBox Header=" Misc" Grid.Row="0" Margin="196,10,14.571,5.143">
                         <Grid>
                             <CheckBox x:Name="chkInitN2" Content="initN2 in sum. table" HorizontalAlignment="Left" Margin="3,10,0,0" VerticalAlignment="Top" Width="130"/>
-                            <Label Content="Visual Data Length" HorizontalAlignment="Left" Margin="0,30,0,0" VerticalAlignment="Top"/>
-                            <TextBox x:Name="tbVisualDataLength" HorizontalAlignment="Left" Height="23" Margin="113,34,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" Width="52"/>
+                            <Label Content="Visual signal length" HorizontalAlignment="Left" Margin="0,30,0,0" VerticalAlignment="Top"/>
+                            <TextBox x:Name="tbVisualDataLength" HorizontalAlignment="Left" Height="23" Margin="113,33,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" Width="52"/>
+                            <CheckBox x:Name="chkSaveVisuals" Content="Save visual arrangement" HorizontalAlignment="Left" Margin="3,60,0,0" VerticalAlignment="Top" Width="152"/>
 
                         </Grid>
                     </GroupBox>

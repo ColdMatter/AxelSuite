@@ -74,7 +74,8 @@ namespace UtilsNS
             //return (MessageBoxReturnStatus)returnValue;
         }
 
-        public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).Parent.FullName).FullName;
+       // public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).FullName).FullName;
+        public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).Parent.FullName).FullName; 
         public static string configPath { get { return basePath + "\\Config\\"; } }
         public static string dataPath { get { return basePath + "\\Data\\"; } }
     }

@@ -39,9 +39,10 @@
 
             <Grid x:Name="gridMiddle" Grid.Row="1" MinHeight="20">
                 <TabControl x:Name="tabSecPlots" Margin="0,7,0.714,2.286" SelectedIndex="0" FontSize="14" SelectionChanged="tabSecPlots_SelectionChanged">
-                    <TabItem Header=" Hide "/>
+                    <TabItem Header=" Hide ">
+                    </TabItem>
                     <TabItem x:Name="tabSignal" Header="Signal" Width="100" Height="28">
-                        <Grid Margin="0">
+                         <Grid Margin="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="200*"/>
                                 <ColumnDefinition Width="100*"/>
@@ -171,7 +172,7 @@
                         </Grid>
                     </TabItem>
                     <TabItem x:Name="tabDistance" Header="Distance" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Visibility="Collapsed">
-                        <Grid>
+                         <Grid>
                             <ni:GraphInteractionPalette x:Name="interactionHisto" HorizontalAlignment="Stretch" Height="23" Margin="28,5,0,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphVelocity}"/>
                             <ni:Graph x:Name="graphDistance" Margin="3,30,0,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto">
                                 <ni:Graph.Plots>
@@ -213,7 +214,6 @@
 
                         </Grid>
                     </TabItem>
-
                 </TabControl>
             </Grid>
             <Grid x:Name="gridLow" Grid.Row="2" MinHeight="20" Margin="0,6,0,0">
@@ -258,21 +258,26 @@
                                     <ni:AxisDouble x:Name="accelYaxis" Orientation="Vertical" Adjuster="None"/>
                                 </ni:Graph.Axes>
                                 <ni:Graph.Children>
-                                    <ni:MultiPlotCursor Label="multiPlotCursor2"/>
+                                    <ni:MultiPlotCursor x:Name="plotcursorAccel" Label="multiPlotCursor2"/>
                                 </ni:Graph.Children>
                                 <ni:Graph.Plots>
                                     <ni:Plot x:Name="plotMotAccel" Label="MOTaccel">
                                         <ni:PlotRendererGroup>
-                                            <ni:LinePlotRenderer Stroke="#FF074BF4" StrokeThickness="1.5"/>
+                                            <ni:LinePlotRenderer StrokeThickness="1.5"/>
                                             <ni:PointPlotRenderer Fill="#FF0AF9CE" Stroke="#FF074BF4" Size="3,3"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
                                     <ni:Plot x:Name="plotCorr" Label="Corrections">
                                         <ni:BarPlotRenderer BarWidth="0.35" Fill="#FF07B484" Stroke="#FF07B484"/>
                                     </ni:Plot>
-                                    <ni:Plot x:Name="plotMems" Label="scrollPlot">
+                                    <ni:Plot x:Name="plotMems" Label="MEMS">
                                         <ni:PlotRendererGroup>
                                             <ni:LinePlotRenderer Stroke="#FFF5C70B" StrokeThickness="2"/>
+                                            <ni:PointPlotRenderer Fill="#FFF5C404" Stroke="#FFFB1A10" Size="4,4"/>
+                                        </ni:PlotRendererGroup>
+                                    </ni:Plot>
+                                    <ni:Plot x:Name="plotVibr" Label="Vibrations">
+                                        <ni:PlotRendererGroup>
                                             <ni:PointPlotRenderer Fill="#FFF5C404" Stroke="#FFFB1A10" Size="4,4"/>
                                         </ni:PlotRendererGroup>
                                     </ni:Plot>
@@ -289,6 +294,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="145"/>
                                 <ColumnDefinition Width="145"/>
+                                <ColumnDefinition Width="145"/>
                                 <ColumnDefinition Width="607*"/>
                             </Grid.ColumnDefinitions>
                             <GroupBox Grid.Column="1" Header="Fringes Data" Margin="0,0,0,0" FontSize="12">
@@ -296,7 +302,7 @@
                                     <GroupBox Header="Files" Height="147" Margin="0,0,-0.286,0">
                                         <StackPanel Margin="0">
                                             <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" Background="#FFF6F6F6" />
-                                            <Button x:Name="btnSaveFringesAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" Background="#FFF6F6F6" />
+                                            <Button x:Name="btnSaveFringesAs" Content="Save Fringes As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" Background="#FFF6F6F6" />
                                             <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
                                             <TextBox x:Name="tbRemFringes" Margin="0,1,-0.143,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="47"/>
                                         </StackPanel>
@@ -305,7 +311,17 @@
                                 </StackPanel>
 
                             </GroupBox>
-                            <GroupBox x:Name="groupStatFringes" Header=" Statistics " Margin="0" Grid.Column="2" FontSize="12">
+                            <GroupBox x:Name="groupVibration" Header=" Vibrations " Margin="0" Grid.Column="2" FontSize="12">
+                                <Grid Margin="0">
+                                    <CheckBox x:Name="chkVibEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="20,20,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" FontSize="14" Width="80" IsChecked="True"/>
+                                    <Label Content="Start [ms]" HorizontalAlignment="Left" Margin="10,46,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="nbStart" HorizontalAlignment="Left" Height="23" Margin="68,49,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="250" Range="0, 1000, System.Double" KeyDown="ndKP_KeyDown"/>
+                                    <Label Content="Lenght" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="nbLen" HorizontalAlignment="Left" Height="23" Margin="68,77,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown" Value="50"/>
+                                    <Button x:Name="btnSaveTrendAs" Content="Save Trend As..." Margin="5,120,7.714,0" Background="#FFF6F6F6" VerticalAlignment="Top" />
+                                </Grid>
+                            </GroupBox>
+                            <GroupBox x:Name="groupStatFringes" Header=" Statistics " Margin="0" Grid.Column="3" FontSize="12">
                                 <Grid Margin="0">
                                     <Label Content="K" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
                                     <ni:NumericTextBoxDouble x:Name="ndK" HorizontalAlignment="Left" Height="23" Margin="41,13,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>

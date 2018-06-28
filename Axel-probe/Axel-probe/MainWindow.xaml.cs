@@ -36,7 +36,7 @@ namespace Axel_probe
         DispatcherTimer dispatcherTimer;
         double driftRange, driftPeriod, driftStep;
         RemoteMessaging remote;
-        string remoteDoubleFormat = "G12";
+        string remoteDoubleFormat = "G6";
         Random rnd = new Random();
 
         public MainWindow()
@@ -617,21 +617,28 @@ namespace Axel_probe
             double b2 = 1; double btot = 3; double bg = 0;
 
             long realCycles = cycles;
-            if(jumbo)
+            if (cycles == -1)
             {
-                if (cycles == -1) realCycles = long.MaxValue;
-            }
-            else
-            {
-                realCycles = (long)(driftPeriod/driftStep);
-            }               
+                if(jumbo)
+                {
+                     realCycles = long.MaxValue;
+                }
+                else
+                {
+                    realCycles = (long)(driftPeriod/driftStep);
+                }   
+            }            
             double A = 0, frAmpl = 0, drift = 0, pos0, pos1 = 0, pos2 = 0, xPos1 = 0, xPos2 = 0;
             ramp.Clear(); corr.Clear(); corrList.Clear();
             cancelRequest = false; int smallLoop = (int)(driftPeriod/driftStep);
             int i = -1;
             for (long j = 0; j < realCycles; j++)
             {
-                DoEvents();                
+                DoEvents();
+                if ((j == (realCycles - 1)) || cancelRequest)
+                {
+                    md.prms["last"] = 1;
+                }
                 if (jumbo) // jumbo repeat
                 {
                     if (j % smallLoop == 0)
@@ -671,19 +678,16 @@ namespace Axel_probe
                     }
                     Thread.Sleep((int)ndDelay.Value);
                 }
-                else // simple repeat
+                else // simple repeat -> init. by axel-probe 
                 {
                     n2 = 1 + rnd.Next(200) / 100.0; // random from 1 to 3
                     A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                     ramp.Add(new Point(j, A));
                     drift = calcAtPos(jumbo, A, (j % 2) == 1);
                     frAmpl = A;
+                    if (!SingleShot(frAmpl, ref md)) break;
                 }
                 
-                if ((j == (realCycles - 1)) || cancelRequest)
-                {
-                    md.prms["last"] = 1;
-                }
                 Thread.Sleep((int)ndDelay.Value);
                 if (cancelRequest) break;
             }
@@ -720,7 +724,7 @@ namespace Axel_probe
             mm.cmd = "repeat";
             mm.mmexec = "test_repeat";
             mm.sender = "Axel-probe";
-            int cycles = 200;
+            int cycles = (int)(driftPeriod / driftStep); 
             mm.prms["cycles"] = cycles;
             string groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
             mm.prms["groupID"] = groupID;           
@@ -731,6 +735,7 @@ namespace Axel_probe
                 log(msg);
             }
             crsFringes1.Visibility = System.Windows.Visibility.Hidden; crsFringes2.Visibility = System.Windows.Visibility.Hidden;
+            Thread.Sleep(1000);
             SimpleRepeat(false, cycles, groupID);
         }
 

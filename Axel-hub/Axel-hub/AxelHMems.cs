@@ -24,9 +24,10 @@ namespace AxelHMemsNS
         public enum TimingModes { byNone, byADCtimer, byStopwatch, byBoth };
         public TimingModes TimingMode = TimingModes.byNone;
 
-        private bool _running = false;
-        private readonly string physicalChannel0 = "cDAQ1Mod1/ai0";
+        
+        private readonly string physicalChannel0 = "cDAQ1Mod1/ai0"; //ADC24
         private readonly string physicalChannel1 = "cDAQ1Mod1/ai1";
+        private readonly string physicalChannel2 = "Dev4/ai1"; //PXIe
 
         private int _nSamples = 1500; // default
         public int nSamples {get { return _nSamples; }  }
@@ -52,12 +53,20 @@ namespace AxelHMemsNS
             activeChannel = 0;
         }
 
+        public double TimeElapsed() // [sec]
+        {
+            if(!sw.IsRunning) return double.NaN;
+            if (Stopwatch.IsHighResolution) return sw.ElapsedTicks / Stopwatch.Frequency;
+            else return sw.ElapsedMilliseconds/1000;
+        }
+
+        private bool _running = false;
         public bool running // wait for running to end in order to read rawData
         {
             get { return _running; }
         }
 
-        public int activeChannel { get; private set; } // 0,1 or 2 for both
+        public int activeChannel { get; private set; } // 0,1 or 2 for both; 3 for chn.1 of PXIe
 
         public double RealConvRate(double wantedCR)
         {   
@@ -151,6 +160,8 @@ namespace AxelHMemsNS
                         myTask.AIChannels.CreateVoltageChannel(physicalChannel0, "", (AITerminalConfiguration)(-1), -3.5, 3.5, AIVoltageUnits.Volts);
                     if ((activeChannel == 1) || (activeChannel == 2)) 
                         myTask.AIChannels.CreateVoltageChannel(physicalChannel1, "", (AITerminalConfiguration)(-1), -3.5, 3.5, AIVoltageUnits.Volts);
+                    if (activeChannel == 3)
+                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", (AITerminalConfiguration)(-1), -3.5, 3.5, AIVoltageUnits.Volts);
                 }
                 // Configure the timing parameters
                 myTask.Stop();
@@ -234,7 +245,7 @@ namespace AxelHMemsNS
                                     data.Add(new Point(lastTime, waveform[actChn+1].Samples[sample].Value));
                             }
                             break;
-                        case(TimingModes.byBoth): // time markers from Stopwatch, sampleRate from ADC setting
+                        case (TimingModes.byBoth): // time markers from Stopwatch, sampleRate from ADC setting
                             for (int sample = 0; sample < waveform[activeChannel].Samples.Count; ++sample)
                             {
                                 data.Add(new Point(lastTime + sample / sampleRate, waveform[actChn].Samples[sample].Value));

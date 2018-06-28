@@ -15,27 +15,27 @@
         </Grid.RowDefinitions>
 
         <ni:BooleanButton x:Name="bbtnStart" Grid.Row="1"  Content="Start" HorizontalAlignment="Right" Height="31" Margin="0,13.857,15,0" VerticalAlignment="Top" Width="139" FontSize="18" Click="bbtnStart_Click"/>
-        <GroupBox x:Name="groupDigit" Grid.Row="2" Header=" Conversion rate " Height="59" Margin="0,0.429,6,0" VerticalAlignment="Top" Grid.RowSpan="2">
+        <GroupBox x:Name="groupDigit" Grid.Row="2" Header=" Sampling rate " Height="59" Margin="0,0.429,6,0" VerticalAlignment="Top" Grid.RowSpan="2">
             <StackPanel HorizontalAlignment="Center" Height="28" Width="216" Margin="2,10,6,0" VerticalAlignment="Top" Orientation="Horizontal">
-                <ComboBox x:Name="cbDigitMode" HorizontalAlignment="Left" Height="23" VerticalAlignment="Top" Width="116" SelectedIndex="0">
+                <ComboBox x:Name="cbSamplingMode" HorizontalAlignment="Left" Height="23" VerticalAlignment="Top" Width="116" SelectedIndex="0">
                     <ComboBoxItem Content="frequency [Hz]" Foreground="#FF051095"/>
                     <ComboBoxItem Content="frequency [kHz]" FontWeight="Bold" Foreground="#FF051095"/>
                     <ComboBoxItem Content="period [s]"/>
                     <ComboBoxItem Content="period [ms]" FontWeight="Bold"/>
                     <ComboBoxItem Content="External sync" Foreground="#FFB20505" Visibility="Hidden"/>
                 </ComboBox>
-                <TextBox x:Name="tbDigitValue" Height="23" TextWrapping="Wrap" Text="200" Margin="5,0,0,0" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Right" Width="93" RenderTransformOrigin="0.509,-1.547"/>
+                <TextBox x:Name="tbSamplingRate" Height="23" TextWrapping="Wrap" Text="200" Margin="5,0,0,0" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Right" Width="93" RenderTransformOrigin="0.509,-1.547"/>
             </StackPanel>
         </GroupBox>
         <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="0,4.571,10,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
             <TabItem x:Name="tabTimeLimit" Header="Time Limit" Height="26">
                 <Grid Margin="0,1,0.429,-0.857">
-                    <TextBox x:Name="tbTimeLimit" HorizontalAlignment="Right" Height="23" Margin="0,0,40.428,7" TextWrapping="Wrap" Text="3" VerticalAlignment="Bottom" Width="74" FontSize="14"/>
+                    <TextBox x:Name="tbTimeLimit" HorizontalAlignment="Right" Height="23" Margin="0,0,40.428,10" TextWrapping="Wrap" Text="3" VerticalAlignment="Bottom" Width="74" FontSize="14"/>
                     <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
-                    <Label Content="sec" HorizontalAlignment="Right" Margin="0,32,10,7" VerticalAlignment="Bottom"/>
+                    <Label Content="sec" HorizontalAlignment="Right" Margin="0,0,10.428,11.143" VerticalAlignment="Bottom" Height="30" Width="28"/>
                 </Grid>
             </TabItem>
             <TabItem x:Name="tabBufferSizeLimit_" Header="Size Limit" Height="26">
@@ -44,15 +44,15 @@
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
-                    <Label Content="Buffer size:" HorizontalAlignment="Left" Margin="57,37,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.286,5.143" TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="102" FontSize="14"/>
+                    <Label Content="Buffer size:" HorizontalAlignment="Right" Margin="0,0,115.857,8" VerticalAlignment="Bottom" Width="70"/>
+                    <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.857,10.286" TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="101" FontSize="14"/>
                 </Grid>
             </TabItem>
 
             <TabItem x:Name="tabRemote" Header=" Remote " Height="26">
                 <Grid>
-                    <Label x:Name="lbMode" Content="Oper.Mode:" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
-                    <Label x:Name="lbFringePrm" Content="Fringe Prm:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>
+                    <Label x:Name="lbMode" Content="Mode:" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
+                    <Label x:Name="lbActivity" Content="Activity:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>
                     <Button x:Name="btnCheckComm" Content="&lt;-&gt; MM2" HorizontalAlignment="Left" Margin="5,7,0,0" VerticalAlignment="Top" Width="67" Click="btnCheckComm_Click"/>
                 </Grid>
             </TabItem>
