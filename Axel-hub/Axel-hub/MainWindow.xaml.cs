@@ -314,7 +314,7 @@ namespace Axel_hub
             }
         }
 
-        private MMexec lastGrpExe; private MMscan lastScan;
+        private MMexec lastGrpExe; private MMscan lastScan; //
         private double strbLeft = 0, strbRight = 0, NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10,
             fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null;
