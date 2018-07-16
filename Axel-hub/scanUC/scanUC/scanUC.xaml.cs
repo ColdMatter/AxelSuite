@@ -40,7 +40,7 @@ namespace scanHub
     public partial class scanClass : UserControl
     {
         private double realSampling;
-        private string ArrangedPartner = "";//MOTMaster2"; 
+        private string ArrangedPartner = "Axel Probe";//MOTMaster2"; 
 
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
