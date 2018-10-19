@@ -50,13 +50,18 @@ namespace AxelChartNS
     {
         public DataStack(int depth = 1000): base() // -1 for Non-Stack mode
         {
+
             _stackMode = (depth>0);
             TimeSeriesMode = false;
             if (StackMode) Depth = depth;
             else Depth = 1000;
             stopWatch = new Stopwatch();
-            logger = new AutoFileLogger();
+            logger = new AutoFileLogger(); 
+            random = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
+            Clear();
+            Thread.Sleep(1);
         }
+        private Random random;
         public string rem { get; set; }
         public string lastError { get; set; }
         public Dictionary<string, double> RefFileStats;
@@ -133,7 +138,7 @@ namespace AxelChartNS
         public new int Add(Point pnt) 
         {
             base.Add(pnt); 
-            if (logger.Enabled) logger.log(pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
+            logger.log(logger.stw.Elapsed.TotalSeconds.ToString("F1")+"\t"+pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
             OnAddPoint(1);
             return Count;
         }
@@ -152,11 +157,10 @@ namespace AxelChartNS
         public int AddRange(List<Point> pnts)
         {
             base.AddRange(pnts);
-            if (logger.Enabled)
-                for (int i = 0; i < pnts.Count; i++)
-                {
-                    logger.log(pnts[i].X.ToString("G6") + '\t' + pnts[i].Y.ToString("G5")); 
-                }
+            for (int i = 0; i < pnts.Count; i++)
+            {
+                logger.log(pnts[i].Y.ToString("G6") + '\t' + pnts[i].X.ToString("G5")); 
+            }
             OnAddPoint(pnts.Count);
             return Count;
         }
@@ -190,14 +194,18 @@ namespace AxelChartNS
             return rslt;
         }
 
-        public DataStack Portion(int lastNPoints)
+        public DataStack Portion(int lastNPoints, int backFrom = 0)
         {
-            DataStack rslt = new DataStack(lastNPoints);
+            DataStack rslt = new DataStack(lastNPoints);           
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
-            int k = Math.Max(0, Count - lastNPoints);
-            for (int i = k; i < Count; i++)
-                rslt.Add(new Point(this[i].X, this[i].Y));
+            if (Count == 0) return rslt;
+            int bf = (Utils.InRange(backFrom,1,Count - 1)) ? backFrom : Count - 1 ;
+            int k = Math.Max(0, bf - lastNPoints);
+            for (int i = k; i < k + lastNPoints; i++)
+            {
+                if(Utils.InRange(i,0,Count-1)) rslt.Add(new Point(this[i].X, this[i].Y));
+            }                
             return rslt;
         }
 
@@ -207,7 +215,7 @@ namespace AxelChartNS
         }
         public Point Last
         {
-            get {  return this[Count - 1]; }
+            get { return this[Count - 1]; }
         }
 
         public int indexByX(double X, bool smart = true)
@@ -232,44 +240,52 @@ namespace AxelChartNS
             return Utils.EnsureRange(idx,-1,Count-1);     
         }
 
-        public bool statsByIdx(int FromIdx, int ToIdx, out double Mean, out double WgMean, out double stDev)
+        public bool statsByIdx(int FromIdx, int ToIdx, bool weightMean, out double Mean, out double stDev) // WgMean - triangle weight (is callibration valid ?)
         {
-            Mean = double.NaN; WgMean = double.NaN; stDev = double.NaN;
-            if (!Utils.InRange(FromIdx, 0, Count-1) || !Utils.InRange(ToIdx, 0, Count-1) || (FromIdx >= ToIdx)) return false;
-            int j, len = ToIdx - FromIdx + 1;
+            Mean = double.NaN; stDev = double.NaN;
+            if (Count == 0) return false;
+            int fromIdx = Utils.EnsureRange(FromIdx, 0, Count - 2); int toIdx = Utils.EnsureRange(ToIdx, 1, Count - 1);     
+            if (fromIdx >= toIdx) return false;
+            int j, len = toIdx - fromIdx + 1;
             double a, b, w = 0;
             double[] arr = new double[len];
-            for (int i=FromIdx; i<=ToIdx; i++)
+            for (int i=fromIdx; i<=toIdx; i++)
             {
-                j = i-FromIdx;
-                arr[j] = this[i].Y; 
-                if( j < (len/2)) 
+                j = i-fromIdx;
+                if (weightMean)
                 {
-                    a = 4 / len; b = 0;
+                    if( j < (len/2)) 
+                    {
+                        a = 4 / len; b = 0;
+                    }
+                    else 
+                    {
+                        a = - 4 / len; b = 4;
+                    }
+                    w += (a * j + b) * this[i].Y;  
                 }
-                else 
+                else
                 {
-                    a = - 4 / len; b = 4;
+                    arr[j] = this[i].Y;
                 }
-                w += (a * j + b) * this[i].Y;  
             }
-            Mean = arr.Average();
-            WgMean = w / (2*len); 
+            if (weightMean) { Mean = w / (2 * len); }
+            else { Mean = arr.Average(); }
             stDev = Statistics.StandardDeviation(arr); // correspond to STDEV.P from Excel
             return true;
         }
 
-        public bool statsByTime(double endOfTimeInterval, double duration, out double Mean, out double WgMean, out double stDev) 
+        public bool statsByTime(double endOfTimeInterval, double duration, bool weightMean, out double Mean, out double stDev) 
             // startingPoint is the later edge of time interval, duration is backwards (from late to earlier)
         {
-            Mean = double.NaN; WgMean = double.NaN; stDev = double.NaN;
+            Mean = double.NaN; stDev = double.NaN; lastError = "";
             if (Count == 0)   
             {
                 lastError = "No data"; return false;
             }               
             if ((double.IsNaN(endOfTimeInterval)) && (double.IsNaN(duration))) // the whole thing
             {
-                return statsByIdx(0, Count-1, out Mean, out WgMean, out stDev);
+                return statsByIdx(0, Count - 1, weightMean, out Mean, out stDev);
             }
             if (endOfTimeInterval > Last.X)
             {
@@ -299,7 +315,7 @@ namespace AxelChartNS
                 lastError = "no left edge index > " + (moment - duration).ToString("G6") + "\r" + " <" + First.X.ToString("G6") + "<->" + Last.X.ToString("G6") + ">";
                 return false;
             }
-            bool bl = statsByIdx(FromIdx, ToIdx, out Mean, out WgMean, out stDev);
+            bool bl = statsByIdx(FromIdx, ToIdx, weightMean, out Mean, out stDev);
             if (!bl) lastError = "error in statsByIdx method";
             return bl;
         }
@@ -359,6 +375,11 @@ namespace AxelChartNS
             {
                 AddPoint(ys[i],xs[i]);
             }
+        }
+        public void fillSamples(int n)
+        {
+            Clear();
+            for (int i = 0; i < n; i++) AddPoint(random.NextDouble());
         }
  
         #region File operations in DataStack
@@ -433,18 +454,20 @@ namespace AxelChartNS
         {
             InitializeComponent();
             Waveform = new DataStack(DataStack.maxDepth);
-            Waveform.Clear();
+            MEMS2 = new DataStack(DataStack.maxDepth);
 
-            Running = false;
+            SetValue(RunningProperty, false);
             tabSecPlots.SelectedIndex = 1;
             //
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
             Waveform.DoRefresh += new DataStack.RefreshHandler(Refresh);
             
             Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
+            MEMS2.TimeSeriesMode = Waveform.TimeSeriesMode;
             resultStack = new DataStack(DataStack.maxDepth);
             Refresh();
         }
+
         GeneralOptions genOptions = null;
         Modes genModes = null;
         public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes)
@@ -454,17 +477,26 @@ namespace AxelChartNS
             seRollMean.Value = _genModes.RollMean;
             seShowFreq.Value = _genModes.ShowFreq;
             seStackDepth.Value = _genModes.StackDepth;
-            chkVisualUpdate.IsChecked = _genModes.VisUpdate;
+            chkChartUpdate.IsChecked = _genModes.ChartUpdate;
+            chkTblUpdate.IsChecked = _genModes.TblUpdate;
+            nbPowerCoeff.Value = _genModes.PowerCoeff;
             if(genOptions.saveVisuals) rowScroll.Height = new GridLength(_genModes.TopOfTopFrame);
             genModes = _genModes;
         }
 
+        public DataStack MEMS2;
         private DataStack resultStack;
         public int GetStackDepth() { return (int)seStackDepth.Value; }
 
+        public double convertV2mg(double V, bool M2 = false)
+        {
+            if (M2) return ((V - 2.5+0.056) / 3)*1000; // [mg]
+            else return V / (6000.12 * 1.235976e-6);
+        }
+
         public void Clear() 
         {
-            Waveform.Clear();
+            Waveform.Clear(); MEMS2.Clear(); resultStack.Clear();
             graphScroll.Data[0] = null; graphOverview.Data[0] = null; graphPower.Data[0] = null; graphHisto.Data[0] = null; graphHisto.Data[1] = null;
             lboxGaussFit.Items.Clear();
             grpData.Header = "Data";
@@ -577,8 +609,7 @@ namespace AxelChartNS
                     Clear();
                     btnPause.Visibility = Visibility.Visible;
                     Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
-                    if (chkVisualUpdate.IsChecked.Value) Waveform.visualCountLimit = (int)seStackDepth.Value;
-                    else Waveform.visualCountLimit = -1;
+                    Waveform.visualCountLimit = (int)seStackDepth.Value;
                     Waveform.Depth = (int)seStackDepth.Value;
                 }
                 else
@@ -587,10 +618,13 @@ namespace AxelChartNS
                     Refresh(null, null);
                 }
                 if (Running == value) return;
-                resultStack.logger.Enabled = value && chkResultsLog.IsChecked.Value;
+                bool bb = value && chkResultsLog.IsChecked.Value;
+                if (bb || !resultStack.logger.Enabled) resultStack.logger.AutoSaveFileName = ""; // reset name to a new log file
+                resultStack.logger.Enabled = bb;
                 if (value)
                 {
-                    if (resultStack.logger.Enabled) resultStack.logger.log("#StDev\tmean");
+                    if (genOptions.MemsChannels == 2) resultStack.logger.log("#time\tMEMS\tMEMS2");
+                    else resultStack.logger.log("#time\tMEMS\tStDsp");
                     resultStack.Clear();
                 } 
                 SetValue(RunningProperty, value);
@@ -657,12 +691,56 @@ namespace AxelChartNS
 
         private void Refresh(object sender, RoutedEventArgs e)
         {
-            if (Utils.isNull(Waveform) || !chkVisualUpdate.IsChecked.Value) return;
+            if (Utils.isNull(Waveform)) return;
             if (Waveform.Count == 0)
             {
                 Clear();
                 return;
+            } 
+            if (chkTblUpdate.IsChecked.Value && (tabSecPlots.SelectedIndex == 4)) // opts / stats
+            {
+                double mn,mn2 = 0, dsp,dsp2; bool bb,bc = true;
+                //mn = Waveform.pointYs().Average(); dsp = Waveform.pointSDevY();
+                if (numTimeSlice.Value < 0) bb = Waveform.statsByIdx(Waveform.Count - 1001, Waveform.Count - 1, false, out mn, out dsp);
+                else bb = Waveform.statsByTime(double.NaN, numTimeSlice.Value / 1000, false, out mn, out dsp);
+                if (genOptions.MemsChannels == 2)
+                {
+                    if (numTimeSlice.Value < 0) bc = MEMS2.statsByIdx(Waveform.Count - 1001, Waveform.Count - 1, false, out mn2, out dsp2);
+                    else bc = MEMS2.statsByTime(double.NaN, numTimeSlice.Value / 1000, false, out mn2, out dsp2);
+                }
+                if(bb && bc)
+                {
+                    Application.Current.Dispatcher.BeginInvoke(
+                        DispatcherPriority.Background,
+                        new Action(() =>
+                        {
+                            lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
+                            double k = 1000;
+                            lbMean.Items[1] = (k * mn).ToString("G7"); lbStDev.Items[1] = (k * dsp).ToString("G7"); // mV
+                            k = 1e6 / 6000.12;
+                            lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
+                            lbMean.Items[3] = convertV2mg(mn).ToString("G7"); lbStDev.Items[3] = convertV2mg(dsp).ToString("G7"); // mg
+                            if (genOptions.MemsChannels == 2) resultStack.AddPoint(k * mn, k * mn2);
+                            else resultStack.AddPoint(k * mn, k * dsp);
+                            lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDev().X.ToString("G7");
+                            if (genOptions.MemsChannels == 2)
+                            {
+                                lbMean.Items[5] = convertV2mg(mn2,true).ToString("G7"); lbStDev.Items[5] = convertV2mg(dsp,true).ToString("G7"); // mg2
+                            }
+                            else
+                            {
+                                lbMean.Items[5] = "NaN"; lbStDev.Items[5] = "NaN"; // mg2
+                            }
+                            numTimeSlice.Background = Brushes.White;
+                        }));
+                }
+                else
+                {
+                    numTimeSlice.Background = Brushes.Red;
+                }
+                lbErrorStatus.Content = "Error status: "+Waveform.lastError;    
             }
+            if (!chkChartUpdate.IsChecked.Value) return;
             //Console.WriteLine("refresh at " + Waveform.stopWatch.Elapsed.Seconds.ToString());
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
 
@@ -710,48 +788,21 @@ namespace AxelChartNS
                             }
                             graphOverview.Data[0] = pB;
                             break;
-                    case 2: double[] Ys = Waveform.pointYs(); // 
-                            double df;
-                            double[] ps; //, ampl, phase; 
-                            if (SamplingPeriod == 0) SamplingPeriod = (Waveform.pointXs()[99] - Waveform.pointXs()[0]) / 100;
+                    case 2: double df;
+                            if (SamplingPeriod == 0) SamplingPeriod = (Waveform.pointXs()[Waveform.Count - 1] - Waveform.pointXs()[0]) / Waveform.Count;
                             //Measurements.AmplitudePhaseSpectrum(Ys, false, SamplingPeriod , out ampl, out phase, out df); 
-                            ps = Measurements.AutoPowerSpectrum(Ys, SamplingPeriod, out df);  
+                            double[] ps = Measurements.AutoPowerSpectrum(Waveform.pointYs(), SamplingPeriod, out df);  
                             DataStack pl = new DataStack(DataStack.maxDepth);
                             int len = Math.Min(ps.Length, 300000); // limit the lenght for visual speed
                             for (int i = 1; i < len; i++) // skip DC component at position 0
                             {
-                                if ((i * df) < 0.5) continue; // cut off level
-                                pl.Add(new Point(i * df, ps[i])); 
+                                if (ps[i] < 0.0) continue; // skip negatives
+                                pl.Add(new Point(i * df, nbPowerCoeff.Value * Math.Sqrt(ps[i]))); 
                             }                        
                             graphPower.Data[0] = pl;
                             break;
                     case 3: graphHisto.Data[0] = Histogram(Waveform);
                             break;
-                    case 4: if (chkRefresh.IsChecked.Value) // opts / stats
-                            {
-                                double mn, wmn, dsp;
-                                //mn = Waveform.pointYs().Average(); dsp = Waveform.pointSDevY();
-                                if (Waveform.statsByTime(double.NaN, ntbTimeSlice.Value / 1000, out mn, out wmn, out dsp))
-                                {
-                                    Application.Current.Dispatcher.BeginInvoke(
-                                     DispatcherPriority.Background,
-                                     new Action(() =>
-                                     {
-                                         lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
-                                         double k = 1000;
-                                         lbMean.Items[1] = (k * mn).ToString("G7"); lbStDev.Items[1] = (k * dsp).ToString("G7"); // mV
-                                         k = 1e6 / 6000.12;
-                                         lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
-                                         k = 1.235976e6 / 6000.12;
-                                         lbMean.Items[3] = (k * mn).ToString("G7"); lbStDev.Items[3] = (k * dsp).ToString("G7"); // mg
-                                         resultStack.AddPoint(k * mn, k * dsp);
-                                         lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDev().Y.ToString("G7");
-                                         ntbTimeSlice.Background = Brushes.White;
-                                     }));
-                                }
-                                else ntbTimeSlice.Background = Brushes.Red;
-                            }
-                            break; 
                 }
                 //DoEvents();
                 if (btnPause.Foreground == Brushes.Black) btnPause.Foreground = Brushes.Navy;
@@ -955,7 +1006,9 @@ namespace AxelChartNS
             genModes.RollMean = (int)seRollMean.Value;
             genModes.ShowFreq = (int)seShowFreq.Value;
             genModes.StackDepth = (int)seStackDepth.Value;
-            genModes.VisUpdate = (bool)chkVisualUpdate.IsChecked.Value;
+            genModes.ChartUpdate = (bool)chkChartUpdate.IsChecked.Value;
+            genModes.TblUpdate = (bool)chkTblUpdate.IsChecked.Value;
+            genModes.PowerCoeff = nbPowerCoeff.Value;
 
             if (Utils.isNull(seStackDepth) || Utils.isNull(Waveform)) return;
             Waveform.Depth = (int)seStackDepth.Value;            
@@ -1140,5 +1193,19 @@ namespace AxelChartNS
                 genModes.TopOfTopFrame = rowScroll.Height.Value;
         }
 
-       }
+        private void UserControl_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5) Refresh(); 
+        }
+
+        private void nbPowerCoeff_ValueChanging(object sender, ValueChangingEventArgs<double> e)
+        {
+            seStackDepth_ValueChanged(null, null);
+        }
+
+        private void nbPowerCoeff_KeyUp(object sender, KeyEventArgs e)
+        {
+            seStackDepth_ValueChanged(null, null);
+        }
+    }
 }

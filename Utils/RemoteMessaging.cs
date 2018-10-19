@@ -31,6 +31,7 @@ namespace RemoteMessagingNS
     public class RemoteMessaging
     {
         public string partner { get; private set; }
+        public bool silentPartner { get; set; }
         private IntPtr windowHandle;
         public string lastRcvMsg { get; private set; }
         public string lastSndMsg { get; private set; }
@@ -45,7 +46,8 @@ namespace RemoteMessagingNS
         }
 
         public bool Enabled = true;
-        public bool Connected { get; private set; }
+        public int keyID { get; private set; }
+        public bool Connected { get; private set; } // only for status purposes
         public bool partnerPresent
         {
             get
@@ -55,9 +57,9 @@ namespace RemoteMessagingNS
             }
         }
 
-        public RemoteMessaging(string Partner)
+        public RemoteMessaging(string Partner, int _keyID = 666)
         {
-            partner = Partner;
+            partner = Partner; keyID = _keyID; silentPartner = false;
             windowHandle = new WindowInteropHelper(Application.Current.MainWindow).Handle;
             HwndSource hwndSource = HwndSource.FromHwnd(windowHandle);
             hwndSource.AddHook(new HwndSourceHook(WndProc));
@@ -82,28 +84,28 @@ namespace RemoteMessagingNS
 
         private void dTimer_Tick(object sender, EventArgs e)
         {
-            if (!Enabled) return;
-            if(!CheckConnection()) Console.WriteLine("Warning: the partner <"+partner+"> is not responsive!");
+            //if (!Enabled) return;
+            CheckConnection(); //Console.WriteLine("Warning: the partner <"+partner+"> is not responsive!");
             //else Console.WriteLine("Info: the partner <" + partner + "> is responsive.");
 
             // Forcing the CommandManager to raise the RequerySuggested event
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
          }
 
-        public delegate bool RemoteHandler(string msg);
-        public event RemoteHandler OnReceive;
-        protected bool OnRemote(string msg)
+        public delegate bool ReceiveHandler(string msg);
+        public event ReceiveHandler OnReceive;
+        protected bool Receive(string msg)
         {
             if (OnReceive != null) return OnReceive(msg);
             else return false;
         }
 
         public delegate void ActiveCommHandler(bool active, bool forced);
-        public event ActiveCommHandler ActiveComm;
-        protected void OnActiveComm(bool active, bool forced)
+        public event ActiveCommHandler OnActiveComm;
+        protected void ActiveComm(bool active, bool forced)
         {
             Connected = active;
-            if (ActiveComm != null) ActiveComm(active, forced);
+            if (OnActiveComm != null) OnActiveComm(active, forced);
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) // receive
@@ -115,7 +117,7 @@ namespace RemoteMessagingNS
                 {
                     MyStruct myStruct = (MyStruct)Marshal.PtrToStructure(cds.lpData, typeof(MyStruct));
                     int msgID = myStruct.Number;
-                    if (msgID == 666)
+                    if (msgID == keyID)
                     {
                         lastRcvMsg = myStruct.Message;
                         Log.log("R: " + lastRcvMsg);
@@ -130,7 +132,7 @@ namespace RemoteMessagingNS
                         case("pong"):
                                 handled = true;                               
                                 break;
-                        default:handled = OnRemote(lastRcvMsg); // the command systax is OK
+                        default:handled = OnReceive(lastRcvMsg); // the command systax is OK
                                 break;
                         }
                     }
@@ -179,7 +181,7 @@ namespace RemoteMessagingNS
             // Prepare the COPYDATASTRUCT struct with the data to be sent.
             MyStruct myStruct;
 
-            myStruct.Number = 666;
+            myStruct.Number = keyID;
             myStruct.Message = msg; 
 
             // Marshal the managed struct to a native block of memory.
@@ -211,17 +213,27 @@ namespace RemoteMessagingNS
                     ResetTimer(); 
                 }
                 return true;
-            }                
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("SendMessage(WM_COPYDATA) failed w/err: "+ e.Message);
+                return false;
+            } 
             finally
             {
-                Marshal.FreeHGlobal(pMyStruct);
+                Marshal.FreeHGlobal(pMyStruct); 
             }
         }
 
         private bool lastConnection = false;
         public bool CheckConnection(bool forced = false)
         {
-            if (!Enabled) return false;
+            if (!Enabled)
+            {
+                OnActiveComm(false, forced);
+                Connected = false;
+                return false;
+            }
             lastRcvMsg = "";
             bool back = sendCommand("ping");
             if (back)

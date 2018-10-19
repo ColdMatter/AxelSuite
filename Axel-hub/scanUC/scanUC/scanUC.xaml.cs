@@ -28,11 +28,11 @@ namespace scanHub
         Simple_Repeat, // repeat initiated by MM
         Free // no grouping (default state)  
     }
-    public struct FringeParams  // = cos(period * t + phase) + offset
+    public struct FringeParams  // fringes(phi) = cos(period * phi + phase) + offset
     {
-        public double period;
-        public double phase;
-        public double offset;
+        public double period; // in mg per rad
+        public double phase;  // the MEMS and the interferometer are not entirely paralel
+        public double offset; // phase offset [rad]
     }
     /// <summary>
     /// Interaction logic for UserControl1.xaml
@@ -40,7 +40,7 @@ namespace scanHub
     public partial class scanClass : UserControl
     {
         private double realSampling;
-        private string ArrangedPartner = "Axel Probe";//MOTMaster2"; 
+        private string ArrangedPartner = "MOTMaster2"; 
 
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
@@ -174,8 +174,13 @@ namespace scanHub
 
         public bool EndlessMode()
         {
-            if (tabControl.SelectedIndex == 0) return (cbTimeEndless.SelectedIndex == 1);
-            else return (cbSizeEndless.SelectedIndex == 1);
+            switch (tabControl.SelectedIndex) 
+            {
+                case 0: return (cbTimeEndless.SelectedIndex == 1);
+                case 1: return (cbSizeEndless.SelectedIndex == 1);
+                case 2: return true;
+                default: return false;
+            }
         }
 
         public RemoteMode remoteMode
@@ -209,7 +214,7 @@ namespace scanHub
                   new PropertyMetadata(null)
               );
 
-        private bool MessageHandler(string message)
+        private bool OnReceive(string message)
         {
             try
             {
@@ -264,10 +269,10 @@ namespace scanHub
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Hub v1.3 \n         by Teodor Krastev \nfor Imperial College, London, UK", "About");
+            MessageBox.Show("           Axel Hub v1.4 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
-        private double GetSamplingPeriod()
+        public double GetSamplingPeriod()
         {
             double freq = 1; // in seconds
             double vl = 0;
@@ -288,6 +293,25 @@ namespace scanHub
                 case 4: throw new Exception("Not implemented yet");                    
             }
             return 1 / freq;
+        }
+
+        public int GetBufferSize()
+        {
+            int sizeLimit = 0; // [s]
+            double Limit = 1;
+            switch (tabControl.SelectedIndex)
+            {
+                case 0: case 2:
+                    if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
+                    sizeLimit = (int)(Limit / GetSamplingPeriod());
+                    break;
+                case 1: 
+                    if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
+                    sizeLimit = (int)Limit;
+                    break;
+            }
+            return sizeLimit;
+
         }
         
         public void bbtnStart_Click(object sender, RoutedEventArgs e)
@@ -330,23 +354,7 @@ namespace scanHub
             bool down = Running;
             bbtnStart.Value = down;
             double period = GetSamplingPeriod(); // sampling rate in sec
-            int sizeLimit = 0; // [s]
-
-            double Limit = 1;
-            switch (tabControl.SelectedIndex)
-            {
-                case 0:
-                    if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
-                    sizeLimit = (int)(Limit / period);
-                    break;
-                case 1:
-                    if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
-                    sizeLimit = (int)Limit;
-                    break;
-                case 2: 
-                    sizeLimit = -1;
-                    break;
-            }
+                        
             if (EndlessMode())
             {
                 lbTimeLeft.Visibility = System.Windows.Visibility.Hidden;
@@ -356,13 +364,13 @@ namespace scanHub
             else
             {
                 lbTimeLeft.Visibility = System.Windows.Visibility.Visible;
-                totalTime = new TimeSpan(0, 0, (int)(sizeLimit * period));
+                totalTime = new TimeSpan(0, 0, (int)(GetBufferSize() * period));
                 currentTime = new TimeSpan(0, 0, 0);
             }
-            OnStart(jumbo, down, period, sizeLimit); // the last three are valid only in non-jumbo mode with down = true
+            OnStart(jumbo, down, period, GetBufferSize()); // the last three are valid only in non-jumbo mode with down = true
          }
 
-        public void Abort(bool local) // the origin of Abort is (local) or (remote / end sequence)
+        public void Abort(bool local) // the origin of Abort is (local) or (remote abort OR end sequence)
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
             remoteMode = RemoteMode.Free;
@@ -383,7 +391,7 @@ namespace scanHub
              if (remote != null) remote.Enabled = (tabControl.SelectedIndex == 2);
              if (tabControl.SelectedIndex == 2) 
              {
-                 remote.CheckConnection();
+                 remote.CheckConnection(true);
              }                     
              else
              {
@@ -396,6 +404,8 @@ namespace scanHub
 
          private void OnActiveComm(bool active, bool forced)
          {
+             if (tabControl.SelectedIndex != 2) return;
+             ledRemote.Value = active;
              if (active)
              {
                  Status("Ready to remote<->");
@@ -413,15 +423,24 @@ namespace scanHub
              }
          }
 
-         private void btnCheckComm_Click(object sender, RoutedEventArgs e)
-         {
-             remote.CheckConnection();
-         }
-
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
+             string callingPartner = ""; bool bRemote = false;
+             string[] args = Environment.GetCommandLineArgs();
+             if (args.Length > 1)
+             {
+                 string ss = args[1];
+                 Console.WriteLine("Command line argument: " + ss);
+                 bRemote = ss.Contains("-remote");
+                 if (bRemote)
+                 {
+                     string[] sa = ss.Split(':');
+                     if (sa.Length == 2) callingPartner = sa[1];
+                 }
+             }
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
              string partner = ArrangedPartner;
+             if(!callingPartner.Equals("")) partner = callingPartner; //highest priority             
              if(partner == "")
                  switch (computerName) 
                  {
@@ -430,16 +449,11 @@ namespace scanHub
                  }
              remote = new RemoteMessaging(partner); 
              remote.Enabled = false;
-             remote.OnReceive += new RemoteMessaging.RemoteHandler(MessageHandler);
-             remote.ActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
+             remote.OnReceive += new RemoteMessaging.ReceiveHandler(OnReceive);
+             remote.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
              remote.OnAsyncSent += new RemoteMessaging.AsyncSentHandler(OnAsyncSend);
 
-             string[] args = Environment.GetCommandLineArgs(); 
-             if (args.Length > 1) 
-             {
-                Console.WriteLine("Command line argument: " + args[1]);
-                if (args[1].Equals("-remote")) tabControl.SelectedIndex = 2;
-             }    
+             if(bRemote) tabControl.SelectedIndex = 2;
          }
      }
 }

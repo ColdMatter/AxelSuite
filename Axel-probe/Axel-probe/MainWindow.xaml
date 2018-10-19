@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" xmlns:System="clr-namespace:System;assembly=mscorlib" xmlns:scanHub="clr-namespace:scanHub;assembly=scanHub" x:Name="frmMain" x:Class="Axel_probe.MainWindow"
-        Title="Axel Probe" Height="900.714" Width="1297.857" Icon="dashboard_widgets_speed_fs7_icon.ico" ResizeMode="CanResizeWithGrip" Closing="frmMain_Closing" Loaded="frmMain_Loaded">
+        Title="Axel Probe" Height="900.714" Width="1297.857" Icon="dashboard_widgets_speed_fs7_icon.ico" ResizeMode="CanResizeWithGrip" Closing="frmMain_Closing" Loaded="frmMain_Loaded" KeyDown="frmMain_KeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="225"/>
@@ -10,76 +10,82 @@
             <ColumnDefinition Width="182*"/>
         </Grid.ColumnDefinitions>
         <StackPanel Margin="5,0,0.143,-0.143">
-            <GroupBox Header="Acceleration/Phase Drift" Height="205" Margin="0,0,0,0">
-                <Grid Margin="0,0,0,0">
-                    <Label Content="Range [m/s^2]" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndRange" HorizontalAlignment="Left" Height="23" Margin="144,43,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="2" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
-                    <Label Content="Sweep Period [rel.unit]" HorizontalAlignment="Left" Margin="10,67,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndPeriod" HorizontalAlignment="Left" Height="23" Margin="144,71,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="20" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
-                    <Label Content="Step [rel.unit]" HorizontalAlignment="Left" Margin="10,96,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndStep" HorizontalAlignment="Left" Height="23" Margin="144,99,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="0.2" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
-                    <Button x:Name="btnRun" Content="R U N" HorizontalAlignment="Right" Margin="0,0,8,5" VerticalAlignment="Bottom" Width="80" Height="39" FontWeight="Bold" Foreground="#FF1C9005" Click="btnRun_Click" IsDefault="True"/>
-                    <ComboBox x:Name="cbFinite" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top" Width="99" SelectedIndex="0">
+            <GroupBox Header="Acceleration/Phase Drift" Height="210" Margin="0,0,0,0" BorderBrush="#FF01C66B">
+                <Grid Margin="0,0,-0.429,0">
+                    <Label Content="Amplitude [mg]" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
+                    <ni:NumericTextBoxDouble x:Name="ndAmplitude" HorizontalAlignment="Left" Height="23" Margin="141,43,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="2" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged"/>
+                    <Label Content="Order Factor [mg/rad]" HorizontalAlignment="Left" Margin="10,67,0,0" VerticalAlignment="Top"/>
+                    <ni:NumericTextBoxDouble x:Name="ndOrderFactor" HorizontalAlignment="Left" Height="23" Margin="141,71,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="0.3" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged" Range="0, 1000, System.Double" Interval="0.1"/>
+                    <Label Content="Step [% from period]" HorizontalAlignment="Left" Margin="10,97,0,0" VerticalAlignment="Top"/>
+                    <ni:NumericTextBoxDouble x:Name="ndStep" HorizontalAlignment="Left" Height="23" Margin="141,100,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="1" KeyDown="ndRange_KeyDown" ValueChanged="ndRange_ValueChanged" Interval="0.1" Range="0.1, 100, System.Double"/>
+                    <Button x:Name="btnRun" Content="In  R U N" HorizontalAlignment="Right" Margin="0,0,8,8" VerticalAlignment="Bottom" Width="80" Height="39" FontWeight="Bold" Foreground="#FF1C9005" Click="btnRun_Click" IsDefault="True" Background="#FFEBFADB"/>
+                    <ComboBox x:Name="cbFinite" HorizontalAlignment="Left" Margin="10,0,0,25" VerticalAlignment="Bottom" Width="99" SelectedIndex="0">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continious"/>
                     </ComboBox>
-                    <CheckBox x:Name="chkPause" Content="Pause" HorizontalAlignment="Left" Margin="19,163,0,0" VerticalAlignment="Top"/>
-                    <ComboBox x:Name="cbDriftType" HorizontalAlignment="Left" Margin="19,11,0,0" VerticalAlignment="Top" Width="170" SelectedIndex="1">
+                    <CheckBox x:Name="chkPause" Content="Pause>NumPad0" HorizontalAlignment="Left" Margin="2,0,0,3" VerticalAlignment="Bottom"/>
+                    <ComboBox x:Name="cbDriftType" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top" Width="127" SelectedIndex="1">
                         <ComboBoxItem Content="Constant"/>
                         <ComboBoxItem Content="Trapeze shape"/>
                         <ComboBoxItem Content="Sine"/>
                     </ComboBox>
+                    <Image x:Name="imgAbout" HorizontalAlignment="Left" Height="38" Margin="159,0,0,0" VerticalAlignment="Top" Width="40" Source="dashboard_widgets_speed_fs7_icon.ico" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
             </GroupBox>
-            <GroupBox Header="Gauss Noise" Height="70" Margin="0,5,0.143,0">
+            <GroupBox Header="Add Gauss Noise to Fringes" Height="85" Margin="0,5,0,0" BorderBrush="#FF7302B2">
                 <Grid Margin="0,0,-0.286,-0.143">
-                    <CheckBox x:Name="chkAddGauss" Content="Add Noise" HorizontalAlignment="Left" Margin="129,-2,0,0" VerticalAlignment="Top"/>
-                    <Label Content="Sigma [m/s^2]" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndGaussSigma" HorizontalAlignment="Left" Height="23" Margin="104,18,0,0" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.501,-0.217" Value="0.2"/>
+                    <CheckBox x:Name="chkAddGaussX" Content="" HorizontalAlignment="Left" Margin="179,16,0,0" VerticalAlignment="Top" RenderTransformOrigin="2.75,2.346"/>
+                    <Label Content="Accel Noise [mg]" HorizontalAlignment="Left" Margin="0,9,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
+                    <ni:NumericTextBoxDouble x:Name="ndGaussNoiseX" HorizontalAlignment="Left" Height="23" Margin="98,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="0.01"/>
+                    <CheckBox x:Name="chkAddGaussY" Content="" HorizontalAlignment="Left" Margin="179,43,0,0" VerticalAlignment="Top" RenderTransformOrigin="3,4.029"/>
+                    <Label Content="Y Noise [%]" HorizontalAlignment="Left" Margin="10,34,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
+                    <ni:NumericTextBoxDouble x:Name="ndGaussNoiseY" HorizontalAlignment="Left" Height="23" Margin="98,38,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="5"/>
                 </Grid>
             </GroupBox>
-            <GroupBox Header="Offset Variations" Height="100" Margin="0,5,0.143,0">
+            <GroupBox Header="Offset Variations" Height="110" Margin="0,5,0,0" BorderBrush="#FF5D03A3">
                 <Grid Margin="0,0,-0.286,-12.857">
                     <CheckBox x:Name="chkVaryAmpl" Content="Vary" HorizontalAlignment="Left" Margin="136,2,0,0" VerticalAlignment="Top"/>
                     <ComboBox HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top" Width="109" SelectedIndex="0">
                         <ComboBoxItem Content="Sine breathing"/>
                     </ComboBox>
 
-                    <Label Content="Breathing Ampl [%]" HorizontalAlignment="Left" Margin="0,27,0,-0.857" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndBreatheAmpl" HorizontalAlignment="Left" Height="23" Margin="126,26,0,0" VerticalAlignment="Top" Width="78" RenderTransformOrigin="0.501,-0.217" Value="20"/>
-                    <Label Content="Breathing Period [sec]" HorizontalAlignment="Left" Margin="0,52,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndBreathePeriod" HorizontalAlignment="Left" Height="23" Margin="126,54,0,0" VerticalAlignment="Top" Width="78" RenderTransformOrigin="0.501,-0.217" Value="20"/>
+                    <Label Content="Breathing Ampl [%]" HorizontalAlignment="Left" Margin="0,32,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
+                    <ni:NumericTextBoxDouble x:Name="ndBreatheAmpl" HorizontalAlignment="Left" Height="23" Margin="126,32,0,0" VerticalAlignment="Top" Width="78" RenderTransformOrigin="0.501,-0.217" Value="20"/>
+                    <Label Content="Breathing Period [sec]" HorizontalAlignment="Left" Margin="0,61,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
+                    <ni:NumericTextBoxDouble x:Name="ndBreathePeriod" HorizontalAlignment="Left" Height="23" Margin="126,61,0,0" VerticalAlignment="Top" Width="78" RenderTransformOrigin="0.501,-0.217" Value="20"/>
                 </Grid>
             </GroupBox>
-            <GroupBox Header="Visuals and (scan/repeat)" Height="70" Margin="0,5,0.143,0">
-                <Grid Margin="0,0,-0.286,-0.143">
-                    <Label Content="Delay [ms]" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndDelay" HorizontalAlignment="Left" Height="23" Margin="124,18,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="400"/>
+            <GroupBox Header="Visuals and (scan/repeat)" Height="60" Margin="0,5,0,0" BorderBrush="#FF02107F">
+                <Grid Margin="0,0,0,0">
+                    <Label Content="Delay [ms]" HorizontalAlignment="Left" Margin="10,8,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
+                    <ni:NumericTextBoxDouble x:Name="ndDelay" HorizontalAlignment="Left" Height="23" Margin="124,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="200"/>
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="grpRemote" Header="Remote" Height="140" Foreground="Black">
-                <Grid Margin="0">
-                    <Button x:Name="btnCommCheck" Content="Comm.Check" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click"/>
-                    <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click"/>
-                    <Button x:Name="btnRepeat" Content="Repeat" HorizontalAlignment="Left" Margin="99,74,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnRepeat_Click"/>
-                    <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked"/>
-                    <ni:BooleanButton x:Name="bbtnAbort" Content="Abort !" HorizontalAlignment="Left" Height="23" Margin="10,80,0,0" VerticalAlignment="Top" Width="75" Click="btnAbort_Click"/>
+            <GroupBox x:Name="grpRemote" Header="Remote" Height="130" Foreground="Black" BorderBrush="#FF015E95">
+                <Grid Margin="0,0,-0.429,0.429">
+                    <Button x:Name="btnCommCheck" Content="Comm.Check" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click" Background="#FFE2F5F8"/>
+                    <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click" Background="#FFFDFEE2" FontSize="14"/>
+                    <Button x:Name="btnRepeat" Content="Repeat" HorizontalAlignment="Left" Margin="99,74,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnRepeat_Click" Background="#FFE6FBD9" FontSize="14"/>
+                    <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="30,16,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked" RenderTransformOrigin="0.401,2.519"/>
+                    <ni:BooleanButton x:Name="bbtnAbort" Content="Abort !" HorizontalAlignment="Left" Height="23" Margin="10,80,0,0" VerticalAlignment="Top" Width="75" Click="btnAbort_Click" Background="#FFFDD0D0"/>
+                    <ni:LED x:Name="ledComm" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="3,10,0,0" TrueContent="On" VerticalAlignment="Top" Width="23" RenderTransformOrigin="0.385,0.54"/>
                 </Grid>
             </GroupBox>
+            <Button x:Name="btnCustomScan" Content="Custom Scan" Background="#FFDDFDEF" VerticalAlignment="Top" Margin="0,5,0,0" Height="26" FontSize="14" Click="btnCustomScan_Click"/>
 
         </StackPanel>
         <GroupBox Grid.Column="2" Header="" Margin="0,0,0,-0.143">
             <Grid Margin="0,0,0.571,0">
                 <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" IsChecked="True"/>
-                <TextBox x:Name="tbLog" Margin="0,20,-0.142,0" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True"/>
-                <Button x:Name="btnClear" Content="Clear" HorizontalAlignment="Left" Margin="65,-1,0,0" VerticalAlignment="Top" Width="60" Height="20" Click="btnClear_Click"/>
+                <TextBox x:Name="tbLog" Margin="0,20,-0.142,0" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True" BorderBrush="#FFF9CD91"/>
+                <Button x:Name="btnClear" Content="Clear" HorizontalAlignment="Left" Margin="65,-5,0,0" VerticalAlignment="Top" Width="60" Height="20" Click="btnClear_Click" BorderBrush="#FF797663" Background="#FFFCF7DF"/>
             </Grid>
 
         </GroupBox>
         <GridSplitter Grid.Column="2" HorizontalAlignment="Left" Margin="0" Width="5" Background="#FFE3E0E0"/>
         <Grid Grid.Column="1" Margin="20,0,0,0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="366*"/>
+                <RowDefinition Height="496*"/>
                 <RowDefinition Height="309*"/>
                 <RowDefinition Height="337*"/>
             </Grid.RowDefinitions>
@@ -88,7 +94,7 @@
             <ni:Graph x:Name="grRslt" Margin="0,2.143,-0.286,0" Grid.Row="2" Interactions="Pan, Zoom" SelectionFill="#15C8C828" SelectionStroke="#FFFF9F00" DefaultInteraction="Pan">
                 <ni:Graph.Plots>
                     <ni:Plot VerticalScale="{Binding ElementName=yAxis1}" Label="Plot 1">
-                        <ni:LinePlotRenderer StrokeThickness="2"/>
+                        <ni:LinePlotRenderer StrokeThickness="2" Stroke="#FF020A97"/>
                     </ni:Plot>
                     <ni:Plot VerticalScale="{Binding ElementName=yAxis2}" Label="Plot 2">
                         <ni:BarPlotRenderer Fill="Green" BarWidth="0.6"/>
@@ -98,9 +104,9 @@
                     <ni:MultiPlotCursor Label="multiPlotCursor3"/>
                 </ni:Graph.Children>
                 <ni:Graph.Axes>
-                    <ni:AxisDouble Orientation="Horizontal" Range="0, 20, System.Double" Adjuster="None"/>
-                    <ni:AxisDouble x:Name="yAxis1" Orientation="Vertical"  Range="0, 2, System.Double" Adjuster="None"/>
-                    <ni:AxisDouble x:Name="yAxis2" Orientation="Vertical" Range="-0.5, 0.5, System.Double"  Adjuster="None"/>
+                    <ni:AxisDouble Orientation="Horizontal" Range="0, 100, System.Double" Adjuster="None"/>
+                    <ni:AxisDouble x:Name="yAxis1" Orientation="Vertical"  Range="0, 2.1, System.Double" Adjuster="None" BaselineStroke="#FF033896"/>
+                    <ni:AxisDouble x:Name="yAxis2" Orientation="Vertical" Range="-0.5, 0.5, System.Double"  Adjuster="FitVisibleLoosely" BaselineStroke="#FF059A09"/>
                 </ni:Graph.Axes>
             </ni:Graph>
             <Grid Margin="0,0,0,0" Grid.Row="1">
@@ -120,7 +126,7 @@
                     </ni:Graph.Plots>
                 </ni:Graph>
 
-                <ListBox x:Name="lboxNB" HorizontalAlignment="Left" Margin="0,0,0,0.286" Grid.Column="0" Width="85">
+                <ListBox x:Name="lboxNB" HorizontalAlignment="Left" Margin="0,0,0,0.286" Grid.Column="0" Width="85" BorderBrush="#FF67749B">
                     <ListBoxItem Content="N2"/>
                     <ListBoxItem Content="NTot"/>
                     <ListBoxItem Content="B2"/>
@@ -130,10 +136,10 @@
             </Grid>
             <Grid Margin="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="115"/>
+                    <ColumnDefinition Width="135"/>
                     <ColumnDefinition Width="657*"/>
                 </Grid.ColumnDefinitions>
-                <GroupBox Header="PID feedback" Margin="0" Width="115" Grid.Column="0" Grid.ColumnSpan="1">
+                <GroupBox Header="PID feedback" Margin="0" Grid.Column="0" Grid.ColumnSpan="1" BorderBrush="#FF998961">
                     <Grid Margin="0,0,0.429,0">
                         <Label Content="kP" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
                         <ni:NumericTextBoxDouble x:Name="ndKP" HorizontalAlignment="Left" Height="23" Margin="41,13,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
@@ -142,12 +148,13 @@
                         <Label Content="kD" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top"/>
                         <ni:NumericTextBoxDouble x:Name="ndKD" HorizontalAlignment="Left" Height="23" Margin="41,68,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
                         <CheckBox x:Name="chkFollowPID" Content="Follow" HorizontalAlignment="Left" Margin="10,106,0,0" VerticalAlignment="Top" IsChecked="True"/>
-                        <GroupBox Header="Strobes" HorizontalAlignment="Left" Margin="0,126,0,0" VerticalAlignment="Top" Height="67" Width="103">
+                        <GroupBox Header="Strobes" Margin="0,126,0,0" VerticalAlignment="Top" Height="67" Width="103">
                             <StackPanel Margin="0,0,0.429,-12.714">
                                 <RadioButton x:Name="rbSingle" Content="Single(down)" Margin="0,5,0,0" IsChecked="True" Checked="rbSingle_Checked"/>
-                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0" Checked="rbSingle_Checked"/>
+                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0" Checked="rbSingle_Checked" IsChecked="True"/>
                             </StackPanel>
                         </GroupBox>
+                        <ListBox x:Name="lbDecomposeAccel" Margin="0,198,0,0"/>
                     </Grid>
                 </GroupBox>
                 <Grid Grid.Column="1" Margin="0">
@@ -161,12 +168,12 @@
                             <ni:AxisDouble Adjuster="None" Orientation="Vertical" Range="-1.5, 1.5, System.Double"/>
                         </ni:Graph.Axes>
                         <ni:Graph.Children>
-                            <ni:MultiPlotCursor x:Name="crsFringes1" Label="multiPlotCursor2">
+                            <ni:MultiPlotCursor x:Name="crsFringes1" Label="down-hill" LabelVisibility="Visible">
                                 <ni:MultiPlotCursor.AxisValue>
-                                    <System:Double>7.85</System:Double>
+                                    <System:Double>1.59</System:Double>
                                 </ni:MultiPlotCursor.AxisValue>
                             </ni:MultiPlotCursor>
-                            <ni:MultiPlotCursor x:Name="crsFringes2" Label="multiPlotCursor2" Visibility="Hidden">
+                            <ni:MultiPlotCursor x:Name="crsFringes2" Label="up-hill" LabelVisibility="Visible">
                                 <ni:MultiPlotCursor.AxisValue>
                                     <System:Double>4.71</System:Double>
                                 </ni:MultiPlotCursor.AxisValue>

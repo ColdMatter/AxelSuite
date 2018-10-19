@@ -90,6 +90,7 @@ namespace UtilsNS
     public class AutoFileLogger
     {
         public string header = ""; // that will be put as a file first line with # in front of it
+        public string defaultExt = ".ahf";
         List<string> buffer;
         public int bufferLimit = 256; // number of items
         private int bufferCharLimit = 256000; // the whole byte/char size
@@ -97,7 +98,7 @@ namespace UtilsNS
         public int bufferCharSize { get; private set; }
         public bool writing { get; private set; }
         public bool missingData { get; private set; }
-        Stopwatch stw;
+        public Stopwatch stw;
 
         public AutoFileLogger(string Filename = "")
         {
@@ -188,7 +189,7 @@ namespace UtilsNS
                     string dir = "";
                     if (!_AutoSaveFileName.Equals("")) dir = Directory.GetParent(_AutoSaveFileName).FullName;
                     if (!Directory.Exists(dir))
-                        _AutoSaveFileName = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + ".ahf"; //axel hub file
+                        _AutoSaveFileName = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt; //axel hub file
 
                     string hdr = "";
                     if (header != "") hdr = "# " + header + "\n";

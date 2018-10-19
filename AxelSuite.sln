@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-track", "Axel-track\Axel-track.csproj", "{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-probe", "Axel-probe\Axel-probe\Axel-probe.csproj", "{9C288394-1DE7-4F48-9D10-1DDE8827D738}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-hub", "Axel-hub\Axel-hub\Axel-hub.csproj", "{6C5C4030-6910-4AC7-BD4A-79476703D912}"
@@ -15,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilsLib", "Utils\UtilsLib.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scanHub", "Axel-hub\scanUC\scanUC\scanHub.csproj", "{EC092AFA-EC88-499D-9932-0A0273F4BF87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AxelProcUC", "Axel-boss\AxelProcUC\AxelProcUC\AxelProcUC.csproj", "{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-show", "Axel-show\Axel-show.csproj", "{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-track-4Jonas", "Axel-track-4Jonas\Axel-track-4Jonas.csproj", "{C0D3D559-1012-49DE-BEB7-DD7BA888130D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axel-tilt", "Axel-tilt\Axel-tilt.csproj", "{F3437BFA-5B92-4726-AECF-E2C79B414A2B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,18 +27,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Debug|x64.ActiveCfg = Debug|x64
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Debug|x64.Build.0 = Debug|x64
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Debug|x86.ActiveCfg = Debug|x86
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Debug|x86.Build.0 = Debug|x86
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x64.ActiveCfg = Release|x64
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x64.Build.0 = Release|x64
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x86.ActiveCfg = Release|x86
-		{B2C1540F-C2E8-49F2-9C56-CB1AAEED3FD7}.Release|x86.Build.0 = Release|x86
 		{9C288394-1DE7-4F48-9D10-1DDE8827D738}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9C288394-1DE7-4F48-9D10-1DDE8827D738}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C288394-1DE7-4F48-9D10-1DDE8827D738}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -81,26 +67,22 @@ Global
 		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|x64.ActiveCfg = Release|Any CPU
 		{EC092AFA-EC88-499D-9932-0A0273F4BF87}.Release|x86.ActiveCfg = Release|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Release|x64.ActiveCfg = Release|Any CPU
-		{FB3CF2E1-3F30-4D9A-8667-75245ABC16FA}.Release|x86.ActiveCfg = Release|Any CPU
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Debug|x64.ActiveCfg = Debug|x64
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Debug|x64.Build.0 = Debug|x64
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Debug|x86.ActiveCfg = Debug|x86
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Debug|x86.Build.0 = Debug|x86
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Release|x64.ActiveCfg = Release|x64
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Release|x64.Build.0 = Release|x64
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Release|x86.ActiveCfg = Release|x86
-		{C0D3D559-1012-49DE-BEB7-DD7BA888130D}.Release|x86.Build.0 = Release|x86
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Release|x64.ActiveCfg = Release|Any CPU
+		{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}.Release|x86.ActiveCfg = Release|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Release|x64.ActiveCfg = Release|Any CPU
+		{F3437BFA-5B92-4726-AECF-E2C79B414A2B}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

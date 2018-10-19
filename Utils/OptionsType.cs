@@ -31,6 +31,11 @@ namespace OptionsTypeNS
         public int visualDataLength { get; set; }
         public bool saveVisuals { get; set; }
 
+        public bool JumboScan { get; set; }
+        public bool JumboRepeat { get; set; }
+
+        public int MemsChannels { get; set; }
+
         public void Save()
         {
             string fileJson = JsonConvert.SerializeObject(this);
@@ -56,11 +61,13 @@ namespace OptionsTypeNS
         public bool SizeLimitMode { get; set; } // false - finite; true - cont.
         public int SizeLimit { get; set; } // in points
 
-        // Top
+        // Top Axel-chart
         public int ShowFreq { get; set; }
         public int RollMean { get; set; }
         public int StackDepth { get; set; }
-        public bool VisUpdate { get; set; }
+        public bool ChartUpdate { get; set; }
+        public bool TblUpdate { get; set; }
+        public double PowerCoeff { get; set; }
 
         // Middle
         public bool ManualYAxisMiddle { get; set; }
@@ -72,13 +79,22 @@ namespace OptionsTypeNS
         public bool RN1 { get; set; }
         public bool RN2 { get; set; }
         public bool Ntot { get; set; }
+        public bool RsltUpdating { get; set; }
+        public bool RsltDetails { get; set; }
+        public bool SignalLogFile { get; set; }
+
 
         // Bottom
         public double JumboFrom { get; set; }
         public double JumboTo { get; set; }
         public double JumboBy { get; set; }
         public int JumboCycles { get; set; }
-        public bool VibrEnabled { get; set; }
+
+        public bool MemsEnabled { get; set; }
+        public double MemsStart { get; set; }
+        public double MemsLen { get; set; }
+        public double Kcoeff { get; set; }
+        public double phi0 { get; set; }
 
         public bool ManualYAxisBottom { get; set; }
         public double kP { get; set; }

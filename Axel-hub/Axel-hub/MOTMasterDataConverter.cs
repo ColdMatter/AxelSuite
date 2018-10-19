@@ -9,10 +9,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RemoteMessagingNS;
 using OptionsNS;
+using UtilsNS;
 
 namespace Axel_hub
 {
-    public static class MOTMasterDataConverter
+    public static class MMDataConverter
     {
         public static Dictionary<string, double> AverageShotSegments(MMexec data, bool initN2, bool stdDev)
         {
@@ -50,7 +51,7 @@ namespace Axel_hub
             Dictionary<string,object>tempDict = new Dictionary<string, object>(); 
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID" || key == "last") tempDict[key] = data.prms[key];
+                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS") tempDict[key] = data.prms[key];
                 else
                 {
                     var rawData = (JArray) data.prms[key];
@@ -65,8 +66,7 @@ namespace Axel_hub
             return Asymmetry(AverageShotSegments(data, false,false), subtractBackground, subtractDark);
         }
 
-        public static double Asymmetry(Dictionary<string, double> avgs, bool subtractBackground = true,
-            bool subtractDark = true)
+        public static double Asymmetry(Dictionary<string, double> avgs, bool subtractBackground = true, bool subtractDark = true)
         {
             var n2 = avgs["N2"];
             var ntot = avgs["NTot"];
@@ -90,6 +90,15 @@ namespace Axel_hub
         public static double IntegrateAcceleration(MMexec data)
         {
             throw new NotImplementedException();
+        }
+
+        public static double Restrict2twoPI(double phi) 
+        {            
+            double ph = phi;
+            if (ph <= 0) ph += 2 * Math.PI;
+            if (ph <= 0) ph += 2 * Math.PI;
+            if (Utils.InRange(ph, 0, 2 * Math.PI)) return ph;
+            return ph % (2 * Math.PI);
         }
     }
 }

@@ -6,14 +6,13 @@ using System.Diagnostics;
 
 using NationalInstruments;
 using NationalInstruments.DAQmx;
-//using DS345NS;
 using UtilsNS;
 
 namespace AxelHMemsNS
 {     
     public class AxelMems
     {
-        public Timer mTimer = null; // start/stop
+        
         private Stopwatch sw = null;
         public bool AdjustTimelineToStopwatch = false;  // false - use the set time interval between points
                                                         // true - adjust the time interval to stopwatch markers
@@ -29,12 +28,9 @@ namespace AxelHMemsNS
         private readonly string physicalChannel1 = "cDAQ1Mod1/ai1";
         private readonly string physicalChannel2 = "Dev4/ai1"; //PXIe
 
-        private int _nSamples = 1500; // default
-        public int nSamples {get { return _nSamples; }  }
-
-        private double _sampleRate = 2133;
-        public double sampleRate { get { return _sampleRate; } }
-        public int Timeout = 1000; // [sec]
+        public int nSamples { get; private set; }
+        public double sampleRate { get; private set; }
+        public int Timeout = -1; // [sec] ; -1 - no timeout
         public List<double> rawData = null;
         
         private Task voltageInputTask = null;
@@ -51,6 +47,8 @@ namespace AxelHMemsNS
         {
             sw = new Stopwatch();
             activeChannel = 0;
+            sampleRate = 2133;
+            nSamples = 1500;
         }
 
         public double TimeElapsed() // [sec]
@@ -66,7 +64,7 @@ namespace AxelHMemsNS
             get { return _running; }
         }
 
-        public int activeChannel { get; private set; } // 0,1 or 2 for both; 3 for chn.1 of PXIe
+        public int activeChannel { get; set; } // 0,1 or 2 for both; 3 for chn.1 of PXIe
 
         public double RealConvRate(double wantedCR)
         {   
@@ -108,7 +106,7 @@ namespace AxelHMemsNS
             return aiData;
         }
 
-        public void configureVITask(string physicalChn, int numbSamples, double samplingRate) 
+        public void configureVITask(string physicalChn, int numbSamples, double samplingRate) // obsolete, but good to have as how to configure acquisition task
         {
             if(Utils.isNull(voltageInputTask)) voltageInputTask = new Task();
 
@@ -116,8 +114,8 @@ namespace AxelHMemsNS
                 (double)-3.5, (double)3.5, AIVoltageUnits.Volts);
 
             voltageInputTask.Timing.ConfigureSampleClock("", sampleRate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples);
-            voltageInputTask.Timing.SamplesPerChannel = nSamples;
-            voltageInputTask.Stream.Timeout = 1000 * Timeout;
+            voltageInputTask.Timing.SamplesPerChannel = numbSamples;
+            voltageInputTask.Stream.Timeout = Timeout;
             voltageInputTask.Control(TaskAction.Commit);
 
             if(Utils.isNull(VIReader)) VIReader = new AnalogMultiChannelReader(voltageInputTask.Stream);
@@ -150,22 +148,24 @@ namespace AxelHMemsNS
         {
             try
             {
-                if (runningTask == null)
+                if (Utils.isNull(runningTask))
                 {
                     // Create a new task
                     myTask = new Task();                
                    
                     // Create a virtual channel
-                    if ((activeChannel == 0) || (activeChannel == 2)) 
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel0, "", (AITerminalConfiguration)(-1), -3.5, 3.5, AIVoltageUnits.Volts);
-                    if ((activeChannel == 1) || (activeChannel == 2)) 
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel1, "", (AITerminalConfiguration)(-1), -3.5, 3.5, AIVoltageUnits.Volts);
+                    if ((activeChannel == 0) || (activeChannel == 2))
+                        myTask.AIChannels.CreateVoltageChannel(physicalChannel0, "", AITerminalConfiguration.Differential, -3.5, 3.5, AIVoltageUnits.Volts);
+                    if ((activeChannel == 1) || (activeChannel == 2))
+                        myTask.AIChannels.CreateVoltageChannel(physicalChannel1, "", AITerminalConfiguration.Differential, -3.5, 3.5, AIVoltageUnits.Volts);
                     if (activeChannel == 3)
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", (AITerminalConfiguration)(-1), -3.5, 3.5, AIVoltageUnits.Volts);
+                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", AITerminalConfiguration.Differential, -3.5, 3.5, AIVoltageUnits.Volts);
                 }
                 // Configure the timing parameters
                 myTask.Stop();
                 myTask.Timing.ConfigureSampleClock("", samplingRate, SampleClockActiveEdge.Rising, SampleQuantityMode.ContinuousSamples, samplesPerChannel);
+                myTask.Timing.SamplesPerChannel = samplesPerChannel;
+                myTask.Stream.Timeout = Timeout;
 
                 // Verify the Task
                 myTask.Control(TaskAction.Verify);
@@ -180,8 +180,8 @@ namespace AxelHMemsNS
                     // marshals callbacks across threads appropriately.
                     analogInReader.SynchronizeCallbacks = true;
                 }
-                _nSamples = samplesPerChannel;
-                _sampleRate = RealConvRate(samplingRate);
+                nSamples = samplesPerChannel;
+                sampleRate = RealConvRate(samplingRate);
                 if (!sw.IsRunning)
                 {
                     sw.Start(); // first time

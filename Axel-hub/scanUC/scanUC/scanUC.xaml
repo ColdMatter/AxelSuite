@@ -9,8 +9,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="25.143"/>
             <RowDefinition Height="47.429"/>
-            <RowDefinition Height="58.857"/>
-            <RowDefinition Height="104"/>
+            <RowDefinition Height="57.143"/>
+            <RowDefinition Height="105.143"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
 
@@ -27,33 +27,34 @@
                 <TextBox x:Name="tbSamplingRate" Height="23" TextWrapping="Wrap" Text="200" Margin="5,0,0,0" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Right" Width="93" RenderTransformOrigin="0.509,-1.547"/>
             </StackPanel>
         </GroupBox>
-        <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="0,4.571,10,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
+        <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="4,3.286,6,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
             <TabItem x:Name="tabTimeLimit" Header="Time Limit" Height="26">
                 <Grid Margin="0,1,0.429,-0.857">
                     <TextBox x:Name="tbTimeLimit" HorizontalAlignment="Right" Height="23" Margin="0,0,40.428,10" TextWrapping="Wrap" Text="3" VerticalAlignment="Bottom" Width="74" FontSize="14"/>
-                    <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
+                    <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="10,7,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
                     <Label Content="sec" HorizontalAlignment="Right" Margin="0,0,10.428,11.143" VerticalAlignment="Bottom" Height="30" Width="28"/>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="tabBufferSizeLimit_" Header="Size Limit" Height="26">
+            <TabItem x:Name="tabBufferSizeLimit_" Header="Size Limit" Height="26" Margin="-2">
                 <Grid>
-                    <ComboBox x:Name="cbSizeEndless" HorizontalAlignment="Left" Height="22" Margin="10,10,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
+                    <ComboBox x:Name="cbSizeEndless" HorizontalAlignment="Left" Height="22" Margin="10,7,0,0" VerticalAlignment="Top" Width="93" SelectedIndex="1">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
-                    <Label Content="Buffer size:" HorizontalAlignment="Right" Margin="0,0,115.857,8" VerticalAlignment="Bottom" Width="70"/>
+                    <Label Content="Buffer size: " HorizontalAlignment="Left" Margin="40,0,0,13" VerticalAlignment="Bottom" Width="117" Height="24"/>
+                    <Label Content="(local 'n remote)" HorizontalAlignment="Left" Margin="35,0,0,0" VerticalAlignment="Bottom" Width="117" Height="24"/>
                     <TextBox x:Name="tbBifferSize" HorizontalAlignment="Right" Height="22" Margin="0,0,9.857,10.286" TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="101" FontSize="14"/>
                 </Grid>
             </TabItem>
 
             <TabItem x:Name="tabRemote" Header=" Remote " Height="26">
                 <Grid>
-                    <Label x:Name="lbMode" Content="Mode:" HorizontalAlignment="Left" Margin="72,4,-0.143,0" VerticalAlignment="Top" Foreground="#FF0429C5" Width="171" FontWeight="Bold"/>
+                    <Label x:Name="lbMode" Content="Mode:" HorizontalAlignment="Left" Margin="40,4,0,0" VerticalAlignment="Top" Foreground="#FF0429C5" FontWeight="Bold"/>
                     <Label x:Name="lbActivity" Content="Activity:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>
-                    <Button x:Name="btnCheckComm" Content="&lt;-&gt; MM2" HorizontalAlignment="Left" Margin="5,7,0,0" VerticalAlignment="Top" Width="67" Click="btnCheckComm_Click"/>
+                    <ni:LED x:Name="ledRemote" Content="LED" FalseContent="Off" Height="23" TrueContent="On" Width="23" Margin="8,8,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </Grid>
             </TabItem>
 
@@ -68,9 +69,9 @@
                 </TransformGroup>
             </Image.RenderTransform>
         </Image>
-        <ProgressBar x:Name="progressBar" Grid.Row="4" HorizontalAlignment="Left" Height="25" Margin="0,1.571,0,0" VerticalAlignment="Top" Width="249" Background="#FFF1F0F0" Foreground="#FFB8D9BE" />
-        <Label x:Name="lbTimeElapsed" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="75" Margin="10,0,0,0" FontSize="13" Foreground="#FF017973" FontWeight="Bold"/>
-        <Label x:Name="lbTimeLeft" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" Margin="180,1.571,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.466,0" Height="25" Width="67" Foreground="#FF016F06"/>
+        <ProgressBar x:Name="progressBar" Grid.Row="4" HorizontalAlignment="Left" Height="25" Margin="4,1.143,0,0" VerticalAlignment="Top" Width="249" Background="#FFF1F0F0" Foreground="#FFB8D9BE" />
+        <Label x:Name="lbTimeElapsed" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="75" Margin="10,0.143,0,0" FontSize="13" Foreground="#FF017973" FontWeight="Bold"/>
+        <Label x:Name="lbTimeLeft" Grid.Row="4" Content="...[s]" HorizontalAlignment="Left" Margin="180,1.143,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.466,0" Height="25" Width="67" Foreground="#FF016F06"/>
         <Label x:Name="lblStatus" Grid.Row="0"  Content="Status:" HorizontalAlignment="Left" Height="28" Margin="0,-4,0,0" VerticalAlignment="Top" Width="254" FontSize="14" RenderTransformOrigin="0.5,0.5" Foreground="#FF1B7F11"/>
     </Grid>
 </UserControl>
