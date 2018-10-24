@@ -7,6 +7,7 @@
 *.sln.docstates
 *.ahf
 *.cfg
+*.key
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

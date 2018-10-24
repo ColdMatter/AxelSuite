@@ -91,7 +91,6 @@ namespace Axel_hub
 
             ucScan1.OnStart += new scanClass.StartHandler(DoStart);
             ucScan1.OnRemote += new scanClass.RemoteHandler(DoRemote);
-            ucScan1.OnFileRef += new scanClass.FileRefHandler(DoRefFile);
             ucScan1.OnLog += new scanClass.LogHandler(log);
             
             AxelChart1.Waveform.TimeSeriesMode = false;
@@ -107,7 +106,7 @@ namespace Axel_hub
 
             showLogger = new AutoFileLogger(); showLogger.defaultExt = ".shw";
 
-            if (System.Windows.Forms.SystemInformation.MonitorCount > 1) // secondary monitor
+            if (false)//(System.Windows.Forms.SystemInformation.MonitorCount > 1) // secondary monitor
             {           
                 WindowStartupLocation = WindowStartupLocation.Manual;
 
@@ -309,7 +308,22 @@ namespace Axel_hub
 
                     if (ucScan1.remoteMode == RemoteMode.Free) return;  // end mission
                 }
-                else btnConfirmStrobes_Click(null, null);                    
+                else 
+                {
+                    Utils.TimedMessageBox("Open a fringe file, adjust the strobes and confirm.", "Jumbo-Repeat Requirements", 3500);
+                    if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
+                    else srsFringes.Clear();
+                    btnOpenFringes_Click(null, null);
+                    if (srsFringes.Count == 0)
+                    {
+                        Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
+                        ucScan1.Running = false;
+                        return;
+                    }
+                    crsStrobe1.AxisValue = 4.7; crsStrobe2.AxisValue = 7.8;
+                    btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
+                    btnSinFit.Visibility = System.Windows.Visibility.Visible;
+                }                                   
             }
             else
             {
@@ -551,10 +565,11 @@ namespace Axel_hub
                     }
                     //
                     // Ns chart (left)
-                    double A = (N2 - B2) / (NTot - BTot); //double A = 1 - 2 * (N2 - B2) / (NTot - BTot);
+                   
                     double corr, disbalance;
                     // corrected with background
                     double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
+                    double A = cN2 / cNtot ;//(N2 - B2) / (NTot - BTot); //double A = 1 - 2 * (N2 - B2) / (NTot - BTot);
                     double currX = 1, cN2_std = 1, cNtot_std = 1;
                     if (chkStdDev.IsChecked.Value)
                     {
@@ -626,10 +641,10 @@ namespace Axel_hub
                     // LOWER section
                     if (scanMode) 
                     {
-                        srsFringes.Add(new Point(currX, asymmetry));
+                        srsFringes.Add(new Point(currX, A)); //asymmetry
                         if (!chkVerbatim.IsChecked.Value)
                             log(log_out + "scanX/Y= " + currX.ToString(Options.genOptions.SignalTablePrec) +
-                            " / " + asymmetry.ToString(Options.genOptions.SignalTablePrec), Brushes.DarkGreen.Color);
+                            " / " + A.ToString(Options.genOptions.SignalTablePrec), Brushes.DarkGreen.Color);//asymmetry.ToString
                         if (!chkManualAxisBottom.IsChecked.Value) // Fringes
                         {
                             double d; 
@@ -650,14 +665,14 @@ namespace Axel_hub
                             double disbalCorr = 0;
                             if (rbSingle.IsChecked.Value)
                             {
-                                disbalance = asymmetry;
+                                disbalance = A;//asymmetry
                             }
                             else // double strobe
                             {
-                                if ((runID % 2) == 0) strbDownhill.Y = asymmetry;
-                                else strbUphill.Y = asymmetry;
+                                if ((runID % 2) == 0) strbDownhill.Y = A;//asymmetry
+                                else strbUphill.Y = A;//asymmetry
                                 disbalance = strbDownhill.Y - strbUphill.Y;
-                                disbalCorr = (disbalance/numScale.Value)/2; // correction for disbalance
+                                disbalCorr = (disbalance / numScale.Value) / 2 ; // correction for disbalance
                                 Color clr = Brushes.Black.Color;
                                 if (Math.Abs(disbalCorr) > 0.8) clr = Brushes.Red.Color;
                                 log("s.Down/Up: " + strbDownhill.Y.ToString("G4") + "/" + strbUphill.Y.ToString("G4") + "; d.corr: " + disbalCorr.ToString("G4"), clr);
@@ -688,11 +703,13 @@ namespace Axel_hub
                                 mmeOut.prms["phase"] = phaseCorr.ToString("G6");
                                 ucScan1.SendJson(JsonConvert.SerializeObject(mmeOut), true); 
                                 srsCorr.Add(new Point(runID, corr)); graphAccelTrend.Data[1] = srsCorr.Portion(Options.genOptions.visualDataLength);
-                                statDt["PhiRad"] = phaseRad - numPhi0.Value;                             
+                               // statDt["PhiRad"] = phaseRad - numPhi0.Value;
+                                statDt["PhiRad"] = phaseRad ;  
                             }
                             else // no PID feedback
                             {
-                                phaseRad = (strbUphill.X + strbDownhill.X) / 2 + disbalCorr; 
+                                phaseRad = //(strbUphill.X + strbDownhill.X) / 2 + 
+                                    disbalCorr; 
                                 statDt["PhiRad"] = phaseRad - numPhi0.Value; 
                             }
                         }
@@ -728,7 +745,7 @@ namespace Axel_hub
                             }
                             if (ucScan1.remoteMode == RemoteMode.Simple_Repeat)
                             {
-                                srsMotAccel.Add(new Point(xVl, asymmetry)); graphAccelTrend.Data[2] = srsMotAccel.Portion(Options.genOptions.visualDataLength);
+                                srsMotAccel.Add(new Point(xVl, A)); graphAccelTrend.Data[2] = srsMotAccel.Portion(Options.genOptions.visualDataLength);
                             }                            
                             if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
                             {
@@ -877,11 +894,13 @@ namespace Axel_hub
             
             if (!dt.ContainsKey("K")) rslt["K"] = numKcoeff.Value;
             if (!dt.ContainsKey("Phi0")) rslt["Phi0"] = numPhi0.Value;
+            if (!dt.ContainsKey("Scale")) rslt["Scale"] = numScale.Value;
             
             if(dt.ContainsKey("MEMS_V")) rslt["MEMS"] = AxelChart1.convertV2mg(dt["MEMS_V"]); // convert V to mg
             if(dt.ContainsKey("MEMS2_V")) rslt["MEMS2"] = AxelChart1.convertV2mg(dt["MEMS2_V"],true);  
 
             rslt["PhiMg"] = (dt["PhiRad"] - rslt["Phi0"]) * rslt["K"];  // convert rad to mg
+          //  rslt["PhiMg"] = (dt["PhiRad"] ) * rslt["K"];  // convert rad to mg
             phiMg.AddPoint(rslt["PhiMg"]);
             
             double ord = (rslt["MEMS"] - rslt["PhiMg"]) / (2 * Math.PI * numKcoeff.Value);
@@ -942,14 +961,6 @@ namespace Axel_hub
             return cr;
         }
 
-        // XPS log file reference .....
-        public void DoRefFile(string FN, bool statFlag)
-        {            
-        }
-
-        public void DoCompareChart()
-        {
-        }
         #region File operation 
         //TODO Change this to add new columns to corresponding datastacks (N2_std, Ntot_std etc) - maybe using a list?
         public bool OpenSignal(string fn)
@@ -1008,7 +1019,7 @@ namespace Axel_hub
         {
             if (stackN1.Count == 0)
             {
-                MessageBox.Show("Error: No data to be saved");
+                MessageBox.Show("Error: No signal data to be saved");
                 return;
             }
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
@@ -1017,9 +1028,11 @@ namespace Axel_hub
             file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tN2_std\tNtot_std\tN2int");  
             for (int i = 0; i < stackN1.Count; i++)
             {
-                string ss = stackN1[i].X.ToString("G7") + "\t" + stackN1[i].Y.ToString("G7") + "\t" + stackN2[i].Y.ToString("G7") + "\t" + 
-                            stackRN1[i].Y.ToString("G7") + "\t" + stackRN2[i].Y.ToString("G7") + "\t" + stackNtot[i].Y.ToString("G7")+ "\t" + stackN2_int[i].Y.ToString("G7"); 
-                if (stackN2_std.Count > i) ss += "\t" + stackN2_std[i].Y.ToString("G7") + "\t" + stackNtot_std[i].Y.ToString("G7");
+                string ss = stackN1[i].X.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackN1[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" +
+                    stackN2[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackRN1[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" +
+                    stackRN2[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackNtot[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" +
+                    stackN2_int[i].Y.ToString(Options.genOptions.SaveFilePrec);
+                if (stackN2_std.Count > i) ss += "\t" + stackN2_std[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackNtot_std[i].Y.ToString(Options.genOptions.SaveFilePrec);
                 file.WriteLine(ss);
             }
             file.Close();
@@ -1038,38 +1051,6 @@ namespace Axel_hub
             if (result == true) SaveSignal(dlg.FileName);
         }
 
-        public void OpenPair(string fn, ref DataStack ds)
-        {
-            if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
-            if (Utils.isNull(ds)) ds = new DataStack(); ds.Clear();
-            int j = 0;
-            double X, Y;
-            string[] pair;
-
-            foreach (string line in File.ReadLines(fn))
-            {
-                if (line.Contains("#Rem="))
-                {
-                    ds.rem = line.Substring(6,255); 
-                }
-                if (line[0] == '#') continue; //skip comments/service info
-                pair = line.Split('\t');
-                if (!double.TryParse(pair[0], out X)) throw new Exception("Wrong double at line " + j.ToString());
-                if (!double.TryParse(pair[1], out Y)) throw new Exception("Wrong double at line " + j.ToString());
-                ds.Add(new Point(X, Y));
-                j++;
-            }
-        }
-
-        public void SavePair(string fn, DataStack ds)
-        {
-            System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
-            if (!ds.rem.Equals("")) file.WriteLine("#rem " + ds.rem);
-            for (int i = 0; i < ds.Count; i++)
-                file.WriteLine(ds[i].X.ToString("G5") + "\t" + ds[i].Y.ToString("G5"));
-            file.Close();
-        }
-
         private void btnOpenFringes_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
@@ -1081,7 +1062,10 @@ namespace Axel_hub
             Nullable<bool> result = dlg.ShowDialog();
 
             // Process save file dialog box results
-            if (result == true) OpenPair(dlg.FileName, ref srsFringes);
+
+            if (result != true) return;
+            if (Utils.isNull(srsFringes)) srsFringes = new DataStack(); GroupBox gb = null;
+            srsFringes.OpenPair(dlg.FileName, ref gb);
             graphFringes.DataSource = srsFringes;
             lbInfoFringes.Content = srsFringes.rem;
             tbRemFringes.Text = srsFringes.rem;
@@ -1098,7 +1082,7 @@ namespace Axel_hub
             Nullable<bool> result = dlg.ShowDialog();
             srsFringes.rem = tbRemFringes.Text;
             if (srsFringes.rem.Equals("")) srsFringes.rem = (string)lbInfoFringes.Content;
-            if (result == true) SavePair(dlg.FileName, srsFringes);
+            if (result == true) srsFringes.SavePair(dlg.FileName, "", Options.genOptions.SaveFilePrec);
         }
 
         private void btnClearAll_Click(object sender, RoutedEventArgs e)
@@ -1318,6 +1302,7 @@ namespace Axel_hub
 
                 numKcoeff.Value = modes.Kcoeff;
                 numPhi0.Value = modes.phi0;
+                numScale.Value = modes.scale;
 
                 chkManualAxisBottom.IsChecked = modes.ManualYAxisBottom;
                 ndKP.Value = modes.kP;
@@ -1360,6 +1345,7 @@ namespace Axel_hub
 
                 modes.Kcoeff = numKcoeff.Value;
                 modes.phi0 = numPhi0.Value;
+                modes.scale = numScale.Value;
 
                 modes.ManualYAxisBottom = chkManualAxisBottom.IsChecked.Value;
                 modes.kP = ndKP.Value;
@@ -1429,10 +1415,10 @@ namespace Axel_hub
             double[] xs = srsFringes.pointXs(); double[] ys = srsFringes.pointYs(); 
             double[] coeffs = new double[4];
             // signal(x) = scale[0] * sin(per[1]*x + phi0[2]) + offset[3] -> idx in coeffs
-            coeffs[0] = (ys.Max() - ys.Min()) / 2; 
-            coeffs[1] = 1;
-            coeffs[2] = 3.14;
-            coeffs[3] = ys.Average();
+            coeffs[0] = (ys.Max() - ys.Min()) / 2; // scale
+            coeffs[1] = 1; // period
+            coeffs[2] = numPhi0.Value; // phi0 
+            coeffs[3] = ys.Average(); // Offset.Y
             double meanSquaredError;
             ModelFunctionCallback callback = new ModelFunctionCallback(ModelFunction);
             double[] fittedData = CurveFit.NonLinearFit(xs, ys, callback, coeffs, out meanSquaredError, 100);
@@ -1441,21 +1427,20 @@ namespace Axel_hub
             fit.importFromArrays(xs, fittedData);
             graphFringes.Data[1] = fit;
 
-            log("Scale = "+coeffs[0].ToString("G5"), Brushes.DarkCyan.Color);
-            log("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan.Color);
-            log("Period = " + coeffs[1].ToString("G5"), Brushes.DarkCyan.Color);
+            log("FIT.meanSqError = " + meanSquaredError.ToString("G5"), Brushes.DarkCyan.Color);
             log("Phase0 = " + coeffs[2].ToString("G5"), Brushes.DarkCyan.Color);
-            log("meanSquaredError = " + meanSquaredError.ToString("G5"), Brushes.DarkCyan.Color);
+            log("Scale = "+coeffs[0].ToString("G5"), Brushes.DarkCyan.Color);
+            log("Period = " + coeffs[1].ToString("G5"), Brushes.DarkCyan.Color);
+            log("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan.Color);
 
             crsStrobe2.AxisValue = coeffs[2];
             crsStrobe1.AxisValue = MMDataConverter.Restrict2twoPI(coeffs[2]+Math.PI);
-            numScale.Value = coeffs[0];
-            numPhi0.Value = coeffs[2]; 
+            //numScale.Value = coeffs[0]; numPhi0.Value = coeffs[2]; 
         }
         // Callback function that implements the fitting model 
         private double ModelFunction(double x, double[] coefficients)
         {
-            return (coefficients[0] * Math.Sin(coefficients[1] * x + coefficients[2])) + coefficients[3];
+            return (coefficients[0] * Math.Sin(x / coefficients[1] + coefficients[2])) + coefficients[3];
         }
 
         private bool OnShowReceive(string message)
@@ -1505,8 +1490,7 @@ namespace Axel_hub
             showLogger.Enabled = debugMode && btnTestAxelShow.Value;
 
             if (btnTestAxelShow.Value) timer = new Timer(Timer_Tick, sender, 1, 2000);           
-            else timer = null;
-            
+            else timer = null;           
         }
 
         private void Timer_Tick(object sender)
@@ -1547,6 +1531,42 @@ namespace Axel_hub
             export2Show(dt);
             // Forcing the CommandManager to raise the RequerySuggested event
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void SaveTrend(string FileName)  // srsMems, srsMotAccel, srsAccel, srsCorr
+        {
+            if (srsMems.Count == 0 || srsMotAccel.Count == 0)
+            {
+                Utils.TimedMessageBox("Error: No trend data to be saved !", "ERROR", 2500);
+                return;
+            }
+            System.IO.StreamWriter file = new System.IO.StreamWriter(FileName);
+            file.WriteLine("#Time\tMEMS\tMOTaccel\tAccel\tCorr"); string ss;
+            for (int i = 0; i < srsMems.Count; i++)
+            {
+                ss = srsMems[i].X.ToString(Options.genOptions.SaveFilePrec) + "\t" + srsMems[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" +
+                    srsMotAccel[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + srsAccel[i].Y.ToString(Options.genOptions.SaveFilePrec);
+                if (!Utils.isNull(srsCorr))
+                {
+                    if (srsCorr.Count > i) ss += "\t" + srsCorr[i].Y.ToString(Options.genOptions.SaveFilePrec);
+                    else ss += "\t0.0";
+                }
+                file.WriteLine(ss);
+            }
+            file.Close();
+            log("Saved> " + FileName);
+        }
+
+        private void btnSaveTrendAs_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = ""; // Default file name
+            dlg.DefaultExt = ".aht"; // Default file extension
+            dlg.Filter = "Axel Hub Trend (.aht)|*.aht"; // Filter files by extension
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true) SaveTrend(dlg.FileName);
         }
      } 
 }

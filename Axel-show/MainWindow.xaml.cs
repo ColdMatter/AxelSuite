@@ -31,28 +31,31 @@ namespace Axel_show
         public string html;
         public int zoom;
         public Point center, initPos, size;
-        public List<Point> loc;
+        public List<Point> loc; 
+        public List<Point> start;
         public int numbPlane;
+        public string googleKey;
 
         public gMap(bool dummy) 
         {
             // map itself
             html = "";
-            string googleKey = "AIzaSyDi0WTQZ9D5hvN4duh4cJawl91QadCUy0w"; 
-            size = new Point(2500, 500); // width, height
-            zoom = 10;
-            center = new Point(-33.92, 150.75); //  latitude(south-north), longitude(east-west)
+            googleKey = File.ReadAllText(Utils.configPath+"google.key"); 
+            size = new Point(500, 500); // width, height
+            zoom = 13;
+            center = new Point(49.910, -6.431); //  latitude(south-north), longitude(east-west)
             // the planes            
-            initPos = new Point(-33.92, 151.50);
+            initPos = new Point(49.912, -6.333);
             numbPlane = 4;
-            loc = new List<Point>();
-            for (int i = 0; i < numbPlane; i++) loc.Add(new Point()); 
+            loc = new List<Point>(); start = new List<Point>();
+            for (int i = 0; i < numbPlane; i++) loc.Add(new Point());
+            for (int i = 0; i < 3; i++) start.Add(new Point()); 
         }
 
         public Point pos(double dist, int idx, double bearing = 270)
         {
             const double R = 6371e3;
-            double phi = (initPos.X + idx * 0.05) * Math.PI / 180; // latitude(south-north) 
+            double phi = (initPos.X + idx * 0.005) * Math.PI / 180; // latitude(south-north) 
             double lamda = initPos.Y * Math.PI / 180; // longitude(east-west)
             double brng = bearing * Math.PI / 180; // all in rad from north
 
@@ -83,7 +86,7 @@ namespace Axel_show
         const bool DebugMode = false;
         const int dsCount = 5;
         private int refIdx = 0;
-        int depth = 1000;
+        int depth = 10000;
         List<DataStack> dsAcc, dsTr;
         Random random;
         Stopwatch sw = new Stopwatch();
@@ -123,10 +126,20 @@ namespace Axel_show
             if(rowTools.Height.Value == 0) rowTools.Height = new GridLength(60, GridUnitType.Pixel);
             else rowTools.Height = new GridLength(0, GridUnitType.Pixel);
         }
-
         public void DoEvents()
         {
-            if (closingFlag) return;
+            /*System.Windows.Application.Current.Dispatcher.Invoke(
+                System.Windows.Threading.DispatcherPriority.Background,
+                new System.Threading.ThreadStart(() => { }));*/
+             if (closingFlag) return; Thread.Sleep(1);
+             System.Windows.Application.Current.Dispatcher.Invoke(
+                System.Windows.Threading.DispatcherPriority.Background,
+                new System.Action(delegate { }));
+        }
+/*
+        public void DoEvents()
+        {
+            //if (closingFlag) return; Thread.Sleep(1);
             DispatcherFrame frame = new DispatcherFrame();
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
                 new DispatcherOperationCallback(ExitFrame), frame);
@@ -137,7 +150,7 @@ namespace Axel_show
             ((DispatcherFrame)f).Continue = false;
             return null;
         }
-
+*/
         private void Clear()
         {
             for (int i = 0; i < dsCount; i++)
@@ -145,22 +158,32 @@ namespace Axel_show
                 dsAcc[i].Clear(); dsTr[i].Clear();
             }
         }
+        private double convertMg2mms2(double mg)
+        {
+            return 9.8 * mg;
+        }
         // 0 - MEMS; 1 - MEMS2; 2 - PhiMg; 3 - Accel; 4 - Tilt
         private void Refresh(int backFrom = 0, bool adjustAxes = true)
         {
             if (!btnGo.Value || dsAcc[0].Count == 0 || dsTr[0].Count == 0 || closingFlag) return;
             int len = (int)numNP.Value; double[] acc = new double[dsCount]; double[] tr = new double[dsCount];
-
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, // graphs
                 new Action(() => 
                 {
-                    for (int i = 0; i < dsAcc.Count; i++)
-                    {   
-                        DataStack ds = dsAcc[i].Portion(len, backFrom); acc[i] = ds.Last.Y;
-                        if (i > 0) graphAccel.Data[i - 1] = ds; // skip MEMS in chart
-                        DataStack dt = dsTr[i].Portion(len, backFrom); tr[i] = dt.Last.Y;
-                        if (i > 0) graphTraj.Data[i - 1] = dt; // skip MEMS in chart
-                    }
+                    DataStack ds = dsAcc[2].Portion(len, backFrom); acc[2] = ds.Last.Y;
+                    graphAccel.Data[0] = ds;
+                    ds = dsAcc[1].Portion(len, backFrom); acc[1] = ds.Last.Y;
+                    graphAccel.Data[1] = ds;
+                    ds = dsAcc[refIdx].Portion(len, backFrom); acc[refIdx] = ds.Last.Y;
+                    graphAccel.Data[2] = ds; 
+
+                    DataStack dt = dsTr[2].Portion(len, backFrom); tr[2] = dt.Last.Y;
+                    graphTraj.Data[0] = dt;
+                    dt = dsTr[1].Portion(len, backFrom); tr[1] = dt.Last.Y;
+                    graphTraj.Data[1] = dt;
+                    dt = dsTr[refIdx].Portion(len, backFrom); tr[refIdx] = dt.Last.Y;
+                    graphTraj.Data[2] = dt;      
+              
                     if (adjustAxes)
                     {
                         DataStack wAcc = dsAcc[0].Portion(len,backFrom);
@@ -176,14 +199,14 @@ namespace Axel_show
                         }
                     }
                 }));
-            DoEvents(); if(closingFlag) return;
+            DoEvents(); if (closingFlag) return;
 
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, // labels
                 new Action(() => 
                 {
-                    lbMemsAccel.Content = acc[1].ToString(tbPrec.Text); // MEMS2
-                    lbMOTaccel.Content = acc[2].ToString(tbPrec.Text); // MOTaccel
-                    lbRefAccel.Content = acc[refIdx].ToString(tbPrec.Text); // accel
+                    lbMEMS.Content = convertMg2mms2(acc[1]).ToString(tbPrec.Text); // MEMS2
+                    lbMOTaccel.Content = convertMg2mms2(acc[2]).ToString(tbPrec.Text); // MOTaccel
+                    lbRefAccel.Content = convertMg2mms2(acc[refIdx]).ToString(tbPrec.Text); // ref
 
                     string ss = (sw.ElapsedMilliseconds / 1000.0).ToString(tbPrec.Text) + "\t";
                     for (int i = 0; i < dsCount-1; i++) ss += acc[i].ToString(tbPrec.Text) + "\t";
@@ -194,19 +217,23 @@ namespace Axel_show
             if (!chkMap.IsChecked.Value || !btnGo.Value) return;  // map
             if ((Utils.isNull(webBrowser.Source))) webBrowser.Source = new Uri((@"file:\\\"+ Utils.configPath+"temp.html"));           
             StringBuilder htm = new StringBuilder(map.html);
-            double fact = 1000;  
+            double fact = 1;
+            htm.Replace("#googleKey#", map.googleKey);
             htm.Replace("#zoom#", map.zoom.ToString());
             htm.Replace("#center#", map.center.X.ToString("G5") + "," + map.center.Y.ToString("G5"));
             htm.Replace("#height#", (map.size.Y/0.61).ToString("F0")); htm.Replace("#width#", (map.size.X/0.58).ToString("F0"));
-            map.loc[0] = map.pos(tr[1] * fact, 2); htm.Replace("#MEMS#", map.loc[0].X.ToString("G7") + "," + (map.loc[0].Y).ToString("G7"));
-            map.loc[1] = map.pos(tr[2] * fact, 1); htm.Replace("#MOT#", map.loc[1].X.ToString("G7") + "," + (map.loc[1].Y).ToString("G7"));
-            map.loc[2] = map.pos(tr[4] * fact, 0); htm.Replace("#Accel#", map.loc[2].X.ToString("G7") + "," + (map.loc[2].Y).ToString("G7"));
-            map.loc[3] = map.pos(tr[4] * fact, -1); htm.Replace("#Tilt#", map.loc[3].X.ToString("G7") + "," + (map.loc[3].Y).ToString("G7"));
+            map.start[0] = map.pos(map.initPos.Y, 2); htm.Replace("#StartUp#", map.start[0].X.ToString("G7") + "," + (map.start[0].Y).ToString("G7"));
+            map.start[1] = map.pos(map.initPos.Y, -2); htm.Replace("#StartDown#", map.start[1].X.ToString("G7") + "," + (map.start[1].Y).ToString("G7"));
+
+            map.loc[0] = map.pos(tr[1] * fact, 1); htm.Replace("#MEMS#", map.loc[0].X.ToString("G7") + "," + (map.loc[0].Y).ToString("G7"));
+            map.loc[1] = map.pos(tr[2] * fact, 0); htm.Replace("#MOT#", map.loc[1].X.ToString("G7") + "," + (map.loc[1].Y).ToString("G7"));
+            map.loc[2] = map.pos(tr[3] * fact, -1); htm.Replace("#REF#", map.loc[2].X.ToString("G7") + "," + (map.loc[2].Y).ToString("G7"));
+            //map.loc[3] = map.pos(tr[4] * fact, -1); htm.Replace("#Tilt#", map.loc[3].X.ToString("G7") + "," + (map.loc[3].Y).ToString("G7"));
             File.WriteAllText(Utils.configPath + "temp.html", htm.ToString());
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
                 new Action(() => 
                 {
-                    webBrowser.NavigateToString(htm.ToString()); //Thread.Sleep(500);
+                    webBrowser.NavigateToString(htm.ToString()); Thread.Sleep(500);
                 }));
             DoEvents();
         }
@@ -309,10 +336,9 @@ namespace Axel_show
                 for (int j = 0; j < dsCount; j++)
                 {
                     double last = 0; if (dsTr[j].Count > 0) last = dsTr[j].Last.Y;
-                    dsTr[j].AddPoint(last + db[j], dsAcc[0][len - 1].X);
+                    dsTr[j].AddPoint(last + db[j], dsAcc[0].Last.X);
                 }
-                
-                Thread.Sleep((int)numRate.Value * 1000); DoEvents(); Refresh(0);
+                Thread.Sleep((int)numRate.Value * 1000); DoEvents(); Refresh();
             }
             // dsAcc[i].fillSamples(100); dsTr[i].fillSamples(100); // one time fill in
         }
@@ -386,12 +412,16 @@ namespace Axel_show
                 // ask Tilt for its position
                 if (remoteTilt.Connected)
                 {
-                    remoteTilt.sendCommand("query.tilt", 10);
-                    stage = 3; traceLog.log(sw.ElapsedMilliseconds.ToString() + " > st:3");
+                    remoteTilt.sendCommand("query.tilt", 5);                   
+                    stage = 3; traceLog.log(sw.ElapsedMilliseconds.ToString() + " > st:3"); 
+                    int j = 0;
+                    while (stage == 3 && j < 5000) { j++; DoEvents(); }
+                    if (j > 4900) Utils.TimedMessageBox("Tilt reply - time out!");
                 }
                 else
                 {
-                    OnTiltReceive("tilt=" + (0.9 + 0.1 * random.NextDouble()).ToString("G6")); // simulation random
+                    if (Utils.TheosComputer()) OnTiltReceive("tilt=" + (0.9 + 0.1 * random.NextDouble()).ToString("G6")); // simulation random
+                    else OnTiltReceive("tilt=0.0");
                 }                
                 return back;
             }
@@ -409,7 +439,7 @@ namespace Axel_show
                 bool back = true;
                 string[] sa = message.Split('=');
                 if (sa[0].Equals("tilt")) dsAcc[dsCount-1].AddPoint(Convert.ToDouble(sa[1]), sw.ElapsedMilliseconds / 1000.0);
-                else { throw new Exception("Wrong tilt reply"); }
+                else { throw new Exception("Wrong <query.tilt> reply"); }
                 int len = dsAcc[0].Count; traceLog.log(sw.ElapsedMilliseconds.ToString() + " > tilt");
                 if (dsAcc[1].Count != len || dsAcc[2].Count != len || dsAcc[3].Count != len || dsAcc[4].Count != len) { Utils.TimedMessageBox("dsAcc size problem","Warning",500); }
                 if (len < 3)
@@ -519,6 +549,18 @@ namespace Axel_show
         private void imgPeacock_MouseDown(object sender, MouseButtonEventArgs e)
         {
             MessageBox.Show("           Axel Show v1.3 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+        }
+
+        private void cbRef_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            switch (cbRef.SelectedIndex)
+            {
+                case 0: refIdx = 0;
+                    break;
+                case 1: refIdx = 4;
+                    break;
+            }
+            if (btnGo.Value) btnGo_Click(null, null);    
         }
      }
 }

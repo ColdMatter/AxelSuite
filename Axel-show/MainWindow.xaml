@@ -7,24 +7,21 @@
         <Image Margin="0" Source="MS14_Background.png" Stretch="Fill"/>
         <Grid x:Name="gridMain" Margin="0,0,0,0.429">
             <Grid.RowDefinitions>
-                <RowDefinition Height="10*"/>
-                <RowDefinition Name="rowTools"  Height="65"/>
+                <RowDefinition Height="100"/>
+                <RowDefinition Height="100*"/>
+                <RowDefinition Name="rowTools"  Height="70"/>
             </Grid.RowDefinitions>
-            <Grid Margin="0">
+            <Grid Grid.Row="1" Margin="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="605*"/>
-                    <ColumnDefinition Width="589*"/>
+                    <ColumnDefinition Width="589"/>
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="17*"/>
-                    <RowDefinition Height="105*"/>
-                </Grid.RowDefinitions>
-                <Grid Margin="605,85,0.286,-0.286" Grid.ColumnSpan="2" Grid.RowSpan="2">
+               <Grid Margin="0" Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="25*"/>
                         <RowDefinition Height="27*"/>
-                        <RowDefinition Height="33*"/>
-                        <RowDefinition Height="20*"/>
+                        <RowDefinition Height="152"/>
+                        <RowDefinition Height="110"/>
                     </Grid.RowDefinitions>
                     <Grid Margin="0" Grid.Row="2">
                         <Grid.ColumnDefinitions>
@@ -32,14 +29,27 @@
                             <ColumnDefinition Width="33*"/>
                             <ColumnDefinition Width="33*"/>
                         </Grid.ColumnDefinitions>
-                        <Rectangle Fill="#FF25338C" Margin="0" Stroke="Black" HorizontalAlignment="Center" VerticalAlignment="Center" Width="140" Height="140"/>
-                        <Rectangle Grid.Column="1" Fill="#FFE30512" HorizontalAlignment="Center" Height="140" Margin="0" Stroke="Black" VerticalAlignment="Center" Width="140"/>
-                        <Rectangle Grid.Column="2" Fill="#FF009A3C" HorizontalAlignment="Center" Height="140" Margin="0" Stroke="Black" VerticalAlignment="Center" Width="140"/>
-                        <Label x:Name="lbMemsAccel" Content="0.00" Margin="40,75,71.571,44.143" Foreground="White" FontSize="28" FontWeight="Bold" Background="{x:Null}"/>
-                        <Label x:Name="lbMOTaccel" Content="0.00" Margin="43.429,75,73.143,44.143" Foreground="White" FontSize="28" FontWeight="Bold" Grid.Column="1"/>
-                        <Label x:Name="lbRefAccel" Content="0.00" Margin="36.857,75,57.143,44.143" Foreground="White" FontSize="28" FontWeight="Bold" Grid.Column="2"/>
+                        <Grid HorizontalAlignment="Center" Height="150" Grid.Column="0" Margin="10,0,0,0" VerticalAlignment="Top" Width="150" Background="#FF25338C">
+                            <Label Content="Accelerometer" HorizontalAlignment="Left" Margin="10,33,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label Content="Quantum" HorizontalAlignment="Left" Margin="12,9,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label Content="[mm/s^2]" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label x:Name="lbMOTaccel" Content="0.00" Margin="5,93,3,10" Foreground="White" FontSize="26" FontWeight="Bold" RenderTransformOrigin="0.518,0.709"/>
+                        </Grid>
+
+                        <Grid HorizontalAlignment="Center" Height="150" Grid.Column="1" Margin="0" VerticalAlignment="Top" Width="150" Background="#FFE30512">
+                            <Label Content="Accelerometer" HorizontalAlignment="Left" Margin="10,33,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label Content="Classical" HorizontalAlignment="Left" Margin="12,9,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label Content="[mm/s^2]" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label x:Name="lbMEMS" Content="0.00" Margin="5,93,3,10" Foreground="White" FontSize="26" FontWeight="Bold" RenderTransformOrigin="0.518,0.709"/>
+                        </Grid>
+                        <Grid HorizontalAlignment="Center" Height="150" Grid.Column="2" Margin="0,0,10,0" VerticalAlignment="Top" Width="150" Background="#FF009A3C">
+                            <Label Content="Acceleration" HorizontalAlignment="Left" Margin="10,33,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label Content="Reference" HorizontalAlignment="Left" Margin="12,9,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label Content="[mm/s^2]" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Foreground="#FFFAF8F8" FontSize="18" FontWeight="Bold"/>
+                            <Label x:Name="lbRefAccel" Content="0.00" Margin="5,93,3,10" Foreground="White" FontSize="26" FontWeight="Bold" RenderTransformOrigin="0.518,0.709"/>
+                        </Grid>
                     </Grid>
-                    <ni:Graph x:Name="graphAccel" Margin="0" PlotAreaBackground="{x:Null}" PlotAreaBorderBrush="#FFDDDCDC" Foreground="#FFF9F9F8" DefaultInteraction="Pan" Interactions="Zoom, Pan" MouseDoubleClick="graphAccel_MouseDoubleClick" SelectionFill="#8FC8C828">
+                    <ni:Graph x:Name="graphAccel" Margin="0,0,5,0" PlotAreaBackground="{x:Null}" PlotAreaBorderBrush="#FFB1B0B0" Foreground="#FF080808" DefaultInteraction="Pan" Interactions="Zoom, Pan" MouseDoubleClick="graphAccel_MouseDoubleClick" SelectionFill="#8FC8C828" BorderBrush="#FF080808">
                         <ni:Graph.Plots>
                             <ni:Plot Label="MOT">
                                 <ni:LinePlotRenderer Stroke="#FF25338C" StrokeThickness="2.5"/>
@@ -50,20 +60,20 @@
                             <ni:Plot Label="Ref">
                                 <ni:LinePlotRenderer Stroke="#FF009A3C" StrokeThickness="2.5"/>
                             </ni:Plot>
-                            <ni:Plot Label="Accel">
+                            <ni:Plot Label="Accel" Visibility="Collapsed">
                                 <ni:LinePlotRenderer Stroke="#FFE5B52F" StrokeThickness="2.5"/>
                             </ni:Plot>
                         </ni:Graph.Plots>
                         <ni:Graph.Axes>
                             <ni:AxisDouble x:Name="accelXaxis" BaselineStroke="#FFF2F8F3" LabelVisibility="Collapsed" Orientation="Horizontal" Visibility="Collapsed" Adjuster="None" />
-                            <ni:AxisDouble x:Name="accelYaxis" BaselineStroke="#FFF9F9F8" Orientation="Vertical">
+                            <ni:AxisDouble x:Name="accelYaxis" BaselineStroke="#FFFAFAFA" Orientation="Vertical" Label="accel. [mm/s^2]">
                                 <ni:AxisDouble.MajorDivisions>
                                     <ni:RangeLabeledDivisions/>
                                 </ni:AxisDouble.MajorDivisions>
                             </ni:AxisDouble>
                         </ni:Graph.Axes>
                     </ni:Graph>
-                    <ni:Graph x:Name="graphTraj" Margin="0,0,0,18" PlotAreaBackground="{x:Null}" PlotAreaBorderBrush="#FFE6E4E4" Foreground="#FFF9F9F8" Interactions="Zoom, Pan" DefaultInteraction="Pan" MouseDoubleClick="graphAccel_MouseDoubleClick" SelectionFill="#8FC8C828" Background="#0216464E" Grid.Row="1">
+                    <ni:Graph x:Name="graphTraj" Margin="0,0,5,18" PlotAreaBackground="{x:Null}" PlotAreaBorderBrush="#FFB4B3B3" Foreground="#FF060606" Interactions="Zoom, Pan" DefaultInteraction="Pan" MouseDoubleClick="graphAccel_MouseDoubleClick" SelectionFill="#8FC8C828" Background="#0216464E" Grid.Row="1">
                         <ni:Graph.Plots>
                             <ni:Plot Label="MOT">
                                 <ni:LinePlotRenderer Stroke="#FF25338C" StrokeThickness="2.5"/>
@@ -74,25 +84,34 @@
                             <ni:Plot Label="Tilt">
                                 <ni:LinePlotRenderer Stroke="#FF009A3C" StrokeThickness="2.5"/>
                             </ni:Plot>
-                            <ni:Plot Label="Accel">
+                            <ni:Plot Label="Accel" Visibility="Collapsed">
                                 <ni:LinePlotRenderer Stroke="#FFE5B52F" StrokeThickness="2.5"/>
                             </ni:Plot>
                         </ni:Graph.Plots>
                         <ni:Graph.Axes>
-                            <ni:AxisDouble x:Name="trajXaxis" BaselineStroke="#FFF2F8F3" LabelVisibility="Collapsed" Orientation="Horizontal" Visibility="Collapsed" Adjuster="None"/>
-                            <ni:AxisDouble x:Name="trajYaxis" BaselineStroke="#FFF9F9F8" Orientation="Vertical">
+                            <ni:AxisDouble x:Name="trajXaxis" BaselineStroke="#FFF2F8F3" Orientation="Horizontal" Adjuster="None" Location="Near" Label="time [s]" LabelVisibility="Collapsed">
+                                <ni:AxisDouble.MajorDivisions>
+                                    <ni:RangeLabeledDivisions/>
+                                </ni:AxisDouble.MajorDivisions>
+                                <ni:AxisDouble.MinorDivisions>
+                                    <ni:RangeDivisions TickVisibility="Collapsed"/>
+                                </ni:AxisDouble.MinorDivisions>
+                            </ni:AxisDouble>
+                            <ni:AxisDouble x:Name="trajYaxis" BaselineStroke="#FFF9F9F8" Orientation="Vertical" Label="distance [m]">
                                 <ni:AxisDouble.MajorDivisions>
                                     <ni:RangeLabeledDivisions/>
                                 </ni:AxisDouble.MajorDivisions>
                             </ni:AxisDouble>
                         </ni:Graph.Axes>
                     </ni:Graph>
+                    <Image x:Name="imgM2" HorizontalAlignment="Right" Height="80" Margin="0,0,270,0" Grid.Row="3" VerticalAlignment="Center" Width="100" Source="m2_logo.png"/>
+                    <Image x:Name="imgImperial" HorizontalAlignment="Right" Height="80" Margin="0,0,24,0" Grid.Row="3" VerticalAlignment="Center" Width="215" Source="imperial_logo.png"/>
                 </Grid>
-                <WebBrowser x:Name="webBrowser" Margin="0,0,0,-1.286" SizeChanged="webBrowser_SizeChanged" Grid.Row="1"/>
-                <GridSplitter Margin="595,0,0,0" Grid.Row="1" Width="5"/>
+                <WebBrowser x:Name="webBrowser" Margin="0,0,5,0" SizeChanged="webBrowser_SizeChanged" Source="{x:Null}" Grid.Column="0"/>
+                <GridSplitter Margin="0" Width="5"/>
             </Grid>
 
-            <StackPanel Margin="0,5.143,0.143,0" Grid.Row="1" Background="White" Orientation="Horizontal">
+            <StackPanel Margin="0,5.143,0.143,0" Grid.Row="2" Background="White" Orientation="Horizontal">
                 <GroupBox Header="Data source " HorizontalAlignment="Left" Margin="10,0,0,3" Width="235">
                     <Grid>
                         <RadioButton x:Name="rbDataFlow" Content="Data flow" HorizontalAlignment="Left" Height="16" Margin="5,0,0,0" VerticalAlignment="Center" Checked="rbDataFlow_Checked" Unchecked="rbDataFlow_Checked" IsChecked="True"/>
@@ -101,28 +120,43 @@
                     </Grid>
                 </GroupBox>
                 <ni:BooleanContentButton x:Name="btnGo" Content="G O" HorizontalAlignment="Left" Height="34" Margin="10,15,0,9.857" VerticalAlignment="Center" Width="85" FontSize="14" FontWeight="Bold" Click="btnGo_Click" Background="WhiteSmoke" BorderThickness="7,6" FalseBrush="#FF96FACD" TrueBrush="#FFFB5F1F" FalseContent="G O" TrueContent="Stop !"/>
-                <GroupBox Header="Charts" Margin="10,0,0,-0.143" Width="385">
-                    <StackPanel Margin="0" Orientation="Horizontal">
+                <GroupBox Header="Charts" Margin="10,0,0,0" Width="365">
+                    <StackPanel Margin="0,0,0,0.143" Orientation="Horizontal">
                         <Label Content="Visual points" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
                         <ni:NumericTextBoxDouble x:Name="numNP" HorizontalAlignment="Left" Height="24" Margin="0,4" VerticalAlignment="Center" Width="52" Range="10, 2000, System.Double" Value="200" Interval="10" ValueChanging="numNP_ValueChanging"/>
                         <Label Content="Refresh rate [s]" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
                         <ni:NumericTextBoxDouble x:Name="numRate" HorizontalAlignment="Left" Height="24" Margin="0,4" VerticalAlignment="Center" Width="46" Range="1, 20, System.Double" Value="2" Interval="0.1" ValueChanged="numRate_ValueChanged"/>
-                        <CheckBox x:Name="chkManualYaxis" Content="Manual axes" HorizontalAlignment="Left" Margin="3,0,0,0" VerticalAlignment="Center" Checked="chkManualYaxis_Checked" Unchecked="chkManualYaxis_Checked"/>
+                        <CheckBox x:Name="chkManualYaxis" Content="Manual axes" HorizontalAlignment="Left" Margin="3,11,0,11.143" VerticalAlignment="Center" Checked="chkManualYaxis_Checked" Unchecked="chkManualYaxis_Checked" Width="82"/>
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Header="Labels prec." Width="80" Margin="0,0,0,-0.143">
+                <GroupBox>
                     <Grid>
-                        <TextBox x:Name="tbPrec" HorizontalAlignment="Left" Margin="10,6,0,6" Text="G5" VerticalAlignment="Center" Width="49" FontSize="14"/>
+                        <Button x:Name="btnReset" Content="Reset traj." HorizontalAlignment="Left" Margin="3,5,-0.143,0" VerticalAlignment="Top" Width="80" Height="24" Background="#FFFEFECE" FontSize="14" BorderBrush="#FF5DCA55" Foreground="#FF0A8902" RenderTransformOrigin="11.663,0.595" Click="btnReset_Click"/>
+                        <Label Content="Ref:" HorizontalAlignment="Left" Margin="-5,29,0,0" VerticalAlignment="Top"/>
+                        <ComboBox x:Name="cbRef" HorizontalAlignment="Left" Margin="20,33,0,0" VerticalAlignment="Top" Width="62" SelectedIndex="0" Height="20" SelectionChanged="cbRef_SelectionChanged">
+                            <ComboBox.Background>
+                                <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                                    <GradientStop Color="#FFF0F0F0" Offset="0"/>
+                                    <GradientStop Color="#FFF8F8F8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </ComboBox.Background>
+                            <TabItem Content="MEMS"/>
+                            <TabItem Content="Tilt"/>
+                        </ComboBox>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Lbl prec." Width="55">
+                    <Grid Margin="0,0,0,0">
+                        <TextBox x:Name="tbPrec" HorizontalAlignment="Left" Margin="5,8,0,8.143" Text="G5" VerticalAlignment="Center" Width="31" FontSize="14"/>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Map" Margin="0,0,0,-0.143">
                     <CheckBox x:Name="chkMap" Content="" HorizontalAlignment="Center" Margin="3,0,0,0" VerticalAlignment="Center"/>
                 </GroupBox>
-                <Button x:Name="btnReset" Content="Reset traj." HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Width="75" Height="30" Background="#FFFEFECE" FontSize="14" BorderBrush="#FF5DCA55" Foreground="#FF0A8902" RenderTransformOrigin="11.663,0.595" Click="btnReset_Click"/>
-                <GroupBox Header="Connections" Margin="10,0,0,-0.143" Width="220">
+                <GroupBox Header="Connections" Margin="3,0,0,0" Width="221">
                     <Grid Margin="0">
                         <CheckBox x:Name="chkAxelHub" Content="Axel Hub" HorizontalAlignment="Left" Margin="30,0,0,0" VerticalAlignment="Center" RenderTransformOrigin="0.733,0.692" Checked="chkAxelHub_Checked" Unchecked="chkAxelHub_Checked" IsChecked="True"/>
-                        <CheckBox x:Name="chkAxelTilt" Content="Axel Tilt" HorizontalAlignment="Left" Margin="143,0,0,0" VerticalAlignment="Center" Checked="chkAxelTilt_Checked" Unchecked="chkAxelTilt_Checked"/>
+                        <CheckBox x:Name="chkAxelTilt" Content="Axel Tilt" HorizontalAlignment="Left" Margin="143,0,0,0" VerticalAlignment="Center" Checked="chkAxelTilt_Checked" Unchecked="chkAxelTilt_Checked" IsChecked="True"/>
                         <ni:LED x:Name="ledAxelHub" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="3,0,0,0" TrueContent="On" VerticalAlignment="Center" Width="23" RenderTransformOrigin="0.41,0.106"/>
                         <ni:LED x:Name="ledAxelTilt" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="115,0,0,0" TrueContent="On" VerticalAlignment="Center" Width="23"/>
                     </Grid>
@@ -130,6 +164,10 @@
                 <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="7,7,0,0" IsChecked="True"/>
             </StackPanel>
         </Grid>
+        <Label Content="QUANTUM" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Background="#FFC5C4C4" Foreground="White" Height="40" Width="135" FontSize="24"/>
+
+        <Label Content="ACCELEROMETER" HorizontalAlignment="Left" Margin="20,46,0,0" VerticalAlignment="Top" Background="#FFC5C4C4" Foreground="White" Height="40" Width="205" FontSize="24"/>
+
 
     </Grid>
 </Window>

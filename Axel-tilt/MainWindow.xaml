@@ -135,7 +135,7 @@
                                     <RowDefinition Height="32"/>
                                     <RowDefinition Height="10"/>
                                     <RowDefinition Height="30"/>
-                                    <RowDefinition Height="55"/>
+                                    <RowDefinition Height="95"/>
                                     <RowDefinition Height="62*"/>
                                 </Grid.RowDefinitions>
                                 <ni:BooleanButton x:Name="btnInitiateTilt" Content="Initialize" HorizontalAlignment="Left" Height="23" Width="73" FontWeight="Normal" Background="#FFEBFAE8" Margin="0,5,0,4" VerticalAlignment="Center" Click="btnInitiateTilt_Click"/>
@@ -150,20 +150,30 @@
                                 </ni:BooleanButton>
                                 <Label x:Name="lbState" Content="Cur.state: " HorizontalAlignment="Left" Margin="278,2,0,4" VerticalAlignment="Center" Foreground="#FF01029E"/>
                                 <Button x:Name="btnStop" Content="Stop" HorizontalAlignment="Right" Margin="0,3,0,0" VerticalAlignment="Top" Width="55" Height="28" Background="#FFF93232" Foreground="White" FontWeight="Bold" Click="btnStop_Click" Grid.RowSpan="2"/>
-                                <GroupBox Header="Options" Grid.Row="3" Margin="0">
-                                    <StackPanel Margin="0" Orientation="Horizontal">
-                                        <ni:BooleanButton x:Name="btnSpeed" Content="Speed [mm/s]" HorizontalAlignment="Left" Width="90" Margin="5,0,0,0" FontWeight="Normal" Background="#FFE5F2FC"  Height="23" VerticalAlignment="Center" Click="btnSpeed_Click"/>
-                                        <ni:NumericTextBoxDouble x:Name="ndSpeed" Margin="5,0,0,0" Padding="7,0,0,0" FontWeight="Normal" VerticalAlignment="Center" HorizontalAlignment="Left" Width="83" Height="23" Interval="0.01" Value="0.5" Range="0.01, 5, System.Double"/>
-                                        <GroupBox x:Name="gbBacklash" Header="Backlash comp." Margin="10,-9,0,0" HorizontalAlignment="Left" Width="158" FontWeight="Normal" VerticalAlignment="Center" Height="40">
-                                            <StackPanel Margin="0" Orientation="Horizontal">
-                                                <RadioButton x:Name="rbBacklashON" Content="ON" Margin="5,0,0,0" Checked="rbBacklashON_Checked" VerticalAlignment="Center"/>
-                                                <RadioButton x:Name="rbBacklashOFF" Content="OFF" Margin="8,0,0,0" Checked="rbBacklashON_Checked" VerticalAlignment="Center"/>
-                                                <RadioButton x:Name="rbBacklashAuto" Content="Auto" Margin="8,0,0,0" IsChecked="True" Checked="rbBacklashAuto_Checked" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                <GroupBox Header="Options" Grid.Row="3" Margin="0,0,0.429,0">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="50*"/>
+                                            <RowDefinition Height="50*"/>
+                                        </Grid.RowDefinitions>
+                                        <StackPanel Margin="0" Grid.Row="0" Orientation="Horizontal" Grid.RowSpan="1">
+                                            <ni:BooleanButton x:Name="btnSpeed" Content="Speed [mm/s]" HorizontalAlignment="Left" Width="90" Margin="5,0,0,0" FontWeight="Normal" Background="#FFE5F2FC"  Height="23" VerticalAlignment="Center" Click="btnSpeed_Click"/>
+                                            <ni:NumericTextBoxDouble x:Name="ndSpeed" Margin="5,0,0,0" Padding="7,0,0,0" FontWeight="Normal" VerticalAlignment="Center" HorizontalAlignment="Left" Width="83" Height="23" Interval="0.01" Value="0.5" Range="0.01, 5, System.Double"/>
+                                            <GroupBox x:Name="gbBacklash" Header="Backlash comp." Margin="10,-9,0,0" HorizontalAlignment="Left" Width="158" FontWeight="Normal" VerticalAlignment="Center" Height="40">
+                                                <StackPanel Margin="0" Orientation="Horizontal">
+                                                    <RadioButton x:Name="rbBacklashON" Content="ON" Margin="5,0,0,0" Checked="rbBacklashON_Checked" VerticalAlignment="Center"/>
+                                                    <RadioButton x:Name="rbBacklashOFF" Content="OFF" Margin="8,0,0,0" Checked="rbBacklashON_Checked" VerticalAlignment="Center"/>
+                                                    <RadioButton x:Name="rbBacklashAuto" Content="Auto" Margin="8,0,0,0" IsChecked="True" Checked="rbBacklashAuto_Checked" VerticalAlignment="Center"/>
+                                                </StackPanel>
 
-                                        </GroupBox>
-                                        <CheckBox x:Name="chkMemsCorr" Content="MEMS correction" VerticalAlignment="Center" FontWeight="Normal" IsChecked="True" Margin="5,0,0,0" Checked="chkMemsCorr_Checked" Unchecked="chkMemsCorr_Checked"/>
-                                    </StackPanel>
+                                            </GroupBox>
+                                            <CheckBox x:Name="chkMemsCorr" Content="MEMS correction" VerticalAlignment="Center" FontWeight="Normal" IsChecked="True" Margin="5,0,0,0" Checked="chkMemsCorr_Checked" Unchecked="chkMemsCorr_Checked"/>
+                                        </StackPanel>
+                                        <StackPanel Margin="0" Grid.Row="1" Orientation="Horizontal" Grid.RowSpan="1">
+                                            <Label Content="Offset dodging [mg]" Margin="0" HorizontalAlignment="Left" Height="26" FontWeight="Normal" VerticalAlignment="Center"/>
+                                            <ni:NumericTextBoxDouble x:Name="numOffsetDodging" Height="23" Width="60" FontWeight="Normal" FontSize="13" Margin="0" ValueChanged="numOffsetDodging_ValueChanged" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </GroupBox>
                             </Grid>
                         </GroupBox>

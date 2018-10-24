@@ -20,6 +20,7 @@ namespace Axel_tilt
         public double posA { get; set; } // [mm]
         public double posB { get; set; }
         public double speed { get; set; } // [mm/s]
+        public double OffsetDodging { get; set; }
     }
 
     class Motor
@@ -132,12 +133,14 @@ namespace Axel_tilt
 
         public bool SetSpeed(double speed) // [mm/s]
         {
-            double spd = Utils.EnsureRange(speed, 0, 30);
+            double spd = Utils.EnsureRange(speed, 0, 10);
             engine_settings_t engine_settings;
             res = API.get_engine_settings(devIdx, out engine_settings);
             if (res != Result.ok)
                 throw new Exception("Error " + res.ToString());
-            engine_settings.NomSpeed = (uint)dist2steps(spd)[0];
+            int[] speedInSteps = dist2steps(spd);
+            engine_settings.NomSpeed = (uint)speedInSteps[0];
+            engine_settings.uNomSpeed = (uint)speedInSteps[1];
             res = API.set_engine_settings(devIdx, ref engine_settings);
             if (res != Result.ok)
                 throw new Exception("Error " + res.ToString());
@@ -222,6 +225,7 @@ namespace Axel_tilt
         public const double tilt_arm = 510.003; // [mm]
         public const double MemsCorr_A = 1.071;
         public const double MemsCorr_B = -8.034;
+        public const double minSpeed = 0; // [mm/s]
         public Horizontal horizontal;
         public Stopwatch sw = new Stopwatch();
 
@@ -460,16 +464,18 @@ namespace Axel_tilt
 
         public double accel2tilt(double accel) // accel[mg]; tilt[mrad]
         {
-            double rslt = 1000.0 * Math.Asin(accel / 1000.0);
+            double dodgedAccel = accel + horizontal.OffsetDodging;
+            double rslt = 1000.0 * Math.Asin(dodgedAccel / 1000.0);
             if (MemsCorr) return (rslt - MemsCorr_B) / MemsCorr_A;
             else return rslt;
         }
 
         public double tilt2accel(double tilt) // accel[mg]; tilt[mrad]
         {
-            double rslt = 1000.0 * Math.Sin(tilt / 1000.0);
-            if (MemsCorr) return MemsCorr_A * rslt + MemsCorr_B;
-            else return rslt;
+            double accel = 1000.0 * Math.Sin(tilt / 1000.0);
+            double rslt = accel;
+            if (MemsCorr) rslt = MemsCorr_A * accel + MemsCorr_B;
+            return rslt - horizontal.OffsetDodging;
         }
 
         public double accelSpeed // [mg/s]
@@ -528,7 +534,7 @@ namespace Axel_tilt
         {
             double spd;
             if (speed < 0) spd = horizontal.speed;
-            else spd = Utils.EnsureRange(speed, 0.001, 10);
+            else spd = Utils.EnsureRange(speed, minSpeed, 10);
             OnLog("T> speed to " + spd.ToString("G5")+" [mm/s]"); DoEvents();
             workingSpeed = spd;
             return mA.SetSpeed(spd) && mB.SetSpeed(spd);
@@ -620,9 +626,13 @@ namespace Axel_tilt
             for (int i = 0; i < len; i++)
                 pattern.Add(new Point(period * (ptrn[i, 0] / 100.0), ampl * (ptrn[i, 1] / 100.0) + offset));
             MoveAccel(pattern[0].Y); // init position [idx = 0]            
-            stepIdx = 1;
-            dTimer = new DispatcherTimer(DispatcherPriority.Send);
-            dTimer.Tick += NextStep;            
+            stepIdx = 1; // next target
+            if (Utils.isNull(dTimer))
+            {
+                dTimer = new DispatcherTimer(DispatcherPriority.Send);
+                dTimer.Tick += NextStep;
+            }
+            else dTimer.Stop();
             NextStep(null,null);
         }
         #endregion

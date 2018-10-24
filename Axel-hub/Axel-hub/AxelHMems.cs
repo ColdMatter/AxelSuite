@@ -24,8 +24,8 @@ namespace AxelHMemsNS
         public TimingModes TimingMode = TimingModes.byNone;
 
         
-        private readonly string physicalChannel0 = "cDAQ1Mod1/ai0"; //ADC24
-        private readonly string physicalChannel1 = "cDAQ1Mod1/ai1";
+        private readonly string physicalChannel0 = "cDAQ1Mod1_1/ai0"; //ADC24
+        private readonly string physicalChannel1 = "cDAQ1Mod1_1/ai1";
         private readonly string physicalChannel2 = "Dev4/ai1"; //PXIe
 
         public int nSamples { get; private set; }

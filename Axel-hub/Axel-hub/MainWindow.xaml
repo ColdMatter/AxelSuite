@@ -333,7 +333,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="Opts/Stats" Height="28" VerticalAlignment="Top" Margin="0">
+                    <TabItem Header=" Opts/Stats " Height="28" VerticalAlignment="Top" Margin="0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="145"/>
@@ -362,22 +362,22 @@
                                     <ni:NumericTextBoxDouble x:Name="numMemsStart" HorizontalAlignment="Left" Height="23" Margin="70,49,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="250" Range="0, 1000, System.Double" KeyDown="ndKP_KeyDown"/>
                                     <Label Content="Lenght [ms]" HorizontalAlignment="Left" Margin="0,75,0,0" VerticalAlignment="Top"/>
                                     <ni:NumericTextBoxDouble x:Name="numMemsLen" HorizontalAlignment="Left" Height="23" Margin="70,77,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown" Value="50"/>
-                                    <Button x:Name="btnSaveTrendAs" Content="Save Trend As..." Margin="5,120,7.714,0" Background="#FFF6F6F6" VerticalAlignment="Top" />
+                                    <Button x:Name="btnSaveTrendAs" Content="Save Acc.Trend As..." Margin="5,120,7.714,0" Background="#FFF6F6F6" VerticalAlignment="Top" Click="btnSaveTrendAs_Click" />
                                 </Grid>
                             </GroupBox>
                             <GroupBox x:Name="groupStatFringes" Header="MEMS and AtomInterfer. merge" Margin="5,0" Grid.Column="3" FontSize="12" BorderBrush="#FF02578A">
                                 <Grid Margin="0">
                                     <Label Content="a[mg] = K * 2Pi * n[int] + phi[mg]" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="221"/>
                                     <Label Content="Fringes parameters" HorizontalAlignment="Left" Margin="10,23,0,0" VerticalAlignment="Top" Width="221" FontWeight="Bold"/>
-                                    <Label Content="K" HorizontalAlignment="Left" Margin="16,47,0,0" VerticalAlignment="Top"/>
-                                    <ni:NumericTextBoxDouble x:Name="numKcoeff" HorizontalAlignment="Left" Height="23" Margin="47,50,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="0.1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                                    <Label Content="[mg/rad]" HorizontalAlignment="Left" Margin="106,47,0,0" VerticalAlignment="Top"/>
+                                    <Label Content="K" HorizontalAlignment="Left" Margin="13,47,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="numKcoeff" HorizontalAlignment="Left" Height="23" Margin="47,50,0,0" VerticalAlignment="Top" Width="72" RenderTransformOrigin="0.501,-0.217" Value="0.1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
+                                    <Label Content="[mg/rad]" HorizontalAlignment="Left" Margin="124,47,0,0" VerticalAlignment="Top"/>
                                     <Label Content="phi0" HorizontalAlignment="Left" Margin="11,81,0,0" VerticalAlignment="Top"/>
-                                    <ni:NumericTextBoxDouble x:Name="numPhi0" HorizontalAlignment="Left" Height="23" Margin="47,83,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                                    <Label Content="[rad]" HorizontalAlignment="Left" Margin="106,78,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="numPhi0" HorizontalAlignment="Left" Height="23" Margin="47,81,0,0" VerticalAlignment="Top" Width="72" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="-7, 7, System.Double" KeyDown="ndKP_KeyDown"/>
+                                    <Label Content="[rad]" HorizontalAlignment="Left" Margin="124,80,0,0" VerticalAlignment="Top"/>
                                     <Label Content="Scale" HorizontalAlignment="Left" Margin="9,110,0,0" VerticalAlignment="Top"/>
-                                    <ni:NumericTextBoxDouble x:Name="numScale" HorizontalAlignment="Left" Height="23" Margin="47,112,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown" Value="1"/>
-                                    <Label Content="(max-min)/2" HorizontalAlignment="Left" Margin="106,107,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="numScale" HorizontalAlignment="Left" Height="23" Margin="47,112,0,0" VerticalAlignment="Top" Width="72" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown" Value="1"/>
+                                    <Label Content="(max-min)/2" HorizontalAlignment="Left" Margin="124,106,0,0" VerticalAlignment="Top"/>
                                 </Grid>
                             </GroupBox>
                             <GroupBox Header="Jumbo parameters" Margin="5,0,0,0" BorderBrush="#FF840802">

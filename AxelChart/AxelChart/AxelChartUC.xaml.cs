@@ -384,7 +384,7 @@ namespace AxelChartNS
  
         #region File operations in DataStack
         // standard tab separated x,y file 
-        public bool OpenPair(string fn, ref GroupBox header, int rm = 1) // rm - RollMean
+        public bool OpenPair(string fn, ref GroupBox header, int rm = 1) // header - for rolling index during reading (can be null); rm - RollMean
         {
             bool rslt = true;
             Clear();
@@ -408,7 +408,7 @@ namespace AxelChartNS
                 {
                     rem = line.Substring(5); 
                 }
-                if (line[0] == '#') continue; //skip comments/service info
+                if (line[0].Equals('#')) continue; //skip comments/service info
                 pair = line.Split('\t');
                 if (pair.Length < 2) continue;
                 bool bx = (double.TryParse(pair[0], out X));
@@ -434,12 +434,12 @@ namespace AxelChartNS
             return rslt;
         }
         
-        public void Save(string fn, string rem = "")
+        public void SavePair(string fn, string rem = "", string format = "")
         {
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
             if (rem != "") file.WriteLine("#Rem=" + rem);
             for (int i = 0; i < Count; i++ )
-                file.WriteLine(this[i].X.ToString("G10") + "\t" + this[i].Y.ToString("G8"));
+                file.WriteLine(this[i].X.ToString(format) + "\t" + this[i].Y.ToString(format));
             file.Close();
         }
         #endregion
@@ -881,7 +881,7 @@ namespace AxelChartNS
             if (result == true)
             {
                 // Save file                
-                Waveform.Save(dlg.FileName, tbRemFile.Text);
+                Waveform.SavePair(dlg.FileName, tbRemFile.Text);
                 lbInfo.Content = "Saved: " + dlg.FileName; 
             }
         }

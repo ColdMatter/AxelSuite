@@ -36,8 +36,12 @@ namespace Axel_tilt
         Tilt tilt;
         // first time -> 0; last time -> 100
         public static readonly int maxTextLen = 10000;
-        public static readonly double[,] trapezePtrn = { {0 , 0 }, { 33 , 100 }, { 66 , 100 } , { 100, 0} }; // {time [0..100], ampl [-100..100]}
-        public static readonly double[,] trianglePtrn = { { 0, 0 }, { 25, 100 }, { 50, 0 }, { 75, -100 }, { 100, 0 } };
+        public static readonly double[,] trapezePtrn = { { 0, 0 }, { 15, 0 }, { 40, 100 }, { 65, 100 }, { 90, 0 }, { 100, 0 } }; // {time [0..100], ampl [-100..100]}
+ //     public static readonly double[,] trapezePtrn = { {0 , 0 }, { 33 , 100 }, { 66 , 100 } , { 100, 0} }; // {time [0..100], ampl [-100..100]}
+      
+        public static readonly double[,] trianglePtrn = { { 0, 0 }, { 5, 0 }, { 20, -100 }, { 30, -100 }, { 45, 0 }, { 55, 0 }, { 70, 100 }, { 80, 100 }, { 95, 0 }, { 100, 0 }, };
+//      public static readonly double[,] trianglePtrn = { { 0, 0 }, { 25, 100 }, { 50, 0 }, { 75, -100 }, { 100, 0 } };
+
         public static readonly double[,] stairsPtrn = { { 0, 0 }, { 5, 25 }, { 25, 25 }, { 30, 50 }, { 50, 50 }, { 55, 75 }, { 75, 75 }, { 80, 100 }, { 100, 100 }}; 
 
         public MainWindow()
@@ -129,8 +133,8 @@ namespace Axel_tilt
             {
                 bool back = true;
                 if (!message.Equals("query.tilt")) Utils.TimedMessageBox("Unknown command: " + message);
-                double tlt = tilt.GetAccel(); 
-                remoteShow.sendCommand("tilt="+tlt.ToString("G6"), 10);
+                double tlt = tilt.GetAccel();
+                back = remoteShow.sendCommand("tilt=" + tlt.ToString("G6"), 10);
                 return back;
             }
             catch (Exception ex)
@@ -152,6 +156,7 @@ namespace Axel_tilt
             remoteShow.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnShowActiveComm);
 
             tilt.MemsCorr = chkMemsCorr.IsChecked.Value;
+            numOffsetDodging.Value = tilt.horizontal.OffsetDodging;
         }
 
         private void chkAxelShow_Checked(object sender, RoutedEventArgs e)
@@ -400,21 +405,26 @@ namespace Axel_tilt
                 tilt.request2Stop = true;  DoEnd(true);              
                 DoEvents(); return; 
             }
-            dTimer = new DispatcherTimer(DispatcherPriority.Send);
-            dTimer.Tick += dTimer_Tick;
+            if (Utils.isNull(dTimer))
+            {
+                dTimer = new DispatcherTimer(DispatcherPriority.Send);
+                dTimer.Tick += dTimer_Tick;
+            }
+            else dTimer.Stop();            
             int dur = (int)(ndPeriodDur.Value * (ndStepPer.Value / 100.0) * 1000.0); // ms
             dTimer.Interval = new TimeSpan(dur * 10000);
             dTimer.Start();
 
             dt = new DataStack(); dq = new DataStack(); graphTilt.Data[0] = null; graphTilt.Data[1] = null; sw.Restart(); 
-            axisHoriz.Range = new Range<double>(0, ndShownPer.Value * ndPeriodDur.Value * 1.08);
+            double margin = 0.1;
+            axisHoriz.Range = new Range<double>(margin, ndShownPer.Value * ndPeriodDur.Value * 1.08);
             switch (cbDriftType.SelectedIndex)
             {
                 case 1:
-                case 2: axisVert.Range = new Range<double>(0, ndAmplitude.Value * 1.08);
+                case 2: axisVert.Range = new Range<double>(-margin, ndAmplitude.Value + margin);
                     break;
-                case 0: 
-                case 3: axisVert.Range = new Range<double>(-ndAmplitude.Value * 1.08, ndAmplitude.Value * 1.08);
+                case 0:
+                case 3: axisVert.Range = new Range<double>(-ndAmplitude.Value - margin, ndAmplitude.Value + margin);
                     break;
             }           
             SinglePeriod();          
@@ -472,6 +482,11 @@ namespace Axel_tilt
         private void ndGotoPos_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Return || e.Key == Key.Enter) btnGoTo_Click(null, null);
+        }
+
+        private void numOffsetDodging_ValueChanged(object sender, ValueChangedEventArgs<double> e)
+        {
+            tilt.horizontal.OffsetDodging = numOffsetDodging.Value;
         }
     }
 }

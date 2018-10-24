@@ -13,6 +13,11 @@ namespace UtilsNS
 {
     public static class Utils
     {
+        public static bool TheosComputer()
+        {
+            return (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"] == "DESKTOP-U334RMA";
+        }
+
         public static bool isNull(System.Object o)
         {
             return object.ReferenceEquals(null, o);
