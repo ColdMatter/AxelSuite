@@ -49,7 +49,7 @@
                             <Label x:Name="lbRefAccel" Content="0.00" Margin="5,93,3,10" Foreground="White" FontSize="26" FontWeight="Bold" RenderTransformOrigin="0.518,0.709"/>
                         </Grid>
                     </Grid>
-                    <ni:Graph x:Name="graphAccel" Margin="0,0,5,0" PlotAreaBackground="{x:Null}" PlotAreaBorderBrush="#FFB1B0B0" Foreground="#FF080808" DefaultInteraction="Pan" Interactions="Zoom, Pan" MouseDoubleClick="graphAccel_MouseDoubleClick" SelectionFill="#8FC8C828" BorderBrush="#FF080808">
+                    <ni:Graph x:Name="graphAccel" Margin="0,0,20,0" PlotAreaBackground="{x:Null}" PlotAreaBorderBrush="#FFB1B0B0" Foreground="#FF080808" DefaultInteraction="Pan" Interactions="Zoom, Pan" MouseDoubleClick="graphAccel_MouseDoubleClick" SelectionFill="#8FC8C828" BorderBrush="#FF080808">
                         <ni:Graph.Plots>
                             <ni:Plot Label="MOT">
                                 <ni:LinePlotRenderer Stroke="#FF25338C" StrokeThickness="2.5"/>
@@ -112,7 +112,7 @@
             </Grid>
 
             <StackPanel Margin="0,5.143,0.143,0" Grid.Row="2" Background="White" Orientation="Horizontal">
-                <GroupBox Header="Data source " HorizontalAlignment="Left" Margin="10,0,0,3" Width="235">
+                <GroupBox x:Name="grpDataSource" Header="Data source " HorizontalAlignment="Left" Margin="10,0,0,3" Width="235">
                     <Grid>
                         <RadioButton x:Name="rbDataFlow" Content="Data flow" HorizontalAlignment="Left" Height="16" Margin="5,0,0,0" VerticalAlignment="Center" Checked="rbDataFlow_Checked" Unchecked="rbDataFlow_Checked" IsChecked="True"/>
                         <RadioButton x:Name="rbArchive" Content="Archive" HorizontalAlignment="Left" Height="16" Margin="80,0,0,0" VerticalAlignment="Center"/>
@@ -123,10 +123,10 @@
                 <GroupBox Header="Charts" Margin="10,0,0,0" Width="365">
                     <StackPanel Margin="0,0,0,0.143" Orientation="Horizontal">
                         <Label Content="Visual points" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <ni:NumericTextBoxDouble x:Name="numNP" HorizontalAlignment="Left" Height="24" Margin="0,4" VerticalAlignment="Center" Width="52" Range="10, 2000, System.Double" Value="200" Interval="10" ValueChanging="numNP_ValueChanging"/>
+                        <ni:NumericTextBoxDouble x:Name="numNP" HorizontalAlignment="Left" Height="24" Margin="0" VerticalAlignment="Center" Width="52" Range="10, 2000, System.Double" Value="200" Interval="10" ValueChanging="numNP_ValueChanging"/>
                         <Label Content="Refresh rate [s]" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <ni:NumericTextBoxDouble x:Name="numRate" HorizontalAlignment="Left" Height="24" Margin="0,4" VerticalAlignment="Center" Width="46" Range="1, 20, System.Double" Value="2" Interval="0.1" ValueChanged="numRate_ValueChanged"/>
-                        <CheckBox x:Name="chkManualYaxis" Content="Manual axes" HorizontalAlignment="Left" Margin="3,11,0,11.143" VerticalAlignment="Center" Checked="chkManualYaxis_Checked" Unchecked="chkManualYaxis_Checked" Width="82"/>
+                        <ni:NumericTextBoxDouble x:Name="numRate" HorizontalAlignment="Left" Height="24" Margin="0" VerticalAlignment="Center" Width="46" Range="1, 20, System.Double" Value="2" ValueChanged="numRate_ValueChanged"/>
+                        <CheckBox x:Name="chkManualYaxis" Content="Manual axes" HorizontalAlignment="Left" Margin="3,0,0,0" VerticalAlignment="Center" Checked="chkManualYaxis_Checked" Unchecked="chkManualYaxis_Checked" Width="82"/>
                     </StackPanel>
                 </GroupBox>
                 <GroupBox>
@@ -147,7 +147,7 @@
                 </GroupBox>
                 <GroupBox Header="Lbl prec." Width="55">
                     <Grid Margin="0,0,0,0">
-                        <TextBox x:Name="tbPrec" HorizontalAlignment="Left" Margin="5,8,0,8.143" Text="G5" VerticalAlignment="Center" Width="31" FontSize="14"/>
+                        <TextBox x:Name="tbPrec" HorizontalAlignment="Left" Margin="8,0,0,0" Text="G5" VerticalAlignment="Center" Width="31" FontSize="14"/>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Map" Margin="0,0,0,-0.143">
@@ -155,8 +155,8 @@
                 </GroupBox>
                 <GroupBox Header="Connections" Margin="3,0,0,0" Width="221">
                     <Grid Margin="0">
-                        <CheckBox x:Name="chkAxelHub" Content="Axel Hub" HorizontalAlignment="Left" Margin="30,0,0,0" VerticalAlignment="Center" RenderTransformOrigin="0.733,0.692" Checked="chkAxelHub_Checked" Unchecked="chkAxelHub_Checked" IsChecked="True"/>
-                        <CheckBox x:Name="chkAxelTilt" Content="Axel Tilt" HorizontalAlignment="Left" Margin="143,0,0,0" VerticalAlignment="Center" Checked="chkAxelTilt_Checked" Unchecked="chkAxelTilt_Checked" IsChecked="True"/>
+                        <CheckBox x:Name="chkAxelHub" Content="Axel Hub" HorizontalAlignment="Left" Margin="30,0,0,0" VerticalAlignment="Center" RenderTransformOrigin="0.733,0.692" Checked="chkAxelHub_Checked" Unchecked="chkAxelHub_Checked"/>
+                        <CheckBox x:Name="chkAxelTilt" Content="Axel Tilt" HorizontalAlignment="Left" Margin="143,0,0,0" VerticalAlignment="Center" Checked="chkAxelTilt_Checked" Unchecked="chkAxelTilt_Checked"/>
                         <ni:LED x:Name="ledAxelHub" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="3,0,0,0" TrueContent="On" VerticalAlignment="Center" Width="23" RenderTransformOrigin="0.41,0.106"/>
                         <ni:LED x:Name="ledAxelTilt" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="115,0,0,0" TrueContent="On" VerticalAlignment="Center" Width="23"/>
                     </Grid>

@@ -35,6 +35,7 @@ namespace Axel_show
         public List<Point> start;
         public int numbPlane;
         public string googleKey;
+        public double fact;
 
         public gMap(bool dummy) 
         {
@@ -43,6 +44,7 @@ namespace Axel_show
             googleKey = File.ReadAllText(Utils.configPath+"google.key"); 
             size = new Point(500, 500); // width, height
             zoom = 13;
+            fact = -1;
             center = new Point(49.910, -6.431); //  latitude(south-north), longitude(east-west)
             // the planes            
             initPos = new Point(49.912, -6.333);
@@ -55,7 +57,7 @@ namespace Axel_show
         public Point pos(double dist, int idx, double bearing = 270)
         {
             const double R = 6371e3;
-            double phi = (initPos.X + idx * 0.005) * Math.PI / 180; // latitude(south-north) 
+            double phi = (initPos.X + idx * 0.006) * Math.PI / 180; // latitude(south-north) 
             double lamda = initPos.Y * Math.PI / 180; // longitude(east-west)
             double brng = bearing * Math.PI / 180; // all in rad from north
 
@@ -88,9 +90,11 @@ namespace Axel_show
         private int refIdx = 0;
         int depth = 10000;
         List<DataStack> dsAcc, dsTr;
+        List<string> archive;
         Random random;
         Stopwatch sw = new Stopwatch();
-        DispatcherTimer dTimer;
+        DispatcherTimer dTimer, mapTimer;
+        StringBuilder htm = null;
         gMap map = new gMap(true);
 
         RemoteMessaging remoteHub, remoteTilt;
@@ -110,14 +114,66 @@ namespace Axel_show
             dTimer = new System.Windows.Threading.DispatcherTimer();
             dTimer.Tick += new EventHandler(dTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, 2);
+
+            mapTimer = new System.Windows.Threading.DispatcherTimer();
+            mapTimer.Tick += new EventHandler(mapTimer_Tick);
+            mapTimer.Interval = new TimeSpan(0, 0, 6);
+        }
+
+        private void newShot(double time, double[] acc) // for archive and random modes
+        {
+            if (acc.Length != dsCount) throw new Exception("Wrong array length");
+            for (int i = 0; i < dsCount; i++)
+            {
+                if (Double.IsNaN(time)) dsAcc[i].AddPoint(acc[i]);
+                else dsAcc[i].AddPoint(acc[i], time);
+            }
+            int cnt = dsAcc[0].Count;
+            double[] db = calcTrajAtIdx(cnt - 1);
+            for (int j = 0; j < dsCount; j++)
+            {
+                double last = 0; if (dsTr[j].Count > 0 && !request2Reset) last = dsTr[j].Last.Y;
+                dsTr[j].AddPoint(last + db[j], dsAcc[0].Last.X);
+            }
+            request2Reset = false;
         }
 
         private void dTimer_Tick(object sender, EventArgs e)
         {
-            if (!btnGo.Value || !rbDataFlow.IsChecked.Value) return;
-            if (dsAcc[0].Count > 0 && dsTr[0].Count > 0)
+            if (!btnGo.Value) return;
+
+            if (rbDataFlow.IsChecked.Value)
             {
-                Refresh(); traceLog.log(sw.ElapsedMilliseconds.ToString() + " > refresh");
+                if (dsAcc[0].Count == 0) return;
+                Refresh();
+            }
+            if (rbArchive.IsChecked.Value && !Utils.isNull(archive))
+            {               
+                string[] sa = archive[dsAcc[0].Count].Split('\t');
+                double tm = Convert.ToDouble(sa[0]); double[] acc = new double[dsCount];
+                for (int i = 0; i < dsCount; i++) 
+                    acc[i] = Convert.ToDouble(sa[i+1]);
+                newShot(tm, acc);
+                Refresh();
+            }
+            if (rbRandom.IsChecked.Value)
+            {
+                double[] acc = new double[dsCount];
+                for (int i = 0; i < dsCount; i++) 
+                    acc[i] = i + 0.5 * random.NextDouble();
+                newShot(Double.NaN, acc);
+                Refresh();
+            }
+        }
+
+        private void mapTimer_Tick(object sender, EventArgs e)
+        {
+            if (!btnGo.Value || !chkMap.IsChecked.Value) return;
+            if (!Utils.isNull(htm))
+            {
+                int j = 0;
+                while (map.fact > 0 || j > 10000) { DoEvents(); j++;  }
+                webBrowser.NavigateToString(htm.ToString()); DoEvents();
             }
         }
 
@@ -128,15 +184,17 @@ namespace Axel_show
         }
         public void DoEvents()
         {
-            /*System.Windows.Application.Current.Dispatcher.Invoke(
-                System.Windows.Threading.DispatcherPriority.Background,
-                new System.Threading.ThreadStart(() => { }));*/
              if (closingFlag) return; Thread.Sleep(1);
              System.Windows.Application.Current.Dispatcher.Invoke(
                 System.Windows.Threading.DispatcherPriority.Background,
                 new System.Action(delegate { }));
         }
 /*
+        public void DoEvents()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(
+                System.Windows.Threading.DispatcherPriority.Background,
+                new System.Threading.ThreadStart(() => { }));
         public void DoEvents()
         {
             //if (closingFlag) return; Thread.Sleep(1);
@@ -151,13 +209,15 @@ namespace Axel_show
             return null;
         }
 */
-        private void Clear()
+        private void Clear(bool acc = true, bool tr = true)
         {
             for (int i = 0; i < dsCount; i++)
             {
-                dsAcc[i].Clear(); dsTr[i].Clear();
+                if (acc) dsAcc[i].Clear(); 
+                if (tr) dsTr[i].Clear();
             }
         }
+
         private double convertMg2mms2(double mg)
         {
             return 9.8 * mg;
@@ -165,7 +225,7 @@ namespace Axel_show
         // 0 - MEMS; 1 - MEMS2; 2 - PhiMg; 3 - Accel; 4 - Tilt
         private void Refresh(int backFrom = 0, bool adjustAxes = true)
         {
-            if (!btnGo.Value || dsAcc[0].Count == 0 || dsTr[0].Count == 0 || closingFlag) return;
+            if (!btnGo.Value || dsAcc[0].Count == 0 || closingFlag) return; //|| dsTr[0].Count == 0
             int len = (int)numNP.Value; double[] acc = new double[dsCount]; double[] tr = new double[dsCount];
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, // graphs
                 new Action(() => 
@@ -175,7 +235,7 @@ namespace Axel_show
                     ds = dsAcc[1].Portion(len, backFrom); acc[1] = ds.Last.Y;
                     graphAccel.Data[1] = ds;
                     ds = dsAcc[refIdx].Portion(len, backFrom); acc[refIdx] = ds.Last.Y;
-                    graphAccel.Data[2] = ds; 
+                    graphAccel.Data[2] = ds;
 
                     DataStack dt = dsTr[2].Portion(len, backFrom); tr[2] = dt.Last.Y;
                     graphTraj.Data[0] = dt;
@@ -214,10 +274,9 @@ namespace Axel_show
                 }));
             DoEvents(); if (closingFlag) return;
             
-            if (!chkMap.IsChecked.Value || !btnGo.Value) return;  // map
-            if ((Utils.isNull(webBrowser.Source))) webBrowser.Source = new Uri((@"file:\\\"+ Utils.configPath+"temp.html"));           
-            StringBuilder htm = new StringBuilder(map.html);
-            double fact = 1;
+            if (!chkMap.IsChecked.Value) return;  // map
+            htm = new StringBuilder(map.html);
+            map.fact = 1;
             htm.Replace("#googleKey#", map.googleKey);
             htm.Replace("#zoom#", map.zoom.ToString());
             htm.Replace("#center#", map.center.X.ToString("G5") + "," + map.center.Y.ToString("G5"));
@@ -225,17 +284,12 @@ namespace Axel_show
             map.start[0] = map.pos(map.initPos.Y, 2); htm.Replace("#StartUp#", map.start[0].X.ToString("G7") + "," + (map.start[0].Y).ToString("G7"));
             map.start[1] = map.pos(map.initPos.Y, -2); htm.Replace("#StartDown#", map.start[1].X.ToString("G7") + "," + (map.start[1].Y).ToString("G7"));
 
-            map.loc[0] = map.pos(tr[1] * fact, 1); htm.Replace("#MEMS#", map.loc[0].X.ToString("G7") + "," + (map.loc[0].Y).ToString("G7"));
-            map.loc[1] = map.pos(tr[2] * fact, 0); htm.Replace("#MOT#", map.loc[1].X.ToString("G7") + "," + (map.loc[1].Y).ToString("G7"));
-            map.loc[2] = map.pos(tr[3] * fact, -1); htm.Replace("#REF#", map.loc[2].X.ToString("G7") + "," + (map.loc[2].Y).ToString("G7"));
-            //map.loc[3] = map.pos(tr[4] * fact, -1); htm.Replace("#Tilt#", map.loc[3].X.ToString("G7") + "," + (map.loc[3].Y).ToString("G7"));
-            File.WriteAllText(Utils.configPath + "temp.html", htm.ToString());
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
-                new Action(() => 
-                {
-                    webBrowser.NavigateToString(htm.ToString()); Thread.Sleep(500);
-                }));
-            DoEvents();
+            map.loc[0] = map.pos(tr[1] * map.fact, 1); htm.Replace("#MEMS#", map.loc[0].X.ToString("G7") + "," + (map.loc[0].Y).ToString("G7"));
+            map.loc[1] = map.pos(tr[2] * map.fact, 0); htm.Replace("#MOT#", map.loc[1].X.ToString("G7") + "," + (map.loc[1].Y).ToString("G7"));
+            map.loc[2] = map.pos(tr[refIdx] * map.fact, -1); htm.Replace("#REF#", map.loc[2].X.ToString("G7") + "," + (map.loc[2].Y).ToString("G7"));
+            if(DebugMode) File.WriteAllText(Utils.configPath + "temp.html", htm.ToString());
+            map.fact = -1;
+            DoEvents(); 
         }
 
         private double calcSingleInteg(int idx, DataStack ds) // looks two point back to integrate
@@ -271,8 +325,8 @@ namespace Axel_show
                     Clear();
                 }
                 else Utils.TimedMessageBox("Acquisition has been canceled.");
-                bool bb = btnGo.Value && chkLog.IsChecked.Value; 
-                if(bb) logger.AutoSaveFileName = ""; logger.Enabled = bb;
+                bool bb = btnGo.Value && chkLog.IsChecked.Value;
+                if (bb) { logger.Enabled = false; logger.AutoSaveFileName = ""; } logger.Enabled = bb;
                 logger.log("#Time\tMEMS\tMEMS2\tMOTAccel\tAccel\tTilt");
                 traceLog.Enabled = btnGo.Value && DebugMode;
                 sw.Restart(); stage = 0;
@@ -280,81 +334,52 @@ namespace Axel_show
             //if (!remoteTilt.Connected) Utils.TimedMessageBox("No connection to Axel-tilt.");
         }
 
-        private void archiveGo()
+        private void archiveGo() // load archive file
         {
-            if (!btnGo.Value) return;
+            if (btnGo.Value) Clear();
+            else return;
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
             dlg.InitialDirectory = Utils.dataPath;
             dlg.Filter = "Axel Log File (.log)|*.log"; // Filter files by extension
-
-            // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
-
-            // Process save file dialog box results
             if (result == false) return;
-            Clear();
-            double[] da = new double[dsCount+1]; // ...and time
-            foreach (string line in File.ReadLines(dlg.FileName))            
+
+            archive = Utils.readList(dlg.FileName);
+            for (int i = 0; i < dsCount; i++)
             {
-                if (line.Equals("")) continue;
-                if (line[0].Equals('#')) continue;
-                string[] sa = line.Split('\t');
-                for (int i = 0; i < dsCount+1; i++) da[i] = Convert.ToDouble(sa[i]);
-                for (int i = 0; i < dsCount; i++) dsAcc[i].AddPoint(da[i + 1], da[0]);
+                dsAcc[i].Depth = Math.Min(archive.Count, 10000);
             }
-            
-            for (int i = 0; i < dsAcc[0].Count; i++)
-            {
-                double[] db = calcTrajAtIdx(i);
-                for (int j = 0; j < dsCount; j++)
-                {
-                    double last = 0; if (dsTr[j].Count > 0) last = dsTr[j].Last.Y; 
-                    dsTr[j].AddPoint(last + db[j], dsAcc[0][i].X);
-                }
-            }
-            int len = dsAcc[0].Count; int k = (int)numNP.Value;
-            while (btnGo.Value)
-            {
-                Refresh(k, true); DoEvents(); Thread.Sleep((int)numRate.Value*1000);  
-                k++;
-                if (k == len) k = (int)numNP.Value;
-            }           
         }
 
-        private void randomGo()
+        private void randomGo() // prepare for random mode
         {
             if (btnGo.Value) Clear();
-            while (btnGo.Value)
-            {
-                for (int i = 0; i < dsCount; i++)
-                {                        
-                    dsAcc[i].AddPoint(i + 0.5*random.NextDouble());                                 
-                }
-                int len = dsAcc[0].Count;
-                double[] db = calcTrajAtIdx(len-1);
-                for (int j = 0; j < dsCount; j++)
-                {
-                    double last = 0; if (dsTr[j].Count > 0) last = dsTr[j].Last.Y;
-                    dsTr[j].AddPoint(last + db[j], dsAcc[0].Last.X);
-                }
-                Thread.Sleep((int)numRate.Value * 1000); DoEvents(); Refresh();
+            else return;
+            int totNP = (int)(numNP.Value*10.0);
+            for (int i = 0; i < dsCount; i++)
+            {                        
+                dsAcc[i].Depth = totNP;                                 
             }
-            // dsAcc[i].fillSamples(100); dsTr[i].fillSamples(100); // one time fill in
         }
        
         private void btnGo_Click(object sender, RoutedEventArgs e)
         {
             btnGo.Value = !btnGo.Value;
-            if (!btnGo.Value) dTimer.Stop();
-            if (rbDataFlow.IsChecked.Value)
+            if (btnGo.Value)
             {
-                if (btnGo.Value) dTimer.Start();
-                else dTimer.Stop();
-                dataFlowGo();
+                // prepare
+                if (rbDataFlow.IsChecked.Value) dataFlowGo();
+                if (rbArchive.IsChecked.Value) archiveGo();
+                if (rbRandom.IsChecked.Value) randomGo();
+                // run
+                dTimer.Start(); mapTimer.Start(); 
             }
-            if (rbArchive.IsChecked.Value) archiveGo();
-            if (rbRandom.IsChecked.Value) randomGo();
+            else
+            {
+                 dTimer.Stop(); mapTimer.Stop();
+            }
+            grpDataSource.IsEnabled = !btnGo.Value;
         }
 
         private void graphAccel_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -511,6 +536,7 @@ namespace Axel_show
             logger = new AutoFileLogger(); logger.defaultExt = ".log"; logger.Enabled = false;
             traceLog = new AutoFileLogger(); traceLog.defaultExt = ".trc"; traceLog.Enabled = false;
 
+            numRate_ValueChanged(null, null);
             chkAxelHub_Checked(null, null); chkAxelTilt_Checked(null, null);
         }
 
@@ -542,13 +568,21 @@ namespace Axel_show
 
         private void numRate_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {
-            if (Utils.isNull(dTimer)) return;
-            dTimer.Interval = new TimeSpan(0, 0, (int)numRate.Value);
+            if (Utils.isNull(dTimer) || Utils.isNull(numRate)) return;
+            int tick_time = (int)(numRate.Value * 1000.0 * 10000.0); // in ticks
+            bool running = dTimer.IsEnabled;
+            if(running) dTimer.Stop();
+            dTimer.Interval = new TimeSpan(tick_time);
+            if (running) dTimer.Start();
+            running = mapTimer.IsEnabled;
+            if (running) mapTimer.Stop();
+            mapTimer.Interval = new TimeSpan((int)(tick_time*Math.PI));
+            if (running) mapTimer.Start();
         }
 
         private void imgPeacock_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Show v1.3 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Show v1.4 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         private void cbRef_SelectionChanged(object sender, SelectionChangedEventArgs e)

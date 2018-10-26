@@ -23,6 +23,27 @@ namespace UtilsNS
             return object.ReferenceEquals(null, o);
         }
 
+        public static List<string> readList(string filename, bool skipRem = true)
+        {
+            List<string> ls = new List<string>();
+            foreach (string line in File.ReadLines(filename))            
+            {
+                if(skipRem)
+                {
+                    if (line.Equals("")) continue;
+                    if (line[0].Equals('#')) continue;
+                }
+                ls.Add(line);
+            }
+            return ls;
+        }
+
+        public static void writeList(List<string> ls, string filename)
+        {
+            File.WriteAllLines(filename, ls.ToArray());
+        }
+
+
         public static double EnsureRange(double Value, double MinValue, double MaxValue)
         {
             if (Value < MinValue) return MinValue;
