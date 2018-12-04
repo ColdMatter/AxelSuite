@@ -34,7 +34,7 @@
         <Grid x:Name="gridRight" Grid.Column="1" Margin="0">
             <Grid.RowDefinitions>
                 <RowDefinition x:Name="rowUpperChart" MinHeight="3" Height="270"/>
-                <RowDefinition x:Name="rowMiddleChart" MinHeight="30" Height="250"/>
+                <RowDefinition x:Name="rowMiddleChart" MinHeight="30" Height="350"/>
                 <RowDefinition x:Name="rowLowerChart" MinHeight="100" Height="150*"/>
             </Grid.RowDefinitions>
             <GridSplitter x:Name="splitterTop" HorizontalAlignment="Stretch" Height="6" Grid.Row="1" VerticalAlignment="Top" Margin="0,1.143,0,0" Background="#FFFFFEBD" MouseDoubleClick="splitterTop_MouseDoubleClick"/>
@@ -161,10 +161,15 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="tabVelocity" Header="Velocity" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Visibility="Collapsed">
+                    <TabItem x:Name="tabJoinOptim" Header="Join Optim." Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14">
                         <Grid>
-                            <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.285,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphVelocity}" Grid.ColumnSpan="2"/>
-                            <ni:Graph x:Name="graphVelocity" Margin="3,30,-0.285,-0.429" FontSize="12" Grid.ColumnSpan="2" PlotAreaMargin="Auto,2,Auto,Auto">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="150"/>
+                            </Grid.ColumnDefinitions>
+                            <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.143,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphVelocity}" Grid.ColumnSpan="1"/>
+                            <Label x:Name="lbJoinLogInfo" Content="" Margin="236,0,0,0" Height="31" FontSize="13" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                            <ni:Graph x:Name="graphJoinOptim" Margin="3,30,-0.143,-0.286" FontSize="12" Grid.ColumnSpan="1" PlotAreaMargin="Auto,2,Auto,Auto">
                                 <ni:Graph.Plots>
                                     <ni:Plot Label="Plot 3">
                                         <ni:LinePlotRenderer/>
@@ -174,6 +179,22 @@
                                     </ni:Plot>
                                 </ni:Graph.Plots>
                             </ni:Graph>
+                            <Grid Grid.Column="1" Margin="0">
+                                <Button x:Name="btnOpenJLog" Content="Join Log file..." Margin="10,6,0,0" Background="#FFF6F6F6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Click="btnOpenJLog_Click" Height="32" />
+                                <Label Content="From" HorizontalAlignment="Left" Margin="9,87,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
+                                <ni:NumericTextBoxDouble x:Name="numJFrom" HorizontalAlignment="Left" Height="23" Margin="56,89,0,0" VerticalAlignment="Top" Width="67" Value="-2" FontSize="13"/>
+                                <Label Content="To" HorizontalAlignment="Left" Margin="9,116,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
+                                <ni:NumericTextBoxDouble x:Name="numJTo" HorizontalAlignment="Left" Height="23" Margin="56,120,0,0" VerticalAlignment="Top" Width="67" Value="2" FontSize="13"/>
+                                <Label Content="By" HorizontalAlignment="Left" Margin="9,144,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
+                                <ni:NumericTextBoxDouble x:Name="numJBy" HorizontalAlignment="Left" Height="23" Margin="56,150,0,0" VerticalAlignment="Top" Width="67" Value="0.2" Range="0, Infinity, System.Double" FontSize="13"/>
+                                <Label Content="N.Pnts" HorizontalAlignment="Left" Margin="3,178,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF640C03" FontSize="13"/>
+                                <ni:NumericTextBoxDouble x:Name="numJNPnts" HorizontalAlignment="Left" Height="23" Margin="56,181,0,0" VerticalAlignment="Top" Width="67" Value="-1" Range="-1, 1000000, System.Double" Interval="100" FontSize="13"/>
+                                <Label Content="(-1 for all)" HorizontalAlignment="Left" Margin="3,202,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF7B0F03" FontSize="13"/>
+                                <Label Content="MEMS vs Quant" HorizontalAlignment="Left" Margin="13,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
+                                <Label Content="delay [ms] scan" HorizontalAlignment="Left" Margin="13,60,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
+                                <ni:BooleanContentButton x:Name="btnJDlyScan" Content="Test Axel Show" HorizontalAlignment="Left" Margin="10,232,0,0" VerticalAlignment="Top" Width="116" Background="White" Height="33" Click="btnJDlyScan_Click" FalseBrush="#FFFAEB8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Delay Scan" TrueContent="Stop Scan" IsEnabled="False"/>
+                                <CheckBox x:Name="chkChartEachIter" Content="Chart each iter." HorizontalAlignment="Left" Margin="13,277,0,0" VerticalAlignment="Top" FontSize="12" IsChecked="True"/>
+                            </Grid>
                         </Grid>
                     </TabItem>
                     <TabItem x:Name="tabDistance" Header="Distance" Margin="0,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Visibility="Collapsed">
@@ -199,7 +220,7 @@
                             </Grid.ColumnDefinitions>
                             <GroupBox Grid.Column="0" Header="Signal Data" Margin="5,0,0,0" FontSize="12" BorderBrush="#FF146501">
                                 <StackPanel Margin="0,3,0,0">
-                                    <GroupBox Header="Files" Height="145" Margin="0,0,-0.286,0">
+                                    <GroupBox Header="Files" Height="145" Margin="0">
                                         <StackPanel Margin="0,0,0,0">
                                             <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click" Background="#FFF6F6F6"/>
                                             <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveSignalAs_Click" Background="#FFF6F6F6"/>
@@ -215,15 +236,15 @@
                             <GroupBox x:Name="groupStat" Header=" Statistics " Margin="5,0" Grid.Column="1" FontSize="12" BorderBrush="#FF024B76">
                                 <Grid Margin="0">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="201*"/>
+                                        <ColumnDefinition Width="250"/>
                                         <ColumnDefinition Width="457*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="143*"/>
-                                            <RowDefinition Height="22"/>
+                                            <RowDefinition/>
+                                            <RowDefinition Height="27.429"/>
                                         </Grid.RowDefinitions>
-                                        <ListBox x:Name="lboxBigCalc" Grid.Row="0" FontSize="18" Margin="0">
+                                        <ListBox x:Name="lboxBigCalc" Grid.Row="0" FontSize="18" Margin="0,0,0.286,0.286">
                                             <ListBoxItem x:Name="lbiMEMS" Content="MEMS[mg]" Foreground="#FF0E6001"/>
                                             <ListBoxItem x:Name="lbiOrder" Content="Order[int]" Foreground="#FF137903"/>
                                             <ListBoxItem x:Name="lbiOrdRes" Content="Ord.Res.[mg]" Foreground="#FF117201"/>
@@ -231,12 +252,13 @@
                                             <ListBoxItem x:Name="lbiPhiMg" Content="Phi[mg]" Foreground="#FF032285"/>
                                             <ListBoxItem x:Name="lbiAccel" Content="Accel[mg]" FontSize="22" Foreground="#FFA70404"/>
                                         </ListBox>
-                                        <CheckBox x:Name="chkBigCalcUpdate" Grid.Row="1" Margin="4,5,0,0" FontSize="12" Content="Updating" IsChecked="True" VerticalAlignment="Top" Width="80" HorizontalAlignment="Left" />
-                                        <CheckBox x:Name="chkDetail" Grid.Row="1" Margin="80,5,0,0" FontSize="12" Content="Detail" IsChecked="True" VerticalAlignment="Top" HorizontalAlignment="Left" />
-                                        <CheckBox x:Name="chkLogFile" Grid.Row="1" Margin="148,5,0,0" FontSize="12" Content="Log Flie" IsChecked="True" VerticalAlignment="Top" HorizontalAlignment="Left" />
+                                        <CheckBox x:Name="chkBigCalcUpdate" Grid.Row="1" Margin="4,4.714,0,0" FontSize="12" Content="Updating" IsChecked="True" VerticalAlignment="Center" Width="80" HorizontalAlignment="Left" Height="15" />
+                                        <CheckBox x:Name="chkJoinLog" Grid.Row="1" Margin="168,5,0,0" FontSize="12" Content="Join Log" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Left" Height="15" Width="64"/>
+                                        <CheckBox x:Name="chkSignalLog" Grid.Row="1" Margin="82,4.714,0,0" FontSize="12" Content="Signal Log" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Left" Width="81" Height="15" />
                                     </Grid>
                                     <GridSplitter x:Name="splitStats" HorizontalAlignment="Left" Grid.Column="1" Margin="0" Background="#FFF1F1F1" Width="5"/>
                                     <ni:BooleanContentButton x:Name="btnTestAxelShow" Content="Test Axel Show" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="116" Background="#FFFAF9E7" Height="33" Click="btnTestAxelShow_Click" FalseBrush="#FF8DFAA2" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Send Test Data" TrueContent="Stop Data Flow"/>
+                                    <ni:BooleanContentButton x:Name="btnTestSpeed" Content="Test Axel Show" Grid.Column="1" HorizontalAlignment="Left" Margin="10,58,0,0" VerticalAlignment="Top" Width="116" Background="#FFFAF9E7" Height="33" Click="btnTestSpeed_Click" FalseBrush="#FF8DFACF" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Join Log Test" TrueContent="Stop Test"/>
 
                                 </Grid>
                             </GroupBox>
@@ -301,6 +323,7 @@
                             </StackPanel>
                             <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                 <ni:Graph.Axes>
+                                    <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="FitLoosely"/>
                                     <ni:AxisDouble x:Name="accelYaxis" Orientation="Vertical" Adjuster="FitVisibleLoosely"/>
                                 </ni:Graph.Axes>
                                 <ni:Graph.Children>
@@ -357,11 +380,11 @@
                             </GroupBox>
                             <GroupBox x:Name="groupVibration" Header=" Averaging MEMS over " Margin="5,0,0,0" Grid.Column="2" FontSize="12" BorderBrush="#FF024F7D">
                                 <Grid Margin="0">
-                                    <CheckBox x:Name="chkMemsEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="20,20,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" FontSize="14" Width="80" IsChecked="True"/>
-                                    <Label Content="Start [ms]" HorizontalAlignment="Left" Margin="0,46,0,0" VerticalAlignment="Top"/>
-                                    <ni:NumericTextBoxDouble x:Name="numMemsStart" HorizontalAlignment="Left" Height="23" Margin="70,49,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="250" Range="0, 1000, System.Double" KeyDown="ndKP_KeyDown"/>
-                                    <Label Content="Lenght [ms]" HorizontalAlignment="Left" Margin="0,75,0,0" VerticalAlignment="Top"/>
-                                    <ni:NumericTextBoxDouble x:Name="numMemsLen" HorizontalAlignment="Left" Height="23" Margin="70,77,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown" Value="50"/>
+                                    <CheckBox x:Name="chkMemsEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="23,16,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" FontSize="14" Width="80" IsChecked="True"/>
+                                    <Label Content="Delay [ms]" HorizontalAlignment="Left" Margin="0,75,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="numMems2SignalDelay" HorizontalAlignment="Left" Height="23" Margin="73,75,-0.143,0" VerticalAlignment="Top" Width="50" RenderTransformOrigin="0.501,-0.217" Range="-1000, 1000, System.Double" KeyDown="ndKP_KeyDown"/>
+                                    <Label Content="Lenght [ms]" HorizontalAlignment="Left" Margin="0,45,0,0" VerticalAlignment="Top"/>
+                                    <ni:NumericTextBoxDouble x:Name="numMems2SignalLen" HorizontalAlignment="Left" Height="23" Margin="73,45,-0.143,0" VerticalAlignment="Top" Width="50" RenderTransformOrigin="0.501,-0.217" Range="1, 100, System.Double" KeyDown="ndKP_KeyDown" Value="5"/>
                                     <Button x:Name="btnSaveTrendAs" Content="Save Acc.Trend As..." Margin="5,120,7.714,0" Background="#FFF6F6F6" VerticalAlignment="Top" Click="btnSaveTrendAs_Click" />
                                 </Grid>
                             </GroupBox>

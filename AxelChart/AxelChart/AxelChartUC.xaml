@@ -189,38 +189,35 @@
                         <GroupBox x:Name="grpCurrValue" Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="3,0,0,1" Width="369" Foreground="Black" BorderBrush="#FF02598D">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="180"/>
+                                    <RowDefinition Height="150"/>
                                     <RowDefinition Height="20*"/>
                                 </Grid.RowDefinitions>
-                                <Grid Margin="0" Grid.Row = "0" Grid.RowSpan="1">
+                                <Grid Grid.Row = "0" Grid.RowSpan="1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="158.857"/>
                                         <ColumnDefinition Width="153.714"/>
                                         <ColumnDefinition Width="50"/>
                                     </Grid.ColumnDefinitions>
                                     <ListBox x:Name="lbMean" Grid.Column="0" Margin="0,0,0,0" FontSize="18">
-                                        <ListBoxItem Content="0.0"/>
                                         <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
                                         <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
-                                        <ListBoxItem Foreground="#FF008A77" Content="0.0"/>
-                                        <ListBoxItem Foreground="#FFA12D20" Content="# 0"/>
-                                        <ListBoxItem Foreground="#FF017D54" Content="0.0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
+                                        <ListBoxItem Content="# 0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
                                     </ListBox>
                                     <ListBox x:Name="lbStDev" Grid.Column="1" Margin="0.143,0,0,0" FontSize="18" Grid.ColumnSpan="1">
-                                        <ListBoxItem Content="0.0"/>
                                         <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
                                         <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
-                                        <ListBoxItem Foreground="#FF008A77" Content="0.0"/>
                                         <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
-                                        <ListBoxItem Foreground="#FF017D54" Content="0.0"/>
+                                        <ListBoxItem Content="0.0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
                                     </ListBox>
                                     <ListBox x:Name="lbUnits" Grid.Column="2" Margin="0,0,0,0" FontSize="18">
-                                        <ListBoxItem Content="V"/>
                                         <ListBoxItem Foreground="#FF0C7304" Content="mV"/>
                                         <ListBoxItem Foreground="#FF0044AF" Content="uA"/>
-                                        <ListBoxItem Foreground="#FF008A77" Content="mg"/>
-                                        <ListBoxItem Foreground="#FFA12D20" Content="SD"/>
-                                        <ListBoxItem Foreground="#FF017D54" Content="mg2"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="mg"/>
+                                        <ListBoxItem Content="SD"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="mg2"/>
                                     </ListBox>
                                 </Grid>
                                 <Grid Grid.Row="1">
@@ -228,7 +225,7 @@
                                     <ni:NumericTextBoxDouble x:Name="numTimeSlice" HorizontalAlignment="Left" Height="23" Margin="101,8,0,0" VerticalAlignment="Top" Width="55" Range="-1, Infinity, System.Double" Value="-1"/>
                                     <CheckBox x:Name="chkResultsLog" Content="Log accel. [mg]" Margin="163,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="103" Height="17" FontSize="12"/>
                                     <CheckBox x:Name="chkTblUpdate" Content="Tbl Update" Margin="266,10,-0.286,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="92" Height="17"/>
-                                    <Label x:Name="lbErrorStatus" Content="Error status:" HorizontalAlignment="Left" Margin="0,0,0,-5" VerticalAlignment="Bottom" Height="28" FontSize="12" Foreground="#FF670202"/>
+                                    <Label x:Name="lbErrorStatus" Content="Error status:" Margin="0,30,0,0" Height="28" FontSize="13" Foreground="#FF7F0101" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                 </Grid>
                             </Grid>
                         </GroupBox>

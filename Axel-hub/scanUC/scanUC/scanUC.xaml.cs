@@ -40,11 +40,11 @@ namespace scanHub
     public partial class scanClass : UserControl
     {
         private double realSampling;
-        private string ArrangedPartner = "Axel Probe";//MOTMaster2"; 
+        private string ArrangedPartner = ""; //MOTMaster2";Axel Probe"; 
 
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
-        Stopwatch sw;
+        public Stopwatch sw;
 
         public scanClass()
         {
@@ -57,6 +57,7 @@ namespace scanHub
             sw = new Stopwatch();
 
             tabControl.SelectedIndex = 0;
+            jumboButton = false;
             //Status("Ready to go ");
         }
         GeneralOptions genOptions = null;
@@ -157,7 +158,6 @@ namespace scanHub
                     lbTimeElapsed.Content = "...[s]";
                     lbTimeLeft.Content = "...[s]";
                     progressBar.Value = 0;
-                    if(bbtnStart.Content == "Cancel") bbtnStart.Content = "Start";
                 }                
                 SetValue(RunningProperty, value);
             }
@@ -313,46 +313,40 @@ namespace scanHub
             return sizeLimit;
 
         }
+
+        private bool _jumboButton = true;
+        private bool jumboButton
+        {
+            get {return _jumboButton;}
+            set
+            {
+                if (value.Equals(_jumboButton)) return; 
+                _jumboButton = value;
+                if (value)
+                {
+                    bbtnStart.TrueContent = "Jumbo Stop";
+                    bbtnStart.FalseContent = "Jumbo Run";
+                    bbtnStart.FalseBrush = Brushes.LightGreen;
+                    bbtnStart.TrueBrush = Brushes.Coral;
+                }
+                else
+                {
+                    bbtnStart.TrueContent = "Cancel";
+                    bbtnStart.FalseContent = "Start";
+                    bbtnStart.FalseBrush = Brushes.LightGray;
+                    bbtnStart.TrueBrush = Brushes.Orange;
+                }               
+                bbtnStart.Value = false; 
+            }
+        }
         
         public void bbtnStart_Click(object sender, RoutedEventArgs e)
         {
             if (OnStart == null) return;
-            bool jumbo = false;
-            switch ((string)bbtnStart.Content)
-            {
-                case "Start":
-                    {
-                        bbtnStart.Content = "Cancel";
-                        Running = true;                        
-                    }
-                    break;
-                case "Cancel":
-                    {
-                        bbtnStart.Content = "Start";
-                        Running = false;
-                        Abort(true);
-                        return;
-                    }
-                    break;
-                case "Jumbo Run":
-                    {
-                        bbtnStart.Content = "Jumbo Stop";
-                        jumbo = true;
-                        Running = true; 
-                    }
-                    break;
-                case "Jumbo Stop":
-                    {
-                        bbtnStart.Content = "Jumbo Run";
-                        jumbo = false;
-                        Running = false;
-                        Abort(true);
-                        return;
-                    }
-                    break;
-            }
-            bool down = Running;
-            bbtnStart.Value = down;
+            bbtnStart.Value = !bbtnStart.Value;
+            Running = bbtnStart.Value;
+            if (!bbtnStart.Value) Abort(true);
+
             double period = GetSamplingPeriod(); // sampling rate in sec
                         
             if (EndlessMode())
@@ -367,15 +361,14 @@ namespace scanHub
                 totalTime = new TimeSpan(0, 0, (int)(GetBufferSize() * period));
                 currentTime = new TimeSpan(0, 0, 0);
             }
-            OnStart(jumbo, down, period, GetBufferSize()); // the last three are valid only in non-jumbo mode with down = true
+            OnStart(jumboButton, Running, period, GetBufferSize()); // the last three are valid only in non-jumbo mode with down = true
          }
 
         public void Abort(bool local) // the origin of Abort is (local) or (remote abort OR end sequence)
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
             remoteMode = RemoteMode.Free;
-            if (tabControl.SelectedIndex == 2) bbtnStart.Content = "Jumbo Run"; // remote tab
-            else bbtnStart.Content = "Start";
+            jumboButton = (tabControl.SelectedIndex == 2); // remote tab
             Running = false;
             bbtnStart.Value = false;
             OnStart(jumbo, false, 0, 0);
@@ -391,14 +384,13 @@ namespace scanHub
              if (remote != null) remote.Enabled = (tabControl.SelectedIndex == 2);
              if (tabControl.SelectedIndex == 2) 
              {
-                 remote.CheckConnection(true);
+                 jumboButton = remote.CheckConnection(true);
              }                     
              else
              {
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
                  Status("Ready to go ");
-                 if(bbtnStart.Content.ToString().Equals("Start")) return;
-                 if(bbtnStart.Content.ToString().Substring(0,5).Equals("Jumbo")) bbtnStart.Content = "Start"; // TODO ask confirmation                
+                 jumboButton = false;
              }            
          }
 
@@ -410,12 +402,9 @@ namespace scanHub
              {
                  Status("Ready to remote<->");
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
-                 if (bbtnStart.Content.ToString().Equals("Start") || bbtnStart.Content.ToString().Equals("Stop"))
-                 {
-                     bbtnStart.Content = "Jumbo Run";
-                     remoteMode = RemoteMode.Free;
-                 }  
-             }
+                 jumboButton = true; 
+                 remoteMode = RemoteMode.Free;
+              }
              else
              {
                  Status("Commun. problem");
@@ -445,7 +434,7 @@ namespace scanHub
                  switch (computerName) 
                  {
                      case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
-                     case "DESKTOP-U334RMA": partner = "MOTMaster2"; break; //"Axel Probe"
+                     case "DESKTOP-U334RMA": partner = "Axel Probe"; break; //"MOTMaster2"
                  }
              remote = new RemoteMessaging(partner); 
              remote.Enabled = false;

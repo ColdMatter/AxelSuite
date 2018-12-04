@@ -26,60 +26,6 @@ using UtilsNS;
 
 namespace Axel_show
 {
-    public struct gMap
-    {
-        public string html;
-        public int zoom;
-        public Point center, initPos, size;
-        public List<Point> loc; 
-        public List<Point> start;
-        public int numbPlane;
-        public string googleKey;
-        public double fact;
-
-        public gMap(bool dummy) 
-        {
-            // map itself
-            html = "";
-            googleKey = File.ReadAllText(Utils.configPath+"google.key"); 
-            size = new Point(500, 500); // width, height
-            zoom = 13;
-            fact = -1;
-            center = new Point(49.910, -6.431); //  latitude(south-north), longitude(east-west)
-            // the planes            
-            initPos = new Point(49.912, -6.333);
-            numbPlane = 4;
-            loc = new List<Point>(); start = new List<Point>();
-            for (int i = 0; i < numbPlane; i++) loc.Add(new Point());
-            for (int i = 0; i < 3; i++) start.Add(new Point()); 
-        }
-
-        public Point pos(double dist, int idx, double bearing = 270)
-        {
-            const double R = 6371e3;
-            double phi = (initPos.X + idx * 0.006) * Math.PI / 180; // latitude(south-north) 
-            double lamda = initPos.Y * Math.PI / 180; // longitude(east-west)
-            double brng = bearing * Math.PI / 180; // all in rad from north
-
-            double phi2 = Math.Asin(Math.Sin(phi) * Math.Cos(dist / R) + Math.Cos(phi) * Math.Sin(dist / R) * Math.Cos(brng)); // [rad]
-            double lamda2 = lamda + Math.Atan2(Math.Sin(brng) * Math.Sin(dist / R) * Math.Cos(phi),  // [rad]
-                                       Math.Cos(dist / R) - Math.Sin(phi) * Math.Sin(phi2));
-            return new Point(phi2 * 180 / Math.PI, lamda2 * 180 / Math.PI); //  latitude(south-north), longitude(east-west)
-        }
-
-        public Point middle() // of loc
-        {
-            Point md = new Point();
-            for (int i = 0; i < numbPlane; i++)
-            {
-                md.X = md.X + loc[i].X;
-                md.Y = md.Y + loc[i].Y;
-            }
-            md.X = md.X / numbPlane; md.Y = md.Y / numbPlane;  
-            return md;
-        }
-    } 
-
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -93,12 +39,10 @@ namespace Axel_show
         List<string> archive;
         Random random;
         Stopwatch sw = new Stopwatch();
-        DispatcherTimer dTimer, mapTimer;
+        DispatcherTimer dTimer;
         StringBuilder htm = null;
-        gMap map = new gMap(true);
 
         RemoteMessaging remoteHub, remoteTilt;
-        Stopwatch swt; long pingTime;
         private AutoFileLogger logger, traceLog;
         
         public MainWindow()
@@ -115,12 +59,6 @@ namespace Axel_show
             dTimer = new System.Windows.Threading.DispatcherTimer();
             dTimer.Tick += new EventHandler(dTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, 2);
-
-            mapTimer = new System.Windows.Threading.DispatcherTimer();
-            mapTimer.Tick += new EventHandler(mapTimer_Tick);
-            mapTimer.Interval = new TimeSpan(0, 0, 6);
-
-            swt = new Stopwatch(); swt.Start();
         }
 
         private void newShot(double time, double[] acc) // for archive and random modes
@@ -144,9 +82,7 @@ namespace Axel_show
         private void dTimer_Tick(object sender, EventArgs e)
         {
             if (!btnGo.Value) return;
-            
-            remoteTilt.sendCommand("ping"); pingTime = swt.ElapsedTicks;
-            return;
+
             if (rbDataFlow.IsChecked.Value)
             {
                 if (dsAcc[0].Count == 0) return;
@@ -171,20 +107,9 @@ namespace Axel_show
             }
         }
 
-        private void mapTimer_Tick(object sender, EventArgs e)
-        {
-            if (!btnGo.Value || !chkMap.IsChecked.Value) return;
-            if (!Utils.isNull(htm))
-            {
-                int j = 0;
-                while (map.fact > 0 || j > 10000) { DoEvents(); j++;  }
-                webBrowser.NavigateToString(htm.ToString()); DoEvents();
-            }
-        }
-
         private void Axel_show_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if(rowTools.Height.Value == 0) rowTools.Height = new GridLength(60, GridUnitType.Pixel);
+            if(rowTools.Height.Value == 0) rowTools.Height = new GridLength(150, GridUnitType.Pixel);
             else rowTools.Height = new GridLength(0, GridUnitType.Pixel);
         }
         public void DoEvents()
@@ -237,17 +162,17 @@ namespace Axel_show
                 {
                     DataStack ds = dsAcc[2].Portion(len, backFrom); acc[2] = ds.Last.Y;
                     graphAccel.Data[0] = ds;
-                    ds = dsAcc[1].Portion(len, backFrom); acc[1] = ds.Last.Y;
-                    graphAccel.Data[1] = ds;
                     ds = dsAcc[refIdx].Portion(len, backFrom); acc[refIdx] = ds.Last.Y;
-                    graphAccel.Data[2] = ds;
+                    graphAccel.Data[1] = ds;
+                   // ds = dsAcc[refIdx].Portion(len, backFrom); acc[refIdx] = ds.Last.Y;
+                   // graphAccel.Data[2] = ds;
 
                     DataStack dt = dsTr[2].Portion(len, backFrom); tr[2] = dt.Last.Y;
                     graphTraj.Data[0] = dt;
-                    dt = dsTr[1].Portion(len, backFrom); tr[1] = dt.Last.Y;
-                    graphTraj.Data[1] = dt;
                     dt = dsTr[refIdx].Portion(len, backFrom); tr[refIdx] = dt.Last.Y;
-                    graphTraj.Data[2] = dt;      
+                    graphTraj.Data[1] = dt;
+                //    dt = dsTr[refIdx].Portion(len, backFrom); tr[refIdx] = dt.Last.Y;
+                //    graphTraj.Data[2] = dt;      
               
                     if (adjustAxes)
                     {
@@ -277,24 +202,6 @@ namespace Axel_show
                     for (int i = 0; i < dsCount-1; i++) ss += acc[i].ToString(tbPrec.Text) + "\t";
                     if (chkLog.IsChecked.Value) logger.log(ss);
                 }));
-            DoEvents(); if (closingFlag) return;
-            
-            if (!chkMap.IsChecked.Value) return;  // map
-            htm = new StringBuilder(map.html);
-            map.fact = 1;
-            htm.Replace("#googleKey#", map.googleKey);
-            htm.Replace("#zoom#", map.zoom.ToString());
-            htm.Replace("#center#", map.center.X.ToString("G5") + "," + map.center.Y.ToString("G5"));
-            htm.Replace("#height#", (map.size.Y/0.61).ToString("F0")); htm.Replace("#width#", (map.size.X/0.58).ToString("F0"));
-            map.start[0] = map.pos(map.initPos.Y, 2); htm.Replace("#StartUp#", map.start[0].X.ToString("G7") + "," + (map.start[0].Y).ToString("G7"));
-            map.start[1] = map.pos(map.initPos.Y, -2); htm.Replace("#StartDown#", map.start[1].X.ToString("G7") + "," + (map.start[1].Y).ToString("G7"));
-
-            map.loc[0] = map.pos(tr[1] * map.fact, 1); htm.Replace("#MEMS#", map.loc[0].X.ToString("G7") + "," + (map.loc[0].Y).ToString("G7"));
-            map.loc[1] = map.pos(tr[2] * map.fact, 0); htm.Replace("#MOT#", map.loc[1].X.ToString("G7") + "," + (map.loc[1].Y).ToString("G7"));
-            map.loc[2] = map.pos(tr[refIdx] * map.fact, -1); htm.Replace("#REF#", map.loc[2].X.ToString("G7") + "," + (map.loc[2].Y).ToString("G7"));
-            if(DebugMode) File.WriteAllText(Utils.configPath + "temp.html", htm.ToString());
-            map.fact = -1;
-            DoEvents(); 
         }
 
         private double calcSingleInteg(int idx, DataStack ds) // looks two point back to integrate
@@ -370,23 +277,21 @@ namespace Axel_show
        
         private void btnGo_Click(object sender, RoutedEventArgs e)
         {
-            btnGo.Value = !btnGo.Value; 
+            btnGo.Value = !btnGo.Value;
             if (btnGo.Value)
             {
-
                 // prepare
-              //  if (rbDataFlow.IsChecked.Value) dataFlowGo();
+                if (rbDataFlow.IsChecked.Value) dataFlowGo();
                 if (rbArchive.IsChecked.Value) archiveGo();
                 if (rbRandom.IsChecked.Value) randomGo();
                 // run
-                dTimer.Start(); mapTimer.Start(); 
+                dTimer.Start();
             }
             else
             {
-                 dTimer.Stop(); mapTimer.Stop();
+                 dTimer.Stop(); 
             }
             grpDataSource.IsEnabled = !btnGo.Value;
-            traceLog.Enabled = btnGo.Value;
         }
 
         private void graphAccel_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -416,9 +321,6 @@ namespace Axel_show
         int stage = 0; double none = 0.0;
         private bool OnHubReceive(string message) // get data for Axel-hub
         {
-            if (message.Equals("pong")) traceLog.log(((swt.ElapsedTicks - pingTime)/10000.0).ToString("G5"));
-            return false;
-
             traceLog.log("in> " + message);
 	        if (!btnGo.Value) return false;
             if (stage != 0) traceLog.log(sw.ElapsedMilliseconds.ToString() + " > wait for st:0");
@@ -538,10 +440,6 @@ namespace Axel_show
             remoteTilt.OnReceive += new RemoteMessaging.ReceiveHandler(OnTiltReceive);
             remoteTilt.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnTiltActiveComm);
 
-            map.html = File.ReadAllText(Utils.configPath + "Trajectories.html");
-            string path = Utils.configPath.Replace("\\","/"); 
-            map.html = map.html.Replace("#path#", path);
-
             depth = (int)numNP.Range.Maximum;
             logger = new AutoFileLogger(); logger.defaultExt = ".log"; logger.Enabled = false;
             traceLog = new AutoFileLogger(); traceLog.defaultExt = ".trc"; traceLog.Enabled = false;
@@ -563,12 +461,6 @@ namespace Axel_show
             request2Reset = true;
         }
 
-        private void webBrowser_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            map.size.Y = webBrowser.ActualHeight - 1; map.size.X = webBrowser.ActualWidth - 1;
-            //mapSize.Y = gridMain.RowDefinitions[3].ActualHeight - 1; mapSize.X = gridMain.ActualWidth - 1; 
-        }
-
         private bool closingFlag = false;
         private void Axel_show_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -584,15 +476,11 @@ namespace Axel_show
             if(running) dTimer.Stop();
             dTimer.Interval = new TimeSpan(tick_time);
             if (running) dTimer.Start();
-            running = mapTimer.IsEnabled;
-            if (running) mapTimer.Stop();
-            mapTimer.Interval = new TimeSpan((int)(tick_time*Math.PI));
-            if (running) mapTimer.Start();
         }
 
         private void imgPeacock_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Show v1.4 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Show v2.0 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         private void cbRef_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -601,10 +489,57 @@ namespace Axel_show
             {
                 case 0: refIdx = 0;
                     break;
-                case 1: refIdx = 4;
+                case 1: refIdx = 1;
+                    break;
+                case 2: refIdx = 4;
                     break;
             }
             if (btnGo.Value) btnGo_Click(null, null);    
+        }
+
+        private void btnPlay_Click(object sender, RoutedEventArgs e)
+        {
+            mediaElement.Play();
+            bbtnPause.Value = false; 
+        }
+
+        private void bbtnPause_Click(object sender, RoutedEventArgs e)
+        {
+            bbtnPause.Value = !bbtnPause.Value;
+            if (bbtnPause.Value) mediaElement.Pause();
+            else mediaElement.Play();
+        }
+
+        private void btnStop_Click(object sender, RoutedEventArgs e)
+        {
+            mediaElement.Stop();
+        }
+
+        private void btnOpen_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.FileName = ""; // Default file name
+            //dlg.DefaultExt = "."; // Default file extension
+            dlg.Filter = "Any file|*.*"; // Filter files by extension
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true) mediaElement.Source = new Uri(dlg.FileName);
+            mediaElement.Clock = null;
+        }
+
+        private void chkShowTraj_Checked(object sender, RoutedEventArgs e)
+        {
+            if (chkShowTraj.IsChecked.Value)
+            {
+                rowTraj.Height = new GridLength(25, GridUnitType.Star); graphTraj.Visibility = System.Windows.Visibility.Visible;
+            }
+
+            else
+            {
+                rowTraj.Height = new GridLength(0, GridUnitType.Pixel); graphTraj.Visibility = System.Windows.Visibility.Collapsed;
+            }
+
         }
      }
 }

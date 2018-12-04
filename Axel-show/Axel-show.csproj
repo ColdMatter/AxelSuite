@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{06075EC0-E2BD-4D0A-B2F2-2A0FB91E764A}</ProjectGuid>
+    <ProjectGuid>{12637ADB-7CF9-4E17-95B7-DE42DF2A5FBC}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Axel_show</RootNamespace>

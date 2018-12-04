@@ -7,6 +7,7 @@ using System.Timers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using System.Diagnostics;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
@@ -36,6 +37,7 @@ namespace RemoteMessagingNS
         public string lastRcvMsg { get; private set; }
         public string lastSndMsg { get; private set; }
         public memLog Log;
+        protected Stopwatch stopwatch;
 
         public DispatcherTimer dTimer, sTimer;
         private int _autoCheckPeriod = 10; // sec
@@ -75,6 +77,8 @@ namespace RemoteMessagingNS
             sTimer = new DispatcherTimer(DispatcherPriority.Send);
             sTimer.Tick += new EventHandler(sTimer_Tick);
             sTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+
+            stopwatch = new Stopwatch();
         }
         private void ResetTimer()
         {
@@ -90,7 +94,38 @@ namespace RemoteMessagingNS
 
             // Forcing the CommandManager to raise the RequerySuggested event
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-         }
+        }
+
+        public double timeElapsed() // [s]
+        {
+            if (stopwatch.IsRunning) return stopwatch.ElapsedTicks / 10000000.0;
+            else return -1;
+        }
+
+        public bool clockSynchro(bool force = false) // if !force and stopwatch is running, go out
+                                                     // which means that the stopwatch has been started by the other side
+        {
+            if (!force && stopwatch.IsRunning) return true;
+            if (!sendCommand("ClockSynchro", 5)) throw new Exception("ClockSynchro has not been accepted");
+            Thread.Sleep(10);
+            try 
+            {
+                EventWaitHandle handle = new EventWaitHandle(
+                    false,                           /* Parameter ignored since handle already exists.*/
+                    EventResetMode.ManualReset,      /* Explained below. */
+                    "ClockSynchro"                   /* String defined in a shared assembly. */
+                    );
+                handle.Set();
+                stopwatch.Restart();
+                Console.WriteLine("Synchro stopwatches. "+DateTime.Now.ToLongTimeString());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("{0} Exception caught.", e);
+                return false;
+            }     
+            return true;
+        }
 
         public delegate bool ReceiveHandler(string msg);
         public event ReceiveHandler OnReceive;
@@ -124,13 +159,34 @@ namespace RemoteMessagingNS
                         ResetTimer();
                         switch (lastRcvMsg) 
                         {
-                        case("ping"):
+                            case("ping"):
                                 handled = sendCommand("pong");
                                 if (lastConnection != handled) OnActiveComm(handled, false); // fire only if the state has been changed
                                 lastConnection = handled; Connected = handled;
                                 break;
-                        case("pong"):
+                            case("pong"):
                                 handled = true;                               
+                                break;
+                            case("ClockSynchro"):
+                                try 
+                                {
+                                    EventWaitHandle handle = new EventWaitHandle(
+                                        false,                           /* nonsignaled state.*/
+                                        EventResetMode.ManualReset,      /* it has to be reset for reuse. */
+                                        "ClockSynchro"                   /* String defined in a shared assembly. */
+                                        );
+                                    if(!handle.WaitOne(2000)) stopwatch.Restart();
+                                    else UtilsNS.Utils.TimedMessageBox("Unsuccessful attempt to sdynchronize stopwatches!");
+                                    
+                                    Console.WriteLine("Synchro stopwatches. " + DateTime.Now.ToLongTimeString());
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine("{0} Exception caught.", e);
+                                    handled = false;
+                                    return hwnd;
+                                }     
+                                handled = true;
                                 break;
                         default:handled = OnReceive(lastRcvMsg); // the command systax is OK
                                 break;
@@ -239,9 +295,9 @@ namespace RemoteMessagingNS
             if (back)
             {
                 for (int i = 0; i < 200; i++)
-                {
-                    Thread.Sleep(10);
+                {                   
                     if (lastRcvMsg.Equals("pong")) break;
+                    Thread.Sleep(10);
                 }
             }
             back = back && (lastRcvMsg.Equals("pong"));
@@ -316,16 +372,16 @@ namespace RemoteMessagingNS
         }
         #endregion
     }
-    
+
     public class MMexec
     {
-        Random rnd = new Random(); 
+        Random rnd = new Random();
         public string mmexec { get; set; }
         public string sender { get; set; }
         public string cmd { get; set; }
         public int id { get; set; }
         public Dictionary<string, object> prms;
- 
+
         public MMexec(string Caption = "", string Sender = "", string Command = "", int ID = -1)
         {
             mmexec = Caption;
@@ -342,6 +398,14 @@ namespace RemoteMessagingNS
             cmd = "";
             id = -1;
             prms.Clear();
+        }
+        public void Assign(MMexec src)
+        {
+            mmexec = src.mmexec;
+            sender = src.sender;
+            cmd = src.cmd;
+            id = src.id;
+            prms = new Dictionary<string, object>(src.prms);
         }
         public MMexec Clone()
         {
@@ -364,21 +428,44 @@ namespace RemoteMessagingNS
         }
     }
 
-    public class MMscan
+    public class baseMMscan
     {
-        public string groupID;
-        public string sParam;
-        public double sFrom;
-        public double sTo;
-        public double sBy;
-        public double Value;
+        public string sParam { get; set; }
+        public double sFrom { get; set; }
+        public double sTo { get; set; }
+        public double sBy { get; set; }
+        public double Value { get; set; }
 
+        public string getAsString()
+        {
+            return sParam + "  \t" + sFrom.ToString("G6") + " .. " + sTo.ToString("G6") + "; " + sBy.ToString("G6");
+        }
+    }
+
+    public class MMscan : baseMMscan
+    {
+        public string groupID { get; set; }
+
+        public MMscan(string _groupID = "", string _sParam = "", double _sFrom = double.NaN, double _sTo = double.NaN, double _sBy = double.NaN, double _Value = double.NaN)
+        {
+            groupID = _groupID; sParam = _sParam; sFrom = _sFrom; sTo = _sTo; sBy = _sBy; Value = _Value;
+        }
         public bool Check()
         {
             if ((sFrom == sTo) || (sBy == 0) || (Math.Abs(sBy) > Math.Abs(sTo - sFrom))) return false;
             if ((sBy > 0) && (sFrom > sTo)) return false;
             if ((sBy < 0) && (sFrom < sTo)) return false;
             return true;
+        }
+
+        public bool isFirstValue()
+        {
+            return Math.Abs(sFrom - Value) < (0.01 * sBy);
+        }
+
+        public bool isLastValue()
+        {
+            return (Math.Abs(sTo - Value)) < (0.99 * sBy);
         }
 
         public MMscan NextInChain = null;
@@ -404,7 +491,7 @@ namespace RemoteMessagingNS
 
         public string AsString
         {
-            get { return sParam + "\t" + sFrom.ToString("G6") + " .. " + sTo.ToString("G6") + "; " + sBy.ToString("G6"); }
+            get { return getAsString(); }
             set
             {
                 if (value == null) return;
@@ -412,13 +499,21 @@ namespace RemoteMessagingNS
                 {
                     TestInit(); return;
                 }
-                string[] parts = value.Split('\t'); sParam = parts[0];
+                string[] parts = value.Split('\t'); sParam = parts[0].TrimEnd(' ');
                 string ss = parts[1]; int j = ss.IndexOf(".."); if (j == -1) return;
                 parts[0] = ss.Substring(0, j); parts[1] = ss.Substring(j + 2);
                 sFrom = Convert.ToDouble(parts[0]);
                 parts = parts[1].Split(';'); sTo = Convert.ToDouble(parts[0]);
                 sBy = Convert.ToDouble(parts[1]);
             }
+        }
+        public MMscan Clone()
+        {
+            return new MMscan(groupID, sParam, sFrom, sTo, sBy, Value);
+        }
+        public void Assign(MMscan src)
+        {
+            groupID = src.groupID; sParam = src.sParam; sFrom = src.sFrom; sTo = src.sTo; sBy = src.sBy; Value = src.Value;
         }
 
         public void TestInit()

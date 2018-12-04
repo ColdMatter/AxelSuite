@@ -50,7 +50,6 @@ namespace AxelChartNS
     {
         public DataStack(int depth = 1000): base() // -1 for Non-Stack mode
         {
-
             _stackMode = (depth>0);
             TimeSeriesMode = false;
             if (StackMode) Depth = depth;
@@ -59,7 +58,7 @@ namespace AxelChartNS
             logger = new AutoFileLogger(); 
             random = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
             Clear();
-            Thread.Sleep(1);
+            Thread.Sleep(1); 
         }
         private Random random;
         public string rem { get; set; }
@@ -80,11 +79,11 @@ namespace AxelChartNS
         public Stopwatch stopWatch;
 
         public delegate void RefreshHandler();
-        public event RefreshHandler DoRefresh;
+        public event RefreshHandler OnRefresh;
 
-        protected void OnRefresh()
+        protected void RefreshEvent()
         {
-            if (DoRefresh != null) DoRefresh();
+            if (OnRefresh != null) OnRefresh();
         }
 
         private bool _running; 
@@ -131,14 +130,14 @@ namespace AxelChartNS
             if (visualCounter >= visualCountLimit)
             {
                 visualCounter = 0;
-                OnRefresh();
+                RefreshEvent();
             }
         }
 
         public new int Add(Point pnt) 
         {
             base.Add(pnt); 
-            logger.log(logger.stw.Elapsed.TotalSeconds.ToString("F1")+"\t"+pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
+            logger.log((logger.stw.ElapsedMilliseconds/1000.0).ToString("F1")+"\t"+pnt.X.ToString("G6")+'\t'+pnt.Y.ToString("G5"));  
             OnAddPoint(1);
             return Count;
         }
@@ -194,6 +193,27 @@ namespace AxelChartNS
             return rslt;
         }
 
+        public DataStack TimePortion(double fromTime, double toTime)
+        {
+            DataStack rslt = new DataStack();
+            rslt.TimeSeriesMode = TimeSeriesMode;
+            rslt.Running = Running;
+            if (Count == 0) return rslt;
+
+            int ti0 = indexByX(fromTime); int ti1 = indexByX(toTime);
+            if (ti0 == -1 || ti1 == -1)
+            {
+                Console.WriteLine("Index problem in TimePortion "+fromTime.ToString("G5")+" / "+toTime.ToString("G5"));
+                return rslt;
+                //throw new Exception("Index problem in TimePortion");
+            }                  
+            for (int i = ti0; i <= ti1; i++)
+            {
+                if (Utils.InRange(i, 0, Count - 1)) rslt.Add(new Point(this[i].X, this[i].Y));
+            }
+            return rslt;
+        }
+
         public DataStack Portion(int lastNPoints, int backFrom = 0)
         {
             DataStack rslt = new DataStack(lastNPoints);           
@@ -207,6 +227,29 @@ namespace AxelChartNS
                 if(Utils.InRange(i,0,Count-1)) rslt.Add(new Point(this[i].X, this[i].Y));
             }                
             return rslt;
+        }
+
+        public double[,] ExportToArray() // first index - point data, second one -  X/Y index
+        {
+            double[,] da = new double[Count, 2];
+            for (int i = 0; i < Count; i++)
+            {
+                da[i,0] = this[i].X; da[i,1] = this[i].Y;
+            }
+            return da;
+        }
+
+        public bool ImportFromArray(double[,] da) // first index - point data, second one -  X/Y index
+        {
+            if (!da.GetLength(1).Equals(2)) throw new Exception("Wrong array size (1)");
+            int k = da.GetLength(0);
+            if (k < 2) throw new Exception("Wrong array size (0)");
+            Clear();
+            for (int i = 0; i < k; i++)
+            {
+                Add(new Point(da[i, 0],da[i, 1]));
+            }
+            return true;
         }
 
         public Point First
@@ -223,13 +266,14 @@ namespace AxelChartNS
             int idx = -1;
             if (Count == 0) return idx; 
             if (!Utils.InRange(X, First.X, Last.X)) return idx;
+            int j = 0;
             if (smart && (Last.X > First.X))// assuming equidistant and increasing seq.
             {
-                double prd = (Last.X - First.X) / Count;
-                int j = (int)Math.Round((X - First.X) / prd);
-                return Utils.EnsureRange(j, 0, Count - 1);   
+                double prd = (Last.X - First.X) / (Count-1);
+                j = (int)Math.Round((X - First.X) / prd);
+                if (j < 0) j = 0;
             }
-            for (int i = 0; i < Count; i++)
+            for (int i = j-2; i < Count; i++)
             {
                 if (this[i].X >= X)
                 {
@@ -460,11 +504,11 @@ namespace AxelChartNS
             tabSecPlots.SelectedIndex = 1;
             //
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
-            Waveform.DoRefresh += new DataStack.RefreshHandler(Refresh);
+            Waveform.OnRefresh += new DataStack.RefreshHandler(Refresh);
             
             Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
             MEMS2.TimeSeriesMode = Waveform.TimeSeriesMode;
-            resultStack = new DataStack(DataStack.maxDepth);
+            resultStack = new DataStack(1000); resultStack.visualCountLimit = -1;
             Refresh();
         }
 
@@ -485,7 +529,7 @@ namespace AxelChartNS
         }
 
         public DataStack MEMS2;
-        private DataStack resultStack;
+        public DataStack resultStack;
         public int GetStackDepth() { return (int)seStackDepth.Value; }
 
         public double convertV2mg(double V, bool M2 = false)
@@ -496,7 +540,10 @@ namespace AxelChartNS
 
         public void Clear() 
         {
-            Waveform.Clear(); MEMS2.Clear(); resultStack.Clear();
+            if(!Utils.isNull(Waveform)) Waveform.Clear(); 
+            if(!Utils.isNull(MEMS2)) MEMS2.Clear(); 
+            if(!Utils.isNull(resultStack)) resultStack.Clear();
+
             graphScroll.Data[0] = null; graphOverview.Data[0] = null; graphPower.Data[0] = null; graphHisto.Data[0] = null; graphHisto.Data[1] = null;
             lboxGaussFit.Items.Clear();
             grpData.Header = "Data";
@@ -506,29 +553,17 @@ namespace AxelChartNS
             chkWindowMode.IsChecked = false; chkVisWindow_Checked(null, null);
         }
 
-        private string _remoteArg  = String.Empty;
-        public string remoteArg
+        public void SetInfo(string info)
         {
-            get
-            {
-                return (string)GetValue(remoteArgProperty);
-            }
-            set
-            {
-                SetValue(remoteArgProperty, value);
-                Waveform.logger.header = value;
-                if (String.IsNullOrEmpty(value)) lbInfo.Content = "Info: ";
-                else lbInfo.Content = "Info: " + value;
-            }
+            Waveform.logger.header = info;
+            if (String.IsNullOrEmpty(info)) lbInfo.Content = "Info: ";
+            else lbInfo.Content = "Info: " + info;
         }
-        // Using a DependencyProperty as the backing store for remoteArg.  
-        public static readonly DependencyProperty remoteArgProperty
-            = DependencyProperty.Register(
-                  "remoteArg",
-                  typeof(string),
-                  typeof(AxelChartClass),
-                  new PropertyMetadata("")
-              );
+
+        public void SetWaveformDepth(int depth)
+        {
+            if(seStackDepth.Value < (depth*1.2)) seStackDepth.Value = (int)(depth*1.2);
+        }
 
         public double SamplingPeriod
         {
@@ -699,7 +734,7 @@ namespace AxelChartNS
             } 
             if (chkTblUpdate.IsChecked.Value && (tabSecPlots.SelectedIndex == 4)) // opts / stats
             {
-                double mn,mn2 = 0, dsp,dsp2; bool bb,bc = true;
+                double mn,mn2 = 0, dsp,dsp2 = 0; bool bb,bc = true;
                 //mn = Waveform.pointYs().Average(); dsp = Waveform.pointSDevY();
                 if (numTimeSlice.Value < 0) bb = Waveform.statsByIdx(Waveform.Count - 1001, Waveform.Count - 1, false, out mn, out dsp);
                 else bb = Waveform.statsByTime(double.NaN, numTimeSlice.Value / 1000, false, out mn, out dsp);
@@ -714,22 +749,31 @@ namespace AxelChartNS
                         DispatcherPriority.Background,
                         new Action(() =>
                         {
-                            lbMean.Items[0] = mn.ToString("G7"); lbStDev.Items[0] = dsp.ToString("G7"); // V
+                            ListBoxItem lbi;                            
                             double k = 1000;
-                            lbMean.Items[1] = (k * mn).ToString("G7"); lbStDev.Items[1] = (k * dsp).ToString("G7"); // mV
+                            lbi = (ListBoxItem)lbMean.Items[0]; lbi.Content = (k * mn).ToString("G7");
+                            lbi = (ListBoxItem)lbStDev.Items[0]; lbi.Content = (k * dsp).ToString("G7"); // mV
+
                             k = 1e6 / 6000.12;
-                            lbMean.Items[2] = (k * mn).ToString("G7"); lbStDev.Items[2] = (k * dsp).ToString("G7"); // uA
-                            lbMean.Items[3] = convertV2mg(mn).ToString("G7"); lbStDev.Items[3] = convertV2mg(dsp).ToString("G7"); // mg
-                            if (genOptions.MemsChannels == 2) resultStack.AddPoint(k * mn, k * mn2);
-                            else resultStack.AddPoint(k * mn, k * dsp);
-                            lbMean.Items[4] = "# " + resultStack.Count.ToString(); lbStDev.Items[4] = resultStack.pointSDev().X.ToString("G7");
+                            lbi = (ListBoxItem)lbMean.Items[1]; lbi.Content = (k * mn).ToString("G7");
+                            lbi = (ListBoxItem)lbStDev.Items[1]; lbi.Content = (k * dsp).ToString("G7"); // uA
+
+                            lbi = (ListBoxItem)lbMean.Items[2]; lbi.Content = convertV2mg(mn).ToString("G7");
+                            lbi = (ListBoxItem)lbStDev.Items[2]; lbi.Content = convertV2mg(dsp).ToString("G7"); // mg
+
+                            resultStack.AddPoint(convertV2mg(mn)); 
+                            lbi = (ListBoxItem)lbMean.Items[3]; lbi.Content = "# " + resultStack.Count.ToString();
+                            lbi = (ListBoxItem)lbStDev.Items[3]; lbi.Content = (Waveform.stopWatch.ElapsedMilliseconds / 1000.0).ToString("G5"); //resultStack.pointSDev().Y.ToString("G7"); // # and StDev
+                            
                             if (genOptions.MemsChannels == 2)
                             {
-                                lbMean.Items[5] = convertV2mg(mn2,true).ToString("G7"); lbStDev.Items[5] = convertV2mg(dsp,true).ToString("G7"); // mg2
+                                lbi = (ListBoxItem)lbMean.Items[4]; lbi.Content = convertV2mg(mn2, true).ToString("G7");
+                                lbi = (ListBoxItem)lbStDev.Items[4]; lbi.Content = convertV2mg(dsp2, true).ToString("G7"); // mg2
                             }
                             else
                             {
-                                lbMean.Items[5] = "NaN"; lbStDev.Items[5] = "NaN"; // mg2
+                                lbi = (ListBoxItem)lbMean.Items[4]; lbi.Content = "NaN"; 
+                                lbi = (ListBoxItem)lbStDev.Items[4]; lbi.Content = "NaN"; // mg2
                             }
                             numTimeSlice.Background = Brushes.White;
                         }));
@@ -741,7 +785,7 @@ namespace AxelChartNS
                 lbErrorStatus.Content = "Error status: "+Waveform.lastError;    
             }
             if (!chkChartUpdate.IsChecked.Value) return;
-            //Console.WriteLine("refresh at " + Waveform.stopWatch.Elapsed.Seconds.ToString());
+            //Console.WriteLine("refresh at " + (Waveform.stopWatch.ElapsedMillseconds/1000.0).ToString());
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
 
             Mouse.OverrideCursor = Cursors.Wait;
@@ -893,12 +937,12 @@ namespace AxelChartNS
             string ext = System.IO.Path.GetExtension(fn);
             //if (ext.Equals(".abf") || ext.Equals(".ahf"))
             {
-                remoteArg = "";
+                
                 foreach (string line in File.ReadLines(fn))
                 {
                     if (line.Contains("#{"))
                     {
-                        remoteArg = line.Substring(1);                    
+                        SetInfo(line.Substring(1));                    
                     }
                     if (line.Contains("#Rem="))
                     {
@@ -907,13 +951,14 @@ namespace AxelChartNS
                 }
                 if (!Waveform.OpenPair(fn, ref grpData, genModes.RollMean)) Utils.TimedMessageBox("Some data might be missing");
                 grpData.Header = "Data pnts: " + Waveform.Count.ToString();
-                if (String.IsNullOrEmpty(remoteArg))
+                string info = (string)lbInfo.Content; info = info.Replace("Info: ", "");
+                if (String.IsNullOrEmpty(info))
                 {
                     SamplingPeriod = (Waveform.Last.X - Waveform.First.X) / Waveform.Count;
                 }
                 else
                 {
-                    Dictionary<string, object> remotePrms = JsonConvert.DeserializeObject<Dictionary<string, object>>(remoteArg);
+                    Dictionary<string, object> remotePrms = JsonConvert.DeserializeObject<Dictionary<string, object>>(info);
                     SamplingPeriod = (double)remotePrms["SamplingPeriod"];
                 }
                 Waveform.TimeSeriesMode = !(Utils.InRange(SamplingPeriod, 0.99, 1.01));  // sampling with 1 Hz is reserved for 

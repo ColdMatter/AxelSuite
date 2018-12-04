@@ -53,11 +53,16 @@ namespace Axel_hub
     {        
         Modes modes;
         scanClass ucScan1;
+
         private int nSamples = 1500;
         const bool debugMode = true;
 
         private AxelMems axelMems = null;
         private bool jumboADCFlag = true;
+        List<Point> quantList = new List<Point>();
+        ShotList shotList; // arch - on
+        List<string> errList = new List<string>();
+
         Random rnd = new Random();
         private const int dataLength = 10000;
         DataStack stackN1 = new DataStack(10000);
@@ -96,8 +101,8 @@ namespace Axel_hub
             AxelChart1.Waveform.TimeSeriesMode = false;
 
             axelMems = new AxelMems();
-            axelMems.Acquire += new AxelMems.AcquireHandler(DoAcquire);
-            axelMems.RealSampling += new AxelMems.RealSamplingHandler(ucScan1.OnRealSampling);
+            axelMems.OnAcquire += new AxelMems.AcquireHandler(DoAcquire);
+            axelMems.OnRealSampling += new AxelMems.RealSamplingHandler(ucScan1.OnRealSampling);
 
             iStack = new List<double>(); dStack = new List<double>();
             Options = new OptionsWindow();
@@ -207,10 +212,13 @@ namespace Axel_hub
             AxelChart1.Clear();
             AxelChart1.Waveform.StackMode = true; AxelChart1.MEMS2.StackMode = true;          
             nSamples = InnerBufferSize;
+            AxelChart1.SetWaveformDepth(InnerBufferSize);
             AxelChart1.SamplingPeriod = 1/axelMems.RealConvRate(1/period);
-            AxelChart1.Running = true; AxelChart1.MEMS2.Depth = AxelChart1.Waveform.Depth;
+            AxelChart1.Running = true; AxelChart1.Waveform.visualCountLimit = nSamples;
+            AxelChart1.MEMS2.Depth = AxelChart1.Waveform.Depth;
            
-            AxelChart1.remoteArg = "freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString();
+            AxelChart1.SetInfo("freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString());
+
             AxelChart1.Waveform.logger.Enabled = false;
 
             if (AxelChart1.Waveform.TimeSeriesMode) axelMems.TimingMode = AxelMems.TimingModes.byStopwatch;
@@ -349,21 +357,78 @@ namespace Axel_hub
             log("Jumbo succession is RUNNING !", Brushes.Green.Color);
         }
 
+        public bool CombineQuantMems(List<Point> dt, double dur = 0.005) // dly - time delay of mems start ref to quant, dur - duration / save +/- dur (3*dur in total) 
+        {
+            if (dt.Count.Equals(0) || quantList.Count.Equals(0) || !shotList.enabled) return false;
+            List<Point> ds; 
+            for (int i = 0; i < quantList.Count; i++)
+            {
+                if(quantList[i].X < 0) continue;       
+                double w0 = quantList[i].X - dur; double w1 = quantList[i].X + 2*dur; // window of interest
+                if (w0 > w1)
+                {
+                    errList.Add("limits: " + quantList[i].X.ToString()); continue;
+                }
+                if (w0 < dt[0].X) // the window starts before the begining of the buffer, hence go to the Waveform
+                {
+                    ds = AxelChart1.Waveform.TimePortion(w0, w1);
+                    if (ds.Count > 0)
+                        shotList.Add(new SingleShot(quantList[i], ds)); // if empty skip that quantList point
+                    else errList.Add("wf: " + quantList[i].X.ToString());
+                    quantList[i] = new Point(-1, quantList[i].Y); // mark as processed (good or bad)
+                    continue;
+                }
+                //quantList[i] = new Point(-quantList[i].X, quantList[i].Y); // mark as processed !!!
+                //continue;
+                if ((dt[0].X < w0) && (w1 < dt[dt.Count - 1].X)) // the window is well within the buffer
+                {
+                    SingleShot ss = new SingleShot(quantList[i], dt);
+                    ds = ss.memsPortion(new Range<double>(w0,w1));                  
+                    if (ds.Count > 0)
+                    {
+                        // fake quant point for testing
+                        List<Point> dm = ss.memsPortion(new Range<double>(w0 + dur, w1 - dur));
+                        double sum = 0;
+                        foreach(Point pnt in dm) sum += pnt.Y;
+                        Point q = new Point(quantList[i].X, sum/ds.Count);
+
+                        shotList.Add(new SingleShot(q,ds)); // if empty skip that quantList point
+                        quantList[i] = new Point(-quantList[i].X, quantList[i].Y); // mark as processed if good
+                    }
+                    else errList.Add("buff: " + quantList[i].X.ToString());
+                }               
+            }
+            for (int i = quantList.Count-1; i > 0; i--)
+               if (quantList[i].X < 0) quantList.RemoveAt(i); // remove processed points
+            // if any points left in quantList they will go for the next turn
+            lbInfoAccelTrend.Content = "Info: shots # " + shotList.Count.ToString();
+            return true;
+        }
+
         public void DoAcquire(List<Point> dt, out bool next)
         {
-            next = ucScan1.EndlessMode() && AxelChart1.Running && (ucScan1.Running || (ucScan1.remoteMode == RemoteMode.Simple_Repeat));
-            if (axelMems.activeChannel == 2) 
-            {            
-                for (int i = 0; i<dt.Count; i++) 
+            next = ucScan1.EndlessMode() && AxelChart1.Running &&
+                (ucScan1.Running || (ucScan1.remoteMode == RemoteMode.Simple_Repeat) || (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat));
+            List<Point> ds = new List<Point>(dt); List<Point> ds2 = new List<Point>();
+            if (axelMems.activeChannel == 2)
+            {
+                ds.Clear();
+                for (int i = 0; i < dt.Count; i++)
                 {
-                    if((i%2) == 0) AxelChart1.Waveform.Add(dt[i]); // channel 0
-                    else AxelChart1.MEMS2.Add(dt[i]); // channel 1
+                    if ((i % 2) == 0) ds.Add(dt[i]);  // channel 0
+                    else ds2.Add(dt[i]); // channel 1
                 }
+                AxelChart1.Waveform.AddRange(ds); 
+                AxelChart1.MEMS2.AddRange(ds2);
             }
-            else AxelChart1.Waveform.AddRange(dt);
+            else
+            {
+                AxelChart1.Waveform.AddRange(ds);                
+            }
+            if (jumboADCFlag && chkMemsEnabled.IsChecked.Value && chkJoinLog.IsChecked.Value) // && ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                CombineQuantMems(ds, numMems2SignalLen.Value/1000.0);
             //log("ADC>> "+DateTime.Now.ToString("HH:mm:ss"));
-
-            AxelChart1.Refresh();
+            
             if (!next)
             {
                 AxelChart1.Running = false;
@@ -464,7 +529,7 @@ namespace Axel_hub
                         if (Utils.isNull(accelMg)) accelMg = new DataStack(1000);
 
                         Clear(chkMemsEnabled.IsChecked.Value, true, true);
-                        logger.Enabled = false; logger.AutoSaveFileName = ""; logger.Enabled = chkLogFile.IsChecked.Value;
+                        logger.Enabled = false; logger.AutoSaveFileName = ""; logger.Enabled = chkSignalLog.IsChecked.Value;
                         logger.log("# "+JsonConvert.SerializeObject(lastGrpExe));
                         logger.log("# XAxis\tN1\tN2\tRN1\tRN2\tNTot\tB2\tBtot");
                         if (scanMode) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
@@ -713,7 +778,8 @@ namespace Axel_hub
                                 statDt["PhiRad"] = phaseRad - numPhi0.Value; 
                             }
                         }
-                        double xVl = runID; Dictionary<string, double> measr = new Dictionary<string, double>(); 
+                        double xVl = runID; 
+                        Dictionary<string, double> measr = new Dictionary<string, double>(); 
                         Dictionary<string, double> rslt = new Dictionary<string, double>();
                         // the MEMS bit in RemoteMode.xxx_Repeat mode
                         if (AxelChart1.Running && chkMemsEnabled.IsChecked.Value && jumboADCFlag)
@@ -730,7 +796,9 @@ namespace Axel_hub
                                     measr["MEMS"] = Convert.ToDouble(mme.prms["MEMS"]);
                                 }
                                 else measr = nextMeasure(phaseRad);
+
                                 rslt = Statistics(measr);
+                                if (rslt.ContainsKey("PhiMg") && rslt.ContainsKey("qTime")) quantList.Add(new Point(rslt["qTime"], rslt["PhiMg"]));
                                 //if (remoteShow.Connected) export2Show(rslt);
                             }
                             if (rslt.ContainsKey("Accel")) log_out += "accel= " + rslt["Accel"].ToString(Options.genOptions.SignalTablePrec);
@@ -1148,26 +1216,26 @@ namespace Axel_hub
                 if (!Utils.isNull(stackRN1)) stackRN1.Clear();
                 if (!Utils.isNull(stackRN2)) stackRN2.Clear();
                 if (!Utils.isNull(stackNtot)) stackNtot.Clear();
-                for (int i = 0; i < graphNs.Data.Count; i++ ) graphNs.Data[i] = null;
+                //for (int i = 0; i < graphNs.Data.Count; i++ ) graphNs.Data[i] = null;
                 NsYmin = 10; NsYmax = -10;
 
                 if (!Utils.isNull(signalDataStack)) signalDataStack.Clear();
                 if (!Utils.isNull(backgroundDataStack)) backgroundDataStack.Clear();
-                for (int i = 0; i < graphSignal.Data.Count; i++) graphSignal.Data[i] = null;
+                //for (int i = 0; i < graphSignal.Data.Count; i++) graphSignal.Data[i] = null;
                 signalYmin = 10; signalYmax = -10;
                 lboxNB.Items.Clear();
             }
             if (Bottom)
             {
                 if (!Utils.isNull(srsFringes)) srsFringes.Clear();
-                for (int i = 0; i < graphFringes.Data.Count; i++) graphFringes.Data[i] = null;
+                //for (int i = 0; i < graphFringes.Data.Count; i++) graphFringes.Data[i] = null;
  
                 if (!Utils.isNull(srsMotAccel)) srsMotAccel.Clear();
                 if (!Utils.isNull(srsCorr)) srsCorr.Clear();
                 if (!Utils.isNull(srsMems)) srsMems.Clear();
                 if (!Utils.isNull(srsAccel)) srsAccel.Clear();
-                for (int i = 0; i < graphAccelTrend.Data.Count; i++) graphAccelTrend.Data[i] = null;
-                graphAccelTrend.Data.Clear();
+                //for (int i = 0; i < graphAccelTrend.Data.Count; i++) graphAccelTrend.Data[i] = null;
+                //graphAccelTrend.Data.Clear();
                 fringesYmin = 10; fringesYmax = -10; accelYmin = 10; accelYmax = -10;
             }
         }
@@ -1285,9 +1353,9 @@ namespace Axel_hub
                 chkRN2.IsChecked = modes.RN2;
                 chkNtot.IsChecked = modes.Ntot;
 
-                chkBigCalcUpdate.IsChecked = modes.RsltUpdating;
-                chkDetail.IsChecked = modes.RsltDetails;
-                chkLogFile.IsChecked = modes.SignalLogFile;
+                chkBigCalcUpdate.IsChecked = modes.RsltTblUpdate;
+                chkJoinLog.IsChecked = modes.JoinLog;
+                chkSignalLog.IsChecked = modes.SignalLog;
             }
             if (Bottom)
             {
@@ -1297,8 +1365,8 @@ namespace Axel_hub
                 numCycles.Value = modes.JumboCycles;
 
                 chkMemsEnabled.IsChecked = modes.MemsEnabled;
-                numMemsStart.Value = modes.MemsStart;
-                numMemsLen.Value = modes.MemsLen;
+                numMems2SignalDelay.Value = modes.Mems2SignDelay;
+                numMems2SignalLen.Value = modes.Mems2SignLen;
 
                 numKcoeff.Value = modes.Kcoeff;
                 numPhi0.Value = modes.phi0;
@@ -1328,9 +1396,9 @@ namespace Axel_hub
                 modes.RN2 = chkRN2.IsChecked.Value;
                 modes.Ntot = chkNtot.IsChecked.Value;
 
-                modes.RsltUpdating = chkBigCalcUpdate.IsChecked.Value;
-                modes.RsltDetails = chkDetail.IsChecked.Value;
-                modes.SignalLogFile = chkLogFile.IsChecked.Value; 
+                modes.RsltTblUpdate = chkBigCalcUpdate.IsChecked.Value;
+                modes.JoinLog = chkJoinLog.IsChecked.Value;
+                modes.SignalLog = chkSignalLog.IsChecked.Value; 
             }
             if (Bottom)
             {
@@ -1340,8 +1408,8 @@ namespace Axel_hub
                 modes.JumboCycles = (int)numCycles.Value;
 
                 modes.MemsEnabled = chkMemsEnabled.IsChecked.Value;
-                modes.MemsStart = numMemsStart.Value;
-                modes.MemsLen = numMemsLen.Value;
+                modes.Mems2SignDelay = numMems2SignalDelay.Value;
+                modes.Mems2SignLen = numMems2SignalLen.Value;
 
                 modes.Kcoeff = numKcoeff.Value;
                 modes.phi0 = numPhi0.Value;
@@ -1360,6 +1428,7 @@ namespace Axel_hub
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             logger.Enabled = false;
+            axelMems.StopAqcuisition(); Thread.Sleep(200);
             ucScan1.UpdateModes();
             //visuals
             if (Options.genOptions.saveVisuals)
@@ -1568,5 +1637,178 @@ namespace Axel_hub
             Nullable<bool> result = dlg.ShowDialog();
             if (result == true) SaveTrend(dlg.FileName);
         }
+
+       /*     //File.WriteAllText(@"E:\Temp\temp.json", JsonConvert.SerializeObject(AxelChart1.Waveform.ToArray()));
+            ShotList sl = new ShotList(); AxelChart1.Waveform.fillSamples(100);
+            Stopwatch sw = new Stopwatch(); sw.Start();
+            for (int i = 0; i < 100; i++)
+            {
+                SingleShot ss = new SingleShot(i, i+1);                
+                ss.mems = AxelChart1.Waveform.Clone();
+                sl.Add(ss);
+            }
+            sl.CloseWriter();
+            long wr = sw.ElapsedMilliseconds; log("write -> "+wr.ToString());
+            Thread.Sleep(1000);
+            ShotList sm = new ShotList(true, sl.filename);
+            //ShotList sn = new ShotList();
+            bool next = true; sm.ResetScan();
+            while (next)
+            {
+                sm.archyScan(out next);
+            }
+            //sn.CloseWriter();         
+            log("read -> " + (sw.ElapsedMilliseconds - 1000 - wr).ToString());
+            // s100:p100; write -> 1303; (13ms per shot) read -> 47
+        */
+        private void ddTimer_Tick(object sender, EventArgs e)
+        {
+            quantList.Add(new Point(AxelChart1.Waveform.stopWatch.ElapsedMilliseconds / 1000.0, 5));
+        }
+
+        private void setConditions(ref Dictionary<string,double> dc)
+        {
+            dc.Clear();
+            dc["sampling"] = Utils.formatDouble(1/ucScan1.GetSamplingPeriod(), "G5");
+            dc["K"] = numKcoeff.Value;
+            dc["phi0"] = numPhi0.Value;
+            dc["scale"] = numScale.Value;
+        }
+
+        DispatcherTimer ddTimer;
+        private void btnTestSpeed_Click(object sender, RoutedEventArgs e)
+        {
+            btnTestSpeed.Value = !btnTestSpeed.Value;
+            if (!AxelChart1.Waveform.stopWatch.IsRunning && btnTestSpeed.Value)
+            {
+                Utils.TimedMessageBox("Waveform Stopwatch is NOT running.");
+                btnTestSpeed.Value = false;
+                return;
+            }            
+            if (btnTestSpeed.Value)
+            {            
+                quantList.Clear();
+                if (Utils.isNull(ddTimer))
+                {
+                    ddTimer = new DispatcherTimer();
+                    ddTimer.Tick += new EventHandler(ddTimer_Tick);
+                    ddTimer.Interval = new TimeSpan(500*10000);                    
+                }
+                errList.Clear();
+                shotList = new ShotList(chkJoinLog.IsChecked.Value); 
+                setConditions(ref shotList.conditions);
+                ddTimer.Start();               
+            }
+            else
+            {
+                ddTimer.Stop();
+                if (errList.Count > 0)
+                {
+                    Utils.writeList(errList, Utils.dataPath + "errors.jlg");
+                    Utils.TimedMessageBox("Some errors, check <errors.jlg> file");
+                }
+            }
+            shotList.enabled = btnTestSpeed.Value;
+        }
+
+        private void btnOpenJLog_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.FileName = ""; // Default file name
+            dlg.DefaultExt = ".jlg"; // Default file extension
+            dlg.Filter = "Join Log File (.jlg)|*.jlg"; // Filter files by extension
+
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true)
+            {
+                lbJoinLogInfo.Content = "File: "+dlg.FileName;
+                shotList = new ShotList(true, dlg.FileName);
+            }
+            btnJDlyScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
+        }
+
+        DataStack srsMdiffQ = new DataStack();
+        private void btnJDlyScan_Click(object sender, RoutedEventArgs e)
+        {
+            if (Utils.isNull(shotList)) return;
+            btnJDlyScan.Value = !btnJDlyScan.Value;
+            if (!btnJDlyScan.Value) return;
+            if (shotList.savingMode || shotList.filename.Equals("")) throw new Exception("problem with shotList");
+            tabLowPlots.SelectedIndex = 1;
+            int depth = 100000;
+            if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(depth);
+            if (Utils.isNull(srsCorr)) srsCorr = new DataStack(depth);
+            if (Utils.isNull(srsMems)) srsMems = new DataStack(depth);
+            if (Utils.isNull(srsAccel)) srsAccel = new DataStack(depth);
+
+            srsMdiffQ.Clear(); double xMin = 1E6, xMax = -1e6;
+            double wd = numJFrom.Value/1000.0;
+            SingleShot ss; bool next; int j;
+            shotList.ResetScan();
+            if (!shotList.conditions.Count.Equals(0))
+            {
+                log(">> processing conditions:", Brushes.DarkSlateGray.Color);
+                foreach (KeyValuePair<string, double> pair in shotList.conditions)
+                {
+                    log(pair.Key+" = "+pair.Value, Brushes.Teal.Color);
+                }
+            }
+            shotList.ResetScan(); if (!shotList.archiveMode) log("The file is loaded in memory -> " + shotList.FileCount.ToString() + " shots.", Brushes.DarkSlateGray.Color);
+            while ((wd <= (numJTo.Value / 1000.0)) && btnJDlyScan.Value)
+            {
+                srsMotAccel.Clear(); srsCorr.Clear(); srsMems.Clear(); srsAccel.Clear();
+                shotList.ResetScan(); j = 0; 
+                do
+                {
+                    ss = shotList.archyScan(out next); if (!next) break;
+                    srsMotAccel.Add(ss.quant); xMin = Math.Min(xMin, ss.quant.X); xMax = Math.Max(xMax, ss.quant.X);
+                    double m = ss.memsWeightAccel(wd, numMems2SignalLen.Value/1000.0, true);
+
+                    srsMems.AddPoint(m, ss.quant.X + wd);
+                    srsCorr.AddPoint((m - ss.quant.Y) * (m - ss.quant.Y), ss.quant.X);
+                    if (chkChartEachIter.IsChecked.Value)
+                    {
+                        graphAccelTrend.Data[0] = srsMems; graphAccelTrend.Data[1] = srsCorr; 
+                        graphAccelTrend.Data[2] = srsMotAccel; graphAccelTrend.Data[3] = srsAccel;
+                    }                   
+                    DoEvents();
+                    j++;
+                } while ((numJNPnts.Value.Equals(-1) || (j < numJNPnts.Value)) && btnJDlyScan.Value);
+                lbInfoAccelTrend.Content = "Info: shot # " + j.ToString();
+                if (btnJDlyScan.Value)
+                {
+                    if (chkChartEachIter.IsChecked.Value)
+                    {
+                        double d = 0.02 * (xMax - xMin);
+                        accelXaxis.Adjuster = RangeAdjuster.None; 
+                        accelXaxis.Range = new Range<double>(xMin-d, xMax+d);
+                    }
+                    srsMdiffQ.AddPoint(srsCorr.pointYs().Average(), wd*1000.0);
+                    graphJoinOptim.Data[0] = srsMdiffQ;
+                }
+                lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Delay = " + (wd * 1000.0).ToString("G4");
+                DoEvents();
+                wd += numJBy.Value / 1000.0;
+            }
+            accelXaxis.Adjuster = RangeAdjuster.FitLoosely;
+            btnJDlyScan.Value = false;
+            double xm = 0; double ym = 1e6;
+            foreach (Point pnt in srsMdiffQ)
+            {
+                if (pnt.Y < ym)
+                {
+                    xm = pnt.X; ym = pnt.Y;
+                }
+            }
+            lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Minimum at "+xm.ToString("G5")+" / "+ ym.ToString("G5");
+            lbInfoAccelTrend.Content = "Info:";
+        }
+
+        private void btnSaveJoin_Click(object sender, RoutedEventArgs e)
+        {
+            if(Utils.isNull(shotList)) throw new Exception("No ShotList to be saved");
+            if (shotList.Count.Equals(0)) throw new Exception("No ShotList data to be saved");
+            shotList.Save();
+        }       
      } 
 }

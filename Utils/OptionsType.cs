@@ -79,9 +79,9 @@ namespace OptionsTypeNS
         public bool RN1 { get; set; }
         public bool RN2 { get; set; }
         public bool Ntot { get; set; }
-        public bool RsltUpdating { get; set; }
-        public bool RsltDetails { get; set; }
-        public bool SignalLogFile { get; set; }
+        public bool RsltTblUpdate { get; set; }
+        public bool JoinLog { get; set; }
+        public bool SignalLog { get; set; }
 
 
         // Bottom
@@ -91,8 +91,8 @@ namespace OptionsTypeNS
         public int JumboCycles { get; set; }
 
         public bool MemsEnabled { get; set; }
-        public double MemsStart { get; set; }
-        public double MemsLen { get; set; }
+        public double Mems2SignDelay { get; set; }
+        public double Mems2SignLen { get; set; }
         public double Kcoeff { get; set; }
         public double phi0 { get; set; }
         public double scale { get; set; }
