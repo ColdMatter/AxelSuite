@@ -59,6 +59,16 @@ namespace AxelHMemsNS
             Reset();
         }
 
+        public void StartStopwatch()
+        {
+            if (Utils.isNull(sw)) sw = new Stopwatch();
+            sw.Restart();
+        }
+        public void SetStopwatch(Stopwatch ext_sw)
+        {
+            if(!Utils.isNull(ext_sw)) sw = ext_sw;
+        }
+
         public double TimeElapsed() // [sec]
         {
             if(!sw.IsRunning) return double.NaN;
@@ -138,7 +148,7 @@ namespace AxelHMemsNS
 
             runningTask = null;
             if (!Utils.isNull(myTask)) myTask.Dispose();
-            if (sw.IsRunning) sw.Reset();
+            //if (sw.IsRunning) sw.Reset();
 
             if (Utils.InRange(activeChannel, 0, 2))
             {
@@ -204,12 +214,12 @@ namespace AxelHMemsNS
                 }
                 nSamples = samplesPerChannel;
                 sampleRate = RealConvRate(samplingRate);
-                if (!sw.IsRunning)
-                {
-                    sw.Start(); // first time
-                    lastTime = 0.0;
-                    lastCount = 0;
-                }
+ 
+                // sw must be started manually from StartTime
+                if (!sw.IsRunning) throw new Exception("The stopwatch has not been started");
+                lastTime = 0.0;
+                lastCount = 0;
+                
                 _running = true;
                 analogInReader.BeginReadWaveform(samplesPerChannel, analogCallback, myTask);
             }

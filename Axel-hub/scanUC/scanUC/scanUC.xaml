@@ -14,7 +14,7 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ni:BooleanContentButton x:Name="bbtnStart" Grid.Row="1"  Content="Start" HorizontalAlignment="Right" Height="38" Margin="0,3,15,0" VerticalAlignment="Top" Width="139" FontSize="15" Click="bbtnStart_Click" Background="#FFFFFDFD" FalseBrush="#FFECEAEA" BorderThickness="10,8"/>
+        <ni:BooleanContentButton x:Name="bbtnStart" Grid.Row="1"  Content="Start" HorizontalAlignment="Right" Height="38" Margin="0,3,15,0" VerticalAlignment="Top" Width="139" FontSize="15" Click="bbtnStart_Click" Background="#FFFFFDFD" FalseBrush="#FFD8F3F3" BorderThickness="10,8"/>
         <GroupBox x:Name="groupDigit" Grid.Row="2" Header=" Sampling rate " Height="59" Margin="0,0.429,6,0" VerticalAlignment="Top" Grid.RowSpan="2">
             <StackPanel HorizontalAlignment="Center" Height="28" Width="216" Margin="2,10,6,0" VerticalAlignment="Top" Orientation="Horizontal">
                 <ComboBox x:Name="cbSamplingMode" HorizontalAlignment="Left" Height="23" VerticalAlignment="Top" Width="116" SelectedIndex="0">

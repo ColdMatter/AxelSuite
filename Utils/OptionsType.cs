@@ -80,6 +80,7 @@ namespace OptionsTypeNS
         public bool RN2 { get; set; }
         public bool Ntot { get; set; }
         public bool RsltTblUpdate { get; set; }
+        public bool RsltChrtUpdate { get; set; }
         public bool JoinLog { get; set; }
         public bool SignalLog { get; set; }
 

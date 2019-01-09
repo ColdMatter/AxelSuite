@@ -553,11 +553,10 @@ namespace AxelChartNS
             chkWindowMode.IsChecked = false; chkVisWindow_Checked(null, null);
         }
 
-        public void SetInfo(string info)
+        public void SetInfo(string info = "")
         {
             Waveform.logger.header = info;
-            if (String.IsNullOrEmpty(info)) lbInfo.Content = "Info: ";
-            else lbInfo.Content = "Info: " + info;
+            lbInfo.Content = "Info: " + info;
         }
 
         public void SetWaveformDepth(int depth)
@@ -646,6 +645,7 @@ namespace AxelChartNS
                     Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
                     Waveform.visualCountLimit = (int)seStackDepth.Value;
                     Waveform.Depth = (int)seStackDepth.Value;
+
                 }
                 else
                 {

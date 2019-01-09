@@ -49,8 +49,8 @@ namespace Axel_hub
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow: Window
-    {        
+    public partial class MainWindow : Window
+    {
         Modes modes;
         scanClass ucScan1;
 
@@ -74,14 +74,14 @@ namespace Axel_hub
         DataStack stackN2_std = new DataStack(10000);
         DataStack stackN2_int = new DataStack(10000);
         DataStack phiMg = new DataStack(1000);
-        DataStack accelMg = new DataStack(1000); 
+        DataStack accelMg = new DataStack(1000);
         private List<Point> _fringePoints = new List<Point>();
         private AutoFileLogger logger = new AutoFileLogger();
         private List<Point> timeStack = new List<Point>(); // x - time[s]; y - phi[rad]
 
         RemoteMessaging remoteShow;
 
-        OptionsWindow Options; 
+        OptionsWindow Options;
 
         public MainWindow()
         {
@@ -92,12 +92,12 @@ namespace Axel_hub
             ucScan1 = new scanClass();
             gridLeft.Children.Add(ucScan1);
             ucScan1.Height = 266;
-            ucScan1.VerticalAlignment = System.Windows.VerticalAlignment.Top; ucScan1.HorizontalAlignment = System.Windows.HorizontalAlignment.Left; 
+            ucScan1.VerticalAlignment = System.Windows.VerticalAlignment.Top; ucScan1.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
 
             ucScan1.OnStart += new scanClass.StartHandler(DoStart);
             ucScan1.OnRemote += new scanClass.RemoteHandler(DoRemote);
             ucScan1.OnLog += new scanClass.LogHandler(log);
-            
+
             AxelChart1.Waveform.TimeSeriesMode = false;
 
             axelMems = new AxelMems();
@@ -109,10 +109,11 @@ namespace Axel_hub
             AxelChart1.InitOptions(ref Options.genOptions, ref modes);
             ucScan1.InitOptions(ref Options.genOptions, ref modes);
 
+
             showLogger = new AutoFileLogger(); showLogger.defaultExt = ".shw";
 
             if (false)//(System.Windows.Forms.SystemInformation.MonitorCount > 1) // secondary monitor
-            {           
+            {
                 WindowStartupLocation = WindowStartupLocation.Manual;
 
                 System.Drawing.Rectangle workingArea = System.Windows.Forms.Screen.AllScreens[1].WorkingArea;
@@ -123,7 +124,7 @@ namespace Axel_hub
                 WindowState = WindowState.Maximized;
                 WindowStyle = WindowStyle.None;
                 Topmost = true;
-                
+
                 Loaded += Window_Loaded;
                 Show();
             }
@@ -138,6 +139,15 @@ namespace Axel_hub
             rowMiddleChart.Height = new GridLength(modes.MiddleFrame * modes.Height);
         }
 
+        private bool probeMode 
+        {
+            get 
+            { 
+                if (Utils.isNull(ucScan1.remote)) return false;
+                return ucScan1.remote.partner.Equals("Axel Probe") && ucScan1.remote.Connected;
+            }          
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Maximized;
@@ -147,29 +157,29 @@ namespace Axel_hub
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
-            if ((chkVerbatim.IsChecked.Value) || (txt.Length<81)) printOut = txt;
-            else printOut = txt.Substring(0,80)+"..."; //
-            
+            if ((chkVerbatim.IsChecked.Value) || (txt.Length < 81)) printOut = txt;
+            else printOut = txt.Substring(0, 80) + "..."; //
+
             Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
             Application.Current.Dispatcher.BeginInvoke(
               DispatcherPriority.Background,
-              new Action(() => 
+              new Action(() =>
               {
-                TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentStart, tbLog.Document.ContentEnd);
-                string tx = rangeOfText1.Text;
-                int len = tx.Length; int maxLen = 10000; // the number of chars kept
-                if (len > (2 * maxLen)) // when it exceeds twice the maxLen
-                {
-                    tx = tx.Substring(maxLen);
-                    var paragraph = new Paragraph();
-                    paragraph.Inlines.Add(new Run(tx));
-                    tbLog.Document.Blocks.Clear();
-                    tbLog.Document.Blocks.Add(paragraph);
-                }
-                rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
-                rangeOfText1.Text = Utils.RemoveLineEndings(printOut) + "\r";
-                rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
-                tbLog.ScrollToEnd();
+                  TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentStart, tbLog.Document.ContentEnd);
+                  string tx = rangeOfText1.Text;
+                  int len = tx.Length; int maxLen = 10000; // the number of chars kept
+                  if (len > (2 * maxLen)) // when it exceeds twice the maxLen
+                  {
+                      tx = tx.Substring(maxLen);
+                      var paragraph = new Paragraph();
+                      paragraph.Inlines.Add(new Run(tx));
+                      tbLog.Document.Blocks.Clear();
+                      tbLog.Document.Blocks.Add(paragraph);
+                  }
+                  rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
+                  rangeOfText1.Text = Utils.RemoveLineEndings(printOut) + "\r";
+                  rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
+                  tbLog.ScrollToEnd();
               }));
         }
 
@@ -210,26 +220,36 @@ namespace Axel_hub
             }
             if (AxelChart1.Running) AxelChart1.Running = false; //
             AxelChart1.Clear();
-            AxelChart1.Waveform.StackMode = true; AxelChart1.MEMS2.StackMode = true;          
+            AxelChart1.Waveform.StackMode = true; AxelChart1.MEMS2.StackMode = true;
             nSamples = InnerBufferSize;
             AxelChart1.SetWaveformDepth(InnerBufferSize);
-            AxelChart1.SamplingPeriod = 1/axelMems.RealConvRate(1/period);
+            AxelChart1.SamplingPeriod = 1 / axelMems.RealConvRate(1 / period);
             AxelChart1.Running = true; AxelChart1.Waveform.visualCountLimit = nSamples;
             AxelChart1.MEMS2.Depth = AxelChart1.Waveform.Depth;
-           
-            AxelChart1.SetInfo("freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString());
 
+            AxelChart1.SetInfo("freq: " + (1 / AxelChart1.SamplingPeriod).ToString("G6") + ", aqcPnt: " + nSamples.ToString());
             AxelChart1.Waveform.logger.Enabled = false;
 
             if (AxelChart1.Waveform.TimeSeriesMode) axelMems.TimingMode = AxelMems.TimingModes.byStopwatch;
             else axelMems.TimingMode = AxelMems.TimingModes.byNone;
             axelMems.activeChannel = Options.genOptions.MemsChannels;
+            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+            {
+                axelMems.SetStopwatch(ucScan1.remote.stopwatch);
+                ucScan1.remote.synchroClock(true);
+            }
+            else axelMems.StartStopwatch();
             axelMems.StartAqcuisition(nSamples, 1 / AxelChart1.SamplingPeriod); // async acquisition 
         }
 
-        private void jumboRepeat(int cycles, double strobe1, double strobe2)
+        private void jumboRepeat(int cycles, double downStrobe, double upStrobe)
         {
-            Clear();
+            Clear(); // visual stuff
+            quantList.Clear(); // [time,MOTaccel] list of pairs
+            errList.Clear(); // accumulates errors
+            shotList = new ShotList(chkJoinLog.IsChecked.Value); 
+            setConditions(ref shotList.conditions);
+
             tabLowPlots.SelectedIndex = 1;
             // set jumbo-repeat conditions & format MMexec
             lastGrpExe.cmd = "repeat";
@@ -239,45 +259,47 @@ namespace Axel_hub
             lastGrpExe.prms["cycles"] = cycles;
             if (chkFollowPID.IsChecked.Value) { lastGrpExe.prms["follow"] = 1; }
             else { lastGrpExe.prms["follow"] = 0; }
-            lastGrpExe.prms["strobe1"] = strobe1; 
-            lastGrpExe.prms["strobe2"] = strobe2;
+            lastGrpExe.prms["downStrobe"] = downStrobe;            
+            lastGrpExe.prms["upStrobe"] = upStrobe;
             if (rbSingle.IsChecked.Value)
             {
                 lastGrpExe.prms["strobes"] = 1;
-                strbDownhill.X = strobe1;
+                strbDownhill.X = downStrobe;
             }
             else
             {
                 lastGrpExe.prms["strobes"] = 2;
-                strbDownhill.X = strobe1; strbUphill.X = strobe2;
+                strbDownhill.X = downStrobe; strbUphill.X = upStrobe;
             }
             string jsonR = JsonConvert.SerializeObject(lastGrpExe);
-            log("<< " + jsonR, Brushes.Blue.Color);           
-            ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;
-            ucScan1.SendJson(jsonR);
+            log("<< " + jsonR, Brushes.Blue.Color);
+            ucScan1.remoteMode = RemoteMode.Jumbo_Repeat;            
             // set ADC24 and corr. visuals
-            if (jumboADCFlag && chkMemsEnabled.IsChecked.Value) 
+            if (jumboADCFlag && chkMemsEnabled.IsChecked.Value)
             {
-                if(chkFollowPID.IsChecked.Value) ucScan1.SetActivity("Data acquis. with PID feedback");
+                if (chkFollowPID.IsChecked.Value) ucScan1.SetActivity("Data acquis. with PID feedback");
                 else ucScan1.SetActivity("Data acquis. (no PID feedback)");
                 ucScan1.Running = true;
                 AxelChart1.Waveform.TimeSeriesMode = true;
                 plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
 
                 axelMems.Reset(); timeStack.Clear();
-                startADC24(true, ucScan1.GetSamplingPeriod(), ucScan1.GetBufferSize());
+                if (probeMode) AxelChart1.SetInfo("Axel-Probe feeds the MEMS");
+                else startADC24(true, ucScan1.GetSamplingPeriod(), ucScan1.GetBufferSize());
+                Thread.Sleep(1000); DoEvents();
             }
+            ucScan1.SendJson(jsonR);
             if (remoteShow.Connected)
             {
                 showLogger.Enabled = debugMode;
                 dTimer = new DispatcherTimer(DispatcherPriority.Send);
                 dTimer.Tick += dTimer_Tick;
                 double sp = ucScan1.GetSamplingPeriod(); double bs = ucScan1.GetBufferSize();
-                int dur = (int)(sp*bs*1100.0); // [ms]
-                log("set timer to " + dur + " [ms] "+sp.ToString()+"/"+bs.ToString(), Brushes.YellowGreen.Color);
-                dTimer.Interval = new TimeSpan(dur*10000);
+                int dur = (int)(sp * bs * 1100.0); // [ms]
+                log("set timer to " + dur + " [ms] " + sp.ToString() + "/" + bs.ToString(), Brushes.YellowGreen.Color);
+                dTimer.Interval = new TimeSpan(dur * 10000);
                 dTimer.Start();
-            }                
+            }
         }
         // the main call in simple mode
         public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
@@ -314,43 +336,51 @@ namespace Axel_hub
                     ucScan1.remoteMode = RemoteMode.Jumbo_Scan;
                     ucScan1.SendJson(json);
 
-                    if (ucScan1.remoteMode == RemoteMode.Free) return;  // end mission
+                    if (ucScan1.remoteMode == RemoteMode.Ready_To_Remote) return;  // end mission
                 }
-                else 
+                else
                 {
                     Utils.TimedMessageBox("Open a fringe file, adjust the strobes and confirm.", "Jumbo-Repeat Requirements", 3500);
                     if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
                     else srsFringes.Clear();
-                    btnOpenFringes_Click(null, null);
+                    if (probeMode)
+                    {
+                        GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
+                        srsFringes.OpenPair(Utils.configPath+"fringes.ahf", ref gb);
+                        graphFringes.DataSource = srsFringes;
+                        lbInfoFringes.Content = srsFringes.rem;
+                        tbRemFringes.Text = srsFringes.rem;
+                        crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
+                    }
+                    else btnOpenFringes_Click(null, null);
                     if (srsFringes.Count == 0)
                     {
                         Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
                         ucScan1.Running = false;
                         return;
                     }
-                    crsStrobe1.AxisValue = 4.7; crsStrobe2.AxisValue = 7.8;
                     btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
                     btnSinFit.Visibility = System.Windows.Visibility.Visible;
-                }                                   
+                }
             }
             else
             {
-                if(down) Clear(true, false, false);
+                if (down) Clear(true, false, false);
                 int buffSize = 200;
                 if (sizeLimit > -1) buffSize = sizeLimit;
                 startADC24(down, period, buffSize);
             }
         }
 
-        private void btnConfirmStrobes_Click(object sender, RoutedEventArgs e) 
+        private void btnConfirmStrobes_Click(object sender, RoutedEventArgs e)
         {
             int cycles = (int)numCycles.Value;
-            if (Options.genOptions.JumboScan) jumboRepeat(cycles, (double)crsStrobe1.AxisValue, (double)crsStrobe2.AxisValue);
+            if (Options.genOptions.JumboScan) jumboRepeat(cycles, (double)crsDownStrobe.AxisValue, (double)crsUpStrobe.AxisValue);
             else
             {   // no scan to pick from
                 rbSingle_Checked(null, null);
-                if (rbSingle.IsChecked.Value) jumboRepeat(cycles, 7.8, -1);
-                else jumboRepeat(cycles, 4.7, 7.8);
+                if (rbSingle.IsChecked.Value) jumboRepeat(cycles, (double)crsDownStrobe.AxisValue, -1);
+                else jumboRepeat(cycles, (double)crsDownStrobe.AxisValue, (double)crsUpStrobe.AxisValue);
             }
             btnConfirmStrobes.Visibility = System.Windows.Visibility.Hidden;
             btnSinFit.Visibility = System.Windows.Visibility.Hidden;
@@ -360,11 +390,11 @@ namespace Axel_hub
         public bool CombineQuantMems(List<Point> dt, double dur = 0.005) // dly - time delay of mems start ref to quant, dur - duration / save +/- dur (3*dur in total) 
         {
             if (dt.Count.Equals(0) || quantList.Count.Equals(0) || !shotList.enabled) return false;
-            List<Point> ds; 
+            List<Point> ds;
             for (int i = 0; i < quantList.Count; i++)
             {
-                if(quantList[i].X < 0) continue;       
-                double w0 = quantList[i].X - dur; double w1 = quantList[i].X + 2*dur; // window of interest
+                if (quantList[i].X < 0) continue;
+                double w0 = quantList[i].X - dur; double w1 = quantList[i].X + 2 * dur; // window of interest
                 if (w0 > w1)
                 {
                     errList.Add("limits: " + quantList[i].X.ToString()); continue;
@@ -383,23 +413,23 @@ namespace Axel_hub
                 if ((dt[0].X < w0) && (w1 < dt[dt.Count - 1].X)) // the window is well within the buffer
                 {
                     SingleShot ss = new SingleShot(quantList[i], dt);
-                    ds = ss.memsPortion(new Range<double>(w0,w1));                  
+                    ds = ss.memsPortion(new Range<double>(w0, w1));
                     if (ds.Count > 0)
                     {
                         // fake quant point for testing
                         List<Point> dm = ss.memsPortion(new Range<double>(w0 + dur, w1 - dur));
                         double sum = 0;
-                        foreach(Point pnt in dm) sum += pnt.Y;
-                        Point q = new Point(quantList[i].X, sum/ds.Count);
+                        foreach (Point pnt in dm) sum += pnt.Y;
+                        Point q = new Point(quantList[i].X, sum / ds.Count);
 
-                        shotList.Add(new SingleShot(q,ds)); // if empty skip that quantList point
+                        shotList.Add(new SingleShot(q, ds)); // if empty skip that quantList point
                         quantList[i] = new Point(-quantList[i].X, quantList[i].Y); // mark as processed if good
                     }
                     else errList.Add("buff: " + quantList[i].X.ToString());
-                }               
+                }
             }
-            for (int i = quantList.Count-1; i > 0; i--)
-               if (quantList[i].X < 0) quantList.RemoveAt(i); // remove processed points
+            for (int i = quantList.Count - 1; i > 0; i--)
+                if (quantList[i].X < 0) quantList.RemoveAt(i); // remove processed points
             // if any points left in quantList they will go for the next turn
             lbInfoAccelTrend.Content = "Info: shots # " + shotList.Count.ToString();
             return true;
@@ -418,22 +448,22 @@ namespace Axel_hub
                     if ((i % 2) == 0) ds.Add(dt[i]);  // channel 0
                     else ds2.Add(dt[i]); // channel 1
                 }
-                AxelChart1.Waveform.AddRange(ds); 
+                AxelChart1.Waveform.AddRange(ds);
                 AxelChart1.MEMS2.AddRange(ds2);
             }
             else
             {
-                AxelChart1.Waveform.AddRange(ds);                
+                AxelChart1.Waveform.AddRange(ds);
             }
-            if (jumboADCFlag && chkMemsEnabled.IsChecked.Value && chkJoinLog.IsChecked.Value) // && ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
-                CombineQuantMems(ds, numMems2SignalLen.Value/1000.0);
+            if (jumboADCFlag && chkMemsEnabled.IsChecked.Value && chkJoinLog.IsChecked.Value && !probeMode) // && ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                CombineQuantMems(ds, numMems2SignalLen.Value / 1000.0);
             //log("ADC>> "+DateTime.Now.ToString("HH:mm:ss"));
-            
+
             if (!next)
             {
                 AxelChart1.Running = false;
                 ucScan1.Running = false;
-                axelMems.StopAqcuisition(); 
+                axelMems.StopAqcuisition();
                 AxelChart1.Refresh();
             }
         }
@@ -464,19 +494,19 @@ namespace Axel_hub
                            
             double strt = tm - (numMemsStart.Value - numMemsLen.Value)/1000.0;
             double len = numMemsLen.Value / 1000.0;*/
-            double mn, dsp; 
+            double mn, dsp;
             //if (AxelChart1.Waveform.statsByTime(strt, len, out mn, out wmn, out dsp)) 
-            
+
             int j = AxelChart1.Waveform.Count - 1; // index of the last
             if (j == -1)
             {
                 log("Waiting for incomming MEMS data (AxelChart1.Waveform) !", Brushes.DarkOrange.Color);
                 return rslt;
-            }            
-            if (AxelChart1.Waveform.statsByIdx(j - 100, j, false, out mn, out dsp)) 
+            }
+            if (AxelChart1.Waveform.statsByIdx(j - 100, j, false, out mn, out dsp))
             {
-                rslt["MEMS_V"] = mn; 
-                log("Mems= "+mn.ToString("G6")+ "; Phi= "+ phi.ToString("G6"), Brushes.Teal.Color);
+                rslt["MEMS_V"] = mn;
+                log("Mems= " + mn.ToString("G6") + "; Phi= " + phi.ToString("G6"), Brushes.Teal.Color);
             }
             else log("Error in AxelChart1.Waveform.statsByIdx() !", Brushes.Red.Color);
             if (axelMems.activeChannel == 2)
@@ -486,8 +516,8 @@ namespace Axel_hub
                     rslt["MEMS2_V"] = mn;
                     log("Mems2= " + mn.ToString("G6") + "; Phi= " + phi.ToString("G6"), Brushes.Teal.Color);
                 }
-                else log("Error in AxelChart1.Waveform.statsByIdx() !", Brushes.Red.Color);   
-            }           
+                else log("Error in AxelChart1.Waveform.statsByIdx() !", Brushes.Red.Color);
+            }
             return rslt;
         }
 
@@ -496,396 +526,408 @@ namespace Axel_hub
         private double phaseCorr, phaseRad, NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10,
             fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
-        DataStack signalDataStack = null;  DataStack backgroundDataStack = null;
+        DataStack signalDataStack = null; DataStack backgroundDataStack = null;
 
         // remote MM call
         public void DoRemote(string json) // from TotalCount to 1
         {
             MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
-            switch(mme.cmd)
+            switch (mme.cmd)
             {
-#region shotData
-                case("shotData"): // incomming MM2 data
-                {
-                    if (Utils.isNull(lastGrpExe))
+                #region shotData
+                case ("shotData"): // incomming MM2 data
                     {
-                        if (MessageBox.Show("Abort sequence?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                        if (Utils.isNull(lastGrpExe))
                         {
-                            ucScan1.Abort(true);
-                        }
-                        throw new Exception("Wrong sequence of MMexec's");
-                    }
-                    bool scanMode = lastGrpExe.cmd.Equals("scan");
-                    bool repeatMode = lastGrpExe.cmd.Equals("repeat");
-                    bool middleSection = (tabSecPlots.SelectedIndex == 1); // when the charts are shown
-                    if (Convert.ToInt32(mme.prms["runID"]) == 0) // init at first shot from series
-                    {
-                        if (Utils.isNull(srsFringes)) srsFringes = new DataStack(dataLength);
-                        if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(dataLength);
-                        if (Utils.isNull(srsCorr)) srsCorr = new DataStack(dataLength);
-                        if (Utils.isNull(srsMems)) srsMems = new DataStack(dataLength);
-                        if (Utils.isNull(srsAccel)) srsAccel = new DataStack(dataLength);
-                        if (Utils.isNull(phiMg)) phiMg = new DataStack(1000);
-                        if (Utils.isNull(accelMg)) accelMg = new DataStack(1000);
-
-                        Clear(chkMemsEnabled.IsChecked.Value, true, true);
-                        logger.Enabled = false; logger.AutoSaveFileName = ""; logger.Enabled = chkSignalLog.IsChecked.Value;
-                        logger.log("# "+JsonConvert.SerializeObject(lastGrpExe));
-                        logger.log("# XAxis\tN1\tN2\tRN1\tRN2\tNTot\tB2\tBtot");
-                        if (scanMode) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
-                           ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
-                        if (repeatMode) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
-                    }
-                    string s1 = (string)lastGrpExe.prms["groupID"];
-                    if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID"); 
-
-                    MMDataConverter.ConvertToDoubleArray(ref mme);
-
-                    string endBit = "", log_out = ""; int runID = 0;
-                    runID = Convert.ToInt32(mme.prms["runID"]);
-                    if(scanMode) endBit = ";  scanX = " + (lastScan.sFrom+runID*lastScan.sBy).ToString("G4");
-                    lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: "+ runID.ToString() + endBit;
-                    if (chkVerbatim.IsChecked.Value) log("("+json.Length.ToString()+") "+json);
-                    else 
-                    {
-                        log_out = ">SHOT #"+runID.ToString()+"; ";
-                        
-                        //if(scanMode) log(endBit, Brushes.DarkBlue.Color);
-                        if (mme.prms.ContainsKey("last"))
-                        {
-                            log(">LAST SHOT", Brushes.DarkRed.Color);
-                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                            if (MessageBox.Show("Abort sequence?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                             {
-                                ucScan1.Abort(false);
-                                lastGrpExe.Clear();
+                                ucScan1.Abort(true);
                             }
-                        }                             
-                    }
-                    Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme,Options.genOptions.intN2, chkStdDev.IsChecked.Value);
-                    if (middleSection)
-                    {
-                        lboxNB.Items.Clear();
-                        foreach (var item in avgs)
-                        {
-                            ListBoxItem lbi = new ListBoxItem();
-                            lbi.Content = string.Format("{0}: {1:" + Options.genOptions.SignalTablePrec + "}", item.Key, item.Value);
-                            if (item.Key.IndexOf("_std") > 0) lbi.Foreground = Brushes.Green;
-                            else lbi.Foreground = Brushes.Blue;
-                            lboxNB.Items.Add(lbi);
+                            throw new Exception("Wrong sequence of MMexec's");
                         }
-                    }
-                    double asymmetry = MMDataConverter.Asymmetry(avgs, chkBackgroung.IsChecked.Value, chkDarkcurrent.IsChecked.Value);
-                    //
-                    // signal chart (rigth)
-                    if (Utils.isNull(signalDataStack)) signalDataStack = new DataStack();
-                    else signalDataStack.Clear();
-                    if (Utils.isNull(backgroundDataStack)) backgroundDataStack = new DataStack();
-                    else backgroundDataStack.Clear();
+                        bool scanMode = lastGrpExe.cmd.Equals("scan");
+                        bool repeatMode = lastGrpExe.cmd.Equals("repeat");
+                        bool middleSection = (tabSecPlots.SelectedIndex == 1); // when the charts are shown
+                        if (Convert.ToInt32(mme.prms["runID"]) == 0) // init at first shot from series
+                        {
+                            if (Utils.isNull(srsFringes)) srsFringes = new DataStack(dataLength);
+                            if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(dataLength);
+                            if (Utils.isNull(srsCorr)) srsCorr = new DataStack(dataLength);
+                            if (Utils.isNull(srsMems)) srsMems = new DataStack(dataLength);
+                            if (Utils.isNull(srsAccel)) srsAccel = new DataStack(dataLength);
+                            if (Utils.isNull(phiMg)) phiMg = new DataStack(1000);
+                            if (Utils.isNull(accelMg)) accelMg = new DataStack(1000);
 
-                    int xVal = 0; double N2 = avgs["N2"];
-                    if (middleSection)
-                        foreach (double yVal in (double[])mme.prms["N2"])
-                        {
-                            signalDataStack.Add(new Point(xVal, yVal));
-                            xVal++;
+                            Clear(chkMemsEnabled.IsChecked.Value && !probeMode, true, true);
+                            logger.Enabled = false; logger.AutoSaveFileName = ""; logger.Enabled = chkSignalLog.IsChecked.Value;
+                            logger.log("# " + JsonConvert.SerializeObject(lastGrpExe));
+                            logger.log("# XAxis\tN1\tN2\tRN1\tRN2\tNTot\tB2\tBtot");
+                            if (scanMode) lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
+                               ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
+                            if (repeatMode) lbInfoAccelTrend.Content = "groupID:" + lastGrpExe.prms["groupID"] + ";  Repeat: " + lastGrpExe.prms["cycles"] + " cycles";
                         }
-                    double NTot = avgs["NTot"];
-                    if (middleSection)
-                        foreach (double yVal in (double[])mme.prms["NTot"])
-                        {
-                            signalDataStack.Add(new Point(xVal, yVal));
-                            xVal++;
-                        }
+                        string s1 = (string)lastGrpExe.prms["groupID"];
+                        if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID");
 
-                    xVal = 0; double B2 = avgs["B2"];
-                    if (middleSection)
-                        foreach (double yVal in (double[])mme.prms["B2"])
+                        MMDataConverter.ConvertToDoubleArray(ref mme);
+
+                        string endBit = "", log_out = ""; int runID = 0;
+                        runID = Convert.ToInt32(mme.prms["runID"]);
+                        if (scanMode) endBit = ";  scanX = " + (lastScan.sFrom + runID * lastScan.sBy).ToString("G4");
+                        lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: " + runID.ToString() + endBit;
+                        if (chkVerbatim.IsChecked.Value) log("(" + json.Length.ToString() + ") " + json);
+                        else
                         {
-                            backgroundDataStack.Add(new Point(xVal, yVal));
-                            xVal++;
+                            log_out = ">SHOT #" + runID.ToString() + "; ";
+
+                            //if(scanMode) log(endBit, Brushes.DarkBlue.Color);
+                            if (mme.prms.ContainsKey("last"))
+                            {
+                                log(">LAST SHOT", Brushes.DarkRed.Color);
+                                if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                                {
+                                    ucScan1.Abort(false);
+                                    lastGrpExe.Clear();
+                                }
+                            }
                         }
-                    double BTot = avgs["BTot"];
-                    if (middleSection)
-                        foreach (double yVal in (double[])mme.prms["BTot"])
-                        {
-                            backgroundDataStack.Add(new Point(xVal, yVal));
-                            xVal++;
-                        }
-                    if (middleSection) // skip the show
-                    {
-                        graphSignal.Data[0] = signalDataStack;
-                        graphSignal.Data[1] = backgroundDataStack;
-                    }
-                    // readjust Y axis
-                    if (!chkManualAxisMiddle.IsChecked.Value && middleSection) // signal auto-Y-limits
-                    {
-                        double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
-                        d = Math.Floor(10 * d) / 10;
-                        signalYmin = Math.Min(d, signalYmin);
-                        d = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
-                        d = Math.Ceiling(10 * d) / 10;
-                        signalYmax = Math.Max(d, signalYmax);
-                        d = (signalYmax - signalYmin) * 0.02;
-                        signalYaxis.Range = new Range<double>(signalYmin - d, signalYmax + d);
-                    }
-                    //
-                    // Ns chart (left)
-                   
-                    double corr, disbalance;
-                    // corrected with background
-                    double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
-                    double A = cN2 / cNtot ;//(N2 - B2) / (NTot - BTot); //double A = 1 - 2 * (N2 - B2) / (NTot - BTot);
-                    double currX = 1, cN2_std = 1, cNtot_std = 1;
-                    if (chkStdDev.IsChecked.Value)
-                    {
-                        cN2_std = Math.Sqrt(Math.Pow(avgs["N2_std"],2) + Math.Pow(avgs["B2_std"],2));
-                        cNtot_std = Math.Sqrt(Math.Pow(avgs["NTot_std"],2) + Math.Pow(avgs["BTot_std"],2));
-                    }
-                    double cinitN2 = avgs["initN2"] - B2;
-                    if (scanMode)
-                    {
-                        currX = lastScan.sFrom + runID * lastScan.sBy;
+                        Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, Options.genOptions.intN2, chkStdDev.IsChecked.Value);
                         if (middleSection)
                         {
-                            stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
-                            stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
-                            if (chkStdDev.IsChecked.Value)
+                            lboxNB.Items.Clear();
+                            foreach (var item in avgs)
                             {
-                                stackN2_std.Add(new Point(currX, cN2_std)); stackNtot_std.Add(new Point(currX, cNtot_std));
+                                ListBoxItem lbi = new ListBoxItem();
+                                lbi.Content = string.Format("{0}: {1:" + Options.genOptions.SignalTablePrec + "}", item.Key, item.Value);
+                                if (item.Key.IndexOf("_std") > 0) lbi.Foreground = Brushes.Green;
+                                else lbi.Foreground = Brushes.Blue;
+                                lboxNB.Items.Add(lbi);
                             }
-                            stackN2_int.Add(new Point(currX, cinitN2));
                         }
-                    }
-                    else currX = runID;
+                        double asymmetry = MMDataConverter.Asymmetry(avgs, chkBackgroung.IsChecked.Value, chkDarkcurrent.IsChecked.Value);
+                        //
+                        // signal chart (rigth)
+                        if (Utils.isNull(signalDataStack)) signalDataStack = new DataStack();
+                        else signalDataStack.Clear();
+                        if (Utils.isNull(backgroundDataStack)) backgroundDataStack = new DataStack();
+                        else backgroundDataStack.Clear();
 
-                    if (middleSection)
-                    {
+                        int xVal = 0; double N2 = avgs["N2"];
+                        if (middleSection)
+                            foreach (double yVal in (double[])mme.prms["N2"])
+                            {
+                                signalDataStack.Add(new Point(xVal, yVal));
+                                xVal++;
+                            }
+                        double NTot = avgs["NTot"];
+                        if (middleSection)
+                            foreach (double yVal in (double[])mme.prms["NTot"])
+                            {
+                                signalDataStack.Add(new Point(xVal, yVal));
+                                xVal++;
+                            }
+
+                        xVal = 0; double B2 = avgs["B2"];
+                        if (middleSection)
+                            foreach (double yVal in (double[])mme.prms["B2"])
+                            {
+                                backgroundDataStack.Add(new Point(xVal, yVal));
+                                xVal++;
+                            }
+                        double BTot = avgs["BTot"];
+                        if (middleSection)
+                            foreach (double yVal in (double[])mme.prms["BTot"])
+                            {
+                                backgroundDataStack.Add(new Point(xVal, yVal));
+                                xVal++;
+                            }
+                        if (middleSection) // skip the show
+                        {
+                            graphSignal.Data[0] = signalDataStack;
+                            graphSignal.Data[1] = backgroundDataStack;
+                        }
+                        // readjust Y axis
+                        if (!chkManualAxisMiddle.IsChecked.Value && middleSection) // signal auto-Y-limits
+                        {
+                            double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
+                            d = Math.Floor(10 * d) / 10;
+                            signalYmin = Math.Min(d, signalYmin);
+                            d = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
+                            d = Math.Ceiling(10 * d) / 10;
+                            signalYmax = Math.Max(d, signalYmax);
+                            d = (signalYmax - signalYmin) * 0.02;
+                            signalYaxis.Range = new Range<double>(signalYmin - d, signalYmax + d);
+                        }
+                        //
+                        // Ns chart (left)
+
+                        double corr, disbalance;
+                        // corrected with background
+                        double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
+                        //double A = cN2 / cNtot;//(N2 - B2) / (NTot - BTot); //
+                        double A = 1 - 2 * (N2 - B2) / (NTot - BTot);
+                        double currX = 1, cN2_std = 1, cNtot_std = 1;
+                        if (chkStdDev.IsChecked.Value)
+                        {
+                            cN2_std = Math.Sqrt(Math.Pow(avgs["N2_std"], 2) + Math.Pow(avgs["B2_std"], 2));
+                            cNtot_std = Math.Sqrt(Math.Pow(avgs["NTot_std"], 2) + Math.Pow(avgs["BTot_std"], 2));
+                        }
+                        double cinitN2 = avgs["initN2"] - B2;
+                        if (scanMode)
+                        {
+                            currX = lastScan.sFrom + runID * lastScan.sBy;
+                            if (middleSection)
+                            {
+                                stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
+                                stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
+                                if (chkStdDev.IsChecked.Value)
+                                {
+                                    stackN2_std.Add(new Point(currX, cN2_std)); stackNtot_std.Add(new Point(currX, cNtot_std));
+                                }
+                                stackN2_int.Add(new Point(currX, cinitN2));
+                            }
+                        }
+                        else currX = runID;
+
+                        if (middleSection)
+                        {
+                            if (repeatMode)
+                            {
+                                stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
+                                stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot); stackN2_int.AddPoint(cinitN2);
+                                if (chkStdDev.IsChecked.Value)
+                                {
+                                    stackN2_std.AddPoint(cN2_std); stackNtot_std.AddPoint(cNtot_std);
+                                }
+                            }
+                            if (!chkManualAxisMiddle.IsChecked.Value) // Ns auto-Y-limits
+                            {
+                                List<double> ld = new List<double>();
+                                ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min());
+                                ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
+                                double d = ld.Min();
+                                d = Math.Floor(10 * d) / 10;
+                                NsYmin = Math.Min(d, NsYmin);
+                                ld.Clear();
+                                ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
+                                ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
+                                d = ld.Max();
+                                d = Math.Ceiling(10 * d) / 10;
+                                NsYmax = Math.Max(d, NsYmax);
+                                d = (NsYmax - NsYmin) * 0.02;
+                                NsYaxis.Range = new Range<double>(NsYmin - d, NsYmax + d);
+                            }
+                            graphNs.Data[0] = stackN1.Portion(Options.genOptions.visualDataLength);
+                            graphNs.Data[1] = stackN2.Portion(Options.genOptions.visualDataLength);
+                            graphNs.Data[2] = stackRN1.Portion(Options.genOptions.visualDataLength);
+                            graphNs.Data[3] = stackRN2.Portion(Options.genOptions.visualDataLength);
+                            graphNs.Data[4] = stackNtot.Portion(Options.genOptions.visualDataLength);
+                        }
+
+                        //#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tB2\tBtot
+                        if (stackN1.Count > 0)
+                        {
+                            string ss = currX.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackN1.Last.Y.ToString(Options.genOptions.SaveFilePrec) +
+                                "\t" + stackN2.Last.Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackRN1.Last.Y.ToString(Options.genOptions.SaveFilePrec) +
+                                "\t" + stackRN2.Last.Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackNtot.Last.Y.ToString(Options.genOptions.SaveFilePrec) +
+                                "\t" + B2.ToString(Options.genOptions.SaveFilePrec) + "\t" + BTot.ToString(Options.genOptions.SaveFilePrec);
+                            logger.log(ss);
+                        }
+                        //
+                        // LOWER section
+                        if (scanMode)
+                        {
+                            srsFringes.Add(new Point(currX, A)); //asymmetry
+                            if (!chkVerbatim.IsChecked.Value)
+                                log(log_out + "scanX/Y= " + currX.ToString(Options.genOptions.SignalTablePrec) +
+                                " / " + A.ToString(Options.genOptions.SignalTablePrec), Brushes.DarkGreen.Color);//asymmetry.ToString
+                            if (!chkManualAxisBottom.IsChecked.Value) // Fringes
+                            {
+                                double d;
+                                d = Math.Floor(10 * srsFringes.pointYs().Min()) / 10;
+                                fringesYmin = Math.Min(d, fringesYmin);
+                                d = Math.Ceiling(10 * srsFringes.pointYs().Max()) / 10;
+                                fringesYmax = Math.Max(d, fringesYmax);
+                                d = (fringesYmax - fringesYmin) * 0.02;
+                                fringesYaxis.Range = new Range<double>(fringesYmin - d, fringesYmax + d);
+                            }
+                            graphFringes.Data[0] = srsFringes;
+                        }
+                        Dictionary<string, double> statDt = new Dictionary<string, double>();
                         if (repeatMode)
                         {
-                            stackN1.AddPoint(cN1); stackN2.AddPoint(cN2); stackNtot.AddPoint(cNtot);
-                            stackRN1.AddPoint(cN1 / cNtot); stackRN2.AddPoint(cN2 / cNtot);  stackN2_int.AddPoint(cinitN2);
-                            if (chkStdDev.IsChecked.Value)
+                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
                             {
-                                stackN2_std.AddPoint(cN2_std); stackNtot_std.AddPoint(cNtot_std);
-                            }
-                        }
-                        if (!chkManualAxisMiddle.IsChecked.Value) // Ns auto-Y-limits
-                        {                      
-                            List<double> ld = new List<double>();
-                            ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min()); 
-                            ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
-                            double d = ld.Min();
-                            d = Math.Floor(10 * d) / 10;
-                            NsYmin = Math.Min(d, NsYmin);
-                            ld.Clear();
-                            ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
-                            ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
-                            d = ld.Max();
-                            d = Math.Ceiling(10 * d) / 10;
-                            NsYmax = Math.Max(d, NsYmax);
-                            d = (NsYmax - NsYmin) * 0.02;
-                            NsYaxis.Range = new Range<double>(NsYmin - d, NsYmax + d);
-                        }
-                        graphNs.Data[0] = stackN1.Portion(Options.genOptions.visualDataLength);
-                        graphNs.Data[1] = stackN2.Portion(Options.genOptions.visualDataLength);
-                        graphNs.Data[2] = stackRN1.Portion(Options.genOptions.visualDataLength);
-                        graphNs.Data[3] = stackRN2.Portion(Options.genOptions.visualDataLength);
-                        graphNs.Data[4] = stackNtot.Portion(Options.genOptions.visualDataLength);                        
-                    }
-
-                    //#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tB2\tBtot
-                    if (stackN1.Count > 0)
-                    {
-                        string ss = currX.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackN1.Last.Y.ToString(Options.genOptions.SaveFilePrec) + 
-                            "\t" + stackN2.Last.Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackRN1.Last.Y.ToString(Options.genOptions.SaveFilePrec) + 
-                            "\t" + stackRN2.Last.Y.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackNtot.Last.Y.ToString(Options.genOptions.SaveFilePrec) +
-                            "\t" + B2.ToString(Options.genOptions.SaveFilePrec) + "\t" + BTot.ToString(Options.genOptions.SaveFilePrec);
-                        logger.log(ss);
-                    }
-                    //
-                    // LOWER section
-                    if (scanMode) 
-                    {
-                        srsFringes.Add(new Point(currX, A)); //asymmetry
-                        if (!chkVerbatim.IsChecked.Value)
-                            log(log_out + "scanX/Y= " + currX.ToString(Options.genOptions.SignalTablePrec) +
-                            " / " + A.ToString(Options.genOptions.SignalTablePrec), Brushes.DarkGreen.Color);//asymmetry.ToString
-                        if (!chkManualAxisBottom.IsChecked.Value) // Fringes
-                        {
-                            double d; 
-                            d = Math.Floor(10 * srsFringes.pointYs().Min()) / 10;
-                            fringesYmin = Math.Min(d, fringesYmin);                            
-                            d = Math.Ceiling(10 * srsFringes.pointYs().Max()) / 10;
-                            fringesYmax = Math.Max(d, fringesYmax);
-                            d = (fringesYmax - fringesYmin) * 0.02;
-                            fringesYaxis.Range = new Range<double>(fringesYmin - d, fringesYmax + d);
-                        }
-                        graphFringes.Data[0] = srsFringes;
-                    }
-                    Dictionary<string, double> statDt = new Dictionary<string, double>();
-                    if (repeatMode) 
-                    {
-                        if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
-                        {    
-                            double disbalCorr = 0;
-                            if (rbSingle.IsChecked.Value)
-                            {
-                                disbalance = A;//asymmetry
-                            }
-                            else // double strobe
-                            {
-                                if ((runID % 2) == 0) strbDownhill.Y = A;//asymmetry
-                                else strbUphill.Y = A;//asymmetry
-                                disbalance = strbDownhill.Y - strbUphill.Y;
-                                disbalCorr = (disbalance / numScale.Value) / 2 ; // correction for disbalance
-                                Color clr = Brushes.Black.Color;
-                                if (Math.Abs(disbalCorr) > 0.8) clr = Brushes.Red.Color;
-                                log("s.Down/Up: " + strbDownhill.Y.ToString("G4") + "/" + strbUphill.Y.ToString("G4") + "; d.corr: " + disbalCorr.ToString("G4"), clr);
-                                
-                            }
-                            if ((chkFollowPID.IsChecked.Value))
-                            {
-                                corr = PID(disbalance / numScale.Value);// +disbalCorr; // in rad                               
-                                if (rbSingle.IsChecked.Value) // single strobe
+                                double disbalCorr = 0;
+                                if (rbSingle.IsChecked.Value)
                                 {
-                                    strbDownhill.X = MMDataConverter.Restrict2twoPI(strbDownhill.X + corr); phaseCorr = strbDownhill.X; phaseRad = phaseCorr;
+                                    disbalance = A;//asymmetry
                                 }
                                 else // double strobe
                                 {
-                                    if ((runID % 2) == 0) 
-                                    {
-                                        strbDownhill.X = MMDataConverter.Restrict2twoPI(strbDownhill.X + corr); phaseCorr = strbDownhill.X; 
-                                    }
-                                    else 
-                                    {
-                                        strbUphill.X = MMDataConverter.Restrict2twoPI(strbUphill.X + corr); ; phaseCorr = strbUphill.X; 
-                                    }
-                                    phaseRad = (strbUphill.X + strbDownhill.X) / 2 + disbalCorr; 
+                                    log("Down: " + strbDownhill.X.ToString("G4") + " ; " + strbDownhill.Y.ToString("G4") + "; Up: " + strbUphill.X.ToString("G4") + " ; " + strbUphill.Y.ToString("G4"));
+                                    if ((runID % 2) == 0) strbDownhill.Y = A;//asymmetry
+                                    else strbUphill.Y = A;//asymmetry
+                                    disbalance = strbDownhill.Y - strbUphill.Y;
+                                    disbalCorr = (disbalance / numScale.Value) / 2; // correction for disbalance
+                                    Color clr = Brushes.Black.Color;
+                                    if (Math.Abs(disbalCorr) > 0.8) clr = Brushes.Red.Color;
                                 }
-                                MMexec mmeOut = new MMexec("", "Axel-hub","phaseAdjust");
-                                mmeOut.prms.Clear();
-                                mmeOut.prms["runID"] = runID;
-                                mmeOut.prms["phase"] = phaseCorr.ToString("G6");
-                                ucScan1.SendJson(JsonConvert.SerializeObject(mmeOut), true); 
-                                srsCorr.Add(new Point(runID, corr)); graphAccelTrend.Data[1] = srsCorr.Portion(Options.genOptions.visualDataLength);
-                               // statDt["PhiRad"] = phaseRad - numPhi0.Value;
-                                statDt["PhiRad"] = phaseRad ;  
-                            }
-                            else // no PID feedback
-                            {
-                                phaseRad = //(strbUphill.X + strbDownhill.X) / 2 + 
-                                    disbalCorr; 
-                                statDt["PhiRad"] = phaseRad - numPhi0.Value; 
-                            }
-                        }
-                        double xVl = runID; 
-                        Dictionary<string, double> measr = new Dictionary<string, double>(); 
-                        Dictionary<string, double> rslt = new Dictionary<string, double>();
-                        // the MEMS bit in RemoteMode.xxx_Repeat mode
-                        if (AxelChart1.Running && chkMemsEnabled.IsChecked.Value && jumboADCFlag)
-                        {
-                            if (ucScan1.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(double.NaN);
-                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
-                            {
-                                if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
-                                else phaseRad = Double.NaN;
-                                
-                                if (mme.sender.Equals("Axel-probe") && mme.prms.ContainsKey("MEMS"))
+                                if ((chkFollowPID.IsChecked.Value))
                                 {
-                                    measr = prepNextMeasure(phaseRad);
-                                    measr["MEMS"] = Convert.ToDouble(mme.prms["MEMS"]);
-                                }
-                                else measr = nextMeasure(phaseRad);
+                                    corr = PID(disbalance);// / numScale.Value //+disbalCorr; // in rad                               
+                                    if (rbSingle.IsChecked.Value) // single strobe
+                                    {
+                                        strbDownhill.X = MMDataConverter.Restrict2twoPI(strbDownhill.X + corr); phaseCorr = strbDownhill.X; phaseRad = phaseCorr;
+                                    }
+                                    else // double strobe
+                                    {
+                                        if ((runID % 2) == 0) //MMDataConverter.Restrict2twoPI(
+                                        {
+                                            
+                                            strbDownhill.X = strbDownhill.X + corr; phaseCorr = strbDownhill.X;
 
-                                rslt = Statistics(measr);
-                                if (rslt.ContainsKey("PhiMg") && rslt.ContainsKey("qTime")) quantList.Add(new Point(rslt["qTime"], rslt["PhiMg"]));
-                                //if (remoteShow.Connected) export2Show(rslt);
-                            }
-                            if (rslt.ContainsKey("Accel")) log_out += "accel= " + rslt["Accel"].ToString(Options.genOptions.SignalTablePrec);
-                        }                                                 
-                        log(log_out, Brushes.DarkGreen.Color);
-                        if(repeatMode) 
-                        {
-                            if (AxelChart1.Waveform.stopWatch.IsRunning) xVl = AxelChart1.Waveform.stopWatch.ElapsedMilliseconds / 1000.0;
-                            if (rslt.ContainsKey("MEMS"))
-                            {
-                                srsMems.AddPoint(rslt["MEMS"], xVl); graphAccelTrend.Data[0] = srsMems.Portion(Options.genOptions.visualDataLength);
-                            }
-                            if (ucScan1.remoteMode == RemoteMode.Simple_Repeat)
-                            {
-                                srsMotAccel.Add(new Point(xVl, A)); graphAccelTrend.Data[2] = srsMotAccel.Portion(Options.genOptions.visualDataLength);
-                            }                            
-                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
-                            {
-                                if (rslt.ContainsKey("PhiMg"))
-                                {
-                                    srsMotAccel.AddPoint(rslt["PhiMg"], xVl); graphAccelTrend.Data[2] = srsMotAccel.Portion(Options.genOptions.visualDataLength);
+                                        }
+                                        else
+                                        {
+                                            strbUphill.X = strbUphill.X + corr; phaseCorr = strbUphill.X;
+                                        }
+                                        phaseRad = (strbUphill.X + strbDownhill.X) / 2; // +disbalCorr;
+                                    }
+                                    log("Down: " + strbDownhill.X.ToString("G4") +" ; " + strbDownhill.Y.ToString("G4")+"; Up: " + strbUphill.X.ToString("G4") + " ; " + strbUphill.Y.ToString("G4") + " corr: " + corr.ToString("G4"));
+                                    MMexec mmeOut = new MMexec("", "Axel-hub", "phaseAdjust");
+                                    mmeOut.prms.Clear();
+                                    mmeOut.prms["runID"] = runID;
+                                    mmeOut.prms["phase"] = phaseCorr.ToString("G6");
+                                    ucScan1.SendJson(JsonConvert.SerializeObject(mmeOut), true);
+                                    if (chkBigCalcChrtUpdate.IsChecked.Value)
+                                    {                                   
+                                        srsCorr.Add(new Point(runID, corr)); graphAccelTrend.Data[1] = srsCorr.Portion(Options.genOptions.visualDataLength);
+                                    }
+                                    // statDt["PhiRad"] = phaseRad - numPhi0.Value;
+                                    statDt["PhiRad"] = phaseRad;
                                 }
-                                if (rslt.ContainsKey("Accel"))
+                                else // no PID feedback
                                 {
-                                    srsAccel.AddPoint(rslt["Accel"], xVl); graphAccelTrend.Data[3] = srsAccel.Portion(Options.genOptions.visualDataLength);
+                                    phaseRad = //(strbUphill.X + strbDownhill.X) / 2 + 
+                                        disbalCorr;
+                                    statDt["PhiRad"] = phaseRad - numPhi0.Value;
+                                }
+
+                            }
+                            double xVl = runID;
+                            Dictionary<string, double> measr = new Dictionary<string, double>();
+                            Dictionary<string, double> rslt = new Dictionary<string, double>();
+                            // the MEMS bit in RemoteMode.xxx_Repeat mode
+                            if (AxelChart1.Running && chkMemsEnabled.IsChecked.Value && jumboADCFlag)
+                            {
+                                if (ucScan1.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(A);
+                                if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                                {
+                                    if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
+                                    else phaseRad = Double.NaN;
+
+                                    if (mme.sender.Equals("Axel-probe") && mme.prms.ContainsKey("MEMS"))
+                                    {
+                                        measr = prepNextMeasure(phaseRad); 
+                                        measr["MEMS"] = Convert.ToDouble(mme.prms["MEMS"]);
+                                    }
+                                    else measr = nextMeasure(phaseRad);
+                                    if (mme.prms.ContainsKey("time")) measr["time"] = Convert.ToDouble(mme.prms["time"]);
+
+                                    rslt = Statistics(measr);
+                                    if (rslt.ContainsKey("PhiMg")) 
+                                    {
+                                        if (rslt.ContainsKey("qTime") && !btnTestSpeed.Value) quantList.Add(new Point(rslt["qTime"], rslt["PhiMg"]));
+                                        if (rslt.ContainsKey("time")) quantList.Add(new Point(rslt["time"], rslt["PhiMg"]));
+                                    }
+                                    //if (remoteShow.Connected) export2Show(rslt);
+                                }
+                                if (rslt.ContainsKey("Accel")) log_out += "accel= " + rslt["Accel"].ToString(Options.genOptions.SignalTablePrec);
+                            }
+                            log(log_out, Brushes.DarkGreen.Color);
+                            if (repeatMode)
+                            {
+                                if (AxelChart1.Waveform.stopWatch.IsRunning) xVl = AxelChart1.Waveform.stopWatch.ElapsedMilliseconds / 1000.0;
+                                if (rslt.ContainsKey("MEMS") && chkBigCalcChrtUpdate.IsChecked.Value)
+                                {
+                                    srsMems.AddPoint(rslt["MEMS"], xVl); graphAccelTrend.Data[0] = srsMems.Portion(Options.genOptions.visualDataLength);
+                                }
+                                if (ucScan1.remoteMode == RemoteMode.Simple_Repeat && chkBigCalcChrtUpdate.IsChecked.Value)
+                                {
+                                    srsMotAccel.Add(new Point(xVl, A)); graphAccelTrend.Data[2] = srsMotAccel.Portion(Options.genOptions.visualDataLength);
+                                }
+                                if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                                {
+                                    if (rslt.ContainsKey("PhiMg") && chkBigCalcChrtUpdate.IsChecked.Value)
+                                    {
+                                        srsMotAccel.AddPoint(rslt["PhiMg"], xVl); graphAccelTrend.Data[2] = srsMotAccel.Portion(Options.genOptions.visualDataLength);
+                                    }
+                                    if (rslt.ContainsKey("Accel") && chkBigCalcChrtUpdate.IsChecked.Value)
+                                    {
+                                        srsAccel.AddPoint(rslt["Accel"], xVl); graphAccelTrend.Data[3] = srsAccel.Portion(Options.genOptions.visualDataLength);
+                                    }
+                                }
+                            }
+                            if (!chkManualAxisBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis
+                            {
+                                if (ucScan1.remoteMode == RemoteMode.Simple_Repeat || ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                                {
+                                    accelYmin = Math.Min(Math.Floor(10 * srsMotAccel.pointYs().Min()) / 10, accelYmin);
+                                    accelYmax = Math.Max(Math.Ceiling(10 * srsMotAccel.pointYs().Max()) / 10, accelYmax);
+                                    if (rslt.ContainsKey("MEMS"))
+                                    {
+                                        accelYmin = Math.Min(Math.Floor(10 * srsMems.pointYs().Min()) / 10, accelYmin);
+                                        accelYmax = Math.Max(Math.Ceiling(10 * srsMems.pointYs().Max()) / 10, accelYmax);
+                                    }
+                                }
+                                if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
+                                {
+                                    // !!!
+                                }
+                                double d = (accelYmax - accelYmin) * 0.02;
+                                accelYaxis.Range = new Range<double>(accelYmin - d, accelYmax + d);
+                            }
+                        }
+                        if (scanMode && ucScan1.remoteMode == RemoteMode.Jumbo_Scan || ucScan1.remoteMode == RemoteMode.Simple_Scan)
+                        {
+                            if (mme.prms.ContainsKey("last"))
+                            {
+                                if (Convert.ToInt32(mme.prms["last"]) == 1)
+                                {
+                                    if (!Options.genOptions.JumboRepeat)
+                                    {
+                                        ucScan1.Running = false;
+                                        startADC24(false, 1.0 / 2133, 200);
+                                        ucScan1.remoteMode = RemoteMode.Ready_To_Remote;
+                                        return;
+                                    }
+                                    if (ucScan1.remoteMode == RemoteMode.Jumbo_Scan && Options.genOptions.JumboRepeat) // transition from jumboScan to jumboRepeat
+                                    {
+                                        //crsDownStrobe.AxisValue = 4.7; crsUpStrobe.AxisValue = 7.8;
+                                        btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
+                                        btnSinFit.Visibility = System.Windows.Visibility.Visible;
+                                        Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
+                                    }
                                 }
                             }
                         }
-                        if (!chkManualAxisBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis
+                        if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat || ucScan1.remoteMode == RemoteMode.Simple_Repeat)
                         {
-                            if (ucScan1.remoteMode == RemoteMode.Simple_Repeat || ucScan1.remoteMode == RemoteMode.Jumbo_Repeat) 
+                            if (mme.prms.ContainsKey("last"))
                             {
-                                accelYmin = Math.Min(Math.Floor(10 * srsMotAccel.pointYs().Min()) / 10, accelYmin);
-                                accelYmax = Math.Max(Math.Ceiling(10 * srsMotAccel.pointYs().Max()) / 10, accelYmax);
-                                if (rslt.ContainsKey("MEMS"))
-                                {
-                                    accelYmin = Math.Min(Math.Floor(10 * srsMems.pointYs().Min()) / 10, accelYmin);
-                                    accelYmax = Math.Max(Math.Ceiling(10 * srsMems.pointYs().Max()) / 10, accelYmax);
-                                }
-                            }
-                            if (ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
-                            {
-                                // !!!
-                            }
-                            double d = (accelYmax-accelYmin) * 0.02;
-                            accelYaxis.Range = new Range<double>(accelYmin - d, accelYmax + d);
-                        }
-                    }
-                    if (scanMode && ucScan1.remoteMode == RemoteMode.Jumbo_Scan || ucScan1.remoteMode == RemoteMode.Simple_Scan)
-                    {
-                        if (mme.prms.ContainsKey("last"))
-                        {
-                            if (Convert.ToInt32(mme.prms["last"]) == 1)
-                            {
-                                if (!Options.genOptions.JumboRepeat)
+                                if (Convert.ToInt32(mme.prms["last"]) == 1)
                                 {
                                     ucScan1.Running = false;
                                     startADC24(false, 1.0 / 2133, 200);
-                                    ucScan1.remoteMode = RemoteMode.Free;
-                                    return;
+                                    ucScan1.remoteMode = RemoteMode.Ready_To_Remote;
                                 }
-                                if (ucScan1.remoteMode == RemoteMode.Jumbo_Scan && Options.genOptions.JumboRepeat) // transition from jumboScan to jumboRepeat
-                                {
-                                    crsStrobe1.AxisValue = 4.7; crsStrobe2.AxisValue = 7.8;
-                                    btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
-                                    btnSinFit.Visibility = System.Windows.Visibility.Visible;
-                                    Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
-                                }
+                                logger.Enabled = false;
                             }
                         }
                     }
-                    if ((ucScan1.remoteMode == RemoteMode.Jumbo_Repeat) || (ucScan1.remoteMode == RemoteMode.Simple_Repeat))
-                    {
-                        if (mme.prms.ContainsKey("last")) 
-                        {
-                            if (Convert.ToInt32(mme.prms["last"]) == 1)
-                            {
-                                ucScan1.Running = false;
-                                startADC24(false, 1.0 / 2133, 200);
-                                ucScan1.remoteMode = RemoteMode.Free;                               
-                            }
-                            logger.Enabled = false;
-                        }
-                    }
-                }            
-                break;
-#endregion shotData
+                    break;
+                #endregion shotData
                 case ("repeat"):
                     {
                         log(json, Brushes.Blue.Color);
@@ -895,7 +937,7 @@ namespace Axel_hub
                         chkN1_Checked(null, null); // update state
                         chkMEMS_Checked(null, null);
                         Clear();
-                        if (jumboADCFlag && chkMemsEnabled.IsChecked.Value) 
+                        if (jumboADCFlag && chkMemsEnabled.IsChecked.Value)
                         {
                             ucScan1.SetActivity("Data acquisition");
                             ucScan1.Running = true;
@@ -903,19 +945,19 @@ namespace Axel_hub
                             plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
 
                             axelMems.Reset(); timeStack.Clear();
-                            startADC24(true, ucScan1.GetSamplingPeriod(), ucScan1.GetBufferSize()); 
+                            startADC24(true, ucScan1.GetSamplingPeriod(), ucScan1.GetBufferSize());
                         }
                         else
                         {
                             plotcursorAccel.Visibility = System.Windows.Visibility.Visible;
                             ucScan1.SetActivity("");
-                        }                           
+                        }
                     }
                     break;
                 case ("scan"):
                     {
-                        log(json, Brushes.DarkGreen.Color);                       
-                        lastGrpExe = mme.Clone();                       
+                        log(json, Brushes.DarkGreen.Color);
+                        lastGrpExe = mme.Clone();
                         if (Utils.isNull(lastScan)) lastScan = new MMscan();
                         if (!lastScan.FromDictionary(mme.prms))
                         {
@@ -933,19 +975,20 @@ namespace Axel_hub
                     {
                         string txt = (string)mme.prms["text"];
                         int errCode = -1;
-                        if (mme.prms.ContainsKey("error")) errCode = Convert.ToInt32(mme.prms["error"]);                        
-                        if(txt.Contains("Error") || (errCode > -1))
-                        { 
-                            log("!!! "+txt, Brushes.Red.Color);
-                            if (errCode > -1) log("Error code: "+errCode.ToString(), Brushes.Red.Color);
+                        if (mme.prms.ContainsKey("error")) errCode = Convert.ToInt32(mme.prms["error"]);
+                        if (txt.Contains("Error") || (errCode > -1))
+                        {
+                            log("!!! " + txt, Brushes.Red.Color);
+                            if (errCode > -1) log("Error code: " + errCode.ToString(), Brushes.Red.Color);
                         }
-                        else log("! "+txt, Brushes.Coral.Color);
+                        else log("! " + txt, Brushes.Coral.Color);
                     }
                     break;
                 case ("abort"):
                     {
                         log(json, Brushes.Red.Color);
-                        if (ucScan1.remoteMode != RemoteMode.Free)
+                        if (ucScan1.remoteMode == RemoteMode.Simple_Scan || ucScan1.remoteMode == RemoteMode.Simple_Repeat || 
+                            ucScan1.remoteMode == RemoteMode.Jumbo_Scan || ucScan1.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
                             ucScan1.Abort(false);
                         }
@@ -956,31 +999,31 @@ namespace Axel_hub
         }
 
         public Dictionary<string, double> Statistics(Dictionary<string, double> dt) // in MEMS [V]; PhiRad -> out - MEMS [mg], etc.
-        {   
-            Dictionary<string, double> rslt = new Dictionary<string,double>(dt);
+        {
+            Dictionary<string, double> rslt = new Dictionary<string, double>(dt);
             if (!(dt.ContainsKey("MEMS_V") || dt.ContainsKey("MEMS")) || (!dt.ContainsKey("PhiRad"))) return rslt; // works only if both are present
-            
+
             if (!dt.ContainsKey("K")) rslt["K"] = numKcoeff.Value;
             if (!dt.ContainsKey("Phi0")) rslt["Phi0"] = numPhi0.Value;
             if (!dt.ContainsKey("Scale")) rslt["Scale"] = numScale.Value;
-            
-            if(dt.ContainsKey("MEMS_V")) rslt["MEMS"] = AxelChart1.convertV2mg(dt["MEMS_V"]); // convert V to mg
-            if(dt.ContainsKey("MEMS2_V")) rslt["MEMS2"] = AxelChart1.convertV2mg(dt["MEMS2_V"],true);  
+
+            if (dt.ContainsKey("MEMS_V")) rslt["MEMS"] = AxelChart1.convertV2mg(dt["MEMS_V"]); // convert V to mg
+            if (dt.ContainsKey("MEMS2_V")) rslt["MEMS2"] = AxelChart1.convertV2mg(dt["MEMS2_V"], true);
 
             rslt["PhiMg"] = (dt["PhiRad"] - rslt["Phi0"]) * rslt["K"];  // convert rad to mg
-          //  rslt["PhiMg"] = (dt["PhiRad"] ) * rslt["K"];  // convert rad to mg
+            //  rslt["PhiMg"] = (dt["PhiRad"] ) * rslt["K"];  // convert rad to mg
             phiMg.AddPoint(rslt["PhiMg"]);
-            
+
             double ord = (rslt["MEMS"] - rslt["PhiMg"]) / (2 * Math.PI * numKcoeff.Value);
             rslt["Order"] = Math.Round(ord);
             rslt["OrdRes"] = ord - Math.Round(ord);
             rslt["Accel"] = 2 * Math.PI * numKcoeff.Value * rslt["Order"] + rslt["PhiMg"];
             accelMg.AddPoint(rslt["Accel"]);
-           
+
             string ss = "";
-            if ((tabSecPlots.SelectedIndex == 4) && chkBigCalcUpdate.IsChecked.Value)
+            if ((tabSecPlots.SelectedIndex == 4) && chkBigCalcTblUpdate.IsChecked.Value)
             {
-                if (rslt.ContainsKey("MEMS2")) ss = " / "+rslt["MEMS2"].ToString(Options.genOptions.SignalTablePrec);
+                if (rslt.ContainsKey("MEMS2")) ss = " / " + rslt["MEMS2"].ToString(Options.genOptions.SignalTablePrec);
                 lbiMEMS.Content = "MEMS[mg] = " + rslt["MEMS"].ToString(Options.genOptions.SignalTablePrec) + ss;
 
                 lbiPhiRad.Content = "Phi[rad] = " + rslt["PhiRad"].ToString(Options.genOptions.SignalTablePrec);
@@ -1000,8 +1043,8 @@ namespace Axel_hub
             ds["sender"] = remoteShow.keyID;
             if (dt.ContainsKey("MEMS")) ds["MEMS"] = dt["MEMS"];
             if (dt.ContainsKey("MEMS2")) ds["MEMS2"] = dt["MEMS2"];
-            if(dt.ContainsKey("PhiMg")) ds["PhiMg"] = dt["PhiMg"];
-            if(dt.ContainsKey("Accel")) ds["Accel"] = dt["Accel"];
+            if (dt.ContainsKey("PhiMg")) ds["PhiMg"] = dt["PhiMg"];
+            if (dt.ContainsKey("Accel")) ds["Accel"] = dt["Accel"];
             string json = JsonConvert.SerializeObject(ds);
             showLogger.log(json);
             remoteShow.sendCommand(json);
@@ -1009,12 +1052,12 @@ namespace Axel_hub
 
         List<double> iStack, dStack;
         int iStDepth = 5; int dStDepth = 3;
-        public double PID(double curr)
+        public double PID(double disbalance)
         {
-            double pTerm = curr;
-            iStack.Add(curr); while (iStack.Count > iStDepth) iStack.RemoveAt(0);
+            double pTerm = disbalance;
+            iStack.Add(disbalance); while (iStack.Count > iStDepth) iStack.RemoveAt(0);
             double iTerm = iStack.Average();
-            dStack.Add(curr); while (dStack.Count > dStDepth) dStack.RemoveAt(0);
+            dStack.Add(disbalance); while (dStack.Count > dStDepth) dStack.RemoveAt(0);
             double dTerm = 0;
             for (int i = 0; i < dStack.Count - 1; i++)
             {
@@ -1025,21 +1068,21 @@ namespace Axel_hub
             double cr = ndKP.Value * pTerm + ndKI.Value * iTerm + ndKD.Value * dTerm;
             log("PID> " + pTerm.ToString("G3") + "  " + iTerm.ToString("G3") + " " + dTerm.ToString("G3") +
                 // PID X correction and Y value after the correction
-                " corr " + cr.ToString("G4") + " for " + curr.ToString("G4"), Brushes.Navy.Color);
+                " corr " + cr.ToString("G4") + " for " + disbalance.ToString("G4"), Brushes.Navy.Color);
             return cr;
         }
 
-        #region File operation 
+        #region File operation
         //TODO Change this to add new columns to corresponding datastacks (N2_std, Ntot_std etc) - maybe using a list?
         public bool OpenSignal(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
 
             Clear(false, true, false);
-            string[] ns; int j = 0; double x,d; 
+            string[] ns; int j = 0; double x, d;
             foreach (string line in File.ReadLines(fn))
             {
-                if(line.Contains("#{"))
+                if (line.Contains("#{"))
                 {
                     lastGrpExe = JsonConvert.DeserializeObject<MMexec>(line.Substring(1));
                 }
@@ -1049,10 +1092,10 @@ namespace Axel_hub
                 }
                 if (line[0] == '#') continue; //skip comments/service info
                 ns = line.Split('\t');
-                if (ns.Length < 6) continue;                
+                if (ns.Length < 6) continue;
                 if (!double.TryParse(ns[0], out x)) throw new Exception("Wrong double at line " + j.ToString());
                 if (!double.TryParse(ns[1], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackN1.Add(new Point(x,d));
+                stackN1.Add(new Point(x, d));
                 if (!double.TryParse(ns[2], out d)) throw new Exception("Wrong double at line " + j.ToString());
                 stackN2.Add(new Point(x, d));
                 if (!double.TryParse(ns[3], out d)) throw new Exception("Wrong double at line " + j.ToString());
@@ -1060,7 +1103,7 @@ namespace Axel_hub
                 if (!double.TryParse(ns[4], out d)) throw new Exception("Wrong double at line " + j.ToString());
                 stackRN2.Add(new Point(x, d));
                 if (!double.TryParse(ns[5], out d)) throw new Exception("Wrong double at line " + j.ToString());
-                stackNtot.Add(new Point(x, d));                
+                stackNtot.Add(new Point(x, d));
                 j++;
             }
             graphNs.Data[0] = stackN1; graphNs.Data[1] = stackN2;
@@ -1083,7 +1126,7 @@ namespace Axel_hub
             if (result == true) OpenSignal(dlg.FileName);
         }
 
-        public void SaveSignal(string fn) 
+        public void SaveSignal(string fn)
         {
             if (stackN1.Count == 0)
             {
@@ -1091,9 +1134,9 @@ namespace Axel_hub
                 return;
             }
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);
-            if(!Utils.isNull(lastGrpExe)) file.WriteLine("#"+JsonConvert.SerializeObject(lastGrpExe));
+            if (!Utils.isNull(lastGrpExe)) file.WriteLine("#" + JsonConvert.SerializeObject(lastGrpExe));
             if (!String.IsNullOrEmpty(tbRemSignal.Text)) file.WriteLine("#Rem=" + tbRemSignal.Text);
-            file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tN2_std\tNtot_std\tN2int");  
+            file.WriteLine("#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tN2_std\tNtot_std\tN2int");
             for (int i = 0; i < stackN1.Count; i++)
             {
                 string ss = stackN1[i].X.ToString(Options.genOptions.SaveFilePrec) + "\t" + stackN1[i].Y.ToString(Options.genOptions.SaveFilePrec) + "\t" +
@@ -1155,11 +1198,11 @@ namespace Axel_hub
 
         private void btnClearAll_Click(object sender, RoutedEventArgs e)
         {
-            if (sender == btnClearSignal) 
+            if (sender == btnClearSignal)
                 Clear(false, true, false);
-            if (sender == btnClearAll) 
+            if (sender == btnClearAll)
                 Clear();
-            if (sender == btnClearFringes) 
+            if (sender == btnClearFringes)
                 Clear(false, false, true);
         }
 
@@ -1168,7 +1211,7 @@ namespace Axel_hub
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             frmAxelHub.Top = 0;
-            frmAxelHub.Height = SystemParameters.WorkArea.Height;  
+            frmAxelHub.Height = SystemParameters.WorkArea.Height;
             frmAxelHub.Left = SystemParameters.WorkArea.Width * 0.3;
             frmAxelHub.Width = SystemParameters.WorkArea.Width * 0.7;
         }
@@ -1184,13 +1227,13 @@ namespace Axel_hub
             }
             else
             {
-                if (rowMiddleChart.Height.Value < 38) rowMiddleChart.Height = new GridLength(Math.Min(230,middlePlotHeight), GridUnitType.Pixel);
+                if (rowMiddleChart.Height.Value < 38) rowMiddleChart.Height = new GridLength(Math.Min(230, middlePlotHeight), GridUnitType.Pixel);
             }
         }
 
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
-           tbLog.Document.Blocks.Clear();
+            tbLog.Document.Blocks.Clear();
         }
 
         private void ndKP_KeyDown(object sender, KeyEventArgs e)
@@ -1198,15 +1241,15 @@ namespace Axel_hub
             if ((e.Key == Key.L) && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
             {
                 log("Coeff.PID= " + ndKP.Value.ToString("G3") + " / " + ndKI.Value.ToString("G3") + " / " + ndKD.Value.ToString("G3") + " ;");
-            }     
+            }
         }
 
         private void Clear(bool Top = true, bool Middle = true, bool Bottom = true)
         {
             if (Top)
             {
-                AxelChart1.Clear();                
-                AxelChart1.Refresh(); 
+                AxelChart1.Clear();
+                AxelChart1.Refresh();
             }
             if (Middle)
             {
@@ -1229,7 +1272,7 @@ namespace Axel_hub
             {
                 if (!Utils.isNull(srsFringes)) srsFringes.Clear();
                 //for (int i = 0; i < graphFringes.Data.Count; i++) graphFringes.Data[i] = null;
- 
+
                 if (!Utils.isNull(srsMotAccel)) srsMotAccel.Clear();
                 if (!Utils.isNull(srsCorr)) srsCorr.Clear();
                 if (!Utils.isNull(srsMems)) srsMems.Clear();
@@ -1271,12 +1314,12 @@ namespace Axel_hub
 
         private void rbSingle_Checked(object sender, RoutedEventArgs e)
         {
-            crsStrobe1.AxisValue = 2;
-            if (rbSingle.IsChecked.Value) crsStrobe2.Visibility = System.Windows.Visibility.Hidden;
+            crsDownStrobe.AxisValue = 1.5;
+            if (rbSingle.IsChecked.Value) crsUpStrobe.Visibility = System.Windows.Visibility.Hidden;
             else
             {
-                crsStrobe2.Visibility = System.Windows.Visibility.Visible;
-                crsStrobe2.AxisValue = 5;
+                crsUpStrobe.Visibility = System.Windows.Visibility.Visible;
+                crsUpStrobe.AxisValue = 4.6;
             }
         }
 
@@ -1323,8 +1366,8 @@ namespace Axel_hub
 
         private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if(Utils.isNull(Options)) Options = new OptionsWindow();
-            if(!Utils.isNull(sender)) Options.ShowDialog();
+            if (Utils.isNull(Options)) Options = new OptionsWindow();
+            if (!Utils.isNull(sender)) Options.ShowDialog();
             NsCursor.ValuePresenter = new ValueFormatterGroup(" — ", new GeneralValueFormatter("0.00"))
             {
                 ValueFormatters = { new GeneralValueFormatter(Options.genOptions.SignalCursorPrec) }
@@ -1348,12 +1391,13 @@ namespace Axel_hub
                 chkDarkcurrent.IsChecked = modes.DarkCurrent;
                 chkStdDev.IsChecked = modes.StdDev;
                 chkN1.IsChecked = modes.N1;
-                chkN2.IsChecked= modes.N2;
+                chkN2.IsChecked = modes.N2;
                 chkRN1.IsChecked = modes.RN1;
                 chkRN2.IsChecked = modes.RN2;
                 chkNtot.IsChecked = modes.Ntot;
 
-                chkBigCalcUpdate.IsChecked = modes.RsltTblUpdate;
+                chkBigCalcTblUpdate.IsChecked = modes.RsltTblUpdate;
+                chkBigCalcChrtUpdate.IsChecked = modes.RsltChrtUpdate;
                 chkJoinLog.IsChecked = modes.JoinLog;
                 chkSignalLog.IsChecked = modes.SignalLog;
             }
@@ -1377,7 +1421,7 @@ namespace Axel_hub
                 ndKI.Value = modes.kI;
                 ndKD.Value = modes.kD;
                 chkFollowPID.IsChecked = modes.PID_Enabled;
-                if(modes.DoubleStrobe) rbDouble.IsChecked = true;
+                if (modes.DoubleStrobe) rbDouble.IsChecked = true;
                 else rbSingle.IsChecked = true;
             }
         }
@@ -1396,9 +1440,10 @@ namespace Axel_hub
                 modes.RN2 = chkRN2.IsChecked.Value;
                 modes.Ntot = chkNtot.IsChecked.Value;
 
-                modes.RsltTblUpdate = chkBigCalcUpdate.IsChecked.Value;
+                modes.RsltTblUpdate = chkBigCalcTblUpdate.IsChecked.Value;
+                modes.RsltChrtUpdate = chkBigCalcChrtUpdate.IsChecked.Value;
                 modes.JoinLog = chkJoinLog.IsChecked.Value;
-                modes.SignalLog = chkSignalLog.IsChecked.Value; 
+                modes.SignalLog = chkSignalLog.IsChecked.Value;
             }
             if (Bottom)
             {
@@ -1420,7 +1465,7 @@ namespace Axel_hub
                 modes.kI = ndKI.Value;
                 modes.kD = ndKD.Value;
                 modes.PID_Enabled = chkFollowPID.IsChecked.Value;
-                modes.DoubleStrobe = rbDouble.IsChecked .Value;
+                modes.DoubleStrobe = rbDouble.IsChecked.Value;
             }
             modes.Save();
         }
@@ -1440,7 +1485,7 @@ namespace Axel_hub
                 modes.TopFrame = rowUpperChart.Height.Value / Height;
                 modes.MiddleFrame = rowMiddleChart.Height.Value / Height;
             }
- 
+
             if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask))
             {
                 //Save the currently open sequence to a default location
@@ -1460,7 +1505,7 @@ namespace Axel_hub
             Options.genOptions.Save();
             Options.Close();
         }
-        #endregion 
+        #endregion
 
         private void chkMEMS_Checked(object sender, RoutedEventArgs e)
         {
@@ -1477,11 +1522,11 @@ namespace Axel_hub
 
         private void btnSinFit_Click(object sender, RoutedEventArgs e)
         {
-            if(srsFringes.Count == 0) 
+            if (srsFringes.Count == 0)
             {
                 Utils.errorMessage("No data points to fit over."); return;
             }
-            double[] xs = srsFringes.pointXs(); double[] ys = srsFringes.pointYs(); 
+            double[] xs = srsFringes.pointXs(); double[] ys = srsFringes.pointYs();
             double[] coeffs = new double[4];
             // signal(x) = scale[0] * sin(per[1]*x + phi0[2]) + offset[3] -> idx in coeffs
             coeffs[0] = (ys.Max() - ys.Min()) / 2; // scale
@@ -1498,12 +1543,12 @@ namespace Axel_hub
 
             log("FIT.meanSqError = " + meanSquaredError.ToString("G5"), Brushes.DarkCyan.Color);
             log("Phase0 = " + coeffs[2].ToString("G5"), Brushes.DarkCyan.Color);
-            log("Scale = "+coeffs[0].ToString("G5"), Brushes.DarkCyan.Color);
-            log("Period = " + coeffs[1].ToString("G5"), Brushes.DarkCyan.Color);
+            log("Scale = " + Math.Abs(coeffs[0]).ToString("G5"), Brushes.DarkCyan.Color);
+            log("Period = " + Math.Abs(coeffs[1]).ToString("G5"), Brushes.DarkCyan.Color);
             log("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan.Color);
 
-            crsStrobe2.AxisValue = coeffs[2];
-            crsStrobe1.AxisValue = MMDataConverter.Restrict2twoPI(coeffs[2]+Math.PI);
+            crsDownStrobe.AxisValue = coeffs[2];
+            crsUpStrobe.AxisValue = MMDataConverter.Restrict2twoPI(coeffs[2] + Math.PI);
             //numScale.Value = coeffs[0]; numPhi0.Value = coeffs[2]; 
         }
         // Callback function that implements the fitting model 
@@ -1535,7 +1580,7 @@ namespace Axel_hub
         private void chkAxelShow_Checked(object sender, RoutedEventArgs e)
         {
             remoteShow.Enabled = chkAxelShow.IsChecked.Value;
-            remoteShow.CheckConnection(true);         
+            remoteShow.CheckConnection(true);
         }
         protected void OnShowAsyncSend(bool OK, string json2send)
         {
@@ -1558,14 +1603,14 @@ namespace Axel_hub
             btnTestAxelShow.Value = !btnTestAxelShow.Value;
             showLogger.Enabled = debugMode && btnTestAxelShow.Value;
 
-            if (btnTestAxelShow.Value) timer = new Timer(Timer_Tick, sender, 1, 2000);           
-            else timer = null;           
+            if (btnTestAxelShow.Value) timer = new Timer(Timer_Tick, sender, 1, 2000);
+            else timer = null;
         }
 
         private void Timer_Tick(object sender)
         {
             Dictionary<string, double> dt = new Dictionary<string, double>();
-            dt["MEMS"] = 0.1 + 0.1*random.NextDouble();
+            dt["MEMS"] = 0.1 + 0.1 * random.NextDouble();
             dt["MEMS2"] = 0.3 + 0.1 * random.NextDouble();
             dt["PhiMg"] = 0.5 + 0.1 * random.NextDouble();
             dt["Accel"] = 0.7 + 0.1 * random.NextDouble();
@@ -1585,9 +1630,9 @@ namespace Axel_hub
             {
                 len = AxelChart1.MEMS2.Count;
                 if (AxelChart1.MEMS2.statsByIdx(len - bs, len - 1, false, out mn, out sd))
-                    dt["MEMS2"] = AxelChart1.convertV2mg(mn,true);
+                    dt["MEMS2"] = AxelChart1.convertV2mg(mn, true);
             }
-            if(phiMg.Count > 0) 
+            if (phiMg.Count > 0)
             {
                 dt["PhiMg"] = phiMg.pointYs().Average();
                 phiMg.Clear();
@@ -1596,7 +1641,7 @@ namespace Axel_hub
             {
                 dt["Accel"] = accelMg.pointYs().Average();
                 accelMg.Clear();
-            }                 
+            }
             export2Show(dt);
             // Forcing the CommandManager to raise the RequerySuggested event
             CommandManager.InvalidateRequerySuggested();
@@ -1638,38 +1683,38 @@ namespace Axel_hub
             if (result == true) SaveTrend(dlg.FileName);
         }
 
-       /*     //File.WriteAllText(@"E:\Temp\temp.json", JsonConvert.SerializeObject(AxelChart1.Waveform.ToArray()));
-            ShotList sl = new ShotList(); AxelChart1.Waveform.fillSamples(100);
-            Stopwatch sw = new Stopwatch(); sw.Start();
-            for (int i = 0; i < 100; i++)
-            {
-                SingleShot ss = new SingleShot(i, i+1);                
-                ss.mems = AxelChart1.Waveform.Clone();
-                sl.Add(ss);
-            }
-            sl.CloseWriter();
-            long wr = sw.ElapsedMilliseconds; log("write -> "+wr.ToString());
-            Thread.Sleep(1000);
-            ShotList sm = new ShotList(true, sl.filename);
-            //ShotList sn = new ShotList();
-            bool next = true; sm.ResetScan();
-            while (next)
-            {
-                sm.archyScan(out next);
-            }
-            //sn.CloseWriter();         
-            log("read -> " + (sw.ElapsedMilliseconds - 1000 - wr).ToString());
-            // s100:p100; write -> 1303; (13ms per shot) read -> 47
-        */
+        /*     //File.WriteAllText(@"E:\Temp\temp.json", JsonConvert.SerializeObject(AxelChart1.Waveform.ToArray()));
+             ShotList sl = new ShotList(); AxelChart1.Waveform.fillSamples(100);
+             Stopwatch sw = new Stopwatch(); sw.Start();
+             for (int i = 0; i < 100; i++)
+             {
+                 SingleShot ss = new SingleShot(i, i+1);                
+                 ss.mems = AxelChart1.Waveform.Clone();
+                 sl.Add(ss);
+             }
+             sl.CloseWriter();
+             long wr = sw.ElapsedMilliseconds; log("write -> "+wr.ToString());
+             Thread.Sleep(1000);
+             ShotList sm = new ShotList(true, sl.filename);
+             //ShotList sn = new ShotList();
+             bool next = true; sm.ResetScan();
+             while (next)
+             {
+                 sm.archyScan(out next);
+             }
+             //sn.CloseWriter();         
+             log("read -> " + (sw.ElapsedMilliseconds - 1000 - wr).ToString());
+             // s100:p100; write -> 1303; (13ms per shot) read -> 47
+         */
         private void ddTimer_Tick(object sender, EventArgs e)
         {
             quantList.Add(new Point(AxelChart1.Waveform.stopWatch.ElapsedMilliseconds / 1000.0, 5));
         }
 
-        private void setConditions(ref Dictionary<string,double> dc)
+        private void setConditions(ref Dictionary<string, double> dc)
         {
             dc.Clear();
-            dc["sampling"] = Utils.formatDouble(1/ucScan1.GetSamplingPeriod(), "G5");
+            dc["sampling"] = Utils.formatDouble(1 / ucScan1.GetSamplingPeriod(), "G5");
             dc["K"] = numKcoeff.Value;
             dc["phi0"] = numPhi0.Value;
             dc["scale"] = numScale.Value;
@@ -1684,20 +1729,20 @@ namespace Axel_hub
                 Utils.TimedMessageBox("Waveform Stopwatch is NOT running.");
                 btnTestSpeed.Value = false;
                 return;
-            }            
+            }
             if (btnTestSpeed.Value)
-            {            
+            {
                 quantList.Clear();
                 if (Utils.isNull(ddTimer))
                 {
                     ddTimer = new DispatcherTimer();
                     ddTimer.Tick += new EventHandler(ddTimer_Tick);
-                    ddTimer.Interval = new TimeSpan(500*10000);                    
+                    ddTimer.Interval = new TimeSpan(500 * 10000);
                 }
                 errList.Clear();
-                shotList = new ShotList(chkJoinLog.IsChecked.Value); 
+                shotList = new ShotList(chkJoinLog.IsChecked.Value);
                 setConditions(ref shotList.conditions);
-                ddTimer.Start();               
+                ddTimer.Start();
             }
             else
             {
@@ -1721,7 +1766,7 @@ namespace Axel_hub
             Nullable<bool> result = dlg.ShowDialog();
             if (result == true)
             {
-                lbJoinLogInfo.Content = "File: "+dlg.FileName;
+                lbJoinLogInfo.Content = "File: " + dlg.FileName;
                 shotList = new ShotList(true, dlg.FileName);
             }
             btnJDlyScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
@@ -1742,7 +1787,7 @@ namespace Axel_hub
             if (Utils.isNull(srsAccel)) srsAccel = new DataStack(depth);
 
             srsMdiffQ.Clear(); double xMin = 1E6, xMax = -1e6;
-            double wd = numJFrom.Value/1000.0;
+            double wd = numJFrom.Value / 1000.0;
             SingleShot ss; bool next; int j;
             shotList.ResetScan();
             if (!shotList.conditions.Count.Equals(0))
@@ -1750,27 +1795,27 @@ namespace Axel_hub
                 log(">> processing conditions:", Brushes.DarkSlateGray.Color);
                 foreach (KeyValuePair<string, double> pair in shotList.conditions)
                 {
-                    log(pair.Key+" = "+pair.Value, Brushes.Teal.Color);
+                    log(pair.Key + " = " + pair.Value, Brushes.Teal.Color);
                 }
             }
             shotList.ResetScan(); if (!shotList.archiveMode) log("The file is loaded in memory -> " + shotList.FileCount.ToString() + " shots.", Brushes.DarkSlateGray.Color);
             while ((wd <= (numJTo.Value / 1000.0)) && btnJDlyScan.Value)
             {
                 srsMotAccel.Clear(); srsCorr.Clear(); srsMems.Clear(); srsAccel.Clear();
-                shotList.ResetScan(); j = 0; 
+                shotList.ResetScan(); j = 0;
                 do
                 {
                     ss = shotList.archyScan(out next); if (!next) break;
                     srsMotAccel.Add(ss.quant); xMin = Math.Min(xMin, ss.quant.X); xMax = Math.Max(xMax, ss.quant.X);
-                    double m = ss.memsWeightAccel(wd, numMems2SignalLen.Value/1000.0, true);
+                    double m = ss.memsWeightAccel(wd, numMems2SignalLen.Value / 1000.0, true);
 
                     srsMems.AddPoint(m, ss.quant.X + wd);
                     srsCorr.AddPoint((m - ss.quant.Y) * (m - ss.quant.Y), ss.quant.X);
                     if (chkChartEachIter.IsChecked.Value)
                     {
-                        graphAccelTrend.Data[0] = srsMems; graphAccelTrend.Data[1] = srsCorr; 
+                        graphAccelTrend.Data[0] = srsMems; graphAccelTrend.Data[1] = srsCorr;
                         graphAccelTrend.Data[2] = srsMotAccel; graphAccelTrend.Data[3] = srsAccel;
-                    }                   
+                    }
                     DoEvents();
                     j++;
                 } while ((numJNPnts.Value.Equals(-1) || (j < numJNPnts.Value)) && btnJDlyScan.Value);
@@ -1780,10 +1825,10 @@ namespace Axel_hub
                     if (chkChartEachIter.IsChecked.Value)
                     {
                         double d = 0.02 * (xMax - xMin);
-                        accelXaxis.Adjuster = RangeAdjuster.None; 
-                        accelXaxis.Range = new Range<double>(xMin-d, xMax+d);
+                        accelXaxis.Adjuster = RangeAdjuster.None;
+                        accelXaxis.Range = new Range<double>(xMin - d, xMax + d);
                     }
-                    srsMdiffQ.AddPoint(srsCorr.pointYs().Average(), wd*1000.0);
+                    srsMdiffQ.AddPoint(srsCorr.pointYs().Average(), wd * 1000.0);
                     graphJoinOptim.Data[0] = srsMdiffQ;
                 }
                 lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Delay = " + (wd * 1000.0).ToString("G4");
@@ -1800,15 +1845,8 @@ namespace Axel_hub
                     xm = pnt.X; ym = pnt.Y;
                 }
             }
-            lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Minimum at "+xm.ToString("G5")+" / "+ ym.ToString("G5");
+            lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Minimum at " + xm.ToString("G5") + " / " + ym.ToString("G5");
             lbInfoAccelTrend.Content = "Info:";
         }
-
-        private void btnSaveJoin_Click(object sender, RoutedEventArgs e)
-        {
-            if(Utils.isNull(shotList)) throw new Exception("No ShotList to be saved");
-            if (shotList.Count.Equals(0)) throw new Exception("No ShotList data to be saved");
-            shotList.Save();
-        }       
-     } 
+    }
 }

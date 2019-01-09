@@ -217,6 +217,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="145"/>
                                 <ColumnDefinition Width="607*"/>
+                                <ColumnDefinition Width="152"/>
                             </Grid.ColumnDefinitions>
                             <GroupBox Grid.Column="0" Header="Signal Data" Margin="5,0,0,0" FontSize="12" BorderBrush="#FF146501">
                                 <StackPanel Margin="0,3,0,0">
@@ -243,6 +244,7 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition/>
                                             <RowDefinition Height="27.429"/>
+                                            <RowDefinition Height="27.429"/>
                                         </Grid.RowDefinitions>
                                         <ListBox x:Name="lboxBigCalc" Grid.Row="0" FontSize="18" Margin="0,0,0.286,0.286">
                                             <ListBoxItem x:Name="lbiMEMS" Content="MEMS[mg]" Foreground="#FF0E6001"/>
@@ -252,17 +254,23 @@
                                             <ListBoxItem x:Name="lbiPhiMg" Content="Phi[mg]" Foreground="#FF032285"/>
                                             <ListBoxItem x:Name="lbiAccel" Content="Accel[mg]" FontSize="22" Foreground="#FFA70404"/>
                                         </ListBox>
-                                        <CheckBox x:Name="chkBigCalcUpdate" Grid.Row="1" Margin="4,4.714,0,0" FontSize="12" Content="Updating" IsChecked="True" VerticalAlignment="Center" Width="80" HorizontalAlignment="Left" Height="15" />
-                                        <CheckBox x:Name="chkJoinLog" Grid.Row="1" Margin="168,5,0,0" FontSize="12" Content="Join Log" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Left" Height="15" Width="64"/>
-                                        <CheckBox x:Name="chkSignalLog" Grid.Row="1" Margin="82,4.714,0,0" FontSize="12" Content="Signal Log" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Left" Width="81" Height="15" />
+                                        <CheckBox x:Name="chkBigCalcTblUpdate" Grid.Row="2" Margin="97,6.714,0,4.714" FontSize="12" Content="Table" IsChecked="True" VerticalAlignment="Center" Width="50" HorizontalAlignment="Left" Height="16" Foreground="#FF0114A9" />
+                                        <CheckBox x:Name="chkBigCalcChrtUpdate" Grid.Row="2" Margin="150,6.714,0,5.714" FontSize="12" Content="Chart" IsChecked="True" VerticalAlignment="Center" Width="55" HorizontalAlignment="Left" Height="15" Foreground="#FF0114A9" />
+                                        <CheckBox x:Name="chkJoinLog" Grid.Row="1" Margin="87,5,0,0" FontSize="12" Content="Join Log" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Left" Height="15" Width="64"/>
+                                        <CheckBox x:Name="chkSignalLog" Grid.Row="1" Margin="4,4.714,0,0" FontSize="12" Content="Signal Log" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Left" Width="81" Height="15" />
+                                        <Label Content="Accel.Update =&gt;" HorizontalAlignment="Left" Margin="0" Grid.Row="2" VerticalAlignment="Center" Foreground="#FF0114A9"/>
+                                        <GroupBox Header="GroupBox" HorizontalAlignment="Left" Margin="471,50,0,0" VerticalAlignment="Top"/>
+
                                     </Grid>
                                     <GridSplitter x:Name="splitStats" HorizontalAlignment="Left" Grid.Column="1" Margin="0" Background="#FFF1F1F1" Width="5"/>
-                                    <ni:BooleanContentButton x:Name="btnTestAxelShow" Content="Test Axel Show" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="116" Background="#FFFAF9E7" Height="33" Click="btnTestAxelShow_Click" FalseBrush="#FF8DFAA2" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Send Test Data" TrueContent="Stop Data Flow"/>
-                                    <ni:BooleanContentButton x:Name="btnTestSpeed" Content="Test Axel Show" Grid.Column="1" HorizontalAlignment="Left" Margin="10,58,0,0" VerticalAlignment="Top" Width="116" Background="#FFFAF9E7" Height="33" Click="btnTestSpeed_Click" FalseBrush="#FF8DFACF" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Join Log Test" TrueContent="Stop Test"/>
-
                                 </Grid>
                             </GroupBox>
-
+                            <GroupBox Header="Internal Tests" HorizontalAlignment="Right" Margin="0" BorderBrush="#FF02588B" Width="150" Grid.Column="2" FontSize="13">
+                                <Grid>
+                                    <ni:BooleanContentButton x:Name="btnTestAxelShow" Content="Test Axel Show" Grid.Column="1" Margin="5,5,5,0" VerticalAlignment="Top" Background="#FFFAF9E7" Height="33" Click="btnTestAxelShow_Click" FalseBrush="#FF8DFAA2" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Send Data 2 AShow" TrueContent="Stop Data Flow" FontSize="12"/>
+                                    <ni:BooleanContentButton x:Name="btnTestSpeed" Grid.Column="1" Margin="5,50,5,0" VerticalAlignment="Top" Background="#FFFAF9E7" Height="33" Click="btnTestSpeed_Click" FalseBrush="#FF8DFACF" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Join Log Test" TrueContent="Stop Test"/>
+                                </Grid>
+                            </GroupBox>
                         </Grid>
                     </TabItem>
                 </TabControl>
@@ -285,11 +293,11 @@
                             <Button x:Name="btnConfirmStrobes" Content="Confirm Strobes" Margin="0,0,5,0" Width="103" Foreground="#FFEB2603" Visibility="Hidden" Click="btnConfirmStrobes_Click" Height="24" HorizontalAlignment="Right" FontSize="12" FontWeight="Bold" Background="#FFFDFEEF" BorderBrush="#FFFD0404"/>
                             <ni:Graph x:Name="graphFringes" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1">
                                 <ni:Graph.Axes>
-                                    <ni:AxisDouble x:Name="fringesYaxis" Orientation="Vertical" Adjuster="None"/>
+                                    <ni:AxisDouble x:Name="fringesYaxis" Orientation="Vertical" Adjuster="None" Range="0, 2, System.Double"/>
                                 </ni:Graph.Axes>
                                 <ni:Graph.Children>
-                                    <ni:MultiPlotCursor x:Name="crsStrobe1" Label="Uphill" Foreground="#FF046C05" ToolTip="Uphill" LabelVisibility="Visible"/>
-                                    <ni:MultiPlotCursor x:Name="crsStrobe2" Label="Downhill" Foreground="#FF031D9A" ToolTip="" LabelVisibility="Visible"/>
+                                    <ni:MultiPlotCursor x:Name="crsUpStrobe" Label="Uphill" Foreground="#FF046C05" ToolTip="Uphill" LabelVisibility="Visible"/>
+                                    <ni:MultiPlotCursor x:Name="crsDownStrobe" Label="Downhill" Foreground="#FF031D9A" ToolTip="" LabelVisibility="Visible"/>
                                 </ni:Graph.Children>
                                 <ni:Graph.Plots>
                                     <ni:Plot Label="Fringes">

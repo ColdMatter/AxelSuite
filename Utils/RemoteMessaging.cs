@@ -37,7 +37,7 @@ namespace RemoteMessagingNS
         public string lastRcvMsg { get; private set; }
         public string lastSndMsg { get; private set; }
         public memLog Log;
-        protected Stopwatch stopwatch;
+        public Stopwatch stopwatch;
 
         public DispatcherTimer dTimer, sTimer;
         private int _autoCheckPeriod = 10; // sec
@@ -69,7 +69,7 @@ namespace RemoteMessagingNS
             Log = new memLog(); Log.Enabled = true; // for debug use 
             lastRcvMsg = ""; lastSndMsg = "";
 
-            dTimer = new System.Windows.Threading.DispatcherTimer();
+            dTimer = new DispatcherTimer();
             dTimer.Tick += new EventHandler(dTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, autoCheckPeriod);
             dTimer.Start();
@@ -96,28 +96,42 @@ namespace RemoteMessagingNS
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
-        public double timeElapsed() // [s]
+        public double elapsedTime() // [s]
         {
             if (stopwatch.IsRunning) return stopwatch.ElapsedTicks / 10000000.0;
             else return -1;
         }
 
-        public bool clockSynchro(bool force = false) // if !force and stopwatch is running, go out
-                                                     // which means that the stopwatch has been started by the other side
+        public void DoEvents() 
+        {
+            DispatcherFrame frame = new DispatcherFrame();
+            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
+                new DispatcherOperationCallback(ExitFrame), frame);
+            Dispatcher.PushFrame(frame);
+        }
+
+        public object ExitFrame(object f)
+        {
+            ((DispatcherFrame)f).Continue = false;
+            return null;
+        }
+
+        public bool synchroClock(bool force = false) // if !force and stopwatch is running, go out
+                                                     // which means that the stopwatch has been started by the other side, or beforehand
         {
             if (!force && stopwatch.IsRunning) return true;
-            if (!sendCommand("ClockSynchro", 5)) throw new Exception("ClockSynchro has not been accepted");
-            Thread.Sleep(10);
+            if (!sendCommand("SynchroClock",5)) throw new Exception("SynchroClock has not been accepted");
+            DoEvents(); Thread.Sleep(50);
             try 
             {
                 EventWaitHandle handle = new EventWaitHandle(
                     false,                           /* Parameter ignored since handle already exists.*/
                     EventResetMode.ManualReset,      /* Explained below. */
-                    "ClockSynchro"                   /* String defined in a shared assembly. */
+                    "SynchroClock"                   /* String defined in a shared assembly. */
                     );
                 handle.Set();
                 stopwatch.Restart();
-                Console.WriteLine("Synchro stopwatches. "+DateTime.Now.ToLongTimeString());
+                Console.WriteLine("Synchro stopwatches. (sender) at "+DateTime.Now.ToLongTimeString());
             }
             catch (Exception e)
             {
@@ -167,18 +181,20 @@ namespace RemoteMessagingNS
                             case("pong"):
                                 handled = true;                               
                                 break;
-                            case("ClockSynchro"):
+                            case("SynchroClock"):
                                 try 
                                 {
                                     EventWaitHandle handle = new EventWaitHandle(
                                         false,                           /* nonsignaled state.*/
                                         EventResetMode.ManualReset,      /* it has to be reset for reuse. */
-                                        "ClockSynchro"                   /* String defined in a shared assembly. */
+                                        "SynchroClock"                   /* String defined in a shared assembly. */
                                         );
-                                    if(!handle.WaitOne(2000)) stopwatch.Restart();
-                                    else UtilsNS.Utils.TimedMessageBox("Unsuccessful attempt to sdynchronize stopwatches!");
-                                    
-                                    Console.WriteLine("Synchro stopwatches. " + DateTime.Now.ToLongTimeString());
+                                    if (!handle.WaitOne(2000))
+                                    {
+                                        stopwatch.Restart();
+                                        Console.WriteLine("Synchro stopwatches. (receiver) at " + DateTime.Now.ToLongTimeString()); //UtilsNS.Utils.TimedMessageBox
+                                    }
+                                    else UtilsNS.Utils.TimedMessageBox("Unsuccessful attempt to sdynchronize stopwatches!");                                   
                                 }
                                 catch (Exception e)
                                 {

@@ -26,7 +26,8 @@ namespace scanHub
         Jumbo_Repeat, // repeat as part of Jumbo Run
         Simple_Scan, // scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
-        Free // no grouping (default state)  
+        Ready_To_Remote,
+        Disconnected
     }
     public struct FringeParams  // fringes(phi) = cos(period * phi + phase) + offset
     {
@@ -44,7 +45,6 @@ namespace scanHub
 
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
-        public Stopwatch sw;
 
         public scanClass()
         {
@@ -53,8 +53,6 @@ namespace scanHub
             dTimer = new DispatcherTimer(DispatcherPriority.Send);
             dTimer.Tick += new EventHandler(dispatcherTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, 1);
-
-            sw = new Stopwatch();
 
             tabControl.SelectedIndex = 0;
             jumboButton = false;
@@ -189,8 +187,10 @@ namespace scanHub
             set
             {
                 lbMode.Content = "Oper.Mode: " + value.ToString();
+                if (value == RemoteMode.Simple_Repeat || value == RemoteMode.Simple_Scan || value == RemoteMode.Disconnected) bbtnStart.Visibility = System.Windows.Visibility.Collapsed;
+                else bbtnStart.Visibility = System.Windows.Visibility.Visible;
                 SetValue(remoteModeProperty, value);
-                tabControl.IsEnabled = (value == RemoteMode.Free);
+                tabControl.IsEnabled = (value == RemoteMode.Ready_To_Remote || value == RemoteMode.Disconnected);
             }
         }
         public static readonly DependencyProperty remoteModeProperty
@@ -198,7 +198,7 @@ namespace scanHub
                   "remoteMode",
                   typeof(RemoteMode),
                   typeof(scanClass),
-                  new PropertyMetadata(RemoteMode.Free)
+                  new PropertyMetadata(RemoteMode.Disconnected)
               );
 
         public RemoteMessagingNS.RemoteMessaging remote
@@ -333,7 +333,7 @@ namespace scanHub
                 {
                     bbtnStart.TrueContent = "Cancel";
                     bbtnStart.FalseContent = "Start";
-                    bbtnStart.FalseBrush = Brushes.LightGray;
+                    bbtnStart.FalseBrush = Brushes.LightCyan;
                     bbtnStart.TrueBrush = Brushes.Orange;
                 }               
                 bbtnStart.Value = false; 
@@ -367,7 +367,7 @@ namespace scanHub
         public void Abort(bool local) // the origin of Abort is (local) or (remote abort OR end sequence)
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
-            remoteMode = RemoteMode.Free;
+            remoteMode = RemoteMode.Ready_To_Remote;
             jumboButton = (tabControl.SelectedIndex == 2); // remote tab
             Running = false;
             bbtnStart.Value = false;
@@ -400,15 +400,16 @@ namespace scanHub
              ledRemote.Value = active;
              if (active)
              {
-                 Status("Ready to remote<->");
+                 Status("Ready to remote <->");
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
                  jumboButton = true; 
-                 remoteMode = RemoteMode.Free;
+                 remoteMode = RemoteMode.Ready_To_Remote;
               }
              else
              {
-                 Status("Commun. problem");
+                 Status("Disconnected -X-");
                  bbtnStart.Visibility = System.Windows.Visibility.Hidden;
+                 remoteMode = RemoteMode.Disconnected;
              }
          }
 
