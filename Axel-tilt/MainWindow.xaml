@@ -8,7 +8,7 @@
             <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="487*"/>
         </Grid.ColumnDefinitions>
-        <Grid Margin="0" Grid.Column="0">
+        <Grid Margin="0,0,3,0" Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="145.143"/>
                 <RowDefinition Height="275"/>
@@ -31,14 +31,13 @@
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continious"/>
                     </ComboBox>
-                    <ComboBox x:Name="cbDriftType" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top" Width="149" SelectedIndex="0">
+                    <ComboBox x:Name="cbDriftType" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top" Width="174" SelectedIndex="1">
                         <ComboBoxItem Content="Triangle (symmetrical)"/>
                         <ComboBoxItem Content="Trapeze shape"/>
                         <ComboBoxItem Content="Stairs shape"/>
                         <ComboBoxItem Content="Constant"/>
                     </ComboBox>
                     <ni:BooleanContentButton x:Name="btnRun" Content="R u n" HorizontalAlignment="Right" Height="37" Margin="0,0,7,3" VerticalAlignment="Bottom" Width="75" FontSize="14" FontWeight="Bold" Click="btnRun_Click" FalseBrush="#FFBFFEC6" TrueBrush="#FFF7B66E" FalseContent="R U N" TrueContent="Cancel" BorderThickness="5" />
-                    <Image x:Name="imgAbout" HorizontalAlignment="Right" Height="35" Margin="0,1,2,0" VerticalAlignment="Top" Width="35" Source="Tilt2.png" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
 
             </GroupBox>
@@ -76,7 +75,8 @@
                         </ni:ArrowButton.Background>
                     </ni:ArrowButton>
                     <ni:NumericTextBoxDouble x:Name="ndStepMg" HorizontalAlignment="Left" Height="23" Margin="77,50,0,0" VerticalAlignment="Top" Width="57" Interval="0.01" Range="0.001, 10, System.Double" Value="0.1"/>
-                    <Button x:Name="btnHomeAndHoriz" Content="Go Home &amp; Horiz" HorizontalAlignment="Left" Margin="8,8,9.571,0" VerticalAlignment="Top" Width="129" Background="#FFF9E6C7" FontSize="13" Foreground="#FF750500" Click="btnHomeAndHoriz_Click" Height="28"/>
+                    <Button x:Name="btnHomeAndHoriz" Content="Go Home &amp; Horiz" HorizontalAlignment="Left" Margin="8,8,0,0" VerticalAlignment="Top" Width="141" Background="#FFF9E6C7" FontSize="13" Foreground="#FF750500" Click="btnHomeAndHoriz_Click" Height="28"/>
+                    <Image x:Name="imgAbout" HorizontalAlignment="Right" Height="35" Margin="0,3,8,0" VerticalAlignment="Top" Width="35" Source="Tilt2.png" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
             </GroupBox>
         </Grid>
@@ -172,6 +172,7 @@
                                         <StackPanel Margin="0" Grid.Row="1" Orientation="Horizontal" Grid.RowSpan="1">
                                             <Label Content="Offset dodging [mg]" Margin="0" HorizontalAlignment="Left" Height="26" FontWeight="Normal" VerticalAlignment="Center"/>
                                             <ni:NumericTextBoxDouble x:Name="numOffsetDodging" Height="23" Width="60" FontWeight="Normal" FontSize="13" Margin="0" ValueChanged="numOffsetDodging_ValueChanged" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                            <CheckBox x:Name="chkSetZero" Content="Set 0 after scan" HorizontalAlignment="Left" Margin="7,0,0,0" VerticalAlignment="Center" FontWeight="Normal" IsChecked="True"/>
                                         </StackPanel>
                                     </Grid>
                                 </GroupBox>

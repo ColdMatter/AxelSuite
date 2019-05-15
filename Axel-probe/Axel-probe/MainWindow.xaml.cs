@@ -40,8 +40,10 @@ namespace Axel_probe
         RemoteMessaging remote;
         string remoteDoubleFormat = "G6";
         Random rnd = new Random();
-        AutoFileLogger logger;
+        FileLogger logger;
         Stopwatch sw;
+
+        ProbeEngine pe; 
 
         public MainWindow()
         {
@@ -53,58 +55,119 @@ namespace Axel_probe
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
 
-            fringes = new ChartCollection<Point>();
-            grFringes.DataSource = fringes;
-
-            signalN = new ChartCollection<double>();
-            graphNs.Data[0] = signalN;
-            signalB = new ChartCollection<double>();
-            graphNs.Data[1] = signalB;
-
             ramp = new ChartCollection<Point>();
             grRslt.Data[0] = ramp;
             corr = new ChartCollection<Point>();
             grRslt.Data[1] = corr;
 
             iStack = new List<double>(); dStack = new List<double>(); corrList = new List<double>();
-            logger = new AutoFileLogger();
+            logger = new FileLogger();
             sw = new Stopwatch();
             Running = false;
+
+            pe = new ProbeEngine();
+            pe.OnChange += new ProbeEngine.ChangeHandler(OnChangeEvent);
+            pe.OnLog += new ProbeEngine.LogHandler(log);
+            pe.lboxNB = lboxNB;
+            grFringes.DataSource = pe.srsFringes;
+            graphNs.Data[0] = pe.srsSignalN;
+            graphNs.Data[1] = pe.srsSignalB;
          }
 
-       public void DoEvents()
+        void Vis2PEparams()
         {
-            DispatcherFrame frame = new DispatcherFrame(); 
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, 
-                new DispatcherOperationCallback(ExitFrame), frame);
-            Dispatcher.PushFrame(frame);
+            if (Utils.isNull(pe)) return;
+            if (pe.LockParams) return;
+            pe.bpps["pattern"] = cbDriftType.SelectedIndex;
+            pe.bpps["ampl"] = ndAmplitude.Value;
+            pe.bpps["factor"] = ndOrderFactor.Value;
+            pe.bpps["step"] = ndStep.Value;
+            pe.bpps["TimeGap"] = ndTimeGap.Value;
+
+            pe.dps["Xnoise"] = ndGaussNoiseX.Value;
+            pe.dps["Ynoise"] = ndGaussNoiseY.Value;
+            pe.dps["XnoiseIO"] = chkAddGaussX.IsChecked.Value;
+            pe.dps["YnoiseIO"] = chkAddGaussY.IsChecked.Value;
+            pe.dps["BrthPattern"] = cbBrthPattern.SelectedIndex;
+            pe.dps["BrthApmpl"] = ndBreatheAmpl.Value;
+            pe.dps["BrthPeriod"] = ndBreathePeriod.Value;
+            pe.dps["BrthIO"] = chkBreathing.IsChecked.Value;
+        }
+        void PEparams2Vis()
+        {
+            if (Utils.isNull(pe)) return;
+            pe.LockParams = true;
+            cbDriftType.SelectedIndex = (int)pe.bpps["pattern"];
+            ndAmplitude.Value = pe.bpps["ampl"];
+            ndOrderFactor.Value = pe.bpps["factor"];
+            ndStep.Value = pe.bpps["step"];
+            ndTimeGap.Value = pe.bpps["TimeGap"];
+
+            ndGaussNoiseX.Value = Convert.ToDouble(pe.dps["Xnoise"]);
+            ndGaussNoiseY.Value = Convert.ToDouble(pe.dps["Ynoise"]);
+            chkAddGaussX.IsChecked = Convert.ToBoolean(pe.dps["XnoiseIO"]);
+            chkAddGaussY.IsChecked = Convert.ToBoolean(pe.dps["YnoiseIO"]);
+            cbBrthPattern.SelectedIndex = Convert.ToInt32(pe.dps["BrthPattern"]);
+            ndBreatheAmpl.Value = Convert.ToDouble(pe.dps["BrthApmpl"]);
+            ndBreathePeriod.Value = Convert.ToDouble(pe.dps["BrthPeriod"]);
+            chkBreathing.IsChecked = Convert.ToBoolean(pe.dps["BrthIO"]);
+            pe.LockParams = false;
         }
 
-        public object ExitFrame(object f)
+        private void ndGaussNoiseX_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {
-            ((DispatcherFrame)f).Continue = false;
-            return null;
+            if (Utils.isNull(pe)) return;
+            if (pe.LockParams) return;
+            pe.dps["Xnoise"] = ndGaussNoiseX.Value;
+            pe.dps["Ynoise"] = ndGaussNoiseY.Value;
+            pe.dps["BrthApmpl"] = ndBreatheAmpl.Value;
+            pe.dps["BrthPeriod"] = ndBreathePeriod.Value;
+        }
+        private void ndGaussNoiseX_ValueChanged(object sender, RoutedEventArgs e)
+        {
+            if (Utils.isNull(pe)) return;
+            if (pe.LockParams) return;
+            pe.dps["XnoiseIO"] = chkAddGaussX.IsChecked.Value;
+            pe.dps["YnoiseIO"] = chkAddGaussY.IsChecked.Value;
+            pe.dps["BrthIO"] = chkBreathing.IsChecked.Value;
+        }
+        private void ndGaussNoiseX_ValueChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (Utils.isNull(pe)) return;
+            if (pe.LockParams) return;
+            pe.dps["BrthPattern"] = cbBrthPattern.SelectedIndex;
+        }
+        private void chkPause_Checked(object sender, RoutedEventArgs e)
+        {
+            pe.Pause = chkPause.IsChecked.Value;
         }
 
-        private int getIfringe(double x) // get index from phase in fringes
+        void OnChangeEvent(Point newAccel)
         {
-            for (int i = 0; i < fringes.Count-1; i++)
+            if (newAccel.X < ndStep.Value) ramp.Clear();
+            if ((newAccel.X > (100 - ndStep.Value)) && (cbFinite.SelectedIndex == 0))
             {
-                if (Utils.InRange(x,fringes[i].X,fringes[i+1].X)) return i;
+                pe.Stop(); if (Running) btnRun_Click(null, null);
             }
-            return -1;
-        } 
+            ramp.Add(newAccel);
+        }
 
-        private void log(string txt)
+        private void log(string txt, System.Windows.Media.Color? clr = null)
         {
+            if (txt.Length > 0)
+                if (txt[0].Equals("@"))
+                {
+                    switch (txt)
+                    {
+                        case "@stop":
+                            if (Running) btnRun_Click(null, null);
+                            break;
+                    }
+                    //return;
+                }
+
             if (!chkLog.IsChecked.Value) return;
-            tbLog.AppendText(txt + "\r\n");
-            string text = tbLog.Text;
-            int maxLen = 10000;
-            if (text.Length > 2 * maxLen) tbLog.Text = text.Substring(maxLen);
-            tbLog.Focus();
-            tbLog.CaretIndex = tbLog.Text.Length;
-            tbLog.ScrollToEnd();
+            Utils.log(tbLog, txt, clr);
         }
         
         private bool debugMode = true;
@@ -139,7 +202,7 @@ namespace Axel_probe
 
         public double Breathing(double x)
         {
-            if (!chkVaryAmpl.IsChecked.Value) return 0;
+            if (!chkBreathing.IsChecked.Value) return 0;
             double per = Math.Sin(Math.PI * x / ndBreathePeriod.Value);
             double norm = ndBreatheAmpl.Value / 100;
             return per * norm;
@@ -211,20 +274,6 @@ namespace Axel_probe
             return da;
         }
 
-        private double fringesGenerator(double driftPos, double driftAcc) // return 
-        {
-            double sp = 0; double noise = Gauss().X;
-            fringes.Clear(); double orderFactor = ndOrderFactor.Value; 
-            while ((sp < 4 * Math.PI) && !stopRequest)
-            {
-                fringes.Add(new Point(sp, Breathing(driftPos) + Math.Cos(sp - driftAcc / orderFactor + noise) + Gauss().Y));
-                sp += Math.PI / 200;
-                //if ((k % 10) == 0) { DoEvents(); k++; }
-            }
-            grFringes.DataSource = fringes;
-            return driftAcc + noise;
-        }
-
         Dictionary<string, double> lastDecomposedAccel = new Dictionary<string, double>();
         private double calcAtPos(bool jumbo, double driftPos, bool odd) // driftPos - [0..driftPeriod]; odd - odd/even number for 2 strobe mode
             // returns drift [mg]
@@ -234,9 +283,9 @@ namespace Axel_probe
             double driftAcc = accelDrift(driftPos); // noiseless accel. [mg] from driftPos
             if (jumbo) ramp.Add(new Point(driftPos, driftAcc));
 
-            double accel = fringesGenerator(driftPos, driftAcc); // accel. [mg] with noise
+            double accel = pe.fringes(driftAcc); // accel. [mg] with noise
             log("pos.X: "+driftPos.ToString("G5")+"; acc: " + driftAcc.ToString("G5") + "; +ns: " + accel.ToString("G5"));
-            DoEvents();
+            Utils.DoEvents();
             double midFringe = -1; //double fringeTopRad = -1;
             if (chkFollowPID.IsChecked.Value)
             {
@@ -261,84 +310,51 @@ namespace Axel_probe
             }
             double midFringeMg = fringeRad2mg(midFringe); // from rad to mg
             lastDecomposedAccel = decomposeAccel(driftAcc, accel, midFringeMg, 2*Math.PI * orderFactor);
-            DoEvents(); devList.Add(Math.Abs(midFringe - fringeMg2rad(accel)));
+            Utils.DoEvents(); devList.Add(Math.Abs(midFringe - fringeMg2rad(accel)));
             log("fringe drift[mg]/[rad]= " + midFringeMg.ToString("G5") + " / " + midFringe.ToString("G5"));
             log("-----------------------------------");
             return driftAcc;
         }
+        
+        private void ClearVis()
+        {
+        
+        double rng = ndAmplitude.Value;
+        double step = ndStep.Value;
+        downhillLvl = double.NaN; uphillLvl = double.NaN;
+        ((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
+        ((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng * 1.05, rng * 1.05);
+        ((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
+
+        ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
+        }
+
         public bool Running 
         {
-            get { return btnRun.Content.Equals("S t o p"); }
-            set 
-            {
-                if (value) { btnRun.Content = "S t o p"; btnRun.Foreground = Brushes.DarkRed; }
-                else { btnRun.Content = "In  R U N"; btnRun.Foreground = Brushes.DarkGreen; }
-            }
+            get { return bbtnRun.Value; }
+            set { bbtnRun.Value = value; }
         }
-        private void btnReset_Click(object sender, RoutedEventArgs e)
-        {
-            stopRequest = true;
-            double rng = ndAmplitude.Value;
-            double step = ndStep.Value;
-            downhillLvl = double.NaN; uphillLvl = double.NaN;
-            ((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
-            ((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng * 1.05, rng * 1.05);
-            ((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
-
-            ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
-            fringesGenerator(0, 0);
-        }
-
+ 
         bool stopRequest = false; List<double> devList = new List<double>();
         private void btnRun_Click(object sender, RoutedEventArgs e)
         {
-            DoEvents();
             Running = !Running;
             if (Running)
             {
-                logger.AutoSaveFileName = ""; logger.Enabled = true; sw.Start();
+                Vis2PEparams();
+                ClearVis();
+                pe.Start((int)ndTimeGap.Value);
             }
             else
             {
-                logger.Enabled = false;
+                pe.Stop();
             }
-            stopRequest = !Running;
-            DoEvents();
-            if (stopRequest) return;
-
-            double rng = ndAmplitude.Value;
-            double step = ndStep.Value;
-            downhillLvl = double.NaN; uphillLvl = double.NaN;
-            ((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
-            ((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng*1.05, rng*1.05);
-            ((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
-
-            double drift, pos; int j; pauseSingle = false;
-             //tbLog.Text = ""; 
-            log("RUN -> " + cbDriftType.Text);
-            do
-            {
-                ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
-                pos = 0; j = 0;  
-                while ((pos < driftPeriod + 0.0001) && !stopRequest)
-                {
-                    drift = calcAtPos(true, pos, (j % 2) == 1);
-                    pos += step; j++;
-                    do
-                    {
-                        DoEvents(); 
-                    } while (chkPause.IsChecked.Value && !pauseSingle);
-                    pauseSingle = false;
-                    System.Threading.Thread.Sleep((int)ndDelay.Value);
-                }                
-                if (corrList.Count > 0)
-                    log("Aver.dev.=" + devList.ToArray().Average().ToString("G4") + "\n====================");
-            } while ((cbFinite.SelectedIndex == 1) && !stopRequest);
-            Running = false; logger.Enabled = false; sw.Stop();
         }
 
         private void frmMain_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            Vis2PEparams();
+            pe.SaveParams();
             stopRequest = true;
         }
 
@@ -364,7 +380,7 @@ namespace Axel_probe
             double cr = ndKP.Value * pTerm + ndKI.Value * iTerm + ndKD.Value * dTerm;
 
             if (rbDouble.IsChecked.Value) cr /= 2;
-            int curIdx1 = getIfringe((double)crsDownStrobe.AxisValue+cr);
+            int curIdx1 = pe.getIfringe((double)crsDownStrobe.AxisValue+cr);
             if (curIdx1 == -1) log("invalid index curIdx1");
             else log("PID> " + pTerm.ToString("G3") + "; " + iTerm.ToString("G3") + "; " + dTerm.ToString("G3") + " ("+cr.ToString("G3") +")"+
                      // PID X correction and Y value after the correction
@@ -384,7 +400,7 @@ namespace Axel_probe
         private double SingleAdjust(double drift) // return error in fringe position/phase
         {
             double curX = (double)crsDownStrobe.AxisValue;
-            int curIdx = getIfringe(curX);
+            int curIdx = pe.getIfringe(curX);
             if (curIdx == -1)
             {
                 log("Error: index cannot be found"); return double.NaN;
@@ -394,7 +410,7 @@ namespace Axel_probe
                 double corr = PID(fringes[curIdx].Y);
                 crsDownStrobe.AxisValue = curX + corr;
             }
-            curIdx = getIfringe((double)crsDownStrobe.AxisValue);
+            curIdx = pe.getIfringe((double)crsDownStrobe.AxisValue);
             if (curIdx > -1) return drift - (2.5 * Math.PI - fringes[curIdx].X); 
             else return double.NaN;
         }
@@ -409,7 +425,7 @@ namespace Axel_probe
             if (even) // even
             {
                 curX1 = (double)crsDownStrobe.AxisValue;
-                curIdx1 = getIfringe(curX1);
+                curIdx1 = pe.getIfringe(curX1);
                 if (curIdx1 == -1)
                 {
                     log("Error: index cannot be found"); return double.NaN;
@@ -419,7 +435,7 @@ namespace Axel_probe
             else // odd
             {            
                 curX2 = (double)crsUpStrobe.AxisValue;
-                curIdx2 = getIfringe(curX2);
+                curIdx2 = pe.getIfringe(curX2);
                 if (curIdx2 == -1)
                 {
                     log("Error: index cannot be found"); return double.NaN;
@@ -481,6 +497,10 @@ namespace Axel_probe
             remote.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
             remote.OnReceive += new RemoteMessaging.ReceiveHandler(OnReceive);
             remote.Enabled = chkRemoteEnabled.IsChecked.Value;
+
+            pe.remote = remote;
+            pe.LoadParams();
+            PEparams2Vis();
         }
 
         private MMexec lastGrpExe;
@@ -494,8 +514,11 @@ namespace Axel_probe
             }
             else
             {
-                grpRemote.Foreground = Brushes.Red;
-                grpRemote.Header = "Remote - problem -X-";
+                if (chkRemoteEnabled.IsChecked.Value)
+                {
+                    grpRemote.Foreground = Brushes.Red;
+                    grpRemote.Header = "Remote - problem -X-";
+                }
             }
         }
 
@@ -604,112 +627,6 @@ namespace Axel_probe
             return true;
         }
 
-        /* Example base data + some noise
-           N2	Ntot	B2	Btot	Bg		N2	Ntot	B2	Btot	Bg
-            1	5	    1	3	    0		3	5	    1	3	    0
-										
-            NB2	NBtot					    NB2	NBtot			
-            0	2					        2	2			
-										
-            A						        A				
-            1						        -1		*/
-        private bool SingleShot(double A, // A = 1 .. -1
-                                ref MMexec mme) // group template
-        {
-            log("A = "+A.ToString("G5"));
-            bool rslt = false;
-            double ntot = 5; double b2 = 1; double btot = 3; double bg = 0;
-            double n2 = (1-A)*(ntot-btot)/2 + b2;   // n2 = 1 .. 3 / A = 1 .. -1              
-
-            lboxNB.Items[1] = "NTot = " + ntot.ToString();
-            lboxNB.Items[2] = "B2 = " + b2.ToString();
-            lboxNB.Items[3] = "BTot = " + btot.ToString();
-            lboxNB.Items[4] = "Bg = " + bg.ToString();
-
-            double d, scl = 100;
-            List<Double> srsN2 = new List<Double>();
-            List<Double> srsNTot = new List<Double>();
-            List<Double> srsB2 = new List<Double>();
-            List<Double> srsBTot = new List<Double>();
-            List<Double> srsBg = new List<Double>();
-            signalN.Clear(); srsN2.Clear(); srsNTot.Clear(); 
-            signalB.Clear(); srsB2.Clear(); srsBTot.Clear();  srsBg.Clear(); 
-            for (int i = 0; i < 3000; i++)
-            {
-                d = n2 + Gauss01() / scl;
-                lboxNB.Items[0] = "N2 = " + d.ToString(remoteDoubleFormat);
-                srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                d = ntot + Gauss01() / scl;
-                srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
-
-                d = b2 + Gauss01() / scl;
-                srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                d = btot + Gauss01() / scl;
-                srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
-
-                d = bg + Gauss01() / scl;
-                srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));                   
-            }
-            signalN.Append(srsN2); signalN.Append(srsNTot);
-            signalB.Append(srsB2); signalB.Append(srsBTot); 
-
-            if (remote.Connected)
-            {               
-                mme.prms["N2"] = srsN2.ToArray(); mme.prms["NTot"] = srsNTot.ToArray();
-                mme.prms["B2"] = srsB2.ToArray(); mme.prms["BTot"] = srsBTot.ToArray();
-                mme.prms["Bg"] = srsBg.ToArray();
-                mme.id = rnd.Next(int.MaxValue);
-               
-                string msg = JsonConvert.SerializeObject(mme);
-                rslt = remote.sendCommand(msg);
-                mme.prms["runID"] = (int)mme.prms["runID"]+1;
-                log(msg.Substring(1,80)+"...");
-                do
-                {
-                    DoEvents(); Thread.Sleep(20); 
-                } while (chkPause.IsChecked.Value && !pauseSingle);
-                pauseSingle = false;
-            }
-            return rslt;
-        } 
-        
-        private void RealScan(MMscan mms)
-        {
-            MMexec md = new MMexec();
-            md.mmexec = "";
-            md.cmd = "shotData";
-            md.sender = "Axel-probe";
-            md.prms["groupID"] = mms.groupID;
-            md.prms["runID"] = 0;
-
-            double n2 = 1; double ntot = 5; // n2 = 1 .. 3 / A = 1 .. -1              
-            double b2 = 1; double btot = 3; double bg = 0;
-
-            cancelRequest = false; double A = 0;  fringes.Clear();
-            for (double ph = mms.sFrom; ph < mms.sTo + 0.01 * mms.sBy; ph += mms.sBy)
-            {
-                DoEvents();
-                n2 = -Math.Cos(ph)+2;  // n2 = 1 .. 3
-                A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
-                fringes.Add(new Point(ph, A)); 
-
-                System.Threading.Thread.Sleep((int)ndDelay.Value);
-                log(ph.ToString());
-                if (Utils.InRange(ph, mms.sTo - 0.99 * mms.sBy, mms.sTo + 0.99 * mms.sBy) || cancelRequest)
-                {
-                    md.prms["last"] = 1;
-                }
-                if (!SingleShot(A, ref md)) break; 
-                if (cancelRequest) break;
-            }               
-        }
-
- /*       private async void SimpleRepeatAsync(bool jumbo, int cycles, string groupID)
-        {
-            // This method runs asynchronously.
-            await Task.Run(() => SimpleRepeat(jumbo, cycles, groupID));
-        }*/
-
         private void dispatcherTimer_Tick(object sender, EventArgs e)
         {
             dispatcherTimer.Stop();
@@ -718,19 +635,24 @@ namespace Axel_probe
             if(lastGrpExe.cmd.Equals("scan")) 
             {
                 MMscan mms = new MMscan();
-                if (mms.FromDictionary(lastGrpExe.prms)) RealScan(mms);
+                if (mms.FromDictionary(lastGrpExe.prms))
+                {
+                    pe.remoteMode = RemoteMode.Jumbo_Scan;
+                    pe.DoScan(mms);
+                    pe.remoteMode = RemoteMode.Ready_To_Remote;
+                }
             }
             if(lastGrpExe.cmd.Equals("repeat")) 
             {
                 string jumboGroupID = (string)lastGrpExe.prms["groupID"];
                 int jumboCycles = Convert.ToInt32(lastGrpExe.prms["cycles"]);
  
-                RealRepeat(true, jumboCycles, jumboGroupID);
+                JumboRepeat(jumboCycles, jumboGroupID);
             }
         }
 
         bool wait4adjust = false; double xDownPos = 0, xUpPos = 0;
-        private void RealRepeat(bool jumbo, int cycles, string groupID)
+        private void JumboRepeat(int cycles, string groupID)
         {
             MMexec md = new MMexec();
             md.mmexec = "";
@@ -743,84 +665,60 @@ namespace Axel_probe
             double b2 = 1; double btot = 3; double bg = 0;
 
             long realCycles = cycles;
-            if (cycles == -1)
-            {
-                if(jumbo)
-                {
-                     realCycles = long.MaxValue;
-                }
-                else
-                {
-                    realCycles = (long)(driftPeriod/driftStep);
-                }   
-            }
+            if (cycles == -1) realCycles = long.MaxValue;
             double A = 0, frAmpl = 0, frAmplI = 0, drift = 0, pos0, pos1 = 0, pos2 = 0;
             ramp.Clear(); corr.Clear(); corrList.Clear();
             cancelRequest = false; int smallLoop = (int)(driftPeriod/driftStep);
             int i = -1;
             for (long j = 0; j < realCycles; j++)
             {
-                DoEvents();
+                Utils.DoEvents();
                 if ((j == (realCycles - 1)) || cancelRequest)
                 {
                     md.prms["last"] = 1;
                 }
-                if (jumbo) // jumbo repeat 
+                if (j % smallLoop == 0)
                 {
-                    if (j % smallLoop == 0)
+                    i = 0;
+                    ramp.Clear(); corr.Clear();
+                }
+                else i += 1;
+                pos0 = i * driftStep;
+                drift = calcAtPos(true, pos0, (i % 2) == 1) / ndOrderFactor.Value; // [rad]     fringeMg2rad(
+                if (rbSingle.IsChecked.Value)
+                {
+                    pos1 = (double)crsDownStrobe.AxisValue + drift;
+                    frAmpl = Math.Cos(pos1);
+                    log("# pos1= " + pos1.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                }
+                else
+                {
+                    int runID = (int)md.prms["runID"]; string side;
+                    pos1 = (double)crsDownStrobe.AxisValue - drift;
+                    pos2 = (double)crsUpStrobe.AxisValue - drift;
+                    if ((runID % 2) == 0)
                     {
-                        i = 0;
-                        ramp.Clear(); corr.Clear();
-                    }
-                    else i += 1;
-                    pos0 = i * driftStep;
-                    drift = calcAtPos(jumbo, pos0, (i % 2) == 1) / ndOrderFactor.Value; // [rad]     fringeMg2rad(
-                    if (rbSingle.IsChecked.Value)
-                    {
-                        pos1 = (double)crsDownStrobe.AxisValue + drift;
-                        frAmpl = Math.Cos(pos1);
-                        log("# pos1= " + pos1.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4") + "; idx= " + j.ToString());
+                        frAmpl = Math.Cos(pos1); side = "downhill";
+                        frAmplI = fringes[pe.getIfringe((double)crsDownStrobe.AxisValue)].Y;
+                        log("# idxed= " + frAmplI.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4"));
                     }
                     else
                     {
-                        int runID = (int)md.prms["runID"]; string side;
-                        pos1 = (double)crsDownStrobe.AxisValue - drift;
-                        pos2 = (double)crsUpStrobe.AxisValue - drift;
-                        if ((runID % 2) == 0)
-                        {
-                            frAmpl = Math.Cos(pos1); side = "downhill";
-                            frAmplI = fringes[getIfringe((double)crsDownStrobe.AxisValue)].Y;
-                            log("# idxed= " + frAmplI.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4"));
-                        }
-                        else
-                        {
-                            frAmpl = Math.Cos(pos2); side = "uphill";
-                            frAmplI = fringes[getIfringe((double)crsUpStrobe.AxisValue)].Y;
-                            log("# idxed= " + frAmplI.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4"));
-                        }
-                    }   
-                    wait4adjust = chkFollowPID.IsChecked.Value;
-                    md.prms["time"] = (string)(remote.elapsedTime().ToString("G6")); 
-                    if (lastDecomposedAccel.ContainsKey("mems")) md.prms["MEMS"] = (string)(lastDecomposedAccel["mems"].ToString("G5")); // in [mg]
-                    if (!SingleShot(frAmplI, ref md)) break;
-                    while (wait4adjust)
-                    {
-                        Thread.Sleep((int)ndDelay.Value);
-                        DoEvents();
+                        frAmpl = Math.Cos(pos2); side = "uphill";
+                        frAmplI = fringes[pe.getIfringe((double)crsUpStrobe.AxisValue)].Y;
+                        log("# idxed= " + frAmplI.ToString("G4") + "; frAmpl= " + frAmpl.ToString("G4"));
                     }
-                    Thread.Sleep((int)ndDelay.Value);
-                }
-                else // simple repeat -> initiated by axel-probe 
+                }   
+                wait4adjust = chkFollowPID.IsChecked.Value;
+                md.prms["time"] = (string)(remote.elapsedTime().ToString("G6")); 
+                if (lastDecomposedAccel.ContainsKey("mems")) md.prms["MEMS"] = (string)(lastDecomposedAccel["mems"].ToString("G5")); // in [mg]
+                if (!pe.SingleShot(frAmplI, ref md)) break;
+                while (wait4adjust)
                 {
-                    n2 = 1 + rnd.Next(200) / 100.0; // random from 1 to 3
-                    A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
-                    ramp.Add(new Point(j, A));
-                    drift = calcAtPos(jumbo, A, (j % 2) == 1);
-                    frAmpl = A;
-                    if (!SingleShot(frAmpl, ref md)) break;
-                }
-                
-                Thread.Sleep((int)ndDelay.Value);
+                    Thread.Sleep((int)ndTimeGap.Value);
+                    Utils.DoEvents();
+                }                                
+                Thread.Sleep((int)ndTimeGap.Value);
                 if (cancelRequest) break;
             }
         }
@@ -842,11 +740,13 @@ namespace Axel_probe
 
             if (remote.Enabled) // title command
             {
+                pe.remoteMode = RemoteMode.Simple_Scan;
                 msg = JsonConvert.SerializeObject(mm);
                 if (!remote.sendCommand(msg)) MessageBox.Show("send json problem!");
                 log(msg);
+                pe.DoScan(mms);
+                pe.remoteMode = RemoteMode.Ready_To_Remote;
             }
-            RealScan(mms); 
         }
 
         private void btnRepeat_Click(object sender, RoutedEventArgs e)
@@ -868,21 +768,31 @@ namespace Axel_probe
             }
             crsDownStrobe.Visibility = System.Windows.Visibility.Hidden; crsUpStrobe.Visibility = System.Windows.Visibility.Hidden;
             Thread.Sleep(1000);
-            RealRepeat(false, cycles, groupID);
+            pe.remoteMode = RemoteMode.Simple_Repeat;
+            pe.SimpleRepeat(cycles, groupID);
+            pe.remoteMode = RemoteMode.Ready_To_Remote;
         }
 
         private void chkRemoteEnabled_Checked(object sender, RoutedEventArgs e)
         {
-            DoEvents();
+            Utils.DoEvents();
             remote.Enabled = chkRemoteEnabled.IsChecked.Value;
             remote.CheckConnection(true);
         }
 
         private void btnAbort_Click(object sender, RoutedEventArgs e)
         {
-            DoEvents();
+            switch (pe.remoteMode)
+            {
+                case RemoteMode.Simple_Scan: pe.CancelScan();
+                    break;
+                case RemoteMode.Simple_Repeat: pe.CancelRepeat();
+                    break;
+            }
+            Utils.DoEvents();
+
             cancelRequest = true;
-            DoEvents();
+            Utils.DoEvents();
             log("About to ABORT !!!");
             string msg;
             MMexec mm = new MMexec();
@@ -921,12 +831,89 @@ namespace Axel_probe
         private void frmMain_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key.Equals(Key.NumPad0)) chkPause.IsChecked = !chkPause.IsChecked.Value;
-            if (e.Key.Equals(Key.NumPad1)) pauseSingle = true;
+            if (e.Key.Equals(Key.NumPad1)) pe.pauseSingle();
         }
 
         private void imgAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Probe v1.6 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Probe v1.7 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
+
      }
 }
+
+
+/*       private double fringesGenerator(double driftPos, double driftAcc) // return 
+        {
+            double sp = 0; double noise = Gauss().X;
+            fringes.Clear(); double orderFactor = ndOrderFactor.Value; 
+            while ((sp < 4 * Math.PI) && !stopRequest)
+            {
+                fringes.Add(new Point(sp, Breathing(driftPos) + Math.Cos(sp - driftAcc / orderFactor + noise) + Gauss().Y));
+                sp += Math.PI / 200;
+                //if ((k % 10) == 0) { Utils.DoEvents(); k++; }
+            }
+            grFringes.DataSource = fringes;
+            return driftAcc + noise;
+        }*/
+
+/*     private void btnReset_Click(object sender, RoutedEventArgs e)
+{
+stopRequest = true;
+double rng = ndAmplitude.Value;
+double step = ndStep.Value;
+downhillLvl = double.NaN; uphillLvl = double.NaN;
+((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
+((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng * 1.05, rng * 1.05);
+((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
+
+ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
+fringesGenerator(0, 0);
+}*/
+
+
+/*            return;
+            Utils.DoEvents();
+            Running = !Running;
+            if (Running)
+            {
+                logger.AutoSaveFileName = ""; logger.Enabled = true; sw.Start();
+            }
+            else
+            {
+                logger.Enabled = false;
+            }
+            stopRequest = !Running;
+            Utils.DoEvents();
+            if (stopRequest) return;
+
+            double rng = ndAmplitude.Value;
+            double step = ndStep.Value;
+            downhillLvl = double.NaN; uphillLvl = double.NaN;
+            ((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
+            ((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng*1.05, rng*1.05);
+            ((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
+
+            double drift, pos; int j; pauseSingle = false;
+             //tbLog.Text = ""; 
+            log("RUN -> " + cbDriftType.Text);
+            do
+            {
+                ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
+                pos = 0; j = 0;  
+                while ((pos < driftPeriod + 0.0001) && !stopRequest)
+                {
+                    drift = calcAtPos(true, pos, (j % 2) == 1);
+                    pos += step; j++;
+                    do
+                    {
+                        Utils.DoEvents(); 
+                    } while (chkPause.IsChecked.Value && !pauseSingle);
+                    pauseSingle = false;
+                    System.Threading.Thread.Sleep((int)ndDelay.Value);
+                }                
+                if (corrList.Count > 0)
+                    log("Aver.dev.=" + devList.ToArray().Average().ToString("G4") + "\n====================");
+            } while ((cbFinite.SelectedIndex == 1) && !stopRequest);
+            Running = false; logger.Enabled = false; sw.Stop();*/
+

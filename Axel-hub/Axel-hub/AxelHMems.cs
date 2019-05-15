@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows;
 using System.Timers;
 using System.Collections.Generic;
@@ -24,11 +25,13 @@ namespace AxelHMemsNS
         public enum TimingModes { byNone, byADCtimer, byStopwatch, byBoth };
         public TimingModes TimingMode = TimingModes.byNone;
 
-        private const string NI9251 = "cDAQ1Mod1_1"; // ADC24 box
-        private readonly string physicalChannel0 = NI9251+"/ai0"; 
-        private readonly string physicalChannel1 = "/ai1";
+//        private const string NI9251 = "cDAQ1Mod1_1"; // ADC24 box
+//        private readonly string physicalChannel0 = NI9251+"/ai0"; 
+//        private readonly string physicalChannel1 = "/ai1";
         private const string PXIe = "Dev4";         // in PXIe
-        private readonly string physicalChannel2 = PXIe + "/ai1"; 
+        private readonly string physicalChannel2 = PXIe + "/ai1";
+
+        public Dictionary<string, string> hw = new Dictionary<string, string>();
 
         public int nSamples { get; private set; }
         public double sampleRate { get; private set; }
@@ -45,8 +48,8 @@ namespace AxelHMemsNS
         private AsyncCallback analogCallback;
         private AnalogWaveform<double>[] waveform;
         DispatcherTimer dTimer;
-        
-        public AxelMems()
+
+        public AxelMems(string hwFile = "")
         {
             sw = new Stopwatch();
             activeChannel = 0;
@@ -54,8 +57,16 @@ namespace AxelHMemsNS
             nSamples = 1500;
             dTimer = new DispatcherTimer();
             dTimer.Tick += new EventHandler(dTimer_Tick);
-            dTimer.Interval = new TimeSpan(10*10000);
+            dTimer.Interval = new TimeSpan(10*10000); // 10ms
 
+            // default hardware
+            hw["device"] = "cDAQ1Mod1_1";
+            hw["channel1"] = "/ai0";
+            hw["channel2"] = "/ai1";
+            hw["min"] = "-3.5";
+            hw["max"] = "3.5";
+            string fn = Utils.configPath + hwFile + ".hw";
+            if (File.Exists(fn)) hw = Utils.readDict(fn);
             Reset();
         }
 
@@ -140,6 +151,22 @@ namespace AxelHMemsNS
         }
         #endregion
 
+        public bool isDevicePlugged()
+        {
+            if (hw.ContainsKey("device")) return isDevicePresent(hw["device"]);
+            else return false;
+        }
+
+        private bool isDevicePresent(string dev)
+        {
+            bool rslt = false;
+            foreach (string dv in DaqSystem.Local.Devices)
+            {
+                rslt |= dev.Equals(dv);
+            }
+            return rslt;
+        }
+
         public void Reset() // for all purposes
         {
             if (!Utils.isNull(axelAIChannel)) axelAIChannel.Dispose();
@@ -150,12 +177,13 @@ namespace AxelHMemsNS
             if (!Utils.isNull(myTask)) myTask.Dispose();
             //if (sw.IsRunning) sw.Reset();
 
-            if (Utils.InRange(activeChannel, 0, 2))
+            if (((activeChannel == 0) || (activeChannel == 2)) && isDevicePresent(hw["device"]))
             {
-                Device dev = DaqSystem.Local.LoadDevice(NI9251);
-                dev.Reset();
+                Device dev1 = DaqSystem.Local.LoadDevice(hw["device"]);
+                dev1.Reset();
             }
-            if (activeChannel == 3)
+
+            if ((activeChannel == 3) && isDevicePresent(PXIe))
             {
                 Device dev = DaqSystem.Local.LoadDevice(PXIe);
                 dev.Reset();
@@ -173,7 +201,7 @@ namespace AxelHMemsNS
             if (OnAcquire != null) OnAcquire(data, out next);
         }
 
-        public void StartAqcuisition(int samplesPerChannel, double samplingRate)
+        public void StartAcquisition(int samplesPerChannel, double samplingRate) // acquisition
         {
             try
             {
@@ -185,12 +213,15 @@ namespace AxelHMemsNS
 
                     // Create a virtual channel
                     if ((activeChannel == 0) || (activeChannel == 2))
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel0, "", AITerminalConfiguration.Differential, -3.5, 3.5, AIVoltageUnits.Volts);
+                        myTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel1"], "", AITerminalConfiguration.Differential,
+                                                                Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
                     if ((activeChannel == 1) || (activeChannel == 2))
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel1, "", AITerminalConfiguration.Differential, -3.5, 3.5, AIVoltageUnits.Volts);
+                        myTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential, 
+                                                                Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts); 
                     if (activeChannel == 3)
                     {
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", AITerminalConfiguration.Differential, -3.5, 3.5, AIVoltageUnits.Volts);
+                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", AITerminalConfiguration.Differential, 
+                                                                Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
                     }
                 }
                 // Configure the timing parameters
@@ -317,7 +348,58 @@ namespace AxelHMemsNS
             Reset();
         }
         #endregion
+    }
+    public class AxelMemsTemperature
+    { 
+        public Dictionary<string, string> hw = new Dictionary<string, string>();
+        private Task tmpTask = null;
+        public AxelMemsTemperature(string hwFile = "")
+        {
+            // default hardware
+            hw["device"] = "Dev2";
+            hw["channel1"] = "/ai1";
+            hw["channel2"] = "/ai2"; 
+            hw["min"] = "-3.5";
+            hw["max"] = "3.5";
+            string fn = Utils.configPath + hwFile + ".hw";
+            if (File.Exists(fn)) hw = Utils.readDict(fn);
+        }
 
+        public double [] TakeTheTemperature()
+        {
+            double[] rslt = null;
+            try 
+            {
+                //Create a new task
+                using (tmpTask = new Task())
+                {
+                    //Create a virtual channel
+                    tmpTask.AIChannels.CreateVoltageChannel(hw["device"]+hw["channel1"],"",AITerminalConfiguration.Differential,
+                                                        Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]),AIVoltageUnits.Volts);
+                    tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential,
+                                                        Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);  
+
+                    AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);
+                
+                    //Verify the Task
+                    tmpTask.Control(TaskAction.Verify);
+                                            
+                    //Plot Multiple Channels to the table
+                    rslt = reader.ReadSingleSample(); 
+                }
+            }
+            catch (DaqException exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
+            finally 
+            {
+                    
+            }
+            return rslt;
+        }
+    }
+/*
         #region flag (running) synchronized aqcuisition -> OBSOLETE !!!
         public void readInVoltages()
         {
@@ -347,5 +429,5 @@ namespace AxelHMemsNS
             _running = false;
         }
         #endregion
-    }
+*/    
 }

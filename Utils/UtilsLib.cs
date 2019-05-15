@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
+using System.Windows.Media;
+using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.IO;
@@ -13,6 +17,20 @@ namespace UtilsNS
 {
     public static class Utils
     {
+        public static void DoEvents()
+        {
+            DispatcherFrame frame = new DispatcherFrame();
+            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
+                new DispatcherOperationCallback(ExitFrame), frame);
+            Dispatcher.PushFrame(frame);
+        }
+
+        public static object ExitFrame(object f)
+        {
+            ((DispatcherFrame)f).Continue = false;
+            return null;
+        }
+        
         public static bool TheosComputer()
         {
             return (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"] == "DESKTOP-U334RMA";
@@ -21,6 +39,42 @@ namespace UtilsNS
         public static bool isNull(System.Object o)
         {
             return object.ReferenceEquals(null, o);
+        }
+
+        public static void log(RichTextBox richText, string txt, Color? clr = null)
+        {
+            Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
+            Application.Current.Dispatcher.BeginInvoke(
+              DispatcherPriority.Background,
+              new Action(() =>
+              {
+                  TextRange rangeOfText1 = new TextRange(richText.Document.ContentStart, richText.Document.ContentEnd);
+                  string tx = rangeOfText1.Text;
+                  int len = tx.Length; int maxLen = 10000; // the number of chars kept
+                  if (len > (2 * maxLen)) // when it exceeds twice the maxLen
+                  {
+                      tx = tx.Substring(maxLen);
+                      var paragraph = new Paragraph();
+                      paragraph.Inlines.Add(new Run(tx));
+                      richText.Document.Blocks.Clear();
+                      richText.Document.Blocks.Add(paragraph);
+                  }
+                  rangeOfText1 = new TextRange(richText.Document.ContentEnd, richText.Document.ContentEnd);
+                  rangeOfText1.Text = Utils.RemoveLineEndings(txt) + "\r";
+                  rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
+                  richText.ScrollToEnd();
+              }));
+        }
+
+        public static void log(TextBox tbLog, string txt)
+        {
+            tbLog.AppendText(txt + "\r\n");
+            string text = tbLog.Text;
+            int maxLen = 10000;
+            if (text.Length > 2 * maxLen) tbLog.Text = text.Substring(maxLen);
+            tbLog.Focus();
+            tbLog.CaretIndex = tbLog.Text.Length;
+            tbLog.ScrollToEnd();
         }
 
         public static List<string> readList(string filename, bool skipRem = true)
@@ -38,8 +92,40 @@ namespace UtilsNS
             return ls;
         }
 
-        public static void writeList(List<string> ls, string filename)
+        public static void writeList(string filename, List<string> ls)
         {
+            File.WriteAllLines(filename, ls.ToArray());
+        }
+
+        public static Dictionary<string, string> readDict(string filename, bool skipRem = true)
+        {
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            if (!File.Exists(filename))
+            {
+                Utils.TimedMessageBox("File not found: " + filename); return dict;
+            }
+            List<string> ls = new List<string>();
+            foreach (string line in File.ReadLines(filename))
+            {
+                if (skipRem)
+                {
+                    if (line.Equals("")) continue;
+                    if (line[0].Equals('#')) continue;
+                }
+                string[] sb = line.Split('=');
+                if (sb.Length != 2) break;
+                dict[sb[0]] = sb[1];
+            }
+            return dict;
+        }
+
+        public static void writeDict(string filename, Dictionary<string, string> dict)
+        {
+            List<string> ls = new List<string>();
+            foreach (var pair in dict)
+            {
+                ls.Add(pair.Key + "=" + pair.Value);
+            }
             File.WriteAllLines(filename, ls.ToArray());
         }
 
@@ -122,13 +208,15 @@ namespace UtilsNS
         private int bufferCharLimit = 256000; // the whole byte/char size
         public int bufferSize { get { return buffer.Count; } }
         public int bufferCharSize { get; private set; }
+        public string prefix { get; private set; } 
         public bool writing { get; private set; }
         public bool missingData { get; private set; }
         public Stopwatch stw;
 
-        public AutoFileLogger(string Filename = "")
+        public AutoFileLogger(string _prefix = "", string Filename = "")
         {
             _AutoSaveFileName = Filename;
+            prefix = _prefix;
             bufferCharSize = 0;
             buffer = new List<string>();
             stw = new Stopwatch();
@@ -215,7 +303,12 @@ namespace UtilsNS
                     string dir = "";
                     if (!_AutoSaveFileName.Equals("")) dir = Directory.GetParent(_AutoSaveFileName).FullName;
                     if (!Directory.Exists(dir))
-                        _AutoSaveFileName = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt; 
+                    {
+                        string prenote;
+                        if (prefix.Equals("")) prenote = "";
+                        else prenote = prefix+"_";
+                        _AutoSaveFileName = Utils.dataPath + prenote + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt;
+                    }                        
 
                     string hdr = "";
                     if (header != "") hdr = "# " + header + "\n";
@@ -252,7 +345,7 @@ namespace UtilsNS
             }
             set
             {
-                if (_Enabled) throw new Exception("Logger.Enabled must be Off when you set AutoSaveFileName.");
+                if (Enabled) throw new Exception("Logger.Enabled must be Off when you set AutoSaveFileName.");
                 _AutoSaveFileName = value;
             }
         }
@@ -264,13 +357,17 @@ namespace UtilsNS
         public string header = ""; // that will be put as a file first line with # in front of it
         public string defaultExt = ".ahf";
         private ActionBlock<string> block;
+        public string prefix { get; private set; }
+        public string reqFilename { get; private set; }
         public bool writing { get; private set; }
         public bool missingData { get; private set; }
         public Stopwatch stw;
-
-        public FileLogger(string Filename = "")
+ 
+        public FileLogger(string _prefix = "", string _reqFilename = "") // if reqFilename is something it should contain the prefix; 
+            // the usual use is only prefix and no reqFilename
         {
-            _LogFilename = Filename;
+            reqFilename = _reqFilename;
+            prefix = _prefix;
             stw = new Stopwatch();
         }
 
@@ -314,6 +411,17 @@ namespace UtilsNS
             }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
         }
 
+        private string _LogFilename = "";
+        public string LogFilename
+        {
+            get { return _LogFilename; }
+            private set
+            {
+                if (Enabled) throw new Exception("Logger.Enabled must be Off when you set LogFileName.");
+                _LogFilename = value;
+            }
+        }
+
         private bool _Enabled = false;
         public bool Enabled
         {
@@ -324,9 +432,16 @@ namespace UtilsNS
                 if (value && !_Enabled) // when it goes from false to true
                 {
                     string dir = "";
-                    if (!LogFilename.Equals("")) dir = Directory.GetParent(LogFilename).FullName;
-                    if (!Directory.Exists(dir))
-                        _LogFilename = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt;
+                    string prenote;
+                    if (prefix.Equals("")) prenote = "";
+                    else prenote = prefix + "_";
+                    if (reqFilename.Equals("")) LogFilename = Utils.dataPath + prenote + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt;
+                    else
+                    {
+                        dir = Directory.GetParent(reqFilename).FullName;
+                        if (!Directory.Exists(dir)) dir = Utils.dataPath;
+                        LogFilename = dir + Path.GetFileName(reqFilename);
+                    }                        
                     CreateLogger(LogFilename);
                     string hdr = "";
                     if (!header.Equals("")) hdr = "# " + header + "\n";
@@ -347,19 +462,6 @@ namespace UtilsNS
             }
         }
 
-        private string _LogFilename = "";
-        public string LogFilename
-        {
-            get
-            {
-                return _LogFilename;
-            }
-            set
-            {
-                if (_Enabled) throw new Exception("Logger.Enabled must be Off when you set AutoSaveFileName.");
-                _LogFilename = value;
-            }
-        }
     }
 
     #endregion

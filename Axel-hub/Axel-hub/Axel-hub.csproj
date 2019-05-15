@@ -28,7 +28,7 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.4.0.%2a</ApplicationVersion>
+    <ApplicationVersion>2.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -55,7 +55,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>rocket1.ico</ApplicationIcon>
+    <ApplicationIcon>Properties\rocket1.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DataStructures">
@@ -80,13 +80,13 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="scanHub, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\scanUC\scanUC\bin\scanHub.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\..\packages\Microsoft.Tpl.Dataflow.4.5.24\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -109,10 +109,30 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AxelHMems.cs" />
-    <Compile Include="..\..\Utils\RemoteMessaging.cs">
-      <Link>RemoteMessaging.cs</Link>
+    <Compile Include="AxelAxes.cs" />
+    <Compile Include="AxelAxisUC.xaml.cs">
+      <DependentUpon>AxelAxisUC.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AxelChartUC.xaml.cs">
+      <DependentUpon>AxelChartUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="AxelHMems.cs" />
+    <Compile Include="DataStackLib.cs" />
+    <Compile Include="Options\OptionsType.cs" />
+    <Compile Include="scanUC.xaml.cs">
+      <DependentUpon>scanUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="signalUC.xaml.cs">
+      <DependentUpon>signalUC.xaml</DependentUpon>
+    </Compile>
+    <Page Include="AxelAxisUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="AxelChartUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -126,6 +146,14 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Options\Options.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="scanUC.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="signalUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -177,16 +205,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="rocket1.ico" />
+    <Resource Include="Properties\rocket1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="TripleBar.bmp" />
+    <Resource Include="Properties\TripleBar.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AxelChart\AxelChart\AxelChart.csproj">
-      <Project>{c8285db3-de2f-4b3b-b79a-454b4c4c2828}</Project>
-      <Name>AxelChart</Name>
-    </ProjectReference>
+    <Resource Include="Properties\speed2.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

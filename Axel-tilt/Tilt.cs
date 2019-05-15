@@ -225,7 +225,7 @@ namespace Axel_tilt
         public const double tilt_arm = 510.003; // [mm]
         public const double MemsCorr_A = 1.071;
         public const double MemsCorr_B = -8.034;
-        public const double minSpeed = 0; // [mm/s]
+        public const double minSpeed = 0.1; // [mm/s]
         public Horizontal horizontal;
         public Stopwatch sw = new Stopwatch();
 
@@ -534,7 +534,8 @@ namespace Axel_tilt
         {
             double spd;
             if (speed < 0) spd = horizontal.speed;
-            else spd = Utils.EnsureRange(speed, minSpeed, 10);
+            else spd = speed;
+            spd = Utils.EnsureRange(spd, minSpeed, 10);
             OnLog("T> speed to " + spd.ToString("G5")+" [mm/s]"); DoEvents();
             workingSpeed = spd;
             return mA.SetSpeed(spd) && mB.SetSpeed(spd);
@@ -602,10 +603,11 @@ namespace Axel_tilt
         
         List<Point> pattern;
         int stepIdx = -1;
-        DispatcherTimer dTimer;
+        public DispatcherTimer dTimer;
         public void NextStep(object sender, EventArgs e)
         {
-            if (stepIdx > pattern.Count - 1) { dTimer.Stop(); OnEnd(false); return; }
+            if (stepIdx > pattern.Count - 1) 
+                { dTimer.Stop(); EndEvent(false); return; }
             double forTime = pattern[stepIdx].X - pattern[stepIdx - 1].X;
             SingleMove(pattern[stepIdx - 1].Y, pattern[stepIdx].Y, forTime);    
             stepIdx += 1;        

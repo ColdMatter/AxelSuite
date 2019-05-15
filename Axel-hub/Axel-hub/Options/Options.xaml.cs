@@ -15,7 +15,6 @@ using System.Windows.Shapes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UtilsNS;
-using OptionsTypeNS;
 
 namespace OptionsNS
 {
@@ -26,21 +25,27 @@ namespace OptionsNS
     {
         public OptionsWindow()
         {
-            InitializeComponent();
-            genOptions = new GeneralOptions();
+            InitializeComponent();           
             if (File.Exists(Utils.configPath + "genOptions.cfg"))
             {
                 string fileJson = File.ReadAllText(Utils.configPath + "genOptions.cfg");
                 genOptions = JsonConvert.DeserializeObject<GeneralOptions>(fileJson);
             }
+            else genOptions = new GeneralOptions();
         }
 
         public GeneralOptions genOptions;
         private void OKButton_Click(object sender, RoutedEventArgs e) // visual to internal 
         {
+            // General
+            if (rbSingle.IsChecked.Value) genOptions.AxesChannels = 0;
+            if (rbDoubleTabs.IsChecked.Value) genOptions.AxesChannels = 1;
+            if (rbDoublePanels.IsChecked.Value) genOptions.AxesChannels = 2;
+
             genOptions.SignalCursorPrec = tbSignalCursorPrec.Text;
             genOptions.SignalTablePrec = tbSignalTablePrec.Text;
             genOptions.SaveFilePrec = tbSaveFilePrec.Text;
+            genOptions.LogFilePrec = tbLogFilePrec.Text;
 
             genOptions.intN2 = chkInitN2.IsChecked.Value;
             genOptions.visualDataLength = Convert.ToInt32(tbVisualDataLength.Text);
@@ -49,21 +54,34 @@ namespace OptionsNS
             genOptions.JumboScan = rbScanOnly.IsChecked.Value || rbBothModes.IsChecked.Value;
             genOptions.JumboRepeat = rbRepeatOnly.IsChecked.Value || rbBothModes.IsChecked.Value;
 
-            if (rbSingle.IsChecked.Value) genOptions.MemsChannels = 0;
-            if (rbDouble.IsChecked.Value) genOptions.MemsChannels = 2;
-
             if (rbSaveSeqYes.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.save;
             if (rbSaveSeqAsk.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.ask;
             if (rbSaveSeqNo.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.nosave;
 
+            // MEMS
+            genOptions.MemsInJumbo = chkRunMemsInJumbo.IsChecked.Value;
+            genOptions.MemsHw = (cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content.ToString();
+            genOptions.TemperatureHw = (cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content.ToString();
+
+            genOptions.TemperatureEnabled = chkTemperatureEnabled.IsChecked.Value;
+            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;
+
+            genOptions.Save();
+            
             Hide();
         }
 
-        private void frmOptions_Loaded(object sender, RoutedEventArgs e) // internal to visual
+        private void frmOptions_Activated(object sender, EventArgs e)
         {
+            // General
+            rbSingle.IsChecked = genOptions.AxesChannels == 0;
+            rbDoubleTabs.IsChecked = genOptions.AxesChannels == 1;
+            rbDoublePanels.IsChecked = genOptions.AxesChannels == 2;
+
             tbSignalCursorPrec.Text = genOptions.SignalCursorPrec;
             tbSignalTablePrec.Text = genOptions.SignalTablePrec;
             tbSaveFilePrec.Text = genOptions.SaveFilePrec;
+            tbLogFilePrec.Text = genOptions.LogFilePrec;
 
             chkInitN2.IsChecked = genOptions.intN2;
             tbVisualDataLength.Text = genOptions.visualDataLength.ToString();
@@ -73,12 +91,17 @@ namespace OptionsNS
             rbRepeatOnly.IsChecked = genOptions.JumboRepeat;
             rbBothModes.IsChecked = genOptions.JumboScan && genOptions.JumboRepeat;
 
-            rbSingle.IsChecked = genOptions.MemsChannels == 0;
-            rbDouble.IsChecked = genOptions.MemsChannels == 2;
-
             rbSaveSeqYes.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.save);
             rbSaveSeqAsk.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask);
             rbSaveSeqNo.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.nosave);
+
+            // MEMS
+            chkRunMemsInJumbo.IsChecked = genOptions.MemsInJumbo;
+            //(cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content = genOptions.MemsHw;
+            //(cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content = genOptions.TemperatureHw;
+
+            chkTemperatureEnabled.IsChecked = genOptions.TemperatureEnabled;
+            chkTemperatureCompensation.IsChecked = genOptions.TemperatureCompensation;
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)

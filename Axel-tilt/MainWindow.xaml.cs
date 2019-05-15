@@ -167,7 +167,7 @@ namespace Axel_tilt
 
         private void imgAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Tilt v1.1 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Tilt v1.2 \n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         private void btnInitaiteA_Click(object sender, RoutedEventArgs e)
@@ -361,8 +361,11 @@ namespace Axel_tilt
                     {
                         if (userCancel)
                         {
-                            btnRun.Value = false; tilt.Stop(); tilt.SetSpeed(); tilt.MoveAccel(0); ShowAccel(tilt.GetAccel());
-                            if (!Utils.isNull(dTimer)) dTimer.Stop(); 
+                            if (!Utils.isNull(dTimer)) dTimer.Stop();
+                            if (!Utils.isNull(tilt.dTimer)) tilt.dTimer.Stop();
+                            tilt.Stop(); Thread.Sleep(100); tilt.SetSpeed(); 
+                            if(chkSetZero.IsChecked.Value) tilt.MoveAccel(0); ShowAccel(tilt.GetAccel());
+                            btnRun.Value = false;
                             log("user canceled the scan.");
                         }
                         else
@@ -370,7 +373,8 @@ namespace Axel_tilt
                             switch (cbFinite.SelectedIndex) 
                             {
                                 case 0: // Finite mode
-                                    btnRun.Value = false; tilt.SetSpeed(); tilt.MoveAccel(0); 
+                                    btnRun.Value = false; tilt.SetSpeed();
+                                    if (chkSetZero.IsChecked.Value) tilt.MoveAccel(0); 
                                     double accel = tilt.GetAccel(); ShowAccel(accel);
                                     dt.AddPoint(tilt.GetAccel(), sw.ElapsedMilliseconds / 1000.0);
                                     if (!Utils.isNull(dTimer)) dTimer.Stop();

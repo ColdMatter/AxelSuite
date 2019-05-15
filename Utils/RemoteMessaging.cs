@@ -231,12 +231,12 @@ namespace RemoteMessagingNS
             if (OnAsyncSent != null) OnAsyncSent(OK, json2send);
         }
 
-        public bool sendCommand(string msg, int delay = 0)
+        public bool sendCommand(string msg, int delay = 0) // [ms]
         {
             if (!Enabled) return false;
             if (delay > 0)
             {
-                sTimer.Interval = new TimeSpan(0, 0, 0, 0, delay);
+                sTimer.Interval = new TimeSpan(delay*10000);
                 json2send = msg;
                 sTimer.Start();
                 return true;
