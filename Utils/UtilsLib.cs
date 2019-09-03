@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
+using System.Deployment.Application;
+using System.Reflection;
 
 namespace UtilsNS
 {
@@ -36,6 +38,12 @@ namespace UtilsNS
             return (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"] == "DESKTOP-U334RMA";
         }
 
+        public static string getRunningVersion()
+        {
+            return System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Environment.GetCommandLineArgs()[0]).ToString();
+            //System.Reflection.Assembly.GetExecutingAssembly().Location; //Assembly.GetExecutingAssembly().Location
+        }
+
         public static bool isNull(System.Object o)
         {
             return object.ReferenceEquals(null, o);
@@ -44,8 +52,7 @@ namespace UtilsNS
         public static void log(RichTextBox richText, string txt, Color? clr = null)
         {
             Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
-            Application.Current.Dispatcher.BeginInvoke(
-              DispatcherPriority.Background,
+            Application.Current.Dispatcher.BeginInvoke( DispatcherPriority.Background,
               new Action(() =>
               {
                   TextRange rangeOfText1 = new TextRange(richText.Document.ContentStart, richText.Document.ContentEnd);
@@ -177,6 +184,28 @@ namespace UtilsNS
             return value.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty).Replace(lineSeparator, string.Empty).Replace(paragraphSeparator, string.Empty);
         }
 
+        public static Dictionary<string, string> readINI(string filename)
+        {
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            if (!File.Exists(filename)) throw new Exception("File not found: " + filename);           
+            List<string> ls = new List<string>();
+            string line;
+            foreach (string wline in File.ReadLines(filename))
+            {
+                char ch = wline[0];
+                if (ch.Equals('[')) continue;
+                int sc = wline.IndexOf(';');
+                if (sc > -1) line = wline.Remove(sc);
+                else line = wline;
+                if (line.Equals("")) continue;
+                
+                string[] sb = line.Split('=');
+                if (sb.Length != 2) break;
+                dict[sb[0]] = sb[1];
+            }
+            return dict;
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         static extern int MessageBoxTimeout(IntPtr hwnd, String text, String title, uint type, Int16 wLanguageId, Int32 milliseconds);
         public static void TimedMessageBox(string text, string title = "Information", int milliseconds = 1500)
@@ -189,6 +218,8 @@ namespace UtilsNS
         public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).Parent.FullName).FullName; 
         public static string configPath { get { return basePath + "\\Config\\"; } }
         public static string dataPath { get { return basePath + "\\Data\\"; } }
+
+
     }
 
     #region async file logger

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
         xmlns:local="clr-namespace:Axel_hub"        
-        Title="Axel Hub" Height="856.652" Width="1176.785" Icon="Properties/rocket1.ico" ResizeMode="CanResizeWithGrip" Closing="frmAxelHub_Closing" Background="White">
+        Title="Axel Hub" Height="856.652" Width="1176.785" Icon="Properties/rocket1.ico" ResizeMode="CanResizeWithGrip" Closing="frmAxelHub_Closing" Background="White" Loaded="frmAxelHub_Loaded">
     <Grid x:Name="gridMain" Margin="0,0,-0.143,0.429">
         <Grid.ColumnDefinitions>
             <ColumnDefinition MinWidth="265" Width="265"/>
@@ -13,14 +13,17 @@
         <Grid x:Name="gridLeft" Margin="0,0,0.143,0.571" Background="#FFFDFCF4">
             <Grid.RowDefinitions>
                 <RowDefinition MinHeight="100" Height="272"/>
+                <RowDefinition x:Name="rowContinueJumbo" Height="30"/>
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="493*"/>
             </Grid.RowDefinitions>
 
             <!--       <local:scanClass x:Name="ucScan1" Margin="0" Grid.Row="0" />-->
-
-            <RichTextBox x:Name="tbLog" Grid.Row="2" Margin="0,0.286,0,0" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True"/>
-            <StackPanel HorizontalAlignment="Left" Height="30" Grid.Row="1" VerticalAlignment="Top" Width="265" Grid.RowSpan="2" Orientation="Horizontal" Background="#FFF9FEFF">
+            <Grid Grid.Row="1" >
+                <ni:ArrowButton x:Name="abtnContinueJumbo" Content="Continue with Jumbo Repeat" Height="23" Margin="5,3,5,1" FontSize="13" FontWeight="Bold" Foreground="#FF9B0808" Background="#FFF3F2F2" Click="abtnContinueJumbo_Click"/>
+            </Grid>
+            <RichTextBox x:Name="tbLog" Grid.Row="3" Margin="0,0.286,0,0" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True"/>
+            <StackPanel HorizontalAlignment="Left" Height="30" Grid.Row="2" VerticalAlignment="Top" Width="265" Grid.RowSpan="2" Orientation="Horizontal" Background="#FFF9FEFF">
                 <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="10,5,0,0" Grid.Row="1" VerticalAlignment="Center" IsChecked="True"/>
                 <CheckBox x:Name="chkVerbatim" Content="Verbatim" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Center"/>
                 <Button x:Name="btnLogClear" Content="Clear" HorizontalAlignment="Left" Margin="10,6,0,3.714" Grid.Row="1" VerticalAlignment="Center" Width="57" Click="btnLogClear_Click" Background="#FFE5EDFF"/>
@@ -38,13 +41,13 @@
                         <TabControl x:Name="tcAxes" Margin="0" SelectedIndex="0">
                             <TabItem x:Name="tiXAxis" Header="X  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1B8E0D" FontWeight="Bold" >
                                 <Grid>
-                                    <local:AxelAxisClass x:Name="X_AxelAxis"/>
+                                    <local:AxelAxisClass x:Name="X_AxelAxis" Width="Auto" Height="Auto"/>
 
                                 </Grid>
                             </TabItem>
-                            <TabItem x:Name="tiYAxis" Header="Y  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold">
+                            <TabItem x:Name="tiYAxis" Header="Y  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold" Margin="0">
                                 <Grid x:Name="gridPrimary">
-                                    <local:AxelAxisClass x:Name="Y_AxelAxis"/>
+                                    <local:AxelAxisClass x:Name="Y_AxelAxis" Width="Auto" Height="Auto"/>
                                 </Grid>
                             </TabItem>
                         </TabControl>

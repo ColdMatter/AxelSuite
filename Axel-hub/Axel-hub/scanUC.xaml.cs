@@ -14,9 +14,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
-using RemoteMessagingNS;
 using OptionsNS;
 using UtilsNS;
+using System.Reflection;
 
 namespace Axel_hub
 {    
@@ -45,6 +45,7 @@ namespace Axel_hub
             dTimer.Tick += new EventHandler(dispatcherTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, 1);
 
+            _remoteMode = RemoteMode.Disconnected;
             tabControl.SelectedIndex = 0;
             jumboButton = false;
             //Status("Ready to go ");
@@ -171,10 +172,17 @@ namespace Axel_hub
                 lbMode.Content = "Oper.Mode: " + value.ToString();
                 if (value == RemoteMode.Simple_Repeat || value == RemoteMode.Simple_Scan || value == RemoteMode.Disconnected) bbtnStart.Visibility = System.Windows.Visibility.Collapsed;
                 else bbtnStart.Visibility = System.Windows.Visibility.Visible;
-                _remoteMode = value;
-                tabControl.IsEnabled = (value == RemoteMode.Ready_To_Remote || value == RemoteMode.Disconnected);
-                scanModes.remoteMode = value;
+                RemoteMode tempRemoteMode = _remoteMode; _remoteMode = value; scanModes.remoteMode = value;
+                if (!tempRemoteMode.Equals(value)) RemoteModeEvent(tempRemoteMode, value);
+                tabControl.IsEnabled = (value == RemoteMode.Ready_To_Remote || value == RemoteMode.Disconnected);               
             }
+        }
+        public delegate void RemoteModeHandler(RemoteMode oldMode, RemoteMode newMode);
+        public event RemoteModeHandler OnRemoteMode;
+
+        protected void RemoteModeEvent(RemoteMode oldMode, RemoteMode newMode)
+        {
+            if (!Utils.isNull(OnRemoteMode)) OnRemoteMode(oldMode, newMode);
         }
 
         public RemoteMessaging remote { get; set; }
@@ -234,7 +242,8 @@ namespace Axel_hub
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Hub v1.99 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            string ver = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion.ToString();
+            MessageBox.Show("           Axel Hub v" + ver + "\n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         public double GetSamplingPeriod()
@@ -337,7 +346,7 @@ namespace Axel_hub
             bbtnStart.Value = false;            
             if (local)
             {
-                RemoteMessagingNS.MMexec mme = new RemoteMessagingNS.MMexec();
+                MMexec mme = new MMexec();
                 SendJson(mme.Abort("Axel-hub"));
             }
             else OnStart(jumbo, false, 0, 0);
@@ -355,7 +364,15 @@ namespace Axel_hub
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
                  Status("Ready to go ");
                  jumboButton = false;
-             }            
+             }
+             ActiveRemote(jumboButton);
+         }
+
+         public delegate void ActiveRemoteHandler(bool active);
+         public event ActiveRemoteHandler OnActiveRemote;
+         protected void ActiveRemote(bool active)
+         {
+             if (OnActiveRemote != null) OnActiveRemote(active);
          }
 
          private void OnActiveComm(bool active, bool forced)
@@ -375,6 +392,7 @@ namespace Axel_hub
                  bbtnStart.Visibility = System.Windows.Visibility.Hidden;
                  remoteMode = RemoteMode.Disconnected;
              }
+             ActiveRemote(active);
          }
 
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -393,9 +411,8 @@ namespace Axel_hub
                      if (sa.Length == 2) callingPartner = sa[1];
                  }
              }
-             Console.WriteLine(" ");
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
-             string partner = ArrangedPartner;
+             string partner = ArrangedPartner; // default 
              if(!callingPartner.Equals("")) partner = callingPartner; //highest priority             
              if(partner == "")
                  switch (computerName) 
@@ -410,6 +427,10 @@ namespace Axel_hub
              remote.OnAsyncSent += new RemoteMessaging.AsyncSentHandler(OnAsyncSend);
 
              if(bRemote) tabControl.SelectedIndex = 2;
+         }
+
+         private void UserControl_Initialized(object sender, EventArgs e)
+         {
          }
      }
 }

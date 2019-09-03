@@ -187,7 +187,7 @@
                                 <GroupBox Header="Keep last pnts (depth)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50">
                                     <ni:NumericTextBoxDouble x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 15000000, System.Double" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" FontSize="13" Interval="100"/>
                                 </GroupBox>
-                                <CheckBox x:Name="chkChartUpdate" Content="Chart update" Height="18" Margin="10,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True"/>
+                                <CheckBox x:Name="chkChartUpdate" Content="Chart update" Height="18" Margin="10,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" FontWeight="Bold"/>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox x:Name="grpCurrValue" Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="3,0,0,1" Width="369" Foreground="Black" BorderBrush="#FF02598D">

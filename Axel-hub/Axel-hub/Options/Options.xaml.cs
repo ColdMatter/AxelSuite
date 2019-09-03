@@ -47,9 +47,12 @@ namespace OptionsNS
             genOptions.SaveFilePrec = tbSaveFilePrec.Text;
             genOptions.LogFilePrec = tbLogFilePrec.Text;
 
-            genOptions.intN2 = chkInitN2.IsChecked.Value;
-            genOptions.visualDataLength = Convert.ToInt32(tbVisualDataLength.Text);
+            genOptions.intN2 = chkInitN2.IsChecked.Value;            
             genOptions.saveVisuals = chkSaveVisuals.IsChecked.Value;
+            genOptions.followPID = chkFollowPID.IsChecked.Value;
+            
+            genOptions.TrendSignalLen = numTrendSignalLen.Value;
+            genOptions.RawSignalAvg = numRawSignalAvg.Value;
 
             genOptions.JumboScan = rbScanOnly.IsChecked.Value || rbBothModes.IsChecked.Value;
             genOptions.JumboRepeat = rbRepeatOnly.IsChecked.Value || rbBothModes.IsChecked.Value;
@@ -60,6 +63,11 @@ namespace OptionsNS
 
             // MEMS
             genOptions.MemsInJumbo = chkRunMemsInJumbo.IsChecked.Value;
+            genOptions.ShowMemsIfRunning = chkShowMemsIfRunning.IsChecked.Value;
+
+            genOptions.Mems2SignDelay = numMems2SignalDelay.Value;
+            genOptions.Mems2SignLen = numMems2SignalLen.Value;
+
             genOptions.MemsHw = (cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content.ToString();
             genOptions.TemperatureHw = (cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content.ToString();
 
@@ -84,8 +92,11 @@ namespace OptionsNS
             tbLogFilePrec.Text = genOptions.LogFilePrec;
 
             chkInitN2.IsChecked = genOptions.intN2;
-            tbVisualDataLength.Text = genOptions.visualDataLength.ToString();
             chkSaveVisuals.IsChecked = genOptions.saveVisuals;
+            chkFollowPID.IsChecked = genOptions.followPID;
+
+            numTrendSignalLen.Value = genOptions.TrendSignalLen;
+            numRawSignalAvg.Value = genOptions.RawSignalAvg;
 
             rbScanOnly.IsChecked = genOptions.JumboScan;
             rbRepeatOnly.IsChecked = genOptions.JumboRepeat;
@@ -97,11 +108,16 @@ namespace OptionsNS
 
             // MEMS
             chkRunMemsInJumbo.IsChecked = genOptions.MemsInJumbo;
-            //(cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content = genOptions.MemsHw;
-            //(cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content = genOptions.TemperatureHw;
+            chkShowMemsIfRunning.IsChecked = genOptions.ShowMemsIfRunning;
+
+            numMems2SignalDelay.Value = genOptions.Mems2SignDelay;
+            numMems2SignalLen.Value = genOptions.Mems2SignLen;
 
             chkTemperatureEnabled.IsChecked = genOptions.TemperatureEnabled;
             chkTemperatureCompensation.IsChecked = genOptions.TemperatureCompensation;
+
+            //(cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content = genOptions.MemsHw;
+            //(cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content = genOptions.TemperatureHw;
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)

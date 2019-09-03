@@ -1,0 +1,120 @@
+﻿<UserControl x:Class="Axel_hub.signalClass"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d">
+    <Grid Background="White" Margin="0,0,0,-0.286">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200*"/>
+            <ColumnDefinition Width="100*"/>
+            <ColumnDefinition Width="120"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="26"/>
+                <RowDefinition Height="70*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <CheckBox x:Name="chkN1" Content="N1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" FontWeight="Bold" Foreground="#FF01B31C"/>
+                <CheckBox x:Name="chkN2" Content="N2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FF1A5DCF" FontWeight="Bold"/>
+                <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
+                <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFE78302" FontWeight="Bold"/>
+                <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
+                <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="273"/>
+            </StackPanel>
+            <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
+                <ni:Graph.Axes>
+                    <ni:AxisDouble x:Name="NsYaxis" Orientation="Vertical" Adjuster="None" />
+                </ni:Graph.Axes>
+                <ni:Graph.Children>
+                    <ni:MultiPlotCursor x:Name="NsCursor" Label="multiPlotCursor1">
+                        <ni:MultiPlotCursor.ValuePresenter>
+                            <ni:ValueFormatterGroup>
+                                <ni:ValueFormatterGroup.DefaultFormatter>
+                                    <ni:GeneralValueFormatter Format="{x:Null}" ShortFormat="G3"/>
+                                </ni:ValueFormatterGroup.DefaultFormatter>
+                            </ni:ValueFormatterGroup>
+                        </ni:MultiPlotCursor.ValuePresenter>
+                    </ni:MultiPlotCursor>
+                </ni:Graph.Children>
+                <ni:Graph.Plots>
+                    <ni:Plot x:Name="plotN1" Label="N1">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="Green" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FFA9FCA9" Size="3,3" Stroke="Green"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotN2" Label="Ntot">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FF061BCA" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FF95EDF2" Stroke="#FF061BCA"  Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotRN1" Label="rN1">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FF8B04B7" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FFEDD4FD" Stroke="#FF9E11B2" Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotRN2" Label="rN2">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFE78302" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FFFEDFB9" Stroke="#FFD47605" Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotNtot" Label="Ntot">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFC02409" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FFF9C0B6" Stroke="#FFC02409" Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                </ni:Graph.Plots>
+                <ni:Graph.SelectionFill>
+                    <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                </ni:Graph.SelectionFill>
+            </ni:Graph>
+        </Grid>
+
+        <GridSplitter x:Name="split1Signal" HorizontalAlignment="Left" Grid.Column="1" Margin="0,0,0,0" Background="#FFE5FFFA" ResizeDirection="Columns" Width="4"/>
+        <GridSplitter x:Name="split2Signal" HorizontalAlignment="Left" Grid.Column="2" Margin="0,0,0,0" Background="#FFE5FFFA" ResizeDirection="Columns" Width="4"/>
+
+        <Grid Grid.Column="1" Margin="3,0,0,0">
+            <ni:Graph x:Name="graphSignal"  Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" >
+                <ni:Graph.Axes>
+                    <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical" Adjuster="None"/>
+                </ni:Graph.Axes>
+                <ni:Graph.Plots>
+                    <ni:Plot Label="Plot 1">
+                        <ni:PointPlotRenderer Fill="#FFFFA3A3" Stroke="Red" Size="4,4"/>
+                    </ni:Plot>
+                    <ni:Plot Label="Plot 2">
+                        <ni:PointPlotRenderer Fill="#FF8AE6FD" Stroke="#FF1456FD" Size="4,4"/>
+                    </ni:Plot>
+                </ni:Graph.Plots>
+                <ni:Graph.SelectionFill>
+                    <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                </ni:Graph.SelectionFill>
+            </ni:Graph>
+        </Grid>
+        <Grid Grid.Column="2" Margin="5,0,0,0" Background="White">
+            <Grid.RowDefinitions>
+                <RowDefinition x:Name="rowUpper" MinHeight="3" Height="130.286"/>
+                <RowDefinition x:Name="rowMiddle" MinHeight="30" Height="189.714"/>
+            </Grid.RowDefinitions>
+            <CheckBox x:Name="chkAutoScaleMiddle" Grid.Row="0" Margin="3,2,0,5.286" FontSize="13" Content="Auto-scale Y" RenderTransformOrigin="0.514,-8.657" Foreground="#FF0E7501"/>
+            <ListBox x:Name="lboxNB" Grid.Row="0" FontSize="13" Margin="3,19,0,0">
+                <ListBoxItem Content="N2"/>
+                <ListBoxItem Content="NTot"/>
+                <ListBoxItem Content="B2"/>
+                <ListBoxItem Content="BTot"/>
+                <ListBoxItem Content="Bg"/>
+            </ListBox>
+            <CheckBox x:Name="chkBackgroung" Grid.Row="1" Margin="3,25,0,0" FontSize="12" Content="- Backgroung" IsChecked="True" VerticalAlignment="Top"/>
+            <CheckBox x:Name="chkDarkcurrent" Grid.Row="1" Margin="3,8,0,5" FontSize="12" Content="- Dark Current" IsChecked="True" VerticalAlignment="Top"/>
+            <CheckBox x:Name="chkStdDev" Grid.Row="1" Margin="3,43,0,0" FontSize="12" Content="- Std.Dev." IsChecked="True" Height="18" VerticalAlignment="Top"/>
+            <GridSplitter Height="4" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="#FFE3E4E4"/>
+        </Grid>
+    </Grid>
+</UserControl>

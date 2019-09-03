@@ -1,0 +1,10 @@
+﻿To Do In MotMaster2
+===================
+
+IMMEDIATE
+- scan to change both (X/Y) phases in sequence (alternating), e.g. 0..5;0.5 -> phX=0; phY=0.5; phX=1...
+
+- Jumbo Repeat will accept 
+
+IN SOME POSSIBLE FUTURE
+- scan will offer to scan individually X or Y or both alternating

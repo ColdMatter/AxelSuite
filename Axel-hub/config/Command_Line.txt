@@ -1,0 +1,7 @@
+-<arg1>:<param1>
+
+multiple pairs space separated are possible
+
+arg	param
+remote	<name of comm.partner> (e.g. -remote:Axel-probe)
+hw	<filename in Config dir with hardware desc.> (e.g -hw:9251)

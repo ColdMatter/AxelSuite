@@ -206,17 +206,41 @@ namespace Axel_hub
             return rslt;
         }
 
-        public DataStack Portion(int lastNPoints, int backFrom = 0)
+        public DataStack Portion(int lastNPoints, int backFrom = -1) // -1 is for end of series (Count-1)
         {
+            if ((lastNPoints >= Count) && (backFrom == -1)) return this;
             DataStack rslt = new DataStack(lastNPoints);
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
             if (Count == 0) return rslt;
-            int bf = Utils.EnsureRange(backFrom, 1, Count - 1);
+            int bf = (backFrom == -1) ? Count - 1 : backFrom;
+            bf = Utils.EnsureRange(bf, 1, Count - 1);
             int k = Math.Max(0, bf - lastNPoints);
             for (int i = k; i < k + lastNPoints; i++)
             {
                 if (Utils.InRange(i, 0, Count - 1)) rslt.Add(new Point(this[i].X, this[i].Y));
+            }
+            return rslt;
+        }
+
+        public DataStack Compress(int degree = 5) // moving average compression
+        {
+            if (degree == 1) return this;
+            int dg = Utils.EnsureRange(degree, 2, 100);
+            DataStack rslt = new DataStack((int)(Depth/dg)+1);
+            rslt.TimeSeriesMode = TimeSeriesMode;
+            rslt.Running = Running;
+            if (Count == 0) return rslt;             
+            for (int i = 0; i < (Count-dg-1); i++)
+            {
+                if ((i % dg) != 0) continue;
+                Point avg = new Point(0,0);
+                for (int j = 0; j < dg; j++)
+                {
+                    avg.X += this[i+j].X; avg.Y += this[i+j].Y;
+                }   
+                avg.X /= dg; avg.Y /= dg;
+                rslt.Add(avg);
             }
             return rslt;
         }

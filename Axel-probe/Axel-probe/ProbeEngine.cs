@@ -2,27 +2,28 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Media;
 using NationalInstruments.Controls;
 using Newtonsoft.Json;
-using RemoteMessagingNS;
 using UtilsNS;
 
 namespace Axel_probe
 {
     public enum RemoteMode
     {
+        Disconnected,
         Jumbo_Scan, // scan as part of Jumbo Run
         Jumbo_Repeat, // repeat as part of Jumbo Run
         Simple_Scan, // scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
-        Ready_To_Remote,
-        Disconnected
+        Ready_To_Remote        
     }
 
     public class ProbeEngine
@@ -37,6 +38,7 @@ namespace Axel_probe
         // ampl [mg] - accel. amplitude
         // factor [mg/rad]
         // step [%] percent from the pattern period
+        // time gap 
 
         public Dictionary<string, object> dps;  // disturbances - fringe noise and Y breathing 
         // Xnoise - [mg] noise in accel. (fringe shifting)
@@ -47,6 +49,8 @@ namespace Axel_probe
         // BrthApmpl - Breathing amplitude
         // BrthPeriod - Breathing period
         // BrthIO - (bool) Breathing switch
+
+        public int axis { get; set; } // -1 - old style; 0 - X; 1 - Y; 2 - X/Y
 
         public Boolean LockParams = false;
         struct Params 
@@ -111,6 +115,8 @@ namespace Axel_probe
             bpps = new Dictionary<string, double>();
             dps = new Dictionary<string, object>();
 
+            axis = -1;
+
             srsFringes = new ChartCollection<Point>();            
             srsSignalN = new ChartCollection<double>();            
             srsSignalB = new ChartCollection<double>();           
@@ -167,11 +173,12 @@ namespace Axel_probe
             busy = false;
         }
 
-        public delegate void LogHandler(string txt); // ...and general message up; commands with @ 
+        public delegate void LogHandler(string txt, Color? clr = null); // ...and general message up; commands with @ 
         public event LogHandler OnLog;
-        protected void LogEvent(string txt)
+
+        public void LogEvent(string txt, Color? clr = null)
         {
-            if (OnLog != null) OnLog(txt);
+            if (OnLog != null) OnLog(txt, clr);
         }
 
         Random rand = new Random();
@@ -235,7 +242,7 @@ namespace Axel_probe
                     drift = rng * Math.Sin(2 * Math.PI * (pos / (2 * halfPrd)));
                     break;
             }
-            return drift;
+            return drift; // ampl [mg]
         }
 
         public double breathing()
@@ -262,7 +269,7 @@ namespace Axel_probe
             double step = 4 * Math.PI / np;
             double cr = 0; Point g0 = Gauss(); // common for the whole fringe
             srsFringes.Clear();
-            while (cr < 4 * Math.PI)
+            while (cr < 4 * Math.PI) // generate fringes
             {
                 srsFringes.Add(fringesPoint(cr, curAccel + g0.X));
                 cr += step;
@@ -294,8 +301,8 @@ namespace Axel_probe
 										
             A						        A				
             1						        -1		*/
-        public Boolean SingleShot(double A, // A = 1 .. -1
-                 ref MMexec mme )// group template
+        public bool SingleShot(double A, // A = 1 .. -1
+                 int toAxis, ref MMexec mme )// group template
               
         {
             //log("A = " + A.ToString("G5"));
@@ -317,7 +324,7 @@ namespace Axel_probe
             List<Double> srsBg = new List<Double>();
             srsSignalN.Clear(); srsN2.Clear(); srsNTot.Clear();
             srsSignalB.Clear(); srsB2.Clear(); srsBTot.Clear(); srsBg.Clear();
-            for (int i = 0; i < 2000; i++)
+            for (int i = 0; i < 100; i++)
             {
                 d = n2 + Gauss01() / scl;
                 lboxNB.Items[0] = "N2 = " + d.ToString(remoteDoubleFormat);
@@ -342,9 +349,31 @@ namespace Axel_probe
                 mme.prms["B2"] = srsB2.ToArray(); mme.prms["BTot"] = srsBTot.ToArray();
                 mme.prms["Bg"] = srsBg.ToArray();
                 mme.id = rnd.Next(int.MaxValue);
+                string msg = "";
+                if (toAxis == 2) // both axes
+                {
+                    mme.cmd = "shot.X";
+                    msg = JsonConvert.SerializeObject(mme);
+                    rslt = remote.sendCommand(msg);
 
-                string msg = JsonConvert.SerializeObject(mme);
-                rslt = remote.sendCommand(msg);
+                    mme.cmd = "shot.Y";
+                    msg = JsonConvert.SerializeObject(mme);
+                    rslt &= remote.sendCommand(msg);
+                }
+                else // signle axis
+                {
+                    switch (toAxis)
+                    {
+                        case -1: mme.cmd = "shotData";
+                            break;
+                        case 0: mme.cmd = "shot.X";
+                            break;
+                        case 1: mme.cmd = "shot.Y";
+                            break;
+                    }
+                    msg = JsonConvert.SerializeObject(mme);
+                    rslt = remote.sendCommand(msg);
+                }               
                 mme.prms["runID"] = (int)mme.prms["runID"] + 1;
             }
             return rslt;
@@ -367,18 +396,18 @@ namespace Axel_probe
             double A = 0; srsFringes.Clear(); cancelScan = false;
             for (double ph = mms.sFrom; ph < mms.sTo + 0.01 * mms.sBy; ph += mms.sBy)
             {
+                if (bpps.ContainsKey("TimeGap")) Thread.Sleep((int)bpps["TimeGap"]);
                 Utils.DoEvents();
                 n2 = -Math.Cos(ph) + 2;  // n2 = 1 .. 3
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 srsFringes.Add(new Point(ph, A));
 
-                System.Threading.Thread.Sleep((int)dTimer.Interval.TotalMilliseconds);
-                LogEvent(ph.ToString());
+                LogEvent(" Ph/Amp= " + ph.ToString("G4") + " / " + A.ToString("G5"), Brushes.DarkGreen.Color);
                 if (Utils.InRange(ph, mms.sTo - 0.99 * mms.sBy, mms.sTo + 0.99 * mms.sBy) || cancelScan)
                 {
                     md.prms["last"] = 1;
                 }
-                if (!SingleShot(A, ref md) || cancelScan) break;                
+                if (!SingleShot(A, axis, ref md) || cancelScan) break;                
             }
         }
 
@@ -404,6 +433,7 @@ namespace Axel_probe
             int i = -1; srsFringes.Clear();
             for (long j = 0; j < realCycles; j++)
             {
+                if (bpps.ContainsKey("TimeGap")) Thread.Sleep((int)bpps["TimeGap"]);
                 Utils.DoEvents();
                 if ((j == (realCycles - 1)) || cancelRepeat)
                 {
@@ -414,9 +444,9 @@ namespace Axel_probe
                 srsFringes.Add(new Point(j, A));
                 //drift = calcAtPos(jumbo, A, (j % 2) == 1);
                 frAmpl = A;
-                if (!SingleShot(frAmpl, ref md)) break;
+                LogEvent(" #/A= " + j.ToString() + " / " + A.ToString("G5"), Brushes.Navy.Color);
+                if (!SingleShot(frAmpl, axis, ref md)) break;
 
-                System.Threading.Thread.Sleep((int)dTimer.Interval.TotalMilliseconds);
                 if (cancelRepeat) break;
             }
         }

@@ -8,7 +8,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="225"/>
             <ColumnDefinition Width="525*"/>
-            <ColumnDefinition Width="182*"/>
+            <ColumnDefinition Width="350"/>
         </Grid.ColumnDefinitions>
         <StackPanel Margin="5,0,0.143,-0.143">
             <GroupBox Header="Acceleration/Phase Drift" Height="210" Margin="0,0,0,0" BorderBrush="#FF01C66B">
@@ -59,7 +59,7 @@
             <GroupBox Header="Visuals and (scan/repeat)" Height="60" Margin="0,5,0,0" BorderBrush="#FF02107F">
                 <Grid Margin="0,0,0,0">
                     <Label Content="Time interval [ms]" HorizontalAlignment="Left" Margin="10,8,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.561,-1.27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndTimeGap" HorizontalAlignment="Left" Height="23" Margin="124,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="500" Interval="100"/>
+                    <ni:NumericTextBoxDouble x:Name="ndTimeGap" HorizontalAlignment="Left" Height="23" Margin="124,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Value="500" Interval="100" ValueChanged="ndTimeGap_ValueChanged"/>
                 </Grid>
             </GroupBox>
             <GroupBox x:Name="grpRemote" Header="Remote" Height="130" Foreground="Black" BorderBrush="#FF015E95">
@@ -67,9 +67,12 @@
                     <Button x:Name="btnCommCheck" Content="Comm.Check" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click" Background="#FFE2F5F8"/>
                     <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click" Background="#FFFDFEE2" FontSize="14"/>
                     <Button x:Name="btnRepeat" Content="Repeat" HorizontalAlignment="Left" Margin="99,74,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnRepeat_Click" Background="#FFE6FBD9" FontSize="14"/>
-                    <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="30,16,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked" RenderTransformOrigin="0.401,2.519"/>
+                    <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="30,10,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked" RenderTransformOrigin="0.401,2.519" IsChecked="True"/>
                     <ni:BooleanButton x:Name="bbtnAbort" Content="Abort !" HorizontalAlignment="Left" Height="23" Margin="10,80,0,0" VerticalAlignment="Top" Width="75" Click="btnAbort_Click" Background="#FFFDD0D0"/>
-                    <ni:LED x:Name="ledComm" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="3,10,0,0" TrueContent="On" VerticalAlignment="Top" Width="23" RenderTransformOrigin="0.385,0.54"/>
+                    <ni:LED x:Name="ledComm" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="3,7,0,0" TrueContent="On" VerticalAlignment="Top" Width="23" RenderTransformOrigin="0.385,0.54"/>
+                    <RadioButton x:Name="rbXaxis" Content="X" HorizontalAlignment="Left" Margin="15,38,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Foreground="#FF0C9503" Checked="rbXaxis_Checked"/>
+                    <RadioButton x:Name="rbYaxis" Content="Y" HorizontalAlignment="Left" Margin="56,38,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.744,0.692" FontSize="14" FontWeight="Bold" Foreground="#FF0347EA" Checked="rbXaxis_Checked"/>
+                    <RadioButton x:Name="rbXYaxes" Content="X/Y" HorizontalAlignment="Left" Margin="30,58,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" IsChecked="True" Checked="rbXaxis_Checked"/>
                 </Grid>
             </GroupBox>
             <Button x:Name="btnCustomScan" Content="Custom Scan" Background="#FFDDFDEF" VerticalAlignment="Top" Margin="0,5,0,0" Height="26" FontSize="14" Click="btnCustomScan_Click"/>
@@ -119,10 +122,10 @@
                 <ni:Graph x:Name="graphNs" Margin="85,0,0,0.286" Grid.ColumnSpan="2">
                     <ni:Graph.Plots>
                         <ni:Plot Label="Plot 1">
-                            <ni:PointPlotRenderer Fill="#FFEA3232"/>
+                            <ni:PointPlotRenderer Fill="#FFEA3232" Stroke="#FFB10909"/>
                         </ni:Plot>
                         <ni:Plot Label="Plot 2">
-                            <ni:PointPlotRenderer Fill="#FF3D2EED"/>
+                            <ni:PointPlotRenderer Fill="#FF2E96ED" Stroke="#FF02169C"/>
                         </ni:Plot>
                     </ni:Graph.Plots>
                 </ni:Graph>

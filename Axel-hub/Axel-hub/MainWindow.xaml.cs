@@ -38,7 +38,6 @@ using System.Diagnostics;
 using System.Windows.Markup;
 
 using UtilsNS;
-using RemoteMessagingNS;
 using OptionsNS;
 using AxelHMemsNS;
 
@@ -82,7 +81,8 @@ namespace Axel_hub
             gridLeft.Children.Add(ucScan);
             ucScan.Height = 266;
             ucScan.VerticalAlignment = System.Windows.VerticalAlignment.Top; ucScan.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            ucScan.OnStart += new scanClass.StartHandler(DoStart);            
+            ucScan.OnStart += new scanClass.StartHandler(DoStart);
+            ucScan.OnRemoteMode += new scanClass.RemoteModeHandler(RemoteModeEvent);
             ucScan.OnLog += new scanClass.LogHandler(log);            
            //if (axelMems.hw.ContainsKey("filename")) AxelChart1.SetHWfile(axelMems.hw["filename"]);
             //else AxelChart1.SetHWfile("");
@@ -94,8 +94,9 @@ namespace Axel_hub
             axes = new AxelAxesClass(ref Options.genOptions, ref ucScan);
             axes.OnLog += new AxelAxesClass.LogHandler(log);
             axes.AddAxis(ref X_AxelAxis,"X"); axes.AddAxis(ref Y_AxelAxis,"Y");
-            axes[0].OnLog += new AxelAxisClass.LogHandler(log); axes[1].OnLog += new AxelAxisClass.LogHandler(log);
-            ucScan.OnRemote += new scanClass.RemoteHandler(axes.DoRemote);            
+            
+            ucScan.OnRemote += new scanClass.RemoteHandler(axes.DoRemote);
+            continueJumboRepeat(false); // init (hide) the pointy button
                         
             if (false)//(System.Windows.Forms.SystemInformation.MonitorCount > 1) // secondary monitor
             {
@@ -123,6 +124,11 @@ namespace Axel_hub
             setAxesLayout(Options.genOptions.AxesChannels);
         }
 
+        private void frmAxelHub_Loaded(object sender, RoutedEventArgs e)
+        {
+            ucScan.OnActiveRemote += new scanClass.ActiveRemoteHandler(OnActiveRemote);
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Maximized;
@@ -133,136 +139,56 @@ namespace Axel_hub
             if (!chkLog.IsChecked.Value) return;
             string printOut;
             if ((chkVerbatim.IsChecked.Value) || (txt.Length < 81)) printOut = txt;
-            else printOut = txt.Substring(0, 80) + "..."; //
-
-            Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
-            Application.Current.Dispatcher.BeginInvoke(
-              DispatcherPriority.Background,
-              new Action(() =>
-              {
-                  TextRange rangeOfText1 = new TextRange(tbLog.Document.ContentStart, tbLog.Document.ContentEnd);
-                  string tx = rangeOfText1.Text;
-                  int len = tx.Length; int maxLen = 10000; // the number of chars kept
-                  if (len > (2 * maxLen)) // when it exceeds twice the maxLen
-                  {
-                      tx = tx.Substring(maxLen);
-                      var paragraph = new Paragraph();
-                      paragraph.Inlines.Add(new Run(tx));
-                      tbLog.Document.Blocks.Clear();
-                      tbLog.Document.Blocks.Add(paragraph);
-                  }
-                  rangeOfText1 = new TextRange(tbLog.Document.ContentEnd, tbLog.Document.ContentEnd);
-                  rangeOfText1.Text = Utils.RemoveLineEndings(printOut) + "\r";
-                  rangeOfText1.ApplyPropertyValue(TextElement.ForegroundProperty, new System.Windows.Media.SolidColorBrush(ForeColor));
-                  tbLog.ScrollToEnd();
-              }));
+            else printOut = txt.Substring(0, 80) + "..."; //           
+            Utils.log(tbLog, txt, clr);
         }
 
-      /*   private void jumboRepeat(int cycles, double downStrobe, double upStrobe)
+        bool DoContinue = false;       
+        public bool continueJumboRepeat(bool toggle)
         {
-            Clear(); // visual stuff
-            quantList.Clear(); // [time,MOTaccel] list of pairs
-            errList.Clear(); // accumulates errors
-            shotList = new ShotList(chkJoinLog.IsChecked.Value); 
-            //setConditions(ref shotList.conditions); !!!
-
-            tabLowPlots.SelectedIndex = 1;
-            // set jumbo-repeat conditions & format MMexec
-            lastGrpExe.cmd = "repeat";
-            lastGrpExe.id = rnd.Next(int.MaxValue);
-            lastGrpExe.prms.Clear();
-            lastGrpExe.prms["groupID"] = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
-            lastGrpExe.prms["cycles"] = cycles;
-            if (chkFollowPID.IsChecked.Value) { lastGrpExe.prms["follow"] = 1; }
-            else { lastGrpExe.prms["follow"] = 0; }
-            lastGrpExe.prms["downStrobe"] = downStrobe;            
-            lastGrpExe.prms["upStrobe"] = upStrobe;
-            if (rbSingle.IsChecked.Value)
+            if (toggle)
             {
-                lastGrpExe.prms["strobes"] = 1;
-                strbDownhill.X = downStrobe;
+                int k = 0;
+                rowContinueJumbo.Height = new GridLength(30);
+                while (!DoContinue && (k < 3000) && (rowContinueJumbo.Height.Value == 30)) // 5min
+                {
+                    Thread.Sleep(100); Utils.DoEvents(); k++;
+                }
+                if (k > 2990) log("Time out (5 min) !!!", Brushes.Red.Color);
+                rowContinueJumbo.Height = new GridLength(0);
+                DoContinue = false;
+                return (k < 2990);
             }
             else
             {
-                lastGrpExe.prms["strobes"] = 2;
-                strbDownhill.X = downStrobe; strbUphill.X = upStrobe;
+                rowContinueJumbo.Height = new GridLength(0);
+                return true;
             }
-            string jsonR = JsonConvert.SerializeObject(lastGrpExe);
-            log("<< " + jsonR, Brushes.Blue.Color);
-            ucScan.remoteMode = RemoteMode.Jumbo_Repeat;            
-            // set ADC24 and corr. visuals
-            if (jumboADCFlag && chkMemsEnabled.IsChecked.Value)
-            {
-                if (chkFollowPID.IsChecked.Value) ucScan.SetActivity("Data acquis. with PID feedback");
-                else ucScan.SetActivity("Data acquis. (no PID feedback)");
-                ucScan.Running = true;
-                AxelChart1.Waveform.TimeSeriesMode = true;
-                plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
+        }
+        private void abtnContinueJumbo_Click(object sender, RoutedEventArgs e)
+        {
+            DoContinue = true;
+        }
 
-                axelMems.Reset(); timeStack.Clear();
-                if (probeMode) AxelChart1.SetInfo("Axel-Probe feeds the MEMS");
-                else startADC24(true, ucScan.GetSamplingPeriod(), ucScan.GetBufferSize());
-                Thread.Sleep(1000); Utils.DoEvents();
+        public void RemoteModeEvent(RemoteMode oldMode, RemoteMode newMode)
+        {
+            if (oldMode.Equals(RemoteMode.Jumbo_Scan) && newMode.Equals(RemoteMode.Ready_To_Remote))
+            {
+                if (!Options.genOptions.JumboRepeat) return; 
+                if (Utils.TheosComputer()) axes.SetChartStrobes();
+
+                // wait for user confirmation
+                if (!continueJumboRepeat(true)) return; // if timeout
+                int nc = (int)axes[0].numCycles.Value;
+                axes.jumboRepeat(nc);
             }
-            ucScan.SendJson(jsonR);
-        }*/
-        // the main call in simple mode
+        }
+
         public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
         {
             if (jumbo)
             {
-              /*  if (!down) // user jumbo cancel
-                {
-                    AxelChart1.Running = false;
-                    axelMems.StopAqcuisition();
-                    AxelChart1.Waveform.logger.Enabled = false;
-                    log("Jumbo END !", Brushes.Red.Color);
-                    return;
-                }
-                lastGrpExe = new MMexec();
-                lastGrpExe.mmexec = "test_drive";
-                lastGrpExe.sender = "Axel-hub";
-
-                if (Options.genOptions.JumboScan)
-                {
-                    Clear();
-                    tabLowPlots.SelectedIndex = 0;
-                    lastGrpExe.cmd = "scan";
-                    lastGrpExe.id = rnd.Next(int.MaxValue);
-                    lastScan = jumboScan();
-                    lastScan.ToDictionary(ref lastGrpExe.prms);
-
-                    string json = JsonConvert.SerializeObject(lastGrpExe);
-                    log("<< " + json, Brushes.Green.Color);
-                    ucScan.remoteMode = RemoteMode.Jumbo_Scan;
-                    ucScan.SendJson(json);
-
-                    if (ucScan.remoteMode == RemoteMode.Ready_To_Remote) return; // end mission
-                }
-                else
-                {
-                    Utils.TimedMessageBox("Open a fringe file, adjust the strobes and confirm.", "Jumbo-Repeat Requirements", 3500);
-                    if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
-                    else srsFringes.Clear();
-                    if (probeMode)
-                    {
-                        GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
-                        srsFringes.OpenPair(Utils.configPath+"fringes.ahf", ref gb);
-                        graphFringes.DataSource = srsFringes;
-                        lbInfoFringes.Content = srsFringes.rem;
-                        tbRemFringes.Text = srsFringes.rem;
-                        crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
-                    }
-                    // else btnOpenFringes_Click(null, null); MOVE to ucScan
-                    if (srsFringes.Count == 0)
-                    {
-                        Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
-                        ucScan.Running = false;
-                        return;
-                    }
-                    btnConfirmStrobes.Visibility = System.Windows.Visibility.Visible;
-                    btnSinFit.Visibility = System.Windows.Visibility.Visible;
-                } */
+                axes.DoJumboScan(down);                                                             
             }
             else
             {
@@ -276,7 +202,7 @@ namespace Axel_hub
   /*    */
 
         private MMexec lastGrpExe; //
-        private Point strbDownhill = new Point(); private Point strbUphill = new Point();
+        
         private double phaseCorr, phaseRad, fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
         DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
         
@@ -321,27 +247,6 @@ namespace Axel_hub
             return rslt;
         }
 
-        List<double> iStack, dStack;
-        int iStDepth = 5; int dStDepth = 3;
-        public double PID(double disbalance)
-        {
-            double pTerm = disbalance;
-            iStack.Add(disbalance); while (iStack.Count > iStDepth) iStack.RemoveAt(0);
-            double iTerm = iStack.Average();
-            dStack.Add(disbalance); while (dStack.Count > dStDepth) dStack.RemoveAt(0);
-            double dTerm = 0;
-            for (int i = 0; i < dStack.Count - 1; i++)
-            {
-                dTerm += dStack[i + 1] - dStack[i];
-            }
-            dTerm /= Math.Max(dStack.Count - 1, 1);
-
-            double cr = ndKP.Value * pTerm + ndKI.Value * iTerm + ndKD.Value * dTerm;
-            log("PID> " + pTerm.ToString("G3") + "  " + iTerm.ToString("G3") + " " + dTerm.ToString("G3") +
-                // PID X correction and Y value after the correction
-                " corr " + cr.ToString("G4") + " for " + disbalance.ToString("G4"), Brushes.Navy.Color);
-            return cr;
-        }
 
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e) // !!! to AA
         {
@@ -381,7 +286,8 @@ namespace Axel_hub
                     gridSecondary.Children.Add(Y_AxelAxis);
                     break;
             }
-            axes.UpdateFromOptions();
+            bool conn = Utils.isNull(ucScan.remote)? false: ucScan.remote.Connected;
+            axes.UpdateFromOptions(conn);
         }
  
         private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
@@ -395,7 +301,7 @@ namespace Axel_hub
                 {
                     setAxesLayout(Options.genOptions.AxesChannels);
                 }
-                else axes.UpdateFromOptions();
+                else axes.UpdateFromOptions(ucScan.remote.Connected);
             }
         }
 
@@ -410,6 +316,11 @@ namespace Axel_hub
             }
             else
                 scanModes = new ScanModes();
+        }
+
+        private void OnActiveRemote(bool activeComm)
+        {
+            axes.UpdateFromOptions(activeComm);
         }
 
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -446,5 +357,6 @@ namespace Axel_hub
             if (!Utils.isNull(Options)) Options.Close();
         }
         #endregion
+
     }
 }

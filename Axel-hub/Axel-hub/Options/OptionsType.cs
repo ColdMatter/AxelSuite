@@ -20,12 +20,12 @@ namespace OptionsNS
 {
     public enum RemoteMode
     {
-        Jumbo_Scan, // scan as part of Jumbo Run
-        Jumbo_Repeat, // repeat as part of Jumbo Run
-        Simple_Scan, // scan initiated by MM
+        Disconnected,
+        Jumbo_Scan,    // scan as part of Jumbo Run
+        Jumbo_Repeat,  // repeat as part of Jumbo Run
+        Simple_Scan,   // scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
-        Ready_To_Remote,
-        Disconnected
+        Ready_To_Remote       
     }
 
     public class GeneralOptions
@@ -40,9 +40,13 @@ namespace OptionsNS
         public string SaveFilePrec { get; set; }
         public string LogFilePrec { get; set; }
 
-        public bool intN2 { get; set; }
-        public int visualDataLength { get; set; }
+        public bool intN2 { get; set; }        
         public bool saveVisuals { get; set; }
+
+        public bool followPID { get; set; }
+        
+        public int TrendSignalLen { get; set; }
+        public int RawSignalAvg { get; set; }
 
         public bool JumboScan { get; set; }
         public bool JumboRepeat { get; set; }
@@ -50,12 +54,16 @@ namespace OptionsNS
 
         // MEMS
         public bool MemsInJumbo { get; set; }
+        public bool ShowMemsIfRunning { get; set; }
 
-        public string MemsHw { get; set; }
-        public string TemperatureHw { get; set; }
+        public double Mems2SignDelay { get; set; }
+        public double Mems2SignLen { get; set; }
 
         public bool TemperatureEnabled { get; set; }
         public bool TemperatureCompensation { get; set; }
+
+        public string MemsHw { get; set; }
+        public string TemperatureHw { get; set; }
 
         public void Save()
         {
@@ -124,8 +132,6 @@ namespace OptionsNS
         public int JumboCycles { get; set; }
 
         public bool MemsEnabled { get; set; }
-        public double Mems2SignDelay { get; set; }
-        public double Mems2SignLen { get; set; }
         public double Kcoeff { get; set; }
         public double phi0 { get; set; }
         public double scale { get; set; }

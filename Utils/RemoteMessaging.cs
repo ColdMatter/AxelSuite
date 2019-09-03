@@ -12,7 +12,7 @@ using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 
-namespace RemoteMessagingNS
+namespace UtilsNS
 {
     public class memLog: List<string>
     {          

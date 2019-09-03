@@ -8,13 +8,49 @@ using System.Windows.Threading;
 
 using NationalInstruments;
 using NationalInstruments.DAQmx;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using UtilsNS;
 
 namespace AxelHMemsNS
-{     
-    public class AxelMems
+{
+    public struct accelCalibr
     {
-        
+
+        public string model;
+        public string SN;
+        public double rAccel; // in Omhs
+        public double rTemper;
+        public double cK0; // ug
+        public double cK1; // mA/g
+        public double[] pK0;
+        public double[] pK1;
+
+        public double accel(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
+        {
+            double K0 = 0; double K1 = 0;
+            if (tempComp) 
+            {                
+                if (!pK0.Length.Equals(pK1.Length)) throw new Exception("Wrong coeff arrays lenghts");
+                double degC = ((temperV/rTemper)+1E6) - 272.3;               
+                for (int i = 0; i < pK0.Length; i++)
+                {
+                    K0 += pK0[i] + Math.Pow(degC, i);
+                    K1 += pK1[i] + Math.Pow(degC, i);
+                }
+            }
+            else 
+            {
+                K0 = cK0; K1 = cK1;
+            }
+            return K0/1000.0 +                    // bias in mg
+                   ((accelV / rAccel) * 1000.0) * // mA
+                   K1 * 1000.0;                   // mg
+        }
+    } 
+
+    public class AxelMems
+    {        
         private Stopwatch sw = null;
         public bool AdjustTimelineToStopwatch = false;  // false - use the set time interval between points
                                                         // true - adjust the time interval to stopwatch markers
@@ -30,6 +66,7 @@ namespace AxelHMemsNS
 //        private readonly string physicalChannel1 = "/ai1";
         private const string PXIe = "Dev4";         // in PXIe
         private readonly string physicalChannel2 = PXIe + "/ai1";
+        public accelCalibr memsX, memsY;
 
         public Dictionary<string, string> hw = new Dictionary<string, string>();
 
@@ -49,7 +86,7 @@ namespace AxelHMemsNS
         private AnalogWaveform<double>[] waveform;
         DispatcherTimer dTimer;
 
-        public AxelMems(string hwFile = "")
+        public AxelMems(string hwFile = "", string memsFile= "") // memsFile - no ext
         {
             sw = new Stopwatch();
             activeChannel = 0;
@@ -60,13 +97,24 @@ namespace AxelHMemsNS
             dTimer.Interval = new TimeSpan(10*10000); // 10ms
 
             // default hardware
-            hw["device"] = "cDAQ1Mod1_1";
+            hw["device"] = "cDAQ1Mod1_2";
             hw["channel1"] = "/ai0";
             hw["channel2"] = "/ai1";
             hw["min"] = "-3.5";
             hw["max"] = "3.5";
             string fn = Utils.configPath + hwFile + ".hw";
             if (File.Exists(fn)) hw = Utils.readDict(fn);
+
+            string mFN = (memsFile.Equals("")) ? "mems" : memsFile;
+            string FN = Utils.configPath + mFN + ".X";
+            if (!File.Exists(FN)) throw new Exception("File " + FN + " not found.");
+            string fileJson = File.ReadAllText(FN);
+            memsX = JsonConvert.DeserializeObject<accelCalibr>(fileJson);
+            FN = Utils.configPath + mFN + ".Y";
+            if (!File.Exists(FN)) throw new Exception("File " + FN + " not found.");
+            fileJson = File.ReadAllText(FN);
+            memsY = JsonConvert.DeserializeObject<accelCalibr>(fileJson);
+
             Reset();
         }
 

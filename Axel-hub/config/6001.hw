@@ -1,0 +1,6 @@
+# for now, device1 must be equal to device2
+device1=Dev1
+channel1=/ai1
+device2=Dev1
+channel2=/ai2 
+

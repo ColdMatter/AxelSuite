@@ -1,0 +1,6 @@
+# for now, device1 must be equal to device2
+device=Dev2
+channel1=/ai1
+channel2=/ai2 
+min=-3.5
+max=3.5
