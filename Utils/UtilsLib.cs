@@ -14,17 +14,20 @@ using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
 using System.Deployment.Application;
 using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 
 namespace UtilsNS
 {
     public static class Utils
     {
-        public static void DoEvents()
+        public static void DoEvents(DispatcherPriority dp = DispatcherPriority.Background)
         {
             DispatcherFrame frame = new DispatcherFrame();
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
+            Dispatcher.CurrentDispatcher.BeginInvoke(dp,
                 new DispatcherOperationCallback(ExitFrame), frame);
-            Dispatcher.PushFrame(frame);
+             Dispatcher.PushFrame(frame);
         }
 
         public static object ExitFrame(object f)
@@ -82,6 +85,12 @@ namespace UtilsNS
             tbLog.Focus();
             tbLog.CaretIndex = tbLog.Text.Length;
             tbLog.ScrollToEnd();
+        }
+
+        public static string timeName(string prefix = "")
+        {
+            if (prefix.Equals("")) return DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
+            else return DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + "_" + prefix;
         }
 
         public static List<string> readList(string filename, bool skipRem = true)
@@ -156,6 +165,23 @@ namespace UtilsNS
         {
             return ((MinValue <= Value) && (Value <= MaxValue));
         }
+
+        public static bool Convert2BoolDef(string value, bool defaultValue = false)
+        {
+            bool result;
+            return bool.TryParse(value, out result) ? result : defaultValue;
+        }
+        public static int Convert2IntDef(string value, int defaultValue = 0)
+        {
+            int result;
+            return int.TryParse(value, out result) ? result : defaultValue;
+        }
+        public static double Convert2DoubleDef(string value, double defaultValue = 0)
+        {
+            double result;
+            return double.TryParse(value, out result) ? result : defaultValue;
+        }
+
         public static void errorMessage(string errorMsg)
         {
             Console.WriteLine("Error: " + errorMsg);
@@ -219,7 +245,17 @@ namespace UtilsNS
         public static string configPath { get { return basePath + "\\Config\\"; } }
         public static string dataPath { get { return basePath + "\\Data\\"; } }
 
-
+        public static string randomString(int length)
+        {
+            int l8 = 1 + length / 8; string path, ss = "";
+            for (int i = 0; i < l8; i++)
+            {
+                path = Path.GetRandomFileName();
+                path = path.Replace(".", ""); // Remove period.
+                ss += path.Substring(0, 8);  // Return 8 character string
+            }
+            return ss.Remove(length);
+        } 
     }
 
     #region async file logger
@@ -229,9 +265,9 @@ namespace UtilsNS
     /// when you want the logging to start you set Enabled to true
     /// at the end you set Enabled to false (that will flush the buffer to HD)
     /// </summary>
-    public class AutoFileLogger
+    public class AutoFileLogger // an old version, please use FileLogger below !!!
     {
-        private const bool traceMode = true;
+        private const bool traceMode = false;
         public string header = ""; // that will be put as a file first line with # in front of it
         public string defaultExt = ".ahf";
         List<string> buffer;
@@ -335,10 +371,7 @@ namespace UtilsNS
                     if (!_AutoSaveFileName.Equals("")) dir = Directory.GetParent(_AutoSaveFileName).FullName;
                     if (!Directory.Exists(dir))
                     {
-                        string prenote;
-                        if (prefix.Equals("")) prenote = "";
-                        else prenote = prefix+"_";
-                        _AutoSaveFileName = Utils.dataPath + prenote + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt;
+                        _AutoSaveFileName = Utils.dataPath  + Utils.timeName(prefix) + defaultExt;
                     }                        
 
                     string hdr = "";
@@ -384,8 +417,9 @@ namespace UtilsNS
     // new (dec.2018) optimized for speed (7x faster) logger
     public class FileLogger
     {
-        private const bool traceMode = true;
+        private const bool traceMode = false;
         public string header = ""; // that will be put as a file first line with # in front of it
+        public List<string> subheaders; 
         public string defaultExt = ".ahf";
         private ActionBlock<string> block;
         public string prefix { get; private set; }
@@ -393,10 +427,11 @@ namespace UtilsNS
         public bool writing { get; private set; }
         public bool missingData { get; private set; }
         public Stopwatch stw;
- 
+
         public FileLogger(string _prefix = "", string _reqFilename = "") // if reqFilename is something it should contain the prefix; 
-            // the usual use is only prefix and no reqFilename
+        // the usual use is only prefix and no reqFilename
         {
+            subheaders = new List<string>();
             reqFilename = _reqFilename;
             prefix = _prefix;
             stw = new Stopwatch();
@@ -453,6 +488,14 @@ namespace UtilsNS
             }
         }
 
+        public virtual void writeHeader()
+        {
+            if (!header.Equals("")) log("#" + header);
+            for (int i=0; i<subheaders.Count; i++)
+                log("#" + subheaders[i]);
+            if(!header.Equals("") || (subheaders.Count > 0)) log("\n");
+        }
+
         private bool _Enabled = false;
         public bool Enabled
         {
@@ -463,25 +506,22 @@ namespace UtilsNS
                 if (value && !_Enabled) // when it goes from false to true
                 {
                     string dir = "";
-                    string prenote;
-                    if (prefix.Equals("")) prenote = "";
-                    else prenote = prefix + "_";
-                    if (reqFilename.Equals("")) LogFilename = Utils.dataPath + prenote + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + defaultExt;
+
+                    if (reqFilename.Equals("")) LogFilename = Utils.dataPath + Utils.timeName(prefix) + defaultExt;
                     else
                     {
                         dir = Directory.GetParent(reqFilename).FullName;
                         if (!Directory.Exists(dir)) dir = Utils.dataPath;
-                        LogFilename = dir + Path.GetFileName(reqFilename);
-                    }                        
+                        LogFilename = dir + "\\" + Path.GetFileName(reqFilename);
+                    }
+                    if (File.Exists(LogFilename)) File.Delete(LogFilename);
                     CreateLogger(LogFilename);
-                    string hdr = "";
-                    if (!header.Equals("")) hdr = "# " + header + "\n";
-                        
+
                     writing = false;
                     missingData = false;
                     stw.Restart();
                     _Enabled = true;
-                    if (!header.Equals("")) log(hdr);
+                    writeHeader();
                 }
                 if (!value && _Enabled) // when it goes from true to false
                 {
@@ -492,9 +532,173 @@ namespace UtilsNS
                 }
             }
         }
+    }
+    // creates and logs in multicollumn table; record structure is defined in record List<string>
+    // the column names must be set when created 
+    // dictLog will extract only the keys with these names in that order
+    public class DictFileLogger : FileLogger 
+    {
+        List<string> record;
+        public DictFileLogger(string[] _record, string _prefix = "", string _reqFilename = ""): base(_prefix, _reqFilename)
+            // if reqFilename is something it should contain the prefix; 
+            // the usual use is only prefix and no reqFilename
+        {
+            record = new List<string>(_record);
+        }
+        private readonly string[] titles = { "params", "steps" };
+        public void setMMexecAsHeader(MMexec mme)
+        {
+            header = ""; subheaders.Clear(); char q = '"';
+            if (Utils.isNull(mme)) return;
+            foreach (string ss in titles)
+            {
+                if (mme.prms.ContainsKey(ss))
+                {
+                    string sub = JsonConvert.SerializeObject(mme.prms[ss]);
+                    mme.prms.Remove(ss);
+                    subheaders.Add("{"+q+ss+q+":"+sub+"}");
+                }
+            }
+            header = JsonConvert.SerializeObject(mme);
+        }
 
+        public override void writeHeader()
+        {
+            base.writeHeader();
+            if(Utils.isNull(record)) throw new Exception("The record list not set");
+            if (record.Count.Equals(0)) throw new Exception("The record list is empty");
+            string ss = "";
+            foreach (string item in record) 
+                ss += item + '\t';
+            ss = ss.Remove(ss.Length - 1); 
+            log(ss);
+        }
+        // the main methods in three variations
+        public void dictLog(Dictionary<string, string> dict)
+        {
+            string ss = "";
+            foreach (string item in record)
+            {
+                if (dict.ContainsKey(item)) ss += dict[item];
+                else ss += "<none>";
+                ss += '\t';
+            }
+            ss = ss.Remove(ss.Length - 1);
+            log(ss);
+        }
+        public void dictLog(Dictionary<string, object> dict)
+        {
+            Dictionary<string, string> dictS = new Dictionary<string, string>();
+            foreach (var pair in dict)
+            {
+                dictS[pair.Key] = Convert.ToString(pair.Value);                
+            }
+            dictLog(dictS); 
+        }
+        public void dictLog(Dictionary<string, double> dict, string format = "")
+        {
+            Dictionary<string, string> dictS = new Dictionary<string, string>();
+            foreach (var pair in dict)
+            {
+                if (Double.IsNaN(pair.Value)) dictS[pair.Key] = "NaN";
+                else dictS[pair.Key] = pair.Value.ToString(format);
+            }
+            dictLog(dictS); 
+        }
     }
 
+    // format first line #header (for conditions) - optional
+    // next line column names; 
+    // header, subheaders & col names are read when instance is created 
+    // if _record = null then read this row in record
+    // if _record has items the record will be the cross-section of _record and column names list (fileRecord)
+    public class DictFileReader
+    {
+        public string header;
+        public List<string> subheaders; 
+        StreamReader fileReader; public int counter = 0;
+        public List<string> record, fileRecord;
+        public DictFileReader(string Filename, string[] strArr = null)
+        {            
+            if (!File.Exists(Filename)) throw new Exception("no such file: "+Filename);
+            header = ""; subheaders = new List<string>();
+            // Read file using StreamReader. Reads file line by line  
+            fileReader = new StreamReader(Filename);  
+            counter = 0;
+            string ln = fileReader.ReadLine();
+            while(ln.StartsWith("#"))
+            {
+                if (header.Equals("")) header = ln.Remove(0, 1);
+                else subheaders.Add(ln.Remove(0, 1));
+                ln = fileReader.ReadLine();
+            }
+            while (ln.Equals(""))
+                ln = fileReader.ReadLine(); // read the next if empty, and again...
+
+            string[] ns = ln.Split('\t');
+            fileRecord = new List<string>(ns);
+            if (Utils.isNull(strArr)) record = new List<string>(fileRecord);
+            else
+            {
+                List<string> _record = new List<string>(strArr);
+                if (_record.Count.Equals(0)) record = new List<string>(fileRecord);
+                else
+                {
+                    record = new List<string>(_record);
+                    for (int i = _record.Count-1; i > -1; i--)
+                    {
+                        int j = fileRecord.IndexOf(_record[i]);
+                        if (j.Equals(-1)) record.RemoveAt(i); 
+                    }
+                }                    
+            }
+        }
+ 
+        public bool stringIterator(ref Dictionary<string,string> rslt) // returns one line (row) as <column.name , cell.value> dictionary
+        {
+            if (Utils.isNull(rslt)) rslt = new Dictionary<string, string>();
+            else rslt.Clear();
+            bool next = false; 
+            string ln = fileReader.ReadLine();           
+            if (Utils.isNull(ln))
+            {
+                fileReader.Close();
+                return next;
+            }
+            while (ln.Equals("")) 
+                ln = fileReader.ReadLine(); // read the next if empty, and again...
+            string[] ns = ln.Split('\t');
+            if(ns.Length != fileRecord.Count) throw new Exception("wrong number of columns");
+            foreach (string ss in record)
+            {
+                int j = fileRecord.IndexOf(ss);
+                if (j.Equals(-1)) throw new Exception("wrong column name: "+ss);
+                rslt[ss] = ns[j];
+            }
+            counter++;
+            next = true; return next;
+        }
+        public bool doubleIterator(ref Dictionary<string, double> rslt) // same as above but values in double (if possible)
+        {
+            rslt = new Dictionary<string, double>();
+            Dictionary<string, string> strRslt = new Dictionary<string, string>();
+            bool next = stringIterator(ref strRslt);
+            foreach (var pair in strRslt)
+            {
+                try
+                {
+                    double dbl = Convert.ToDouble(pair.Value);
+                    rslt[pair.Key] = dbl;
+                }
+                catch (FormatException)
+                {
+                    rslt[pair.Key] = Double.NaN;
+                }               
+            }
+            return next;
+        }
+    }
+    
     #endregion
 
     public class WaitCursor : IDisposable

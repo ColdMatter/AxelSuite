@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" xmlns:System="clr-namespace:System;assembly=mscorlib" 
         x:Name="frmMain" x:Class="Axel_probe.MainWindow"
-        Title="Axel Probe" Height="900.714" Width="1297.857" Icon="dashboard_widgets_speed_fs7_icon.ico" ResizeMode="CanResizeWithGrip" Closing="frmMain_Closing" Loaded="frmMain_Loaded" KeyDown="frmMain_KeyDown">
+        Title="Axel Probe" Height="900.714" Width="1297.857" Icon="Properties/dashboard_widgets_speed_fs7_icon.ico" ResizeMode="CanResizeWithGrip" Closing="frmMain_Closing" Loaded="frmMain_Loaded" KeyDown="frmMain_KeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="225"/>
@@ -30,7 +30,7 @@
                         <ComboBoxItem Content="Trapeze shape"/>
                         <ComboBoxItem Content="Sine"/>
                     </ComboBox>
-                    <Image x:Name="imgAbout" HorizontalAlignment="Left" Height="38" Margin="159,0,0,0" VerticalAlignment="Top" Width="40" Source="dashboard_widgets_speed_fs7_icon.ico" MouseDown="imgAbout_MouseDown"/>
+                    <Image x:Name="imgAbout" HorizontalAlignment="Left" Height="38" Margin="159,0,0,0" VerticalAlignment="Top" Width="40" Source="Properties/dashboard_widgets_speed_fs7_icon.ico" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
             </GroupBox>
             <GroupBox Header="Add Gauss Noise to Fringes" Height="85" Margin="0,5,0,0" BorderBrush="#FF7302B2">
@@ -70,9 +70,9 @@
                     <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="30,10,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked" RenderTransformOrigin="0.401,2.519" IsChecked="True"/>
                     <ni:BooleanButton x:Name="bbtnAbort" Content="Abort !" HorizontalAlignment="Left" Height="23" Margin="10,80,0,0" VerticalAlignment="Top" Width="75" Click="btnAbort_Click" Background="#FFFDD0D0"/>
                     <ni:LED x:Name="ledComm" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="3,7,0,0" TrueContent="On" VerticalAlignment="Top" Width="23" RenderTransformOrigin="0.385,0.54"/>
-                    <RadioButton x:Name="rbXaxis" Content="X" HorizontalAlignment="Left" Margin="15,38,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Foreground="#FF0C9503" Checked="rbXaxis_Checked"/>
+                    <RadioButton x:Name="rbXaxis" Content="X" HorizontalAlignment="Left" Margin="15,38,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Foreground="#FF0C9503" IsChecked="True" Checked="rbXaxis_Checked"/>
                     <RadioButton x:Name="rbYaxis" Content="Y" HorizontalAlignment="Left" Margin="56,38,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.744,0.692" FontSize="14" FontWeight="Bold" Foreground="#FF0347EA" Checked="rbXaxis_Checked"/>
-                    <RadioButton x:Name="rbXYaxes" Content="X/Y" HorizontalAlignment="Left" Margin="30,58,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" IsChecked="True" Checked="rbXaxis_Checked"/>
+                    <RadioButton x:Name="rbXYaxes" Content="X/Y" HorizontalAlignment="Left" Margin="30,58,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Checked="rbXaxis_Checked"/>
                 </Grid>
             </GroupBox>
             <Button x:Name="btnCustomScan" Content="Custom Scan" Background="#FFDDFDEF" VerticalAlignment="Top" Margin="0,5,0,0" Height="26" FontSize="14" Click="btnCustomScan_Click"/>
@@ -151,14 +151,8 @@
                         <ni:NumericTextBoxDouble x:Name="ndKI" HorizontalAlignment="Left" Height="23" Margin="41,41,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
                         <Label Content="kD" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top"/>
                         <ni:NumericTextBoxDouble x:Name="ndKD" HorizontalAlignment="Left" Height="23" Margin="41,68,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                        <CheckBox x:Name="chkFollowPID" Content="Follow" HorizontalAlignment="Left" Margin="10,106,0,0" VerticalAlignment="Top" IsChecked="True"/>
-                        <GroupBox Header="Strobes" Margin="0,126,0,0" VerticalAlignment="Top" Height="67" Width="103">
-                            <StackPanel Margin="0,0,0.429,-12.714">
-                                <RadioButton x:Name="rbSingle" Content="Single(down)" Margin="0,5,0,0" IsChecked="True" Checked="rbSingle_Checked"/>
-                                <RadioButton x:Name="rbDouble" Content="Double" Margin="0,6,0,0" Checked="rbSingle_Checked" IsChecked="True"/>
-                            </StackPanel>
-                        </GroupBox>
-                        <ListBox x:Name="lbDecomposeAccel" Margin="0,198,0,0"/>
+                        <CheckBox x:Name="chkFollowPID" Content="Follow" HorizontalAlignment="Left" Margin="10,96,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                        <ListBox x:Name="lbDecomposeAccel" Margin="0,116,0,0"/>
                     </Grid>
                 </GroupBox>
                 <Grid Grid.Column="1" Margin="0">

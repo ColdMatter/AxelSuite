@@ -54,7 +54,7 @@ namespace Axel_hub
             Dictionary<string,object> tempDict = new Dictionary<string, object>(); 
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key == "time") tempDict[key] = data.prms[key];
+                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key == "rTime") tempDict[key] = data.prms[key];
                 else
                 {
                     var rawData = (JArray) data.prms[key];
@@ -110,9 +110,10 @@ namespace Axel_hub
     {
         protected string precision = "G5";
 
-        public Point quant;
-        private List<Point> _mems;
+        public Point quant; // .X - time of acquisition[s]; .Y - accel.[mg]
+        private List<Point> _mems; // each point .X - time[s]; .Y - accel.[mg]; the range of mems.X supposed to be 3 times the quant measurement with the quant measuremen in the middle
         public List<Point> mems { get { return _mems; } set { _mems.Clear(); _mems.AddRange(value); } }
+
         public SingleShot()
         {
             quant = new Point(-1, 0);
@@ -133,6 +134,12 @@ namespace Axel_hub
         {
             quant = new Point(q.X, q.Y);
             _mems = new List<Point>(m);
+        }
+
+        public bool IsEmpty()
+        {
+            if(Utils.isNull(quant) || Utils.isNull(_mems)) return true;
+            return (quant.X < 0) || (_mems.Count < 3);
         }
 
         public int idxByTime(double tm, bool smart = true)
@@ -160,17 +167,17 @@ namespace Axel_hub
         public List<Point> memsPortion(Range<double> rng)
         {
             List<Point> ls = new List<Point>();
-            int i0 = idxByTime(rng.Minimum); int i1 = idxByTime(rng.Maximum);
-            if (i0.Equals(-1) || i1.Equals(-1)) return ls;
-            for (int i = i0; i < i1 + 1; i++) ls.Add(mems[i]);
+            for (int i=0; i<mems.Count; i++) 
+                if (Utils.InRange(mems[i].X, rng.Minimum,rng.Maximum)) ls.Add(mems[i]);
             return ls;
         }
 
-        public double memsWeightAccel(double delay, double duration, bool triangle) // delay reference to 
+        public double memsWeightAccel(double delay, double duration = -1, bool triangle = true) // delay reference to quant.X
         // alternative to triangle is uniform
         {
-            if (quant.X < 0) return Double.NaN;
-            List<Point> lp = memsPortion(new Range<double>(quant.X + delay, quant.X + delay + duration));
+            if (IsEmpty()) return Double.NaN;
+            double dur = (duration < 0) ? (mems[mems.Count-1].X - mems[0].X)/3: duration;
+            List<Point> lp = memsPortion(new Range<double>(quant.X + delay, quant.X + delay + dur));
             int len = lp.Count; if (len.Equals(0)) return Double.NaN;
             double a, b, sum = 0;
             switch (triangle)
@@ -198,6 +205,29 @@ namespace Axel_hub
                     }
             }
             return sum / len;
+        }
+
+        public Dictionary<string, double> deconstructAccel(double fringeScale)
+        {
+            Dictionary<string, double> da = new Dictionary<string, double>(); double resid;
+            if (IsEmpty()) return da;
+            double mms = memsWeightAccel(0.0, -1, false);
+            if (Double.IsNaN(mms)) return da;
+            da["MEMS"] = mms;
+
+            // M for measure
+            da["PhiMg"] = quant.Y; // [mg]
+            da["PhiRad"] = quant.Y / fringeScale; // [rad]
+
+            da["Order"] = calcAccel.accelOrder(da["MEMS"] - da["PhiMg"], fringeScale, out resid); // order from mems; "resid" [rad]
+            da["OrdRes"] = resid * fringeScale;
+            
+            calcAccel.accelOrder(quant.Y, fringeScale, out resid); // quant 
+            
+            double orderAccel, residAccel;
+            da["Accel"] = calcAccel.resultAccel(da["Order"], resid, fringeScale, out orderAccel, out residAccel); // [mg]
+            
+            return da;
         }
 
         public string AsString
@@ -232,8 +262,9 @@ namespace Axel_hub
 
     public class ShotList : List<SingleShot>
     {
-        protected int depth = 10000; // max number of last items with direct access; alternatively - archyScan
+        protected int depth = 10000; // max number of last items with direct access; for the whole thing - archyScan
         public string filename { get; private set; }
+        private string _prefix;
         public bool archiveMode { get; private set; } // reading or writing file
         public bool savingMode { get; private set; } // either opening or saving data
 
@@ -243,9 +274,9 @@ namespace Axel_hub
         StreamReader streamReader = null;
         FileLogger streamWriter = null;
 
-        public ShotList(bool arch = true, string FN = "")
+        public ShotList(bool arch = true, string FN = "", string prefix = "")
             // if arch -> open file if FN not empty, or create FN if empty
-            // if not arch -> ignore FN 
+            // if not arch -> ignore FN and prefix 
             : base()
         {
             archiveMode = arch; 
@@ -254,7 +285,7 @@ namespace Axel_hub
                 savingMode = FN.Equals("");
                 if (savingMode) 
                 { 
-                    streamWriter = new FileLogger(); 
+                    streamWriter = new FileLogger(prefix); 
                     streamWriter.defaultExt = ".jlg";
                     streamWriter.Enabled = true;
                 }
@@ -296,7 +327,7 @@ namespace Axel_hub
         }
  
         public int lastIdx { get; private set; }
-        public void ResetScan()
+        public void resetScan()
         {
             if(savingMode) throw new Exception("No scanning in saving mode!");
             lastIdx = -1;
@@ -312,13 +343,11 @@ namespace Axel_hub
             }           
             if (FileCount <= depth) // loading file in memory 
             {
-                bool next = false;
-                while (true)
+                bool next;
+                do
                 {
-                    SingleShot ss = archyScan(out next);
-                    if (!next) break;
-                    this.Add(ss);
-                }
+                    this.Add(archyScan(out next));
+                } while (next);
                 archiveMode = false;
             }
         }
@@ -346,8 +375,8 @@ namespace Axel_hub
         {
             if (FN.Equals(""))
             {
-                if (Utils.isNull(filename)) filename = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + ".jlg";
-                if (filename.Equals("")) filename = Utils.dataPath + DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + ".jlg";
+                if (Utils.isNull(filename)) filename = Utils.dataPath + Utils.timeName(_prefix)+ ".jlg";
+                if (filename.Equals("")) filename = Utils.dataPath + Utils.timeName(_prefix) + ".jlg";
             }
             else filename = FN;
             StreamWriter sWriter = new StreamWriter(new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None, 65536, true));

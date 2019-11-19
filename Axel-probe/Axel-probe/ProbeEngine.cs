@@ -87,7 +87,7 @@ namespace Axel_probe
         Random rnd = new Random();
         public RemoteMode remoteMode = RemoteMode.Disconnected;
 
-        public double period
+        public double period // one cicle [sec]
         {
             get { return dTimer.Interval.TotalSeconds * 100.0 / bpps["step"]; }
         }
@@ -109,7 +109,7 @@ namespace Axel_probe
         }
 
         DispatcherTimer dTimer; 
-        Stopwatch stopWatch;
+        public Stopwatch stopWatch;
         public ProbeEngine()
         {
             bpps = new Dictionary<string, double>();
@@ -205,7 +205,7 @@ namespace Axel_probe
             return randStdNormal;
         }
 
-        double inPeriod(Boolean percent = true) // percent or sec within current period
+        double inPeriod(bool percent = true) // percent or sec within current period
         {
             if (!stopWatch.IsRunning) return Double.NaN;
             double r = Remainder(stopWatch.Elapsed.TotalSeconds,period);
@@ -239,17 +239,18 @@ namespace Axel_probe
                     drift = drift / 0.8;
                     break;
                 case 2: // sine
-                    drift = rng * Math.Sin(2 * Math.PI * (pos / (2 * halfPrd)));
+                    double inPos = pos / period;
+                    drift = rng * Math.Sin(2 * Math.PI * inPos);
                     break;
             }
             return drift; // ampl [mg]
         }
 
-        public double breathing()
+        public double breathing() // factor to multiply the fringes with
         {
             if (Convert.ToBoolean(dps["BrthIO"]))
             {
-                double x = Remainder(stopWatch.Elapsed.TotalSeconds, Convert.ToDouble(dps["BrthPeriod"])) / Convert.ToDouble(dps["BrthPeriod"]); 
+                double x = Remainder(stopWatch.Elapsed.TotalSeconds, Convert.ToDouble(dps["BrthPeriod"])) / Convert.ToDouble(dps["BrthPeriod"]); // 0-1
                 return 1 - (Convert.ToDouble(dps["BrthApmpl"]) / 100) * Math.Sin(x * 2 * Math.PI);
             }
             else return 1;
@@ -259,7 +260,8 @@ namespace Axel_probe
                            double curAccel)  // [mg]
         {
             Point g = Gauss(); // individual for each point from the fringe
-            return new Point(scanPhase, (Math.Cos(scanPhase + curAccel / bpps["factor"]) + g.Y) * breathing());
+            double brt = breathing();
+            return new Point(scanPhase, (Math.Cos(scanPhase + curAccel / bpps["factor"]) + g.Y) * brt);
         }
 
         public double fringes(double curAccel) // curAccel [mg] for illustration; return accel with noise
@@ -269,7 +271,7 @@ namespace Axel_probe
             double step = 4 * Math.PI / np;
             double cr = 0; Point g0 = Gauss(); // common for the whole fringe
             srsFringes.Clear();
-            while (cr < 4 * Math.PI) // generate fringes
+            while (cr < 4 * Math.PI) // generate fringes !
             {
                 srsFringes.Add(fringesPoint(cr, curAccel + g0.X));
                 cr += step;
@@ -301,6 +303,7 @@ namespace Axel_probe
 										
             A						        A				
             1						        -1		*/
+        public double contrPhase = -11; public int b4ConstrID = 0;
         public bool SingleShot(double A, // A = 1 .. -1
                  int toAxis, ref MMexec mme )// group template
               
@@ -350,6 +353,7 @@ namespace Axel_probe
                 mme.prms["Bg"] = srsBg.ToArray();
                 mme.id = rnd.Next(int.MaxValue);
                 string msg = "";
+
                 if (toAxis == 2) // both axes
                 {
                     mme.cmd = "shot.X";
@@ -373,8 +377,7 @@ namespace Axel_probe
                     }
                     msg = JsonConvert.SerializeObject(mme);
                     rslt = remote.sendCommand(msg);
-                }               
-                mme.prms["runID"] = (int)mme.prms["runID"] + 1;
+                }
             }
             return rslt;
         }
@@ -393,7 +396,7 @@ namespace Axel_probe
             double n2 = 1; double ntot = 5; // n2 = 1 .. 3 / A = 1 .. -1              
             double b2 = 1; double btot = 3; double bg = 0;
 
-            double A = 0; srsFringes.Clear(); cancelScan = false;
+            double A = 0; srsFringes.Clear(); cancelScan = false; int idx = 0;
             for (double ph = mms.sFrom; ph < mms.sTo + 0.01 * mms.sBy; ph += mms.sBy)
             {
                 if (bpps.ContainsKey("TimeGap")) Thread.Sleep((int)bpps["TimeGap"]);
@@ -407,7 +410,9 @@ namespace Axel_probe
                 {
                     md.prms["last"] = 1;
                 }
-                if (!SingleShot(A, axis, ref md) || cancelScan) break;                
+                md.prms["runID"] = idx;
+                if (!SingleShot(A, axis, ref md) || cancelScan) break;
+                idx++;
             }
         }
 

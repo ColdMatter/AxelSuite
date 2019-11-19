@@ -1,0 +1,65 @@
+﻿<UserControl
+             x:Class="Axel_hub.strobesUC" 
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" 
+             mc:Ignorable="d" 
+             d:DesignHeight="385" d:DesignWidth="150">
+    <Grid Background="#FFFDFEF1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="109.714"/>
+            <RowDefinition Height="11*"/>
+            <RowDefinition Height="24"/>
+        </Grid.RowDefinitions>
+        <Label Content="kP" HorizontalAlignment="Left" Margin="15,22,0,0" VerticalAlignment="Top" Width="28" Height="26"/>
+        <ni:NumericTextBoxDouble x:Name="ndKP" HorizontalAlignment="Left" Height="23" Margin="52,25,0,0" VerticalAlignment="Top" Width="68" RenderTransformOrigin="0.501,-0.217" Value="1" Interval="0.1" Range="0, 100, System.Double" >
+            <ni:NumericTextBoxDouble.ValueFormatter>
+                <ni:GeneralValueFormatter Format="G3" ShortFormat="{x:Null}"/>
+            </ni:NumericTextBoxDouble.ValueFormatter>
+        </ni:NumericTextBoxDouble>
+        <Label Content="kI" HorizontalAlignment="Left" Margin="15,48,0,0" VerticalAlignment="Top" Width="23" Height="26"/>
+        <ni:NumericTextBoxDouble x:Name="ndKI" HorizontalAlignment="Left" Height="23" Margin="52,53,0,0" VerticalAlignment="Top" Width="68" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" >
+            <ni:NumericTextBoxDouble.ValueFormatter>
+                <ni:GeneralValueFormatter Format="G3" ShortFormat="{x:Null}"/>
+            </ni:NumericTextBoxDouble.ValueFormatter>
+        </ni:NumericTextBoxDouble>
+        <Label Content="kD" HorizontalAlignment="Left" Margin="15,77,0,0" VerticalAlignment="Top" Width="28" Height="26"/>
+        <ni:NumericTextBoxDouble x:Name="ndKD" HorizontalAlignment="Left" Height="23" Margin="52,80,0,0" VerticalAlignment="Top" Width="68" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" >
+            <ni:NumericTextBoxDouble.ValueFormatter>
+                <ni:GeneralValueFormatter Format="G3" ShortFormat="{x:Null}"/>
+            </ni:NumericTextBoxDouble.ValueFormatter>
+        </ni:NumericTextBoxDouble>
+        <TabControl Margin="0,0.286" Grid.Row="1">
+            <TabItem Header=" Report ">
+                <Grid Background="White">
+                    <ListBox x:Name="lbReport" Margin="0"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Options">
+                <Grid Background="White">
+                    <Label Content="kI Depth" HorizontalAlignment="Left" Margin="2,7,0,0" VerticalAlignment="Top" Width="60" Height="26"/>
+                    <Label Content="kD Depth" HorizontalAlignment="Left" Margin="2,35,0,0" VerticalAlignment="Top" Width="60" Height="26"/>
+                    <Label Content="Pi Weight" HorizontalAlignment="Left" Margin="2,80,0,0" VerticalAlignment="Top" Width="65" Height="26"/>
+                    <Label Content="[%]" HorizontalAlignment="Left" Margin="112,80,0,0" VerticalAlignment="Top" Width="31"/>
+                    <ni:RadixNumericTextBoxInt32 x:Name="ndKIdepth" HorizontalAlignment="Left" Height="23" Margin="65,7,0,0" VerticalAlignment="Top" Width="63" Range="1, 1000, System.Int32" RadixVisibility="Collapsed"/>
+                    <ni:RadixNumericTextBoxInt32 x:Name="ndKDdepth" HorizontalAlignment="Left" Height="23" Margin="65,37,0,0" VerticalAlignment="Top" Width="63" Range="1, 1000, System.Int32" RadixVisibility="Collapsed"/>
+                    <ni:RadixNumericTextBoxInt32 x:Name="ndPiWeight" HorizontalAlignment="Left" Height="23" Margin="65,83,0,0" VerticalAlignment="Top" Width="47" Range="0, 50, System.Int32" RadixVisibility="Collapsed"/>
+                    <ni:RadixNumericTextBoxInt32 x:Name="ndFreqContrast" HorizontalAlignment="Left" Height="23" Margin="65,146,0,0" VerticalAlignment="Top" Width="63" Range="0, 1000, System.Int32" RadixVisibility="Collapsed"/>
+                    <Label Content="Freq. Contrast Check" HorizontalAlignment="Left" Margin="2,121,0,0" VerticalAlignment="Top" Width="141" Height="26"/>
+                    <Label Content="(0 - off)" HorizontalAlignment="Left" Margin="2,143,0,0" VerticalAlignment="Top" Width="65" Height="26"/>
+                    <Rectangle Fill="#FFF4F4F5" Height="4" Margin="0,116,0,0" Stroke="#FF888787" VerticalAlignment="Top"/>
+                    <Rectangle Fill="#FFF4F4F5" Height="4" Margin="0,70,0,0" Stroke="#FF828181" VerticalAlignment="Top"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <CheckBox x:Name="chkPIDlog" Content="->Log" HorizontalAlignment="Left" Margin="3,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="67" Height="15">
+
+        </CheckBox>
+        <CheckBox x:Name="chkRpr2file" Content="Rpr>File" HorizontalAlignment="Left" Margin="70,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="67" Height="15">
+
+        </CheckBox>
+        <Label x:Name="lbTitle" Content="PID" HorizontalAlignment="Center" Margin="0,-5,0,0" VerticalAlignment="Top" FontWeight="Bold" Height="25" Background="{x:Null}" Foreground="#FF740202"/>
+    </Grid>
+</UserControl>

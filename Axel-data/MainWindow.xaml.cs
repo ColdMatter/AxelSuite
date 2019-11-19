@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows;
@@ -44,6 +45,58 @@ namespace Axel_data
             else printOut = txt.Substring(0, 80) + "..."; //
 
             Utils.log(tbLog, printOut, clr);
+        }
+        /*            FileLogger fl = new FileLogger("", "C:/temp/test11.log");
+                    DateTime start, finish; TimeSpan time;
+                    string buff = Utils.randomString(1024);
+                    int dly = (int)(1000 / tbiSpeed.Value); 
+                    start = DateTime.Now; log("start at: " + start.ToString() +" / interval = "+dly.ToString());
+
+                    fl.Enabled = true;          
+                    for (int i = 0; i < 100000; i++)
+                    {
+                        //Thread.Sleep(dly);
+                        fl.log(buff);
+                    }
+                    finish = DateTime.Now;
+                    log("finish at: " + finish.ToString());
+                    time = finish - start;
+                    log("end of it: " + fl.stw.Elapsed.Milliseconds.ToString() + " / " + time.Seconds.ToString()+" [s]");
+                    if (fl.missingData) log("skip some data!!!");
+                    fl.Enabled = false;
+                    fl = null;
+         ===================================================================================
+                     List<string> rec = new List<string>();
+                    rec.Add("aaa"); rec.Add("bbb"); rec.Add("ccc"); 
+                    DictFileLogger fl = new DictFileLogger(rec, "", "C:/temp/test12.log");
+
+                    fl.Enabled = true;
+                    Dictionary<string, double> row = new Dictionary<string, double>();
+                    row["aaa"] = 111; row["bbb"] = 222; row["ccc"] = 333;
+                    for (int i = 0; i < 1000; i++)
+                    {              
+                        fl.dictLog(row);
+                    }
+                    if (fl.missingData) log("skiped some data!!!");
+                    fl.Enabled = false;
+                    fl = null;
+                    log("Done!");
+
+        */
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            string[] rec = new string[]{"aaa","bbb","ccc"};
+            DictFileReader fl = new DictFileReader("C:/temp/test12.log", rec);
+       
+            Dictionary<string, double> row = new Dictionary<string, double>();
+            while (fl.doubleIterator(ref row))            
+            {                              
+                log(row["aaa"].ToString()+" | "+row["bbb"].ToString()+" | "+row["ccc"].ToString());               
+            }
+            fl = null;
+            log("Done!");
+
+
         }
     }
 }

@@ -175,10 +175,11 @@ namespace Axel_hub
             if (oldMode.Equals(RemoteMode.Jumbo_Scan) && newMode.Equals(RemoteMode.Ready_To_Remote))
             {
                 if (!Options.genOptions.JumboRepeat) return; 
-                if (Utils.TheosComputer()) axes.SetChartStrobes();
+                if (Utils.TheosComputer()) axes.SetChartStrobes(true);
 
                 // wait for user confirmation
-                if (!continueJumboRepeat(true)) return; // if timeout
+                if (!continueJumboRepeat(true)) return; // main call, out - if timeout
+                axes.SetChartStrobes(false);
                 int nc = (int)axes[0].numCycles.Value;
                 axes.jumboRepeat(nc);
             }
@@ -325,8 +326,8 @@ namespace Axel_hub
 
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            //logger.Enabled = false;
-            axes.axelMems.StopAqcuisition(); Thread.Sleep(200);
+
+            axes.Closing(sender,e);
             ucScan.UpdateModes();
             //visuals
             if (Options.genOptions.saveVisuals)

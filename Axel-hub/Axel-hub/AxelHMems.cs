@@ -391,7 +391,7 @@ namespace AxelHMemsNS
             }
         }
 
-        public void StopAqcuisition()
+        public void StopAcquisition()
         {
             Reset();
         }

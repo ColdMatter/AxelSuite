@@ -417,7 +417,8 @@ namespace Axel_hub
              if(partner == "")
                  switch (computerName) 
                  {
-                     case "NAVIGATOR-ANAL": partner = "MOTMaster2"; break;
+                     case "NAVIGATOR-ANAL":
+                     case "DESKTOP-IHEEQUU": partner = "MOTMaster2"; break;
                      case "DESKTOP-U334RMA": partner = "Axel Probe"; break; //"MOTMaster2"
                  }
              remote = new RemoteMessaging(partner); 

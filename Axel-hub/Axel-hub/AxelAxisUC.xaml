@@ -116,8 +116,8 @@
                                         <ListBoxItem x:Name="lbiMEMS" Content="MEMS[mg]" Foreground="#FF0E6001"/>
                                         <ListBoxItem x:Name="lbiOrder" Content="Order[int]" Foreground="#FF137903"/>
                                         <ListBoxItem x:Name="lbiOrdRes" Content="Ord.Res.[mg]" Foreground="#FF117201"/>
-                                        <ListBoxItem x:Name="lbiPhiRad" Content="Phi[rad]" Foreground="#FF02279D"/>
-                                        <ListBoxItem x:Name="lbiPhiMg" Content="Phi[mg]" Foreground="#FF032285"/>
+                                        <ListBoxItem x:Name="lbiPhiRad" Content="Quant[rad]" Foreground="#FF02279D"/>
+                                        <ListBoxItem x:Name="lbiPhiMg" Content="Quant[mg]" Foreground="#FF032285"/>
                                         <ListBoxItem x:Name="lbiAccel" Content="Accel[mg]" FontSize="22" Foreground="#FFA70404"/>
                                     </ListBox>
                                     <CheckBox x:Name="chkBigCalcTblUpdate" Grid.Row="2" Margin="103,6.714,0,4.714" FontSize="12" Content="Table" IsChecked="True" VerticalAlignment="Center" Width="50" HorizontalAlignment="Left" Height="16" Foreground="#FF0114A9" FontWeight="Bold" />
@@ -143,7 +143,7 @@
         <Grid x:Name="gridLow" Grid.Row="2" MinHeight="20" Margin="0,6,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="785*"/>
-                <ColumnDefinition Width="121"/>
+                <ColumnDefinition Width="145"/>
             </Grid.ColumnDefinitions>
             <TabControl x:Name="tabLowPlots" Margin="0,2,0.714,0.857" SelectedIndex="0" FontSize="14" Grid.ColumnSpan="1">
                 <TabItem x:Name="tabFringes" Header="Fringes" Width="100" Height="28">
@@ -161,7 +161,7 @@
                             </ni:Graph.Axes>
                             <ni:Graph.Children>
                                 <ni:MultiPlotCursor x:Name="crsUpStrobe" Label="Uphill" Foreground="#FF046C05" ToolTip="Uphill" LabelVisibility="Visible"/>
-                                <ni:MultiPlotCursor x:Name="crsDownStrobe" Label="Downhill" Foreground="#FF031D9A" ToolTip="" LabelVisibility="Visible"/>
+                                <ni:MultiPlotCursor x:Name="crsDownStrobe" Label="Downhill" Foreground="#FF031D9A" ToolTip="Downhill" LabelVisibility="Visible"/>
                             </ni:Graph.Children>
                             <ni:Graph.Plots>
                                 <ni:Plot Label="Fringes">
@@ -189,28 +189,39 @@
                         <StackPanel Grid.Row="0" Orientation="Horizontal" >
                             <CheckBox x:Name="chkMEMS" Content="MEMS" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" FontWeight="Bold" Foreground="#FF0A14C1" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" />
                             <CheckBox x:Name="chkCorr" Content="Corr." VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FF07B484" FontWeight="Bold"/>
-                            <CheckBox x:Name="chkMOT" Content="MOT" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
+                            <CheckBox x:Name="chkMOT" Content="Quant" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                             <CheckBox x:Name="chkAccel" Content="Accel." VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FFE05100" FontWeight="Bold"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Height="31" Width="640" FontSize="13" Grid.RowSpan="2"/>
                         </StackPanel>
                         <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <ni:Graph.Axes>
                                 <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="FitLoosely"/>
-                                <ni:AxisDouble x:Name="accelYaxis" Orientation="Vertical" Adjuster="FitVisibleLoosely"/>
+                                <ni:AxisDouble x:Name="accelAxis" Orientation="Vertical" Adjuster="FitLoosely" />
+                                <ni:AxisDouble x:Name="corrAxis" Orientation="Vertical" Adjuster="FitLoosely" BaselineStroke="#FF009064">
+                                    <ni:AxisDouble.MinorDivisions>
+                                        <ni:RangeDivisions TickBrush="#FF0F801E"/>
+                                    </ni:AxisDouble.MinorDivisions>
+                                    <ni:AxisDouble.MajorDivisions>
+                                        <ni:RangeLabeledDivisions LabelBrush="#FF097F12"/>
+                                    </ni:AxisDouble.MajorDivisions>
+                                    <ni:AxisDouble.MajorGridLines>
+                                        <ni:GridLines/>
+                                    </ni:AxisDouble.MajorGridLines>
+                                </ni:AxisDouble>
                             </ni:Graph.Axes>
                             <ni:Graph.Children>
                                 <ni:MultiPlotCursor x:Name="plotcursorAccel" Label="multiPlotCursor2" LabelVisibility="Hidden" ToolTip=""/>
                             </ni:Graph.Children>
                             <ni:Graph.Plots>
-                                <ni:Plot x:Name="plotMems" Label="MEMS">
+                                <ni:Plot x:Name="plotMems" Label="MEMS Accel.">
                                     <ni:PlotRendererGroup>
                                         <ni:LinePlotRenderer Stroke="#FF0A14C1" StrokeThickness="1.5"/>
                                     </ni:PlotRendererGroup>
                                 </ni:Plot>
-                                <ni:Plot x:Name="plotCorr" Label="Corrections">
+                                <ni:Plot x:Name="plotCorr" Label="Corrections" VerticalScale="{Binding ElementName=corrAxis}" >
                                     <ni:BarPlotRenderer BarWidth="0.35" Fill="#FF07B484" Stroke="#FF07B484"/>
                                 </ni:Plot>
-                                <ni:Plot x:Name="plotMotAccel" Label="MOTaccel" >
+                                <ni:Plot x:Name="plotMotAccel" Label="Quantum Accel." >
                                     <ni:PlotRendererGroup>
                                         <ni:LinePlotRenderer StrokeThickness="1.5" Stroke="#FF9F16F4"/>
                                     </ni:PlotRendererGroup>
@@ -259,15 +270,17 @@
                                 <Label Content="a[mg] = K * 2Pi * n[int] + phi[mg]" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="221"/>
                                 <Label Content="Fringes parameters" HorizontalAlignment="Left" Margin="10,23,0,0" VerticalAlignment="Top" Width="221" FontWeight="Bold"/>
                                 <Label Content="K" HorizontalAlignment="Left" Margin="13,47,0,0" VerticalAlignment="Top"/>
-                                <ni:NumericTextBoxDouble x:Name="numKcoeff" HorizontalAlignment="Left" Height="23" Margin="47,50,0,0" VerticalAlignment="Top" Width="72" RenderTransformOrigin="0.501,-0.217" Value="0.1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                                <Label Content="[mg/rad]" HorizontalAlignment="Left" Margin="124,47,0,0" VerticalAlignment="Top"/>
-                                <Label Content="phi0" HorizontalAlignment="Left" Margin="11,81,0,0" VerticalAlignment="Top"/>
-                                <ni:NumericTextBoxDouble x:Name="numPhi0" HorizontalAlignment="Left" Height="23" Margin="47,81,0,0" VerticalAlignment="Top" Width="72" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="-7, 7, System.Double" KeyDown="ndKP_KeyDown"/>
-                                <Label Content="[rad]" HorizontalAlignment="Left" Margin="124,80,0,0" VerticalAlignment="Top"/>
-                                <Label Content="Scale" HorizontalAlignment="Left" Margin="9,110,0,0" VerticalAlignment="Top"/>
-                                <ni:NumericTextBoxDouble x:Name="numScale" HorizontalAlignment="Left" Height="23" Margin="47,112,0,0" VerticalAlignment="Top" Width="72" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown" Value="1"/>
-                                <Label Content="(max-min)/2" HorizontalAlignment="Left" Margin="124,106,0,0" VerticalAlignment="Top"/>
-                                <Button x:Name="btnSaveTrendAs" Content="Save Acc.Trend As..." Margin="5,150,7.714,0" Background="#FFF6F6F6" VerticalAlignment="Top" Click="btnSaveTrendAs_Click" />
+                                <ni:NumericTextBoxDouble x:Name="numKcoeff" HorizontalAlignment="Left" Height="23" Margin="64,50,0,0" VerticalAlignment="Top" Width="59" RenderTransformOrigin="0.501,-0.217" Value="0.1" Interval="0.1" Range="0, 100, System.Double"/>
+                                <Label Content="[mg/rad]" HorizontalAlignment="Left" Margin="128,47,0,0" VerticalAlignment="Top"/>
+                                <Label Content="phase0" HorizontalAlignment="Left" Margin="11,81,0,0" VerticalAlignment="Top"/>
+                                <ni:NumericTextBoxDouble x:Name="numPhi0" HorizontalAlignment="Left" Height="23" Margin="64,81,0,0" VerticalAlignment="Top" Width="59" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="-7, 7, System.Double"/>
+                                <Label Content="[rad]" HorizontalAlignment="Left" Margin="133,80,0,0" VerticalAlignment="Top"/>
+                                <Label Content="Aml.Scale" HorizontalAlignment="Left" Margin="3,110,0,0" VerticalAlignment="Top"/>
+                                <ni:NumericTextBoxDouble x:Name="numScale" HorizontalAlignment="Left" Height="23" Margin="67,112,0,0" VerticalAlignment="Top" Width="56" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" Value="1" ValueChanged="numScale_ValueChanged"/>
+                                <Label Content="(max-min)/2" HorizontalAlignment="Left" Margin="120,111,0,0" VerticalAlignment="Top"/>
+                                <Label Content="Aml.Offset" HorizontalAlignment="Left" Margin="2,140,0,0" VerticalAlignment="Top"/>
+                                <ni:NumericTextBoxDouble x:Name="numOffset" HorizontalAlignment="Left" Height="23" Margin="67,142,0,0" VerticalAlignment="Top" Width="56" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" Value="1" ValueChanged="numScale_ValueChanged"/>
+                                <Button x:Name="btnSaveTrendAs" Content="Save Acc.Trend As..." Margin="3,172,9.857,0" Background="#FFF6F6F6" VerticalAlignment="Top" Click="btnSaveTrendAs_Click" />
                             </Grid>
                         </GroupBox>
                         <GroupBox x:Name="gbJumboParams" Header="Jumbo parameters" Margin="5,0,0,0" BorderBrush="#FF840802">
@@ -290,18 +303,8 @@
 
 
             </TabControl>
-            <GroupBox Header="PID feedback" Margin="0,20,0,0" FontSize="12" Grid.Column="1" BorderBrush="#FF016158">
-                <Grid Margin="0,0,0.429,0">
-                    <Label Content="kP" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndKP" HorizontalAlignment="Left" Height="23" Margin="41,13,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Value="1" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                    <Label Content="kI" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndKI" HorizontalAlignment="Left" Height="23" Margin="41,41,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                    <Label Content="kD" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top"/>
-                    <ni:NumericTextBoxDouble x:Name="ndKD" HorizontalAlignment="Left" Height="23" Margin="41,68,0,0" VerticalAlignment="Top" Width="58" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" KeyDown="ndKP_KeyDown"/>
-                </Grid>
-            </GroupBox>
             <CheckBox x:Name="chkAutoScaleBottom" Content="Auto-scale Y" Grid.Column="1" HorizontalAlignment="Left" Margin="8,5,0,0" VerticalAlignment="Top" Foreground="#FF0E7501" FontSize="13"/>
-
+            <local:strobesUC x:Name="strobes" Margin="0,25,0,0" Grid.Column="1"/>
         </Grid>
 
     </Grid>

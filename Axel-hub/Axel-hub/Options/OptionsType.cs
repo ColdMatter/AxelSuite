@@ -135,6 +135,7 @@ namespace OptionsNS
         public double Kcoeff { get; set; }
         public double phi0 { get; set; }
         public double scale { get; set; }
+        public double offset { get; set; }
 
         public bool AutoScaleBottom { get; set; }
         public double kP { get; set; }

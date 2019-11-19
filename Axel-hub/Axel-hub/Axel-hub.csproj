@@ -125,7 +125,9 @@
     <Compile Include="signalUC.xaml.cs">
       <DependentUpon>signalUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="strobeControl.cs" />
+    <Compile Include="strobesUC.xaml.cs">
+      <DependentUpon>strobesUC.xaml</DependentUpon>
+    </Compile>
     <Page Include="AxelAxisUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -155,6 +157,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="signalUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="strobesUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -215,7 +221,7 @@
     <Resource Include="Properties\speed2.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="ToDoInMM2.txt" />
+    <Resource Include="ToDoList.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

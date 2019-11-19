@@ -142,38 +142,6 @@ namespace Axel_hub
             set;
         }
 
-/*        public string customX
-        {
-            get
-            {
-                return (string)GetValue(customXProperty);
-            }
-            set
-            {
-                if ((value == string.Empty) || (value == "[sec]"))
-                {
-                    rbSec.Content = "[sec]";
-                    rbMiliSec.Visibility = System.Windows.Visibility.Visible;
-                    rbMicroSec.Visibility = System.Windows.Visibility.Visible;
-                }
-                else
-                {
-                    rbSec.Content = value;
-                    rbMiliSec.Visibility = System.Windows.Visibility.Hidden;
-                    rbMicroSec.Visibility = System.Windows.Visibility.Hidden;
-                }
-                SetValue(customXProperty, value);
-            }
-        }
-        // Using a DependencyProperty as the backing store for customX.  
-        public static readonly DependencyProperty customXProperty
-            = DependencyProperty.Register(
-                  "customX",
-                  typeof(string),
-                  typeof(AxelChart),
-                  new PropertyMetadata("")
-              );*/
-
         public DataStack Waveform
         {
             get; 
