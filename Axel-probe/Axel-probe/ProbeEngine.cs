@@ -16,6 +16,9 @@ using UtilsNS;
 
 namespace Axel_probe
 {
+    /// <summary>
+    /// The current mode (group command) of incomming shots
+    /// </summary>
     public enum RemoteMode
     {
         Disconnected,
@@ -23,42 +26,60 @@ namespace Axel_probe
         Jumbo_Repeat, // repeat as part of Jumbo Run
         Simple_Scan, // scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
-        Ready_To_Remote        
+        Ready_To_Remote // Connected and standby       
     }
 
+    /// <summary>
+    /// An calculating engine for generating a fringes patterns according simulated experimental conditions
+    /// the engine runs by its timer and behaives similar to Axel-tilt
+    /// its state evolve according to the set parameters (accel.; disturbances) 
+    /// and axel-probe queries the engine for its state
+    /// OnChange event fires when the state is recalculated
+    /// </summary>
     public class ProbeEngine
     {
-        // the engine runs by its timer and behaives similar to Axel-Tilt
-        // its state evolve according to the set parameters (accel.; disturbances) 
-        // and axel-probe queries the engine for its state
-        // OnChange event fires when the state is recalculated
+        /// <summary>
+        /// behaviour patterns parameters
+        /// pattern => 0 -> constant; 1 -> trapeze; 2 -> sine
+        /// ampl [mg] - accel. amplitude
+        /// factor [mg/rad]
+        /// step [%] percent from the pattern period
+        /// time gap 
+        /// </summary>
+        public Dictionary<string, double> bpps; 
 
-        public Dictionary<string, double> bpps; // behaviour patterns parameters
-        // pattern => 0 -> constant; 1 -> trapeze; 2 -> sine
-        // ampl [mg] - accel. amplitude
-        // factor [mg/rad]
-        // step [%] percent from the pattern period
-        // time gap 
+        /// <summary>
+        /// disturbances - fringe noise and Y breathing simulating experimental conditions
+        /// Xnoise - [mg] noise in accel. (fringe shifting)
+        /// Ynoise - [%] Y noise in fringe signal 
+        /// XnoiseIO - (bool) Xnoise switch
+        /// YnoiseIO - (bool) Ynoise switch
+        /// BrthPattern - (int) Breathing pattern
+        /// BrthApmpl - Breathing amplitude
+        /// BrthPeriod - Breathing period
+        /// BrthIO - (bool) Breathing switch
+        /// </summary>
+        public Dictionary<string, object> dps;  
 
-        public Dictionary<string, object> dps;  // disturbances - fringe noise and Y breathing 
-        // Xnoise - [mg] noise in accel. (fringe shifting)
-        // Ynoise - [%] Y noise in fringe signal 
-        // XnoiseIO - (bool) Xnoise switch
-        // YnoiseIO - (bool) Ynoise switch
-        // BrthPattern - (int) Breathing pattern
-        // BrthApmpl - Breathing amplitude
-        // BrthPeriod - Breathing period
-        // BrthIO - (bool) Breathing switch
-
-        public int axis { get; set; } // -1 - old style; 0 - X; 1 - Y; 2 - X/Y
+        /// <summary>
+        /// Axis mode
+        /// -1 - old style; 0 - X; 1 - Y; 2 - X/Y
+        /// </summary>
+        public int axis { get; set; }  
 
         public Boolean LockParams = false;
+        /// <summary>
+        /// Package bpps & dps in one struct for file operations
+        /// </summary>
         struct Params 
         {
             public Dictionary<string, double> bp;
             public Dictionary<string, object> dp;
         }
 
+        /// <summary>
+        /// Save Params in json file (params.cfg)
+        /// </summary>
         public void SaveParams()
         {
             Params prms;
@@ -68,6 +89,9 @@ namespace Axel_probe
             File.WriteAllText(Utils.configPath+"params.cfg", json);
         }
 
+        /// <summary>
+        /// Load Params from json file (params.cfg)
+        /// </summary>
         public void LoadParams()
         {
             string json = File.ReadAllText(Utils.configPath + "params.cfg");
@@ -85,14 +109,20 @@ namespace Axel_probe
 
         string remoteDoubleFormat = "G6";
         Random rnd = new Random();
-        public RemoteMode remoteMode = RemoteMode.Disconnected;
+        public RemoteMode remoteMode = RemoteMode.Disconnected; // initial state
 
+        /// <summary>
+        /// Time period of generated  
+        /// </summary>
         public double period // one cicle [sec]
         {
             get { return dTimer.Interval.TotalSeconds * 100.0 / bpps["step"]; }
         }
 
         private Boolean _Enabled = false;
+        /// <summary>
+        /// One way to start/stop a simulation
+        /// </summary>
         public Boolean Enabled
         {
             get { return _Enabled; }
@@ -103,13 +133,16 @@ namespace Axel_probe
             }
         }
 
-        double Remainder(double a, double b) // a%b
+        double Remainder(double a, double b) // dupllicate of (a % b)
         {
             return a - Math.Floor(a / b) * b;
         }
 
         DispatcherTimer dTimer; 
         public Stopwatch stopWatch;
+        /// <summary>
+        /// Class constructor
+        /// </summary>
         public ProbeEngine()
         {
             bpps = new Dictionary<string, double>();
@@ -127,6 +160,10 @@ namespace Axel_probe
             stopWatch = new Stopwatch();
         }
 
+        /// <summary>
+        /// Start simulation
+        /// </summary>
+        /// <param name="dur"></param>
         public void Start(int dur = 500) // [ms]
         {
             _Enabled = true; 
@@ -135,6 +172,9 @@ namespace Axel_probe
             stopWatch.Restart();
         }
 
+        /// <summary>
+        /// Stop simulation
+        /// </summary>
         public void Stop()
         {
             _Enabled = false;
@@ -143,6 +183,9 @@ namespace Axel_probe
         }
 
         private Boolean _Pause = false;
+        /// <summary>
+        /// Temporary pause the simulation
+        /// </summary>
         public Boolean Pause
         {
             get { return _Pause; }
@@ -155,6 +198,9 @@ namespace Axel_probe
             }
         }
         private Boolean _pauseSingle = false;
+        /// <summary>
+        /// While in pause mode, shoot a single shot by calling this
+        /// </summary>
         public void pauseSingle()
         {
             if (!Pause) return;
@@ -175,37 +221,35 @@ namespace Axel_probe
 
         public delegate void LogHandler(string txt, Color? clr = null); // ...and general message up; commands with @ 
         public event LogHandler OnLog;
-
         public void LogEvent(string txt, Color? clr = null)
         {
             if (OnLog != null) OnLog(txt, clr);
         }
 
         Random rand = new Random();
+        /// <summary>
+        /// New acceleration point with optional noise by X and Y
+        /// </summary>
+        /// <returns></returns>
         public Point Gauss()
         {
             Point g = new Point(0, 0);
             if (Convert.ToBoolean( dps["XnoiseIO"]))
             {
-                g.X = Gauss01() * Convert.ToDouble(dps["Xnoise"]);
+                g.X = Utils.Gauss01() * Convert.ToDouble(dps["Xnoise"]);
             }
             if (Convert.ToBoolean(dps["YnoiseIO"]))
             {
-                g.Y = Gauss01() * Convert.ToDouble(dps["Ynoise"]) / 100;
+                g.Y = Utils.Gauss01() * Convert.ToDouble(dps["Ynoise"]) / 100;
             }
             return g;
         }
-
-        public double Gauss01()  //random normal mean:0 stDev:1
-        {
-            double u1 = 1.0 - rand.NextDouble(); //uniform(0,1] random doubles
-            double u2 = 1.0 - rand.NextDouble();
-            double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
-                         Math.Sin(2.0 * Math.PI * u2);
-            return randStdNormal;
-        }
-
-        double inPeriod(bool percent = true) // percent or sec within current period
+        /// <summary>
+        /// Percent or sec within current period
+        /// </summary>
+        /// <param name="percent"></param>
+        /// <returns></returns>
+        double inPeriod(bool percent = true) 
         {
             if (!stopWatch.IsRunning) return Double.NaN;
             double r = Remainder(stopWatch.Elapsed.TotalSeconds,period);
@@ -213,7 +257,12 @@ namespace Axel_probe
             return r;
         }
 
-        public double acceleration(double pos) // pos in current pattern [sec]
+        /// <summary>
+        /// Generates specific pattern with set params
+        /// </summary>
+        /// <param name="pos">pos in current pattern [sec]</param>
+        /// <returns></returns>
+        public double acceleration(double pos)  
         {
             double halfPrd = 0.5 * period; 
             double rng = bpps["ampl"];
@@ -246,7 +295,12 @@ namespace Axel_probe
             return drift; // ampl [mg]
         }
 
-        public double breathing() // factor to multiply the fringes with
+        /// <summary>
+        /// Simulates signal loosing contrast (various reassons)
+        /// factor to multiply the fringes with
+        /// </summary>
+        /// <returns></returns>
+        public double breathing() // 
         {
             if (Convert.ToBoolean(dps["BrthIO"]))
             {
@@ -256,15 +310,25 @@ namespace Axel_probe
             else return 1;
         }
 
-        Point fringesPoint(double scanPhase, // [rad]
-                           double curAccel)  // [mg]
+        /// <summary>
+        /// Individual for each point from the fringe
+        /// </summary>
+        /// <param name="scanPhase">[rad]</param>
+        /// <param name="curAccel">[mg]</param>
+        /// <returns>result point</returns>
+        public Point fringesPoint(double scanPhase, double curAccel)  
         {
-            Point g = Gauss(); // individual for each point from the fringe
+            Point g = Gauss(); 
             double brt = breathing();
             return new Point(scanPhase, (Math.Cos(scanPhase + curAccel / bpps["factor"]) + g.Y) * brt);
         }
 
-        public double fringes(double curAccel) // curAccel [mg] for illustration; return accel with noise
+        /// <summary>
+        /// (re)Generates the fringes series
+        /// </summary>
+        /// <param name="curAccel">curAccel [mg] for illustration</param>
+        /// <returns>accel with noise</returns>
+        public double fringes(double curAccel) 
         {
             if (Utils.isNull(srsFringes)) return 0;
             int np = 500; // number of points
@@ -279,7 +343,12 @@ namespace Axel_probe
             return curAccel + g0.X;
         }
 
-        public int getIfringe(double x) // get index from phase in fringes
+        /// <summary>
+        /// Get index from phase in fringes series
+        /// </summary>
+        /// <param name="x">[rad]</param>
+        /// <returns></returns>
+        public int getIfringe(double x) // 
         {
             for (int i = 0; i < srsFringes.Count - 1; i++)
             {
@@ -288,22 +357,30 @@ namespace Axel_probe
             return -1;
         } 
 
-        List<Point> signalN2(double curAccel) // the one sent to axel hub
-        {
-            List<Point> ls = new List<Point>();
-            return ls;
-        }
-
-        /* Example base data + some noise
-           N2	Ntot	B2	Btot	Bg		N2	Ntot	B2	Btot	Bg
-            1	5	    1	3	    0		3	5	    1	3	    0
+        /* 
+           
+            
 										
-            NB2	NBtot					    NB2	NBtot			
-            0	2					        2	2			
+           			
+           		
 										
-            A						        A				
-            1						        -1		*/
+            			
+            	*/
         public double contrPhase = -11; public int b4ConstrID = 0;
+        /// <summary>
+        /// Generates the simulated to photo diode signal to be send to Axel-hub 
+        /// </summary>
+        /// <example>
+        /// Example base data + some noise
+        /// N2	Ntot	B2	Btot	Bg		N2	Ntot	B2	Btot	Bg
+        /// 1	5	    1	3	    0		3	5	    1	3	    0
+        ///  NB2	NBtot					    NB2	NBtot
+        ///  0	2					        2	2	
+        /// A						        A	
+        /// 1						        -1	
+        /// </example>
+        /// <param name="curAccel"></param>
+        /// <returns></returns>
         public bool SingleShot(double A, // A = 1 .. -1
                  int toAxis, ref MMexec mme )// group template
               
@@ -329,18 +406,18 @@ namespace Axel_probe
             srsSignalB.Clear(); srsB2.Clear(); srsBTot.Clear(); srsBg.Clear();
             for (int i = 0; i < 100; i++)
             {
-                d = n2 + Gauss01() / scl;
+                d = n2 + Utils.Gauss01() / scl;
                 lboxNB.Items[0] = "N2 = " + d.ToString(remoteDoubleFormat);
                 srsN2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                d = ntot + Gauss01() / scl;
+                d = ntot + Utils.Gauss01() / scl;
                 srsNTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
-                d = b2 + Gauss01() / scl;
+                d = b2 + Utils.Gauss01() / scl;
                 srsB2.Add(Utils.formatDouble(d, remoteDoubleFormat));
-                d = btot + Gauss01() / scl;
+                d = btot + Utils.Gauss01() / scl;
                 srsBTot.Add(Utils.formatDouble(d, remoteDoubleFormat));
 
-                d = bg + Gauss01() / scl;
+                d = bg + Utils.Gauss01() / scl;
                 srsBg.Add(Utils.formatDouble(d, remoteDoubleFormat));
             }
             srsSignalN.Append(srsN2); srsSignalN.Append(srsNTot);
@@ -384,6 +461,10 @@ namespace Axel_probe
 
         private Boolean cancelScan = false;
         public void CancelScan() { cancelScan = true; }
+        /// <summary>
+        /// Generates scan series of shots by group MMexec envelope
+        /// </summary>
+        /// <param name="mms">group MMexec</param>
         public void DoScan(MMscan mms) 
         {
             MMexec md = new MMexec();
@@ -418,6 +499,11 @@ namespace Axel_probe
 
         private Boolean cancelRepeat = false;
         public void CancelRepeat() { cancelRepeat = true; }
+        /// <summary>
+        /// Generate simple (initialted from here) repeat series of shots
+        /// </summary>
+        /// <param name="cycles">Number of shots (-1 if continious)</param>
+        /// <param name="groupID"></param>
         public void SimpleRepeat(int cycles, string groupID) 
         {
             MMexec md = new MMexec();
@@ -448,14 +534,19 @@ namespace Axel_probe
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 srsFringes.Add(new Point(j, A));
                 //drift = calcAtPos(jumbo, A, (j % 2) == 1);
-                frAmpl = A;
+                md.prms["runID"] = j; frAmpl = A;
                 LogEvent(" #/A= " + j.ToString() + " / " + A.ToString("G5"), Brushes.Navy.Color);
                 if (!SingleShot(frAmpl, axis, ref md)) break;
 
-                if (cancelRepeat) break;
+                if (cancelRepeat) break; 
             }
         }
        
+        /// <summary>
+        /// Advertise (event) the new acceleration value
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void dTimer_Tick(object sender, EventArgs e)
         {
             if (Pause && !_pauseSingle) return;

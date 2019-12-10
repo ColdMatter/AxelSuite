@@ -14,6 +14,9 @@ using Newtonsoft.Json;
 
 namespace UtilsNS
 {
+    /// <summary>
+    /// In memory meassage log - mostly for debug
+    /// </summary>
     public class memLog: List<string>
     {          
         public bool Enabled = true;
@@ -29,6 +32,10 @@ namespace UtilsNS
             while (Count > bufferLimit) RemoveAt(0);
         }
     }
+
+    /// <summary>
+    /// Messaging service using Windows messages (quickest way possible)
+    /// </summary>
     public class RemoteMessaging
     {
         public string partner { get; private set; }
@@ -59,6 +66,11 @@ namespace UtilsNS
             }
         }
 
+        /// <summary>
+        /// Establish communication channel 
+        /// </summary>
+        /// <param name="Partner">The title (caption) of the application</param>
+        /// <param name="_keyID">Similar to port - one app can have more than one channel with diff. keyID</param>
         public RemoteMessaging(string Partner, int _keyID = 666)
         {
             partner = Partner; keyID = _keyID; silentPartner = false;
@@ -85,7 +97,11 @@ namespace UtilsNS
             dTimer.Stop(); 
             if (Enabled) dTimer.Start();
         }
-
+        /// <summary>
+        /// Check regularly for connection status
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void dTimer_Tick(object sender, EventArgs e)
         {
             //if (!Enabled) return;
@@ -96,32 +112,27 @@ namespace UtilsNS
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
+        /// <summary>
+        /// Precise timer for accurate time stamps
+        /// </summary>
+        /// <returns></returns>
         public double elapsedTime() // [s]
         {
             if (stopwatch.IsRunning) return stopwatch.ElapsedTicks / 10000000.0;
             else return -1;
         }
 
-        public void DoEvents() 
-        {
-            DispatcherFrame frame = new DispatcherFrame();
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
-                new DispatcherOperationCallback(ExitFrame), frame);
-            Dispatcher.PushFrame(frame);
-        }
-
-        public object ExitFrame(object f)
-        {
-            ((DispatcherFrame)f).Continue = false;
-            return null;
-        }
-
+        /// <summary>
+        /// Synchronizing stopwatches of two apps with precision less than 15us - Important for time sensitive measurements !
+        /// </summary>
+        /// <param name="force"></param>
+        /// <returns></returns>
         public bool synchroClock(bool force = false) // if !force and stopwatch is running, go out
                                                      // which means that the stopwatch has been started by the other side, or beforehand
         {
             if (!force && stopwatch.IsRunning) return true;
             if (!sendCommand("SynchroClock",5)) throw new Exception("SynchroClock has not been accepted");
-            DoEvents(); Thread.Sleep(50);
+            Utils.DoEvents(); Thread.Sleep(50);
             try 
             {
                 EventWaitHandle handle = new EventWaitHandle(
@@ -143,6 +154,11 @@ namespace UtilsNS
 
         public delegate bool ReceiveHandler(string msg);
         public event ReceiveHandler OnReceive;
+        /// <summary>
+        /// Receive message
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
         protected bool Receive(string msg)
         {
             if (OnReceive != null) return OnReceive(msg);
@@ -151,12 +167,26 @@ namespace UtilsNS
 
         public delegate void ActiveCommHandler(bool active, bool forced);
         public event ActiveCommHandler OnActiveComm;
+        /// <summary>
+        /// When the channel opens/closes
+        /// </summary>
+        /// <param name="active"></param>
+        /// <param name="forced"></param>
         protected void ActiveComm(bool active, bool forced)
         {
             Connected = active;
             if (OnActiveComm != null) OnActiveComm(active, forced);
         }
 
+        /// <summary>
+        /// The wrapper around the actual Windows messaging receive part
+        /// </summary>
+        /// <param name="hwnd"></param>
+        /// <param name="msg"></param>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        /// <param name="handled"></param>
+        /// <returns></returns>
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) // receive
         {
             if ((msg == WM_COPYDATA) && Enabled)
@@ -216,6 +246,11 @@ namespace UtilsNS
 
         private string json2send = "";
         private bool lastSentOK = true;
+        /// <summary>
+        /// Untangled by timer sending procedure
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void sTimer_Tick(object sender, EventArgs e)
         {
             sTimer.Stop();
@@ -231,6 +266,12 @@ namespace UtilsNS
             if (OnAsyncSent != null) OnAsyncSent(OK, json2send);
         }
 
+        /// <summary>
+        /// The wrapper around the Windows messaging send part
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="delay"></param>
+        /// <returns></returns>
         public bool sendCommand(string msg, int delay = 0) // [ms]
         {
             if (!Enabled) return false;
@@ -298,6 +339,11 @@ namespace UtilsNS
         }
 
         private bool lastConnection = false;
+        /// <summary>
+        /// ping<->pong to check the connection
+        /// </summary>
+        /// <param name="forced"></param>
+        /// <returns></returns>
         public bool CheckConnection(bool forced = false)
         {
             if (!Enabled)
@@ -389,6 +435,9 @@ namespace UtilsNS
         #endregion
     }
 
+    /// <summary>
+    /// Class encapsulating one formated by "Book of JaSON" message
+    /// </summary>
     public class MMexec
     {
         Random rnd = new Random();
@@ -398,6 +447,13 @@ namespace UtilsNS
         public int id { get; set; }
         public Dictionary<string, object> prms;
 
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="Caption"></param>
+        /// <param name="Sender"></param>
+        /// <param name="Command"></param>
+        /// <param name="ID"></param>
         public MMexec(string Caption = "", string Sender = "", string Command = "", int ID = -1)
         {
             mmexec = Caption;
@@ -407,6 +463,9 @@ namespace UtilsNS
             else id = ID;
             prms = new Dictionary<string, object>();
         }
+        /// <summary>
+        /// Clean all up
+        /// </summary>
         public void Clear()
         {
             mmexec = "";
@@ -415,6 +474,10 @@ namespace UtilsNS
             id = -1;
             prms.Clear();
         }
+        /// <summary>
+        /// Assign src to this
+        /// </summary>
+        /// <param name="src"></param>
         public void Assign(MMexec src)
         {
             mmexec = src.mmexec;
@@ -423,6 +486,10 @@ namespace UtilsNS
             id = src.id;
             prms = new Dictionary<string, object>(src.prms);
         }
+        /// <summary>
+        /// Clone this - copy all the props to a new instance
+        /// </summary>
+        /// <returns></returns>
         public MMexec Clone()
         {
             MMexec mm = new MMexec();
@@ -434,6 +501,11 @@ namespace UtilsNS
             return mm;
         }
 
+        /// <summary>
+        /// Standard Abort (Cancel) message
+        /// </summary>
+        /// <param name="Sender"></param>
+        /// <returns></returns>
         public string Abort(string Sender = "")
         {
             cmd = "abort";
@@ -444,6 +516,9 @@ namespace UtilsNS
         }
     }
 
+    /// <summary>
+    /// Properties part of MMscan
+    /// </summary>
     public class baseMMscan
     {
         public string sParam { get; set; }
@@ -458,6 +533,9 @@ namespace UtilsNS
         }
     }
 
+    /// <summary>
+    /// Class encapsulating a scan of a parameter
+    /// </summary>
     public class MMscan : baseMMscan
     {
         public string groupID { get; set; }
@@ -485,6 +563,12 @@ namespace UtilsNS
         }
 
         public MMscan NextInChain = null;
+        /// <summary>
+        /// The main call when scan, 
+        /// it works multiscan (chain by NextInChain of scans) mode
+        /// The latter uses recursive (on class level) call the same Next down the chain 
+        /// </summary>
+        /// <returns></returns>
         public bool Next()
         {
             bool NextValue = false;
@@ -505,6 +589,9 @@ namespace UtilsNS
             }
         }
 
+        /// <summary>
+        /// Package / unpackage the scan params as string
+        /// </summary>
         public string AsString
         {
             get { return getAsString(); }
@@ -523,15 +610,26 @@ namespace UtilsNS
                 sBy = Convert.ToDouble(parts[1]);
             }
         }
-        public MMscan Clone()
-        {
-            return new MMscan(groupID, sParam, sFrom, sTo, sBy, Value);
-        }
+        /// <summary>
+        /// Assign src to this
+        /// </summary>
+        /// <param name="src"></param>
         public void Assign(MMscan src)
         {
             groupID = src.groupID; sParam = src.sParam; sFrom = src.sFrom; sTo = src.sTo; sBy = src.sBy; Value = src.Value;
         }
+        /// <summary>
+        /// Clone this - copy all the props to a new instance
+        /// </summary>
+        /// <returns></returns>
+        public MMscan Clone()
+        {
+            return new MMscan(groupID, sParam, sFrom, sTo, sBy, Value);
+        }
 
+        /// <summary>
+        /// Fill in something - only for tests
+        /// </summary>
         public void TestInit()
         {
             groupID = DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
@@ -540,6 +638,10 @@ namespace UtilsNS
             sTo = 4 * 3.14;
             sBy = 0.1;
         }
+        /// <summary>
+        /// Fill in dictionary with props
+        /// </summary>
+        /// <param name="dict"></param>
         public void ToDictionary(ref Dictionary<string, object> dict)
         {
             if (dict == null) dict = new Dictionary<string, object>();
@@ -549,6 +651,11 @@ namespace UtilsNS
             dict["to"] = sTo;
             dict["by"] = sBy;
         }
+        /// <summary>
+        /// Update props from a dictionary
+        /// </summary>
+        /// <param name="dict"></param>
+        /// <returns></returns>
         public bool FromDictionary(Dictionary<string, object> dict)
         {
             if (!string.IsNullOrEmpty((string)dict["groupID"])) groupID = (string)dict["groupID"];

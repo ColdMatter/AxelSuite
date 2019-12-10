@@ -21,8 +21,18 @@ using UtilsNS;
 
 namespace Axel_hub
 {
+    /// <summary>
+    /// Library for calculating acceleration from fringes, phase, etc
+    /// </summary>
     public static class calcAccel
     {
+        /// <summary>
+        /// Calculate phase ref for this fringe
+        /// </summary>
+        /// <param name="Down">down strobe</param>
+        /// <param name="Up">up strobe</param>
+        /// <param name="phi0">phase offset</param>
+        /// <returns>phase ref for this fringe</returns>
         public static double zeroFringe(Point Down, Point Up, double phi0) // [rad] [-pi..pi] 
         {
             double cp = ((Up.X + Down.X) / 2) - phi0; // centerPos
@@ -34,7 +44,14 @@ namespace Axel_hub
             return cp;
         }
 
-        public static double accelOrder(double accel, double factor, out double resid) // accel [mg]; factor [mg/rad]; resid [rad]
+        /// <summary>
+        /// Calculate accleration order
+        /// </summary>
+        /// <param name="accel">acceleration [mg]</param>
+        /// <param name="factor">convertion factor [mg/rad]</param>
+        /// <param name="resid">residual [rad]</param>
+        /// <returns>acceleration order</returns>
+        public static double accelOrder(double accel, double factor, out double resid) 
         {
             double accelRad = accel / factor;
             if (Utils.InRange(accelRad, -Math.PI, Math.PI))
@@ -50,16 +67,31 @@ namespace Axel_hub
                 return aOrd;
             }
         }
+
+        /// <summary>
+        /// Calculate accleration, acceleration order and acceleration residual
+        /// a = 2*PI * factor * order + factor * quant 
+        /// </summary>
+        /// <param name="order">order (from mems - int)</param>
+        /// <param name="quant">quant (from MOT) [rad]</param>
+        /// <param name="factor">convertion factor [mg/rad]</param>
+        /// <param name="orderAccel">acceleration order (int)</param>
+        /// <param name="residAccel">acceleration residual</param>
+        /// <returns>acceleration [mg]</returns>
         public static double resultAccel(double order, double quant, double factor, out double orderAccel, out double residAccel) 
-                                    // order (from mems - int); quant (from MOT) [rad]; factor [mg/rad]; returns accel [mg]
-                                    // 2*PI * factor * order + factor * quant 
         {
             residAccel = quant * factor;  
             orderAccel = (Utils.InRange(order, -0.01, 0.01)) ? 0 : orderAccel = (2 * Math.PI) * factor * order;
             return orderAccel + residAccel;
         }
 
-        public static double between2piAndNewPos(bool down, double newPos) // limit the strobe.X pos to 0..2pi
+        /// <summary>
+        /// Limit the strobe.X pos to 0..2pi
+        /// </summary>
+        /// <param name="down">down/up</param>
+        /// <param name="newPos">value to be limited</param>
+        /// <returns>limited value</returns>
+        public static double between2piAndNewPos(bool down, double newPos) 
         {
             double cp = newPos;
             // correction for 2pi period
@@ -71,7 +103,8 @@ namespace Axel_hub
         }
     }
     /// <summary>
-    /// Interaction logic for strobesUC.xaml
+    /// Interaction logic for strobesUC.xaml user control
+    /// Controlling and calculating strobes of fringe
     /// </summary>
     public partial class strobesUC : UserControl
     {
@@ -79,6 +112,9 @@ namespace Axel_hub
         private MMexec grpMME, lastMMEin, lastMMEout;
 
         private bool _PID_Enabled;
+        /// <summary>
+        /// PID follow the strobe position
+        /// </summary>
         public bool PID_Enabled
         {
             get { return _PID_Enabled; }
@@ -114,7 +150,10 @@ namespace Axel_hub
         public Point Down; // even runID 
         public Point Up;   // odd runID 
         public Point Low;  // lowest point in the middle of 
-
+        
+        /// <summary>
+        /// Class constructor
+        /// </summary>
         public strobesUC()
         {
             InitializeComponent();
@@ -124,12 +163,18 @@ namespace Axel_hub
             lastMMEout = new MMexec();
         }
 
+        /// <summary>
+        /// Initaile strobe for axel-probe simulated fringes
+        /// </summary>
         public void Reset()
         {
             Down = new Point(1.6, 0); // even runID 
             Up = new Point(4.7, 0);   // odd runID 
         }
 
+        /// <summary>
+        /// Exchange UP/DOWN strobe positions
+        /// </summary>
         public void Flip() // flip Down and Up
         {
             Point tmp = new Point(Down.X, Down.Y);
@@ -137,6 +182,10 @@ namespace Axel_hub
             Up = new Point(tmp.X, tmp.Y);
         }
 
+        /// <summary>
+        /// Initiate strobe from file settings 
+        /// </summary>
+        /// <param name="_prefix"></param>
         public void Init(string _prefix)
         {
             prefix = _prefix;
@@ -144,7 +193,14 @@ namespace Axel_hub
             OpenConfigFile();
         }
 
-        public void OnJumboRepeat(double _fringeScale, double _fringeShift, MMexec _grpMME, double contrastV) // before each Jumbo Repeat
+        /// <summary>
+        /// Call this before each Jumbo Repeat for group MMexec and modes synchronization
+        /// </summary>
+        /// <param name="_fringeScale"></param>
+        /// <param name="_fringeShift"></param>
+        /// <param name="_grpMME"></param>
+        /// <param name="contrastV"></param>
+        public void OnJumboRepeat(double _fringeScale, double _fringeShift, MMexec _grpMME, double contrastV) // 
         {
             if (!Double.IsNaN(_fringeScale)) fringeScale = _fringeScale;
             if (!Double.IsNaN(_fringeShift)) fringeShift = _fringeShift;
@@ -165,6 +221,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Log event for massage export
+        /// </summary>
+        /// <param name="txt"></param>
+        /// <param name="clr"></param>
         public delegate void LogHandler(string txt, Color? clr = null);
         public event LogHandler OnLog;
 
@@ -173,24 +234,43 @@ namespace Axel_hub
             if (!Utils.isNull(OnLog)) OnLog(txt, clr);
         }
         
+        /// <summary>
+        /// Calculating fringe centre
+        /// </summary>
+        /// <returns></returns>
         public double centreFringe() 
         {
             return  (Up.X + Down.X) / 2 ;
         }
 
+        /// <summary>
+        /// Calculating contrast
+        /// </summary>
+        /// <param name="A">Asymetry (signal)</param>
+        /// <returns>Calculated contrast</returns>
         public double calcContrast(double A)
         {
             return  Math.Abs((Up.Y + Down.Y) / 2 - A);
         }
 
-        public double zeroFringe() // [rad] [-pi..pi] 
+        /// <summary>
+        /// Calculating zeroFringe - similar to centreFring but woth phase shift compensation
+        /// </summary>
+        /// <returns>Calculated zeroFringe [rad] [-pi..pi]</returns>
+        public double zeroFringe()  
         {
             return calcAccel.zeroFringe(Down, Up, fringeShift);
         }
 
+        /// <summary>
+        /// Deconstructing accaleration to acceleration components - see dictionary keys 
+        /// </summary>
+        /// <param name="accel">acceleration [mg] - target(real)</param>
+        /// <param name="mems">mems accel.[mg] - measured (real + noise)</param>
+        /// <returns></returns>
         public Dictionary<string, double> deconstructAccel(double accel, double mems)
         {
-            // accel[mg] - target(real); mems[mg] - measured (real + noise); zeroFringe[rad] - from PID follow; factor [mg/rad]
+            // zeroFringe[rad] - from PID follow; factor [mg/rad]
             Dictionary<string, double> da = new Dictionary<string, double>(); double resid;
             if (!Double.IsNaN(accel))
             {
@@ -217,7 +297,14 @@ namespace Axel_hub
             return da;
         }
 
-        public double nextShot(int runID, double asymmetry, out double correction) // return phaseCorr - corrected Raman phase (0 if not PID)
+        /// <summary>
+        /// Calculated phaseCorr - corrected Raman phase (0 if not PID)
+        /// </summary>
+        /// <param name="runID">Shot number</param>
+        /// <param name="asymmetry">Asymetry value</param>
+        /// <param name="correction">The correction value</param>
+        /// <returns>The corrected position</returns>
+        public double nextShot(int runID, double asymmetry, out double correction) // 
         {
             double phaseCorr = -11; double disbalance = 0; runI = runID;
             if (!Utils.isNull(lastMMEout))
@@ -271,7 +358,14 @@ namespace Axel_hub
             return phaseCorr;
         }
 
-        public MMexec backMME(int runID, double asymmetry, MMexec mme = null) // mme is ONLY for incoming probe feed
+        /// <summary>
+        /// Prepare back message with new Raman phase value
+        /// </summary>
+        /// <param name="runID">Shot number</param>
+        /// <param name="asymmetry">Asymmetry</param>
+        /// <param name="mme">mme is ONLY for incoming axel-probe feed</param>
+        /// <returns></returns>
+        public MMexec backMME(int runID, double asymmetry, MMexec mme = null) 
         {
             accelSet.Clear(); lastMMEin = null;
             if (!Utils.isNull(mme))
@@ -322,6 +416,10 @@ namespace Axel_hub
         }
 
         string[] Titles = { "runI", "tP", "tI", "tD", "Down.X", "Up.X", "disbal", "corr", "iSD-R", "contrast" };
+        /// <summary>
+        /// Update table with strobes/PID calculation results
+        /// </summary>
+        /// <param name="rpr"></param>
         private void fillReport(Dictionary<string, double> rpr)
         {
             string ss = "";
@@ -335,7 +433,12 @@ namespace Axel_hub
                 if (item.Equals("disbal")) lbi.Foreground = Brushes.Maroon;
                 if (item.Equals("corr")) lbi.Foreground = Brushes.Chocolate;
                 if (item.Equals("iSD-R")) lbi.Foreground = Brushes.SeaGreen;
-                if (item.Equals("contrast")) lbi.Foreground = Brushes.DarkOrange;
+                if (item.Equals("contrast"))
+                {
+                    lbi.Foreground = Brushes.DarkOrange;
+                    if (rpr[item] < 0.6) lbi.Foreground = Brushes.Red;                  
+                }    
+                    
                 lbReport.Items.Add(lbi);
                 if (Rpr2file)
                 {
@@ -346,6 +449,11 @@ namespace Axel_hub
                 if (Rpr2file) logger.log(ss);
         }
 
+        /// <summary>
+        /// Calculating the phase correction from the disbalance on strobes Ys
+        /// </summary>
+        /// <param name="disbalance"></param>
+        /// <returns></returns>
         public double PID(double disbalance) // normalized disbalance
         {
             Dictionary<string, double> rpr = new Dictionary<string, double>();
@@ -387,7 +495,10 @@ namespace Axel_hub
             }
             return cr;
         }
-
+        
+        /// <summary>
+        /// Save Config file in Config directory of Axel-hub
+        /// </summary>
         public void SaveConfigFile()
         {
             Dictionary<string, string> config = new Dictionary<string, string>();
@@ -399,6 +510,9 @@ namespace Axel_hub
             string fileJson = JsonConvert.SerializeObject(config);
             File.WriteAllText(configFile, fileJson);
         }
+        /// <summary>
+        /// Open Config file from Config directory of Axel-hub
+        /// </summary>
         public void OpenConfigFile()
         {
             string fileJson = ""; Dictionary<string, string> config;

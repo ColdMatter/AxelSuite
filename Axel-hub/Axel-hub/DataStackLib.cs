@@ -37,8 +37,12 @@ namespace Axel_hub
     /// </summary>
     public class DataStack : List<System.Windows.Point>
     {
-        public DataStack(int depth = 1000, string _prefix = "")
-            : base() // -1 for Non-Stack modes
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="depth">-1 for Non-Stack modes</param>
+        /// <param name="_prefix"></param>
+        public DataStack(int depth = 1000, string _prefix = ""): base() 
         {
             _stackMode = (depth > 0);
             TimeSeriesMode = false;
@@ -79,6 +83,9 @@ namespace Axel_hub
         }
 
         private bool _running;
+        /// <summary>
+        /// Running the stopwatch and status
+        /// </summary>
         public bool Running
         {
             get { return _running; }
@@ -93,7 +100,11 @@ namespace Axel_hub
         public int Depth { get; set; }
 
         public bool TimeSeriesMode { get; set; }
-
+        
+        /// <summary>
+        /// Restrict the size to about Depth length
+        /// </summary>
+        /// <returns></returns>
         public int Fit2Limit()
         {
             if ((Depth <= 0) || (Depth > maxDepth)) throw new Exception("Error: Invalid Depth(" + Depth.ToString() + ") in StackMode!");
@@ -102,6 +113,9 @@ namespace Axel_hub
             return Count;
         }
 
+        /// <summary>
+        /// Clean everything up
+        /// </summary>
         public new void Clear()
         {
             base.Clear();
@@ -110,7 +124,11 @@ namespace Axel_hub
             if (Depth <= 1) Depth = 1000;
             System.GC.Collect();
         }
-
+        
+        /// <summary>
+        /// To an event add point
+        /// </summary>
+        /// <param name="pnt_count">how many points to add</param>
         private void OnAddPoint(int pnt_count = 1)
         {
             if (StackMode)
@@ -126,6 +144,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Overriding method to the base, assuming correct time order
+        /// </summary>
+        /// <param name="pnt"></param>
+        /// <returns></returns>
         public new int Add(Point pnt)
         {
             base.Add(pnt);
@@ -134,6 +157,12 @@ namespace Axel_hub
             return Count;
         }
 
+        /// <summary>
+        /// Add point by coordinates assuming correct time order
+        /// </summary>
+        /// <param name="Y"></param>
+        /// <param name="X"></param>
+        /// <returns></returns>
         public int AddPoint(double Y, double X = double.NaN)
         {
             double x = X;
@@ -145,6 +174,11 @@ namespace Axel_hub
             return Add(new Point(x, Y));
         }
 
+        /// <summary>
+        /// Add list of points assuming correct time order
+        /// </summary>
+        /// <param name="pnts"></param>
+        /// <returns></returns>
         public int AddRange(List<Point> pnts)
         {
             base.AddRange(pnts);
@@ -156,6 +190,11 @@ namespace Axel_hub
             return Count;
         }
 
+        /// <summary>
+        /// Copy subset of point (skiping some) to speed up visualization
+        /// </summary>
+        /// <param name="each"></param>
+        /// <returns></returns>
         public DataStack CopyEach(int each) // skip some points for visual speed
         {
             DataStack pntsList;
@@ -172,6 +211,12 @@ namespace Axel_hub
             return pntsList;
         }
 
+        /// <summary>
+        /// Clone datastack with some offset applied
+        /// </summary>
+        /// <param name="offsetX"></param>
+        /// <param name="offsetY"></param>
+        /// <returns></returns>
         public DataStack Clone(double offsetX = 0, double offsetY = 0)
         {
             int dp;
@@ -185,6 +230,12 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// Extract sub-DataStack for a time range
+        /// </summary>
+        /// <param name="fromTime"></param>
+        /// <param name="toTime"></param>
+        /// <returns></returns>
         public DataStack TimePortion(double fromTime, double toTime)
         {
             DataStack rslt = new DataStack();
@@ -205,7 +256,13 @@ namespace Axel_hub
             }
             return rslt;
         }
-
+        
+        /// <summary>
+        /// Extract sub-DataStack for an index range
+        /// </summary>
+        /// <param name="lastNPoints"></param>
+        /// <param name="backFrom"></param>
+        /// <returns></returns>
         public DataStack Portion(int lastNPoints, int backFrom = -1) // -1 is for end of series (Count-1)
         {
             if ((lastNPoints >= Count) && (backFrom == -1)) return this;
@@ -223,6 +280,11 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// Another method (moving average) to extract subset of datastack for speed up visualization
+        /// </summary>
+        /// <param name="degree"></param>
+        /// <returns></returns>
         public DataStack Compress(int degree = 5) // moving average compression
         {
             if (degree == 1) return this;
@@ -245,6 +307,10 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// Export data in array[,] format for NI library input
+        /// </summary>
+        /// <returns></returns>
         public double[,] ExportToArray() // first index - point data, second one -  X/Y index
         {
             double[,] da = new double[Count, 2];
@@ -255,6 +321,11 @@ namespace Axel_hub
             return da;
         }
 
+        /// <summary>
+        /// Import data from array[,] (NI routines)
+        /// </summary>
+        /// <param name="da"></param>
+        /// <returns></returns>
         public bool ImportFromArray(double[,] da) // first index - point data, second one -  X/Y index
         {
             if (!da.GetLength(1).Equals(2)) throw new Exception("Wrong array size (1)");
@@ -268,15 +339,27 @@ namespace Axel_hub
             return true;
         }
 
+        /// <summary>
+        /// First data point
+        /// </summary>
         public Point First
         {
             get { return this[0]; }
         }
+        /// <summary>
+        /// Last data point
+        /// </summary>
         public Point Last
         {
             get { return this[Count - 1]; }
         }
 
+        /// <summary>
+        /// Get index by time in time series
+        /// </summary>
+        /// <param name="X"></param>
+        /// <param name="smart">more direct way with equidistance asumption</param>
+        /// <returns></returns>
         public int indexByX(double X, bool smart = true)
         {
             int idx = -1;
@@ -300,6 +383,15 @@ namespace Axel_hub
             return Utils.EnsureRange(idx, -1, Count - 1);
         }
 
+        /// <summary>
+        /// Statistics in an index range with averaging method
+        /// </summary>
+        /// <param name="FromIdx"></param>
+        /// <param name="ToIdx"></param>
+        /// <param name="weightMean">averaging method</param>
+        /// <param name="Mean"></param>
+        /// <param name="stDev"></param>
+        /// <returns></returns>
         public bool statsByIdx(int FromIdx, int ToIdx, bool weightMean, out double Mean, out double stDev) // WgMean - triangle weight (is callibration valid ?)
         {
             Mean = double.NaN; stDev = double.NaN;
@@ -335,6 +427,15 @@ namespace Axel_hub
             return true;
         }
 
+        /// <summary>
+        /// Statistics in a time range with averaging method
+        /// </summary>
+        /// <param name="endOfTimeInterval"></param>
+        /// <param name="duration"></param>
+        /// <param name="weightMean">averaging method</param>
+        /// <param name="Mean"></param>
+        /// <param name="stDev"></param>
+        /// <returns></returns>
         public bool statsByTime(double endOfTimeInterval, double duration, bool weightMean, out double Mean, out double stDev)
         // startingPoint is the later edge of time interval, duration is backwards (from late to earlier)
         {
@@ -380,6 +481,10 @@ namespace Axel_hub
             return bl;
         }
 
+        /// <summary>
+        /// Array of X coordinates
+        /// </summary>
+        /// <returns></returns>
         public double[] pointXs()
         {
             double[] pnts = new double[Count];
@@ -389,6 +494,11 @@ namespace Axel_hub
             }
             return pnts;
         }
+        /// <summary>
+        /// Change the x scale with new one and offset 
+        /// </summary>
+        /// <param name="newXs"></param>
+        /// <param name="offsetX"></param>
         public void Rescale(double[] newXs, double offsetX = 0)
         {
             if (newXs.Length < 2) throw new Exception("Not enough new X points to rescale");
@@ -401,6 +511,10 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Array of Y coordinates
+        /// </summary>
+        /// <returns></returns>
         public double[] pointYs()
         {
             double[] pnts = new double[Count];
@@ -411,6 +525,11 @@ namespace Axel_hub
             return pnts;
         }
 
+        /// <summary>
+        /// StandardDeviation by X and Y 
+        /// </summary>
+        /// <param name="relativeY"></param>
+        /// <returns></returns>
         public Point pointSDev(bool relativeY = false) // in %
         {
             Point pnt = new Point();
@@ -422,6 +541,11 @@ namespace Axel_hub
             return pnt;
         }
 
+        /// <summary>
+        /// Another way to import -> double[] and double[]
+        /// </summary>
+        /// <param name="xs"></param>
+        /// <param name="ys"></param>
         public void importFromArrays(double[] xs, double[] ys)
         {
             Clear();
@@ -436,6 +560,10 @@ namespace Axel_hub
                 AddPoint(ys[i], xs[i]);
             }
         }
+        /// <summary>
+        /// Fill with some random point, mostly for simulation
+        /// </summary>
+        /// <param name="n"></param>
         public void fillSamples(int n)
         {
             Clear();
@@ -443,7 +571,13 @@ namespace Axel_hub
         }
 
         #region File operations in DataStack
-        // standard tab separated x,y file 
+        /// <summary>
+        /// Open tab separated x,y text file 
+        /// </summary>
+        /// <param name="fn"></param>
+        /// <param name="header"></param>
+        /// <param name="rm"></param>
+        /// <returns></returns>
         public bool OpenPair(string fn, ref GroupBox header, int rm = 1) // header - for rolling index during reading (can be null); rm - RollMean
         {
             bool rslt = true;
@@ -494,6 +628,12 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// Save tab separated x,y text file 
+        /// </summary>
+        /// <param name="fn"></param>
+        /// <param name="rem"></param>
+        /// <param name="format"></param>
         public void SavePair(string fn, string rem = "", string format = "")
         {
             System.IO.StreamWriter file = new System.IO.StreamWriter(fn);

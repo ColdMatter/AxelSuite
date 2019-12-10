@@ -20,11 +20,23 @@ using System.Reflection;
 
 namespace Axel_hub
 {    
-    public struct FringeParams  // fringes(phi) = cos(period * phi + phase) + offset
+    /// <summary>
+    /// fringes(phi) = cos(period * phi + phase) + offset
+    /// </summary>
+    public struct FringeParams  
     {
-        public double period; // in mg per rad
-        public double phase;  // the MEMS and the interferometer are not entirely paralel
-        public double offset; // phase offset [rad]
+        /// <summary>
+        /// in mg per rad
+        /// </summary>
+        public double period; 
+        /// <summary>
+        /// the MEMS and the interferometer are not entirely paralel
+        /// </summary>
+        public double phase;  
+        /// <summary>
+        /// phase offset [rad]
+        /// </summary>
+        public double offset; 
     }
     /// <summary>
     /// Interaction logic for UserControl1.xaml
@@ -37,6 +49,9 @@ namespace Axel_hub
         TimeSpan totalTime, currentTime;
         public DispatcherTimer dTimer;
 
+        /// <summary>
+        /// Class constructor - set defaults
+        /// </summary>
         public scanClass()
         {
             InitializeComponent();
@@ -52,6 +67,12 @@ namespace Axel_hub
         }
         GeneralOptions genOptions = null;
         public ScanModes scanModes = null;
+
+        /// <summary>
+        /// Initialize - set genOptions
+        /// </summary>
+        /// <param name="_genOptions">From options windows</param>
+        /// <param name="_scanModes">From saved last used modes</param>
         public void InitOptions(ref GeneralOptions _genOptions, ref ScanModes _scanModes)
         {
             genOptions = _genOptions;
@@ -65,6 +86,9 @@ namespace Axel_hub
             tbBifferSize.Text = scanModes.SizeLimit.ToString();           
         }
 
+        /// <summary>
+        /// Set internal from visual modes
+        /// </summary>
         public void UpdateModes()
         {
             scanModes.SamplingFreq = (int)Math.Round(1 / GetSamplingPeriod());
@@ -74,6 +98,12 @@ namespace Axel_hub
             scanModes.SizeLimit = Convert.ToInt32(tbBifferSize.Text);
         }
 
+        /// <summary>
+        /// Wrapper of remote.sendCommand
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="async"></param>
+        /// <returns></returns>
         public bool SendJson(string json, bool async = false)
         {
             int delay = 0;
@@ -92,6 +122,10 @@ namespace Axel_hub
             tbSamplingRate.Text = rate.ToString();
         }
 
+        /// <summary>
+        /// Show fringes params
+        /// </summary>
+        /// <param name="fp">fringes params</param>
         public void SetFringeParams(FringeParams fp)
         {
             lbActivity.Content = "Fringe Prm: per= " + fp.period.ToString() + "; phase= " + fp.phase.ToString() + "; off= " + fp.offset.ToString();
@@ -103,6 +137,11 @@ namespace Axel_hub
             groupDigit.Header = " Conversion rate (" + realSampling.ToString() + " [Hz])"; 
         }  
 
+        /// <summary>
+        /// Shows visual progress of ADC24 acquisition
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void dispatcherTimer_Tick(object sender, EventArgs e)
         {
             double progress = 0;
@@ -125,6 +164,9 @@ namespace Axel_hub
             lblStatus.Content = ">> " + sts;
         }
         private bool _Running;
+        /// <summary>
+        /// Some visual adjustments when ADC24 starts/stops
+        /// </summary>
         public bool Running
         {
             get { return _Running; }
@@ -152,6 +194,10 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Continuois mode
+        /// </summary>
+        /// <returns></returns>
         public bool EndlessMode()
         {
             switch (tabControl.SelectedIndex) 
@@ -164,6 +210,9 @@ namespace Axel_hub
         }
 
         RemoteMode _remoteMode = RemoteMode.Disconnected;
+        /// <summary>
+        /// Current remode mode - defines the context next group shots
+        /// </summary>
         public RemoteMode remoteMode
         {
             get { return _remoteMode; }
@@ -179,14 +228,17 @@ namespace Axel_hub
         }
         public delegate void RemoteModeHandler(RemoteMode oldMode, RemoteMode newMode);
         public event RemoteModeHandler OnRemoteMode;
-
         protected void RemoteModeEvent(RemoteMode oldMode, RemoteMode newMode)
         {
             if (!Utils.isNull(OnRemoteMode)) OnRemoteMode(oldMode, newMode);
         }
 
         public RemoteMessaging remote { get; set; }
-
+        /// <summary>
+        /// Incomming from MM2/Axel-probe message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         private bool OnReceive(string message)
         {
             try
@@ -202,38 +254,48 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Start/Stop group operation wity ADC24 params
+        /// </summary>
+        /// <param name="jumbo"></param>
+        /// <param name="down"></param>
+        /// <param name="period"></param>
+        /// <param name="sizeLimit"></param>
         public delegate void StartHandler(bool jumbo, bool down, double period, int sizeLimit);
         public event StartHandler OnStart;
-
         protected void StartEvent(bool jumbo, bool down, double period, int sizeLimit)
         {
             if(OnStart != null) OnStart(jumbo, down, period, sizeLimit);
         }
 
+        /// <summary>
+        /// Incomming message event thingy
+        /// </summary>
+        /// <param name="msg"></param>
         public delegate void RemoteHandler(string msg);
         public event RemoteHandler OnRemote;
-
         protected void RemoteEvent(string msg)
         {
             if (OnRemote != null) OnRemote(msg);
         }
 
-        public delegate void FileRefHandler(string FN, bool stats);
-        public event FileRefHandler OnFileRef;
-
-        protected void FileRefEvent(string FN, bool stats)
-        {
-            if (OnFileRef != null) OnFileRef(FN, stats);
-        }
-
+        /// <summary>
+        /// Log into left text box
+        /// </summary>
+        /// <param name="txt"></param>
+        /// <param name="clr"></param>
         public delegate void LogHandler(string txt, Color? clr = null);
         public event LogHandler OnLog;
-
         protected void LogEvent(string txt, Color? clr = null)
         {
             if (OnLog != null) OnLog(txt, clr);
         }
 
+        /// <summary>
+        /// Report sent message in log
+        /// </summary>
+        /// <param name="OK"></param>
+        /// <param name="json2send"></param>
         protected void OnAsyncSend(bool OK, string json2send)
         {
             if (!OK) LogEvent("Error sending -> " + json2send, Brushes.Red.Color);
@@ -246,6 +308,10 @@ namespace Axel_hub
             MessageBox.Show("           Axel Hub v" + ver + "\n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
+        /// <summary>
+        /// Get the sampling period regardless the units
+        /// </summary>
+        /// <returns>[s]</returns>
         public double GetSamplingPeriod()
         {
             double freq = 1; // in seconds
@@ -269,6 +335,10 @@ namespace Axel_hub
             return 1 / Utils.EnsureRange(freq, 0.001, 1e6);
         }
 
+        /// <summary>
+        /// Get the buffer size depending of settings
+        /// </summary>
+        /// <returns></returns>
         public int GetBufferSize()
         {
             int sizeLimit = 0; // [s]
@@ -288,6 +358,9 @@ namespace Axel_hub
         }
 
         private bool _jumboButton = true;
+        /// <summary>
+        /// Set the main scan button to Jumbo mode
+        /// </summary>
         private bool jumboButton
         {
             get {return _jumboButton;}
@@ -313,6 +386,11 @@ namespace Axel_hub
             }
         }
         
+        /// <summary>
+        /// Start something - ADC24 or Jumbo scan/repeat
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void bbtnStart_Click(object sender, RoutedEventArgs e)
         {
             if (OnStart == null) return;
@@ -335,9 +413,13 @@ namespace Axel_hub
                 currentTime = new TimeSpan(0, 0, 0);
             }
             OnStart(jumboButton, Running, period, GetBufferSize()); // the last three are valid only in non-jumbo mode with down = true
-         }
+        }
 
-        public void Abort(bool local) // the origin of Abort is (local) or (remote abort OR end sequence)
+        /// <summary>
+        /// Abort current operation
+        /// </summary>
+        /// <param name="local">the origin of Abort is (local) or (remote abort OR end sequence)</param>
+        public void Abort(bool local)  
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
             remoteMode = RemoteMode.Ready_To_Remote;
@@ -350,8 +432,13 @@ namespace Axel_hub
                 SendJson(mme.Abort("Axel-hub"));
             }
             else OnStart(jumbo, false, 0, 0);
-        }
-
+         }
+         
+        /// <summary>
+        /// Turn the tab of the ADC24 setting
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
          private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
          {
              if (remote != null) remote.Enabled = (tabControl.SelectedIndex == 2);
@@ -367,7 +454,7 @@ namespace Axel_hub
              }
              ActiveRemote(jumboButton);
          }
-
+         
          public delegate void ActiveRemoteHandler(bool active);
          public event ActiveRemoteHandler OnActiveRemote;
          protected void ActiveRemote(bool active)
@@ -375,6 +462,10 @@ namespace Axel_hub
              if (OnActiveRemote != null) OnActiveRemote(active);
          }
 
+         /// <summary>
+         /// Event when the connection goes ON/OFF
+         /// </summary>
+         /// <param name="active"></param>
          private void OnActiveComm(bool active, bool forced)
          {
              if (tabControl.SelectedIndex != 2) return;
@@ -394,7 +485,12 @@ namespace Axel_hub
              }
              ActiveRemote(active);
          }
-
+         
+        /// <summary>
+        /// Some secondary to contructor initialilzations
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
          private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
              string callingPartner = ""; bool bRemote = false;
@@ -428,10 +524,6 @@ namespace Axel_hub
              remote.OnAsyncSent += new RemoteMessaging.AsyncSentHandler(OnAsyncSend);
 
              if(bRemote) tabControl.SelectedIndex = 2;
-         }
-
-         private void UserControl_Initialized(object sender, EventArgs e)
-         {
          }
      }
 }

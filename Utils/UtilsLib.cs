@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
 using System.Deployment.Application;
 using System.Reflection;
+using NationalInstruments.Controls;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -22,6 +24,11 @@ namespace UtilsNS
 {
     public static class Utils
     {
+        static Random rand = new Random();
+        /// <summary>
+        /// ProcessMessages of the visual components 
+        /// </summary>
+        /// <param name="dp"></param>
         public static void DoEvents(DispatcherPriority dp = DispatcherPriority.Background)
         {
             DispatcherFrame frame = new DispatcherFrame();
@@ -29,29 +36,47 @@ namespace UtilsNS
                 new DispatcherOperationCallback(ExitFrame), frame);
              Dispatcher.PushFrame(frame);
         }
-
         public static object ExitFrame(object f)
         {
             ((DispatcherFrame)f).Continue = false;
             return null;
         }
         
+        /// <summary>
+        /// The developer computer. It shouldn't matter, but still..
+        /// </summary>
+        /// <returns></returns>
         public static bool TheosComputer()
         {
             return (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"] == "DESKTOP-U334RMA";
         }
 
+        /// <summary>
+        /// Get the app version from Project properties -> Assembly Information
+        /// </summary>
+        /// <returns></returns>
         public static string getRunningVersion()
         {
             return System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Environment.GetCommandLineArgs()[0]).ToString();
             //System.Reflection.Assembly.GetExecutingAssembly().Location; //Assembly.GetExecutingAssembly().Location
         }
 
+        /// <summary>
+        /// The proper way to check if object is null
+        /// </summary>
+        /// <param name="o"></param>
+        /// <returns></returns>
         public static bool isNull(System.Object o)
         {
             return object.ReferenceEquals(null, o);
         }
 
+        /// <summary>
+        /// Write in log to rich-text-box
+        /// </summary>
+        /// <param name="richText">The target rich-text-box</param>
+        /// <param name="txt">the actual text to log</param>
+        /// <param name="clr">color</param>
         public static void log(RichTextBox richText, string txt, Color? clr = null)
         {
             Color ForeColor = clr.GetValueOrDefault(Brushes.Black.Color);
@@ -76,6 +101,11 @@ namespace UtilsNS
               }));
         }
 
+        /// <summary>
+        /// Write in log to text-box
+        /// </summary>
+        /// <param name="tbLog">The target text-box</param>
+        /// <param name="txt">the actual text to log</param>
         public static void log(TextBox tbLog, string txt)
         {
             tbLog.AppendText(txt + "\r\n");
@@ -87,12 +117,33 @@ namespace UtilsNS
             tbLog.ScrollToEnd();
         }
 
+        /// <summary>
+        /// If the name for file to save is unknown, make-up one as date-time stamp
+        /// </summary>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
         public static string timeName(string prefix = "")
         {
             if (prefix.Equals("")) return DateTime.Now.ToString("yy-MM-dd_H-mm-ss");
             else return DateTime.Now.ToString("yy-MM-dd_H-mm-ss") + "_" + prefix;
         }
 
+        public static void copyGraphToClipboard(Graph gr)
+        {
+            Rect bounds; RenderTargetBitmap bitmap;
+            bounds = System.Windows.Controls.Primitives.LayoutInformation.GetLayoutSlot(gr);
+            bitmap = new RenderTargetBitmap((int)bounds.Width, (int)bounds.Height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(gr);
+            Clipboard.SetImage(bitmap);
+            Utils.TimedMessageBox("The image is in the clipboard");
+        }
+
+        /// <summary>
+        /// Read text file in List of string
+        /// </summary>
+        /// <param name="filename">The text file</param>
+        /// <param name="skipRem">If to skip # and empty lines</param>
+        /// <returns></returns>
         public static List<string> readList(string filename, bool skipRem = true)
         {
             List<string> ls = new List<string>();
@@ -108,11 +159,22 @@ namespace UtilsNS
             return ls;
         }
 
+        /// <summary>
+        /// Write down in a text file a List of string
+        /// </summary>
+        /// <param name="filename">yes, you guessed right...</param>
+        /// <param name="ls">The list in question</param>
         public static void writeList(string filename, List<string> ls)
         {
             File.WriteAllLines(filename, ls.ToArray());
         }
 
+        /// <summary>
+        /// Read text file in Dictionary of string, string
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="skipRem">If to skip # and empty lines</param>
+        /// <returns></returns>
         public static Dictionary<string, string> readDict(string filename, bool skipRem = true)
         {
             Dictionary<string, string> dict = new Dictionary<string, string>();
@@ -135,6 +197,11 @@ namespace UtilsNS
             return dict;
         }
 
+        /// <summary>
+        /// Write dictionary(string,string) in key=value format
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="dict"></param>
         public static void writeDict(string filename, Dictionary<string, string> dict)
         {
             List<string> ls = new List<string>();
@@ -145,52 +212,126 @@ namespace UtilsNS
             File.WriteAllLines(filename, ls.ToArray());
         }
 
+        /// <summary>
+        /// Restrict Value to MinValue and MaxValue (double)
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="MinValue"></param>
+        /// <param name="MaxValue"></param>
+        /// <returns></returns>
         public static double EnsureRange(double Value, double MinValue, double MaxValue)
         {
             if (Value < MinValue) return MinValue;
             if (Value > MaxValue) return MaxValue;
             return Value;
         }
+        /// <summary>
+        /// Restrict Value to MinValue and MaxValue (int)
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="MinValue"></param>
+        /// <param name="MaxValue"></param>
+        /// <returns></returns>
         public static int EnsureRange(int Value, int MinValue, int MaxValue)
         {
             if (Value < MinValue) return MinValue;
             if (Value > MaxValue) return MaxValue;
             return Value;
         }
+        /// <summary>
+        /// Check if Value is in range[MinValue..MaxValue] (double)
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="MinValue"></param>
+        /// <param name="MaxValue"></param>
+        /// <returns></returns>
         public static bool InRange(double Value, double MinValue, double MaxValue)
         {
             return ((MinValue <= Value) && (Value <= MaxValue));
         }
+        /// <summary>
+        /// Check if Value is in range[MinValue..MaxValue] (int)
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="MinValue"></param>
+        /// <param name="MaxValue"></param>
         public static bool InRange(int Value, int MinValue, int MaxValue)
         {
             return ((MinValue <= Value) && (Value <= MaxValue));
         }
 
+        /// <summary>
+        /// Convert string to bool with default value if cannot
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public static bool Convert2BoolDef(string value, bool defaultValue = false)
         {
             bool result;
             return bool.TryParse(value, out result) ? result : defaultValue;
         }
+        /// <summary>
+        /// Convert string to int with default value if cannot
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public static int Convert2IntDef(string value, int defaultValue = 0)
         {
             int result;
             return int.TryParse(value, out result) ? result : defaultValue;
         }
+        /// <summary>
+        /// Convert string to double with default value if cannot
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public static double Convert2DoubleDef(string value, double defaultValue = 0)
         {
             double result;
             return double.TryParse(value, out result) ? result : defaultValue;
         }
 
+        /// <summary>
+        /// Random normaly distributed (mean:0 stDev:1) value
+        /// </summary>
+        /// <returns>random value</returns>
+        public static double Gauss01()  
+        {
+            double u1 = 1.0 - rand.NextDouble(); //uniform(0,1] random doubles
+            double u2 = 1.0 - rand.NextDouble();
+            double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
+                         Math.Sin(2.0 * Math.PI * u2);
+            return randStdNormal;
+        }
+
+        /// <summary>
+        /// Error outlet if no visual logs available
+        /// </summary>
+        /// <param name="errorMsg"></param>
         public static void errorMessage(string errorMsg)
         {
             Console.WriteLine("Error: " + errorMsg);
         }
 
+        /// <summary>
+        /// Format double to another double with required format (e.g.precision)
+        /// </summary>
+        /// <param name="d"></param>
+        /// <param name="format"></param>
+        /// <returns></returns>
         public static double formatDouble(double d, string format)
         {
             return Convert.ToDouble(d.ToString(format));
         }
+        /// <summary>
+        /// Format double array to another double array with required format (e.g.precision)
+        /// </summary>
+        /// <param name="d"></param>
+        /// <param name="format"></param>
+        /// <returns></returns>
         public static double[] formatDouble(double[] d, string format)
         {
             double[] da = new double[d.Length];
@@ -198,6 +339,11 @@ namespace UtilsNS
             return da;
         }
 
+        /// <summary>
+        /// Strip line endings
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string RemoveLineEndings(string value)
         {
             if (String.IsNullOrEmpty(value))
@@ -210,6 +356,12 @@ namespace UtilsNS
             return value.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty).Replace(lineSeparator, string.Empty).Replace(paragraphSeparator, string.Empty);
         }
 
+        /// <summary>
+        /// Read dictionary(string,string) from file format key=value
+        /// skip empty line, starting with [ or ;
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
         public static Dictionary<string, string> readINI(string filename)
         {
             Dictionary<string, string> dict = new Dictionary<string, string>();
@@ -218,6 +370,7 @@ namespace UtilsNS
             string line;
             foreach (string wline in File.ReadLines(filename))
             {
+                if (wline.Equals("")) continue;
                 char ch = wline[0];
                 if (ch.Equals('[')) continue;
                 int sc = wline.IndexOf(';');
@@ -234,17 +387,30 @@ namespace UtilsNS
 
         [DllImport("user32.dll", SetLastError = true)]
         static extern int MessageBoxTimeout(IntPtr hwnd, String text, String title, uint type, Int16 wLanguageId, Int32 milliseconds);
+        /// <summary>
+        /// Temporary message not to bother click OK
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="title"></param>
+        /// <param name="milliseconds"></param>
         public static void TimedMessageBox(string text, string title = "Information", int milliseconds = 1500)
         {
             int returnValue = MessageBoxTimeout(IntPtr.Zero, text, title, Convert.ToUInt32(0), 1, milliseconds);
             //return (MessageBoxReturnStatus)returnValue;
         }
 
-       // public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).FullName).FullName;
+        /// <summary>
+        /// Main directory of current app
+        /// </summary>
         public static string basePath = Directory.GetParent(Directory.GetParent(Environment.GetCommandLineArgs()[0]).Parent.FullName).FullName; 
         public static string configPath { get { return basePath + "\\Config\\"; } }
         public static string dataPath { get { return basePath + "\\Data\\"; } }
 
+        /// <summary>
+        /// Random string (for testing purposes)
+        /// </summary>
+        /// <param name="length"></param>
+        /// <returns></returns>
         public static string randomString(int length)
         {
             int l8 = 1 + length / 8; string path, ss = "";
@@ -259,13 +425,13 @@ namespace UtilsNS
     }
 
     #region async file logger
-    /// <summary>
+    /// <summary> This is an obsolete version, please use FileLogger below instead !!!
     /// Async data storage device 
     /// first you set the full path of the file, otherwise it will save in data dir under date-time file name
     /// when you want the logging to start you set Enabled to true
     /// at the end you set Enabled to false (that will flush the buffer to HD)
     /// </summary>
-    public class AutoFileLogger // an old version, please use FileLogger below !!!
+    public class AutoFileLogger 
     {
         private const bool traceMode = false;
         public string header = ""; // that will be put as a file first line with # in front of it
@@ -414,7 +580,13 @@ namespace UtilsNS
             }
         }
     }
-    // new (dec.2018) optimized for speed (7x faster) logger
+
+    /// <summary>
+    /// Async data storage device - new (dec.2018) optimized for speed (7x faster to AutoFilelogger) logger
+    /// first you set the full path of the file, otherwise it will save in data dir under date-time file name
+    /// when you want the logging to start you set Enabled to true
+    /// at the end you set Enabled to false (that will flush the buffer to HD)
+    /// </summary>
     public class FileLogger
     {
         private const bool traceMode = false;
@@ -428,6 +600,11 @@ namespace UtilsNS
         public bool missingData { get; private set; }
         public Stopwatch stw;
 
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="_prefix"></param>
+        /// <param name="_reqFilename"></param>
         public FileLogger(string _prefix = "", string _reqFilename = "") // if reqFilename is something it should contain the prefix; 
         // the usual use is only prefix and no reqFilename
         {
@@ -437,6 +614,10 @@ namespace UtilsNS
             stw = new Stopwatch();
         }
 
+        /// <summary>
+        /// The main call if you have List of strings
+        /// </summary>
+        /// <param name="newItems"></param>
         public void log(List<string> newItems)
         {
             if (!Enabled) return;
@@ -444,6 +625,10 @@ namespace UtilsNS
             return;
         }
 
+        /// <summary>
+        /// That's the main method 
+        /// </summary>
+        /// <param name="newItem"></param>
         public void log(string newItem)
         {
             if (!Enabled) return;
@@ -457,11 +642,19 @@ namespace UtilsNS
             return;
         }
 
+        /// <summary>
+        /// Optional (traceMode) console output - only for debug
+        /// </summary>
+        /// <param name="txt"></param>
         private void ConsoleLine(string txt)
         {
-            Console.WriteLine(txt);
+            if(traceMode) Console.WriteLine(txt);
         }
 
+        /// <summary>
+        /// Create actual asynchronious logger 
+        /// </summary>
+        /// <param name="filePath"></param>
         public void CreateLogger(string filePath)
         {
             block = new ActionBlock<string>(async message =>
@@ -488,6 +681,9 @@ namespace UtilsNS
             }
         }
 
+        /// <summary>
+        /// Write a header and subheaders with # 
+        /// </summary>
         public virtual void writeHeader()
         {
             if (!header.Equals("")) log("#" + header);
@@ -497,6 +693,10 @@ namespace UtilsNS
         }
 
         private bool _Enabled = false;
+        /// <summary>
+        /// Switch this on to create the file and start to accept logs
+        /// switch it off to flash the buffer and close the file
+        /// </summary>
         public bool Enabled
         {
             get { return _Enabled; }
@@ -533,12 +733,21 @@ namespace UtilsNS
             }
         }
     }
-    // creates and logs in multicollumn table; record structure is defined in record List<string>
-    // the column names must be set when created 
-    // dictLog will extract only the keys with these names in that order
+
+    /// <summary>
+    /// creates and logs in multicollumn table; record structure is defined in record List of string
+    /// the column names must be set when created
+    /// dictLog will extract only the keys with these names in that order
+    /// </summary>
     public class DictFileLogger : FileLogger 
     {
         List<string> record;
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="_record">Required and fixed column names</param>
+        /// <param name="_prefix">Ending in case of timestamp name</param>
+        /// <param name="_reqFilename">If empty timestamp name is generated</param>
         public DictFileLogger(string[] _record, string _prefix = "", string _reqFilename = ""): base(_prefix, _reqFilename)
             // if reqFilename is something it should contain the prefix; 
             // the usual use is only prefix and no reqFilename
@@ -546,6 +755,10 @@ namespace UtilsNS
             record = new List<string>(_record);
         }
         private readonly string[] titles = { "params", "steps" };
+        /// <summary>
+        /// When the group MMexec is known
+        /// </summary>
+        /// <param name="mme"></param>
         public void setMMexecAsHeader(MMexec mme)
         {
             header = ""; subheaders.Clear(); char q = '"';
@@ -561,7 +774,9 @@ namespace UtilsNS
             }
             header = JsonConvert.SerializeObject(mme);
         }
-
+        /// <summary>
+        /// Write the header & subheaders and colunm names line
+        /// </summary>
         public override void writeHeader()
         {
             base.writeHeader();
@@ -573,7 +788,11 @@ namespace UtilsNS
             ss = ss.Remove(ss.Length - 1); 
             log(ss);
         }
-        // the main methods in three variations
+       
+        /// <summary>
+        /// This main methods in three variations, but that is the basic one
+        /// </summary>
+        /// <param name="dict"></param>
         public void dictLog(Dictionary<string, string> dict)
         {
             string ss = "";
@@ -586,6 +805,11 @@ namespace UtilsNS
             ss = ss.Remove(ss.Length - 1);
             log(ss);
         }
+
+        /// <summary>
+        /// log that way with undefined Values type
+        /// </summary>
+        /// <param name="dict"></param>
         public void dictLog(Dictionary<string, object> dict)
         {
             Dictionary<string, string> dictS = new Dictionary<string, string>();
@@ -595,6 +819,12 @@ namespace UtilsNS
             }
             dictLog(dictS); 
         }
+
+        /// <summary>
+        /// log that way with double Values type with format
+        /// </summary>
+        /// <param name="dict"></param>
+        /// <param name="format"></param>
         public void dictLog(Dictionary<string, double> dict, string format = "")
         {
             Dictionary<string, string> dictS = new Dictionary<string, string>();
@@ -607,17 +837,25 @@ namespace UtilsNS
         }
     }
 
-    // format first line #header (for conditions) - optional
-    // next line column names; 
-    // header, subheaders & col names are read when instance is created 
-    // if _record = null then read this row in record
-    // if _record has items the record will be the cross-section of _record and column names list (fileRecord)
+    /// <summary>
+    /// Read dictionary from multi-column text file (tab separated)
+    /// format first line #header (for conditions) - optional
+    /// next line column names;
+    /// header, subheaders & col names are read when instance is created 
+    /// if _record = null then read this row in record
+    /// if _record has items the record will be the cross-section of _record and column names list (fileRecord)
+    /// </summary>
     public class DictFileReader
     {
         public string header;
         public List<string> subheaders; 
         StreamReader fileReader; public int counter = 0;
         public List<string> record, fileRecord;
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="Filename">File must exits</param>
+        /// <param name="strArr">Array of column names</param>
         public DictFileReader(string Filename, string[] strArr = null)
         {            
             if (!File.Exists(Filename)) throw new Exception("no such file: "+Filename);
@@ -653,8 +891,13 @@ namespace UtilsNS
                 }                    
             }
         }
- 
-        public bool stringIterator(ref Dictionary<string,string> rslt) // returns one line (row) as <column.name , cell.value> dictionary
+        
+        /// <summary>
+        /// returns one line (row) as (column.name , cell.value) dictionary
+        /// </summary>
+        /// <param name="rslt">one table row</param>
+        /// <returns>if we can go again</returns>
+        public bool stringIterator(ref Dictionary<string,string> rslt) // 
         {
             if (Utils.isNull(rslt)) rslt = new Dictionary<string, string>();
             else rslt.Clear();
@@ -678,6 +921,12 @@ namespace UtilsNS
             counter++;
             next = true; return next;
         }
+
+        /// <summary>
+        /// same as above but Values are double
+        /// </summary>
+        /// <param name="rslt"></param>
+        /// <returns></returns>
         public bool doubleIterator(ref Dictionary<string, double> rslt) // same as above but values in double (if possible)
         {
             rslt = new Dictionary<string, double>();
@@ -700,11 +949,12 @@ namespace UtilsNS
     }
     
     #endregion
-
+    /// <summary>
+    /// Hour-glass cursor while waiting for Godot
+    /// </summary>
     public class WaitCursor : IDisposable
     {
-        private Cursor _previousCursor;
-
+        private System.Windows.Input.Cursor _previousCursor;
         public WaitCursor()
         {
             _previousCursor = Mouse.OverrideCursor;
@@ -713,18 +963,10 @@ namespace UtilsNS
         }
 
         #region IDisposable Members
-
         public void Dispose()
         {
             Mouse.OverrideCursor = _previousCursor;
         }
-
         #endregion
     }
-    /*
-    using(new WaitCursor())
-    {
-        // very long task to be marked
-    }
-     */
 }

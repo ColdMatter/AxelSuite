@@ -6,10 +6,16 @@ using System.Threading.Tasks;
 
 namespace Axel_probe
 {
+    /// <summary>
+    /// Under development
+    /// </summary>
     public class PID
     {
     }
 
+    /// <summary>
+    /// Under development
+    /// </summary>
     public class Kalman
     {
     }

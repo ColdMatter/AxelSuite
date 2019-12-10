@@ -34,7 +34,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using AxelHMemsNS;
 using UtilsNS;
 using OptionsNS;
 
@@ -42,6 +41,10 @@ namespace Axel_hub
 {
     /// <summary>
     /// Interaction logic for AxelAxisUC.xaml
+    /// AxelAxisClass repressents a single axis of acceleration 
+    /// encapsulated and accesable in AxelAxes list of AxelAxisClass
+    /// Future intermediator abstract movement (linear or rotation) 
+    /// component will be implemented. 
     /// </summary>
     public partial class AxelAxisClass : UserControl
     {
@@ -59,7 +62,8 @@ namespace Axel_hub
                 }                   
             } 
         }
-        private const int dataLength = 10000;
+
+        private const int dataLength = 10000; // default length of data kept in
         private DataStack phiMg = new DataStack(dataLength);
         private DataStack accelMg = new DataStack(dataLength);
         private DispatcherTimer dTimer; 
@@ -67,12 +71,22 @@ namespace Axel_hub
         public List<Point> timeStack = new List<Point>(); // x - time[s]; y - phi[rad]        
         List<Point> quantList = new List<Point>(); List<string> errList = new List<string>();
 
+        /// <summary>
+        /// Class constructor 
+        /// </summary>
         public AxelAxisClass()
         {
             InitializeComponent();
         }
 
         GeneralOptions genOptions = null; ScanModes scanModes = null; Modes modes = null; string modesFile = "";
+        /// <summary>
+        /// Late initialiazation after the dust from loading of main form and ucScan has settle
+        /// </summary>
+        /// <param name="_prefix">ID</param>
+        /// <param name="_genOptions">general options</param>
+        /// <param name="_scanModes">ucScan options</param>
+        /// <param name="_axelMems">ADC24 abstraction</param>
         public void Init(string _prefix, ref GeneralOptions _genOptions, ref ScanModes _scanModes, ref AxelMems _axelMems) // obligatory 
         {
             prefix = _prefix;
@@ -86,7 +100,11 @@ namespace Axel_hub
             tabSecPlots.SelectedIndex = 1;
         }
 
-        private bool probeMode // simulation of MM2 with AxelProbe
+        /// <summary>
+        /// Simulation of MM2 with AxelProbe
+        /// It should be in very limited (ideally none) use
+        /// </summary>
+        private bool probeMode 
         {
             get
             {
@@ -95,6 +113,9 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Visual optimization hiding/showing AxelChart under some condiotions
+        /// </summary>
         public bool AxelChartVisible
         {
             get { return axelChart.Visibility == System.Windows.Visibility.Visible; }
@@ -115,6 +136,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Load and set visual options & modes
+        /// </summary>
+        /// <param name="Middle">selective to middle</param>
+        /// <param name="Bottom">selective to bottom</param>
         private void OpenDefaultModes(bool Middle = true, bool Bottom = true)
         {
             modesFile = Utils.configPath + prefix + "_defaults.cfg"; 
@@ -163,23 +189,35 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// propagate followPID from options to strobe user control
+        /// </summary>
         private void UpdateStrobesParams()
         {
             if (Utils.isNull(strobes)) return;            
             strobes.PID_Enabled = genOptions.followPID;
         }
 
+        /// <summary>
+        /// Log event managment
+        /// </summary>
+        /// <param name="txt"></param>
+        /// <param name="clr"></param>
         public delegate void LogHandler(string txt, Color? clr = null);
         public event LogHandler OnLog;
-
         public void LogEvent(string txt, Color? clr = null)
         {
             if (!Utils.isNull(OnLog)) OnLog(txt, clr);
         }
 
+        /// <summary>
+        /// Send event managment
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="async"></param>
+        /// <returns></returns>
         public delegate bool SendHandler(string json, bool async = false);
         public event SendHandler OnSend;
-
         public bool SendEvent(string json, bool async = false)
         {
             if (!Utils.isNull(OnSend)) return OnSend(json, async);
@@ -198,6 +236,11 @@ namespace Axel_hub
         }
 
         double middlePlotHeight = 230;
+        /// <summary>
+        /// Visual optimization
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void tabSecPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Utils.isNull(sender)) tabSecPlots.SelectedIndex = 0;
@@ -213,6 +256,11 @@ namespace Axel_hub
         }
 
         ShotList shotList; // arch - on
+        /// <summary>
+        /// Open joint log file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnOpenJLog_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
@@ -232,6 +280,11 @@ namespace Axel_hub
         DataStack srsMdiffQ = new DataStack();
         public DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
 
+        /// <summary>
+        /// Scan delay between MOT accel data point and MEMS accel array  
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnJDlyScan_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(shotList)) return;
@@ -263,7 +316,7 @@ namespace Axel_hub
                 shotList.resetScan(); j = 0;
                 do
                 {
-                    ss = shotList.archyScan(out next); 
+                    ss = shotList.archiScan(out next); 
                     srsMotAccel.Add(ss.quant); xMin = Math.Min(xMin, ss.quant.X); xMax = Math.Max(xMax, ss.quant.X);
                     double m = ss.memsWeightAccel(wd, genOptions.Mems2SignLen / 1000.0, true);
 
@@ -310,6 +363,11 @@ namespace Axel_hub
         }
 
         #region File operation
+        /// <summary>
+        /// Open signal dialog box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnOpenSignal_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
@@ -327,6 +385,11 @@ namespace Axel_hub
             OnLog("Opened> " + dlg.FileName);
         }
 
+        /// <summary>
+        /// Save signal dialog box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSaveSignalAs_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
@@ -343,6 +406,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Open fringes scan file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnOpenFringes_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
@@ -363,6 +431,11 @@ namespace Axel_hub
             tbRemFringes.Text = srsFringes.rem;
         }
 
+        /// <summary>
+        /// Save fringes scan file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSaveFringesAs_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
@@ -377,6 +450,11 @@ namespace Axel_hub
             if (result == true) srsFringes.SavePair(dlg.FileName, "", "G6"); //genOptions.SaveFilePrec);
         }
 
+        /// <summary>
+        /// Clear and initialte all the visuals
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnClearAll_Click(object sender, RoutedEventArgs e)
         {
             if (sender == btnClearSignal)
@@ -389,7 +467,12 @@ namespace Axel_hub
         #endregion
 
         private double phaseCorr, phaseRad, fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
-
+        /// <summary>
+        /// Panel-selective clear command
+        /// </summary>
+        /// <param name="Top"></param>
+        /// <param name="Middle"></param>
+        /// <param name="Bottom"></param>
         public void Clear(bool Top = true, bool Middle = true, bool Bottom = true)
         {
             lastGrpExe = null;
@@ -419,6 +502,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Chart zoom reset
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void graphNs_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             (sender as Graph).ResetZoomPan();
@@ -431,14 +519,23 @@ namespace Axel_hub
                 accelYmin = 10; accelYmax = -10;
             }
         }
-
+        /// <summary>
+        /// Initiate strobes positions
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbSingle_Checked(object sender, RoutedEventArgs e)
         {
             crsDownStrobe.AxisValue = 1.5; crsUpStrobe.AxisValue = 4.6;
         }
 
         DispatcherTimer ddTimer;
-        private void btnJoinLogTest_Click(object sender, RoutedEventArgs e) // internal simulation test
+        /// <summary>
+        /// internal simulation test of join data 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnJoinLogTest_Click(object sender, RoutedEventArgs e) // 
         {
             btnJoinLogTest.Value = !btnJoinLogTest.Value;
             if (!axelChart.Waveform.stopWatch.IsRunning && btnJoinLogTest.Value)
@@ -475,7 +572,11 @@ namespace Axel_hub
             quantList.Add(new Point(axelChart.Waveform.stopWatch.ElapsedMilliseconds / 1000.0, 5)); // 
         }
 
-        private void SaveTrend(string FileName)  // srsMems, srsMotAccel, srsAccel, srsCorr
+        /// <summary>
+        /// Save trend as time & srsMems, srsMotAccel, srsAccel, srsCorr series table
+        /// </summary>
+        /// <param name="FileName"></param>
+        private void SaveTrend(string FileName)  // 
         {
             if (srsMems.Count == 0 || srsMotAccel.Count == 0)
             {
@@ -483,7 +584,7 @@ namespace Axel_hub
                 return;
             }
             DictFileLogger fl = new DictFileLogger(new string[]{"Time","MEMS","MOTaccel","Accel","Corr"}, prefix, FileName);
-            fl.defaultExt = ".aht"; fl.setMMexecAsHeader(lastGrpExe);
+            fl.defaultExt = ".aht"; fl.setMMexecAsHeader(lastGrpExe.Clone());
             fl.Enabled = true;
 
             Dictionary<string, double> dt = new Dictionary<string, double>();
@@ -500,6 +601,11 @@ namespace Axel_hub
             OnLog("Saved> " + FileName);
         }
 
+        /// <summary>
+        /// Save trend dialog box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSaveTrendAs_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
@@ -512,6 +618,9 @@ namespace Axel_hub
             if (result == true) SaveTrend(dlg.FileName);
         }
 
+        /// <summary>
+        /// Reinitialize quant list
+        /// </summary>
         public void resetQuantList()
         {
             quantList.Clear(); // [time,MOTaccel] list of pairs
@@ -519,7 +628,6 @@ namespace Axel_hub
             shotList = new ShotList(chkJoinLog.IsChecked.Value,"",prefix); 
             setConditions(ref shotList.conditions); 
         }
-
         private void setConditions(ref Dictionary<string, double> dc)
         {
             dc.Clear();
@@ -530,6 +638,10 @@ namespace Axel_hub
             dc["offset"] = numOffset.Value;
         }
 
+        /// <summary>
+        /// Switching the visual strobe cursors ON/OFF 
+        /// </summary>
+        /// <param name="enabled">New state</param>
         public void visStrobes(bool enabled)
         {
             if (enabled)
@@ -552,6 +664,11 @@ namespace Axel_hub
             }            
         }
 
+        /// <summary>
+        /// Fit a sin (ModelFunction) function
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSinFit_Click(object sender, RoutedEventArgs e)
         {
             if (srsFringes.Count == 0)
@@ -580,18 +697,30 @@ namespace Axel_hub
             LogEvent("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan.Color);
 
             visStrobes(true);
-
             //numScale.Value = coeffs[0]; numKcoeff.Value = coeffs[1]; numPhi0.Value = coeffs[2];  numOffset.Value = coeffs[3]; 
 
         }
-        // Callback function that implements the fitting model 
+        
+        /// <summary>
+        /// Callback function that implements the fitting model 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="coefficients"></param>
+        /// <returns></returns>
         private double ModelFunction(double x, double[] coefficients)
         {
             return (coefficients[0] * Math.Sin(x / coefficients[1] + coefficients[2])) + coefficients[3];
         }
 
-        public bool CombineQuantMems(List<Point> mds, double dur = 0.005, double dly = 0) // mds - last acquired MEMS buffer; dur [s] - quant sample duration: +/- dur (3*dur in total)
-        {                                                                                 // dly [s] - time delay of mems start ref to quant,
+        /// <summary>
+        /// Create SingleShot and add it to shotList for further processing
+        /// </summary>
+        /// <param name="mds">last acquired MEMS buffer</param>
+        /// <param name="dur">[s] - quant sample duration: +/- dur (3*dur in total)</param>
+        /// <param name="dly">[s] - time delay of mems start ref to quant</param>
+        /// <returns></returns>
+        public bool CombineQuantMems(List<Point> mds, double dur = 0.005, double dly = 0) 
+        {                                                                                 
             if (mds.Count.Equals(0) || quantList.Count.Equals(0) || !shotList.enabled || (dur <= 0)) return false;
             int pCount = shotList.Count;
             List<Point> ds; 
@@ -637,6 +766,12 @@ namespace Axel_hub
             return true;
         }
 
+        /// <summary>
+        /// Selective mode saving
+        /// </summary>
+        /// <param name="Top"></param>
+        /// <param name="Middle"></param>
+        /// <param name="Bottom"></param>
         public void SaveDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
         {
             double h = Application.Current.MainWindow.Height - 60;
@@ -674,7 +809,12 @@ namespace Axel_hub
             modes.Save(prefix);
         }
 
-       private void chkMEMS_Checked(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Control of visibility of the accel. trend graph series 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void chkMEMS_Checked(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(plotMems)) return;
             if (chkMEMS.IsChecked.Value) plotMems.Visibility = System.Windows.Visibility.Visible;
@@ -686,7 +826,11 @@ namespace Axel_hub
             if (chkAccel.IsChecked.Value) plotAccel.Visibility = System.Windows.Visibility.Visible;
             else plotAccel.Visibility = System.Windows.Visibility.Hidden;
         }
-
+        
+        /// <summary>
+        /// Creates jumboScan component to be sent to MM2
+        /// </summary>
+        /// <returns></returns>
         public MMscan jumboScan()
         {
             MMscan mms = new MMscan();
@@ -698,6 +842,10 @@ namespace Axel_hub
             return mms;
         }
 
+        /// <summary>
+        /// Update some visual options
+        /// </summary>
+        /// <param name="connected"></param>
         public void UpdateFromOptions(bool connected)
         {
             if (Utils.isNull(strobes)) return;
@@ -711,7 +859,11 @@ namespace Axel_hub
         }
         
         private int timeStackLimit = 3; // process back 30 time steps
-
+        /// <summary>
+        /// Prepare for the next measureme with specific phase
+        /// </summary>
+        /// <param name="phi">Phase</param>
+        /// <returns></returns>
         private Dictionary<string, double> prepNextMeasure(double phi)
         {
             Dictionary<string, double> rslt = new Dictionary<string, double>();
@@ -726,6 +878,13 @@ namespace Axel_hub
         } 
         
         // in simple_repeat only Mems; in jumbo_repeat - both
+
+        /// <summary>
+        /// UNDER DEVELOPMENT
+        /// Incomming measurement with specific phase
+        /// </summary>
+        /// <param name="phi">Phase</param>
+        /// <returns></returns>
         private Dictionary<string, double> nextMeasure(double phi) // return Mems_V and PhiRad 
         {
             Dictionary<string, double> rslt = prepNextMeasure(phi);
@@ -757,6 +916,10 @@ namespace Axel_hub
         }
 
         public MMscan lastScan = null; private MMexec lastGrpExe = null;
+        /// <summary>
+        /// Prepare for particular scanning mode
+        /// </summary>
+        /// <param name="mme"></param>
         public void DoPrepare(MMexec mme)
         {
             switch (mme.cmd)
@@ -816,6 +979,11 @@ namespace Axel_hub
             ucSignal.Init(mme); 
         }
 
+        /// <summary>
+        /// Add a measurement to graph series (point) and table of results (update)
+        /// </summary>
+        /// <param name="xVl">Horiz. value</param>
+        /// <param name="dr">Dictionary of results</param>
         private void showResults(double xVl, Dictionary<string, double> dr)
         {
             if (chkBigCalcChrtUpdate.IsChecked.Value && !Double.IsNaN(xVl))
@@ -872,6 +1040,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Process an incomming shot 
+        /// </summary>
+        /// <param name="mme">The actual shot</param>
+        /// <param name="lastGrpExe">The context (scanning mode) of the shot</param>
         public void DoShot(MMexec mme, MMexec lastGrpExe) // the main call
         {             
             Color clr = Brushes.Black.Color;
@@ -1030,7 +1203,11 @@ namespace Axel_hub
             }
             #endregion shotData
         }              
-
+        /// <summary>
+        /// Extract acceleration params/statistics from result dict
+        /// </summary>
+        /// <param name="dt">Result dicionary</param>
+        /// <returns></returns>
         public Dictionary<string, double> Statistics(Dictionary<string, double> dt) // in MEMS [V]; PhiRad -> out - MEMS [mg], etc.
         {
             Dictionary<string, double> rslt = new Dictionary<string, double>(dt);
@@ -1060,12 +1237,22 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// Propagate options if numScale changes
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void numScale_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {
             if (Utils.isNull(_prefix)) return;
             if (!prefix.Equals("")) UpdateFromOptions(false);
         }
 
+        /// <summary>
+        /// If any additional actions needed (empty so far)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e) // not destroying anything, just preparing
         {
 

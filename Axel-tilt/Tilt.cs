@@ -15,6 +15,9 @@ using UtilsNS;
 
 namespace Axel_tilt
 {
+    /// <summary>
+    /// Intitial (horizontal) position & default speed
+    /// </summary>
     class Horizontal
     {
         public double posA { get; set; } // [mm]
@@ -23,6 +26,9 @@ namespace Axel_tilt
         public double OffsetDodging { get; set; }
     }
 
+    /// <summary>
+    /// Motor abstraction presenting the motor controller into the tilt platform funtionality
+    /// </summary>
     class Motor
     {        
         private string name {get; set;}
@@ -37,7 +43,10 @@ namespace Axel_tilt
             Console.WriteLine("speed: {0} {3}/s position: {1} {3} flags: {2}",
                         status_calb.CurSpeed, status_calb.CurPosition, status_calb.Flags, "mm");
         }
-
+        /// <summary>
+        /// Class constructor 
+        /// </summary>
+        /// <param name="Name"></param>
         public Motor(string Name = "")
         {
             name = Name;
@@ -51,6 +60,10 @@ namespace Axel_tilt
         {
             return (char)(64 + devIdx);
         }
+        
+        /// <summary>
+        /// Open the device controller
+        /// </summary>
         public void Open()
         {
             if(!name.Equals("")) devIdx = API.open_device(name);
@@ -58,11 +71,21 @@ namespace Axel_tilt
             Console.WriteLine("Device {0}", devIdx);
         }
 
+        /// <summary>
+        /// Check for distance range validity
+        /// </summary>
+        /// <param name="dist"></param>
+        /// <returns></returns>
         public bool InRange(double dist) //[mm]
         {
             return Utils.InRange(dist, -horizOffset, steps2dist(9500, 0) - horizOffset);
         }
 
+        /// <summary>
+        /// Go to Home position 
+        /// </summary>
+        /// <param name="wait">Synchronious or Asynchro... execution</param>
+        /// <returns></returns>
         public bool Home(bool wait = true)
         {
             // Send "home" command to device
@@ -72,7 +95,12 @@ namespace Axel_tilt
             if(wait) Wait2stop(); 
             return true;
         }
-
+        
+        /// <summary>
+        /// Set corrent position to be Zero
+        /// </summary>
+        /// <param name="setHoriz"></param>
+        /// <returns>OK</returns>
         public bool Zero(bool setHoriz = false)
         {
             // Send "zero" command to device
@@ -84,6 +112,10 @@ namespace Axel_tilt
             return true;
         }
 
+        /// <summary>
+        /// Stop whatever has been executed
+        /// </summary>
+        /// <returns>OK</returns>
         public bool Stop()
         {
             res = API.command_stop(devIdx);
@@ -92,6 +124,10 @@ namespace Axel_tilt
             return true;
         }
 
+        /// <summary>
+        /// Wrapper for "command_wait_for_stop" controller command
+        /// </summary>
+        /// <returns>OK</returns>
         public bool Wait2stop()
         {
             res = API.command_wait_for_stop(devIdx, 100);
@@ -100,6 +136,10 @@ namespace Axel_tilt
             return true;
         }
 
+        /// <summary>
+        /// Get controller status
+        /// </summary>
+        /// <returns></returns>
         public status_t Status()
         {
             // Read device status
@@ -109,6 +149,10 @@ namespace Axel_tilt
                throw new Exception("Error " + res.ToString());
             return status;
         }
+        /// <summary>
+        /// The same status in easy to print (log) form
+        /// </summary>
+        /// <returns></returns>
         public List<string> ListStatus()
         {
             status_t sts = Status();
@@ -122,6 +166,11 @@ namespace Axel_tilt
             ls.Add("MvCmdSts: " + sts.MvCmdSts.ToString());
             return ls;
         } 
+
+        /// <summary>
+        /// Get current position [mm]
+        /// </summary>
+        /// <returns></returns>
         public double GetPosition() // dist
         {
             get_position_t stPos;
@@ -131,7 +180,12 @@ namespace Axel_tilt
             return steps2dist(stPos.Position, stPos.uPosition);
         }        
 
-        public bool SetSpeed(double speed) // [mm/s]
+        /// <summary>
+        /// Set movement speed [mm/s]
+        /// </summary>
+        /// <param name="speed">[mm/s]</param>
+        /// <returns>OK</returns>
+        public bool SetSpeed(double speed) 
         {
             double spd = Utils.EnsureRange(speed, 0, 10);
             engine_settings_t engine_settings;
@@ -147,6 +201,14 @@ namespace Axel_tilt
             return true;
         }
 
+        /// <summary>
+        /// Set backlash compensation ON/OFF
+        /// ON - more accurate position in back direction, can be very slow for small steps
+        /// OFF - Forward is fine (calibration is valid); 
+        /// backward is not accurate, but useful for scanning if only the change matters
+        /// </summary>
+        /// <param name="bl">Backlash compensation</param>
+        /// <returns>OK</returns>
         public bool SetBacklash(bool bl) 
         {           
             engine_settings_t engine_settings;
@@ -161,7 +223,11 @@ namespace Axel_tilt
                 throw new Exception("Error " + res.ToString());
             return true;
         }
-
+        
+        /// <summary>
+        /// Get calibration
+        /// </summary>
+        /// <returns></returns>
         private calibration_t Calibration()
         {
             status_calb_t status_calb;
@@ -182,12 +248,23 @@ namespace Axel_tilt
             return calibration;
         }
 
+        /// <summary>
+        /// Convert from step:usteps to distance [mm]
+        /// </summary>
+        /// <param name="steps">steps</param>
+        /// <param name="usteps">microsteps</param>
+        /// <returns>[mm]</returns>
         public double steps2dist(int steps, int usteps) // [mm]
         {
             return (steps + usteps / 256.0) * step2mmSlope + step2mmIntercept;
         }
 
-        public int[] dist2steps(double dist) // from [mm] to [steps, usteps]
+        /// <summary>
+        /// Reverse to the upper method -> from distance to steps:usteps
+        /// </summary>
+        /// <param name="dist">[mm]</param>
+        /// <returns>[steps, usteps]</returns>
+        public int[] dist2steps(double dist) 
         {
             int[] rt = new int[2];
             double nat = dist / step2mmSlope - step2mmIntercept;
@@ -198,13 +275,26 @@ namespace Axel_tilt
             return rt;
         }
 
-        // async moves
+        /// <summary>
+        /// Goto (move) to specific position in [steps, usteps]
+        /// </summary>
+        /// <param name="steps">steps</param>
+        /// <param name="usteps">microsteps</param>
+        /// <param name="wait">Synchronious or Asynchro... execution</param>
+        /// <returns>OK</returns>
         private bool MoveS(int steps, int usteps, bool wait) // return success 
         {
             res = API.command_move(devIdx, steps, usteps);
             if (wait) Wait2stop();
             return (res == Result.ok);                
         }
+
+        /// <summary>
+        /// Goto (move) to specific position in [mm]
+        /// </summary>
+        /// <param name="dist">[mm]</param>
+        /// <param name="wait">Synchronious or Asynchro... execution</param>
+        /// <returns>OK</returns>
         public bool MoveD(double dist, bool wait = true) // return success 
         {
             if (!InRange(dist)) return false;
@@ -213,6 +303,10 @@ namespace Axel_tilt
         }
     }
 
+    /// <summary>
+    /// Class to be used as abstraction of controlling the tilt of the platform 
+    /// using motors abstractions
+    /// </summary>
     class Tilt
     {
         public Motor mA, mB;
@@ -229,6 +323,9 @@ namespace Axel_tilt
         public Horizontal horizontal;
         public Stopwatch sw = new Stopwatch();
 
+        /// <summary>
+        /// Class contructor
+        /// </summary>
         public Tilt()
         {
             busy = false;
@@ -258,6 +355,10 @@ namespace Axel_tilt
                         status.CurSpeed, status.CurPosition, status.Flags);
         }
 
+        /// <summary>
+        /// Dealing with some of the controller settings and initializations
+        /// not all of them obligatory, but most of them usefull
+        /// </summary>
         private void ConfigureDriver()
         {
             int device = -1;           
@@ -417,6 +518,10 @@ namespace Axel_tilt
             //Console.ReadKey();
         }
 #endregion 
+
+        /// <summary>
+        /// Go home and set to be a zero position
+        /// </summary>
         public void HomeAndZero()
         {
             SetSpeed(horizontal.speed);
@@ -427,6 +532,11 @@ namespace Axel_tilt
             mA.Zero(); mB.Zero();
         }
 
+        /// <summary>
+        /// Initialization of initial horizontal position
+        /// </summary>
+        /// <param name="posA"></param>
+        /// <param name="posB"></param>
         public void SetHorizontal(double posA, double posB) // [mm]
         {
             mA.MoveD(posA, false); mB.MoveD(posB, false);
@@ -436,11 +546,17 @@ namespace Axel_tilt
             mA.Zero(true); mB.Zero(true);
         }
 
+        /// <summary>
+        /// Stop both motors
+        /// </summary>
         public void Stop()
         {
             mA.Stop(); mB.Stop();
         }
-
+        
+        /// <summary>
+        /// Close controller for both motors
+        /// </summary>
         public void Close()
         {
             int iA = mA.devIdx; int iB = mB.devIdx;
@@ -452,17 +568,32 @@ namespace Axel_tilt
                 throw new Exception("Error " + res.ToString());
         }
 
-        public double dist2tilt(double dist) // tilt[mrad]; dist[mm] from zero pos
+        /// <summary>
+        /// Convert from dist[mm] to tilt[mrad]
+        /// </summary>
+        /// <param name="dist">[mm]</param>
+        /// <returns>[mrad]</returns>
+        public double dist2tilt(double dist)  
         {
             return 1000.0 * Math.Atan(dist / tilt_arm);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tilt"></param>
+        /// <returns></returns>
         public double tilt2dist(double tilt) // tilt[mrad]; dist[mm] from zero pos
         {
             return Math.Tan(tilt / 1000.0) * tilt_arm;
         }
 
-        public double accel2tilt(double accel) // accel[mg]; tilt[mrad]
+        /// <summary>
+        /// Convert acceleration [mg] to tilt [mrad]
+        /// </summary>
+        /// <param name="accel">[mg]</param>
+        /// <returns>[mrad]</returns>
+        public double accel2tilt(double accel) 
         {
             double dodgedAccel = accel + horizontal.OffsetDodging;
             double rslt = 1000.0 * Math.Asin(dodgedAccel / 1000.0);
@@ -470,7 +601,12 @@ namespace Axel_tilt
             else return rslt;
         }
 
-        public double tilt2accel(double tilt) // accel[mg]; tilt[mrad]
+        /// <summary>
+        /// Convert tilt [mrad] to acceleration [mg]
+        /// </summary>
+        /// <param name="tilt">[mrad]</param>
+        /// <returns>[mg]</returns>
+        public double tilt2accel(double tilt) 
         {
             double accel = 1000.0 * Math.Sin(tilt / 1000.0);
             double rslt = accel;
@@ -478,7 +614,10 @@ namespace Axel_tilt
             return rslt - horizontal.OffsetDodging;
         }
 
-        public double accelSpeed // [mg/s]
+        /// <summary>
+        /// Get/Set acceleration speed [mg/s]
+        /// </summary>
+        public double accelSpeed 
         {
             get 
             {                 
@@ -498,7 +637,13 @@ namespace Axel_tilt
             }
         }
 
-        public bool MoveDist(double dist, bool wait = true) // [mm]
+        /// <summary>
+        /// Move to new position in [mm]
+        /// </summary>
+        /// <param name="dist">[mm]</param>
+        /// <param name="wait">Sychronious/Asychronious call</param>
+        /// <returns></returns>
+        public bool MoveDist(double dist, bool wait = true) // 
         {
             bool bb = mA.MoveD(dist, false) && mB.MoveD(dist, false);
             if (wait)
@@ -508,12 +653,21 @@ namespace Axel_tilt
             return bb;
         }
 
-        public bool MoveAccel(double accel, bool wait = true) // [mg]; wait: for manual oper -> true; for moving patterns -> false
+        /// <summary>
+        /// Move to new acceleration 
+        /// </summary>
+        /// <param name="accel">[mg];</param>
+        /// <param name="wait">for manual oper -> true; for moving patterns -> false</param>
+        /// <returns></returns>
+        public bool MoveAccel(double accel, bool wait = true) 
         {
             OnLog("T> accel to " + accel.ToString("G5")); DoEvents();
             return MoveDist(tilt2dist(accel2tilt(accel)), wait);
         }
 
+        /// <summary>
+        /// Wait the last movement to be concluded
+        /// </summary>
         public void Wait4Stop()
         {
             busy = true;
@@ -530,7 +684,12 @@ namespace Axel_tilt
         }
 
         double workingSpeed;
-        public bool SetSpeed(double speed = -1) // [mm/s]
+        /// <summary>
+        /// Set speed of movement [mm/s]
+        /// </summary>
+        /// <param name="speed"></param>
+        /// <returns></returns>
+        public bool SetSpeed(double speed = -1)
         {
             double spd;
             if (speed < 0) spd = horizontal.speed;
@@ -540,16 +699,30 @@ namespace Axel_tilt
             workingSpeed = spd;
             return mA.SetSpeed(spd) && mB.SetSpeed(spd);
         }
+        /// <summary>
+        /// Set both mottors backlash
+        /// </summary>
+        /// <param name="bl"></param>
+        /// <returns></returns>
         public bool SetBacklash(bool bl)
         {
             return mA.SetBacklash(bl) && mB.SetBacklash(bl);
         }
 
-        public double GetPosition() // dist [mm]
+        /// <summary>
+        /// Get the tilt position in mm
+        /// </summary>
+        /// <returns>[mm]</returns>
+        public double GetPosition() 
         {
             return (mA.GetPosition() + mB.GetPosition()) / 2.0;
         }
-        public double GetAccel() // accel [mg]
+
+        /// <summary>
+        /// Get the tilt position in mg
+        /// </summary>
+        /// <returns>[mg]</returns>
+        public double GetAccel() 
         {
             return tilt2accel(dist2tilt(GetPosition()));
         }
@@ -570,7 +743,6 @@ namespace Axel_tilt
 
         public delegate void EndHandler(bool userCancel);
         public event EndHandler OnEnd;
-
         protected void EndEvent(bool userCancel)
         {
             if (OnEnd != null) OnEnd(userCancel);
@@ -578,7 +750,6 @@ namespace Axel_tilt
 
         public delegate void LogHandler(string txt);
         public event LogHandler OnLog;
-
         protected void LogEvent(string txt)
         {
             if (OnLog != null) OnLog(txt);
@@ -586,14 +757,18 @@ namespace Axel_tilt
 
         public delegate void MoveHandler(Point target);
         public event MoveHandler OnMove;
-
         protected void MoveEvent(Point target)
         {
             if (OnMove != null) OnMove(target);
         }
 
-        // start async movement to toPos, with a speed so to take time <time>
-        public void SingleMove(double fromPos, double toPos, double time) // start,end [mg]; for time [s]
+        /// <summary>
+        /// start async movement to toPos, with a speed so to take time 
+        /// </summary>
+        /// <param name="fromPos">[mg]</param>
+        /// <param name="toPos">[mg]</param>
+        /// <param name="time">[s]</param>
+        public void SingleMove(double fromPos, double toPos, double time) 
         {
             accelSpeed = Math.Abs((toPos - fromPos) / time)*1.05;
             MoveAccel(toPos, false);
@@ -604,6 +779,11 @@ namespace Axel_tilt
         List<Point> pattern;
         int stepIdx = -1;
         public DispatcherTimer dTimer;
+        /// <summary>
+        /// Execute  next step (move) in pattern movement
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void NextStep(object sender, EventArgs e)
         {
             if (stepIdx > pattern.Count - 1) 
@@ -620,8 +800,18 @@ namespace Axel_tilt
             }                              
         }
 
-        // first pair <0, init.pos>; second - <time1, second.pos>, etc. [time,ampl] in [s,mg] units
-        public void MoveInPattern(double[,] ptrn, double period, double ampl, double offset) // one pattern
+        /// <summary>
+        /// Move in pattern:
+        /// first pair (0, init.pos)
+        /// second - (time1, second.pos)
+        /// ...etc.
+        /// [time,ampl] in [s,mg] units
+        /// </summary>
+        /// <param name="ptrn"></param>
+        /// <param name="period">Defines horizontal scale</param>
+        /// <param name="ampl">Defines vertical scale</param>
+        /// <param name="offset">Vertical shift</param>
+        public void MoveInPattern(double[,] ptrn, double period, double ampl, double offset) 
         {
             pattern = new List<Point>();
             int len = ptrn.GetUpperBound(0)+1;

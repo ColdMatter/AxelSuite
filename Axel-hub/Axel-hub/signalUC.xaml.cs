@@ -42,6 +42,8 @@ namespace Axel_hub
 {
     /// <summary>
     /// Interaction logic for signalUC.xaml
+    /// visualize the raw signal and signal trends {"N1", "N2", "RN1", "RN2", "NTot", "B2", "Btot"}
+    /// table with last trend position and (optionally) some stats
     /// </summary>
     public partial class signalClass : UserControl
     {
@@ -66,6 +68,9 @@ namespace Axel_hub
         public DictFileLogger logger; 
         private double NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10;
 
+        /// <summary>
+        /// Class constructor
+        /// </summary>
         public signalClass()
         {
             InitializeComponent();
@@ -74,24 +79,51 @@ namespace Axel_hub
         GeneralOptions genOptions = null;
         Modes genModes = null;
         public string prefix { get; private set; }
+        /// <summary>
+        /// Initialization with options from Options dialog and modes from last used ones 
+        /// </summary>
+        /// <param name="_genOptions">from Options dialog</param>
+        /// <param name="_genModes">last used ones</param>
+        /// <param name="_prefix">X/Y</param>
         public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes, string _prefix = "")
         {
             genOptions = _genOptions; genModes = _genModes; prefix = _prefix;
             logger = new DictFileLogger(new string[]{ "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "Btot" }, prefix);
         }
 
-        public void Init(MMexec GrpMme) // new series
+        /// <summary>
+        /// Call when new series starts
+        /// </summary>
+        /// <param name="GrpMme"></param>
+        public void Init(MMexec GrpMme) // 
         {
             grpMme = GrpMme.Clone();
             scanMode = grpMme.cmd.Equals("scan");
             repeatMode = grpMme.cmd.Equals("repeat");
 
-            logger.setMMexecAsHeader(grpMme);
+            logger.setMMexecAsHeader(grpMme.Clone());
             logger.defaultExt = ".ahs";
-            logger.Enabled = genModes.SignalLog; 
+            logger.Enabled = genModes.SignalLog;
+            writeHeaders(logger); 
         }
 
-       public void Clear()
+        /// <summary>
+        /// copy log headers in a separate file 
+        /// </summary>
+        /// <param name="logg"></param>
+        private void writeHeaders(FileLogger logg)
+        {
+            FileLogger fl = new FileLogger(logg.prefix, System.IO.Path.ChangeExtension(logg.LogFilename,".ahh"));
+            fl.header = logg.header;
+            fl.subheaders.AddRange(logg.subheaders);
+            fl.Enabled = logg.Enabled;
+            fl.Enabled = false;
+        }
+
+        /// <summary>
+        /// Clean everyting up 
+        /// </summary>
+        public void Clear()
         {
             stackN1.Clear(); stackN2.Clear();
             stackRN1.Clear(); stackRN2.Clear();
@@ -109,7 +141,13 @@ namespace Axel_hub
             lboxNB.Items.Clear();
         }
 
-        public void Update(MMexec mme, out double currX, out double A) // with unpacked arrays
+        /// <summary>
+        /// Import a shot with unpacked arrays and update signal/trends
+        /// </summary>
+        /// <param name="mme">shot with unpacked arrays</param>
+        /// <param name="currX">Last horiz coordinate</param>
+        /// <param name="A">Asymetry calculated</param>
+        public void Update(MMexec mme, out double currX, out double A) // 
         {
             runID = Convert.ToInt32(mme.prms["runID"]);
             Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, genOptions.intN2, chkStdDev.IsChecked.Value);
@@ -238,8 +276,6 @@ namespace Axel_hub
                         graphNs.Data[4] = stackNtot.Portion(genOptions.TrendSignalLen);
                     }));
             }
-
-            //#XAxis\tN1\tN2\tRN1\tRN2\tNTot\tB2\tBtot
             if (stackN1.Count > 0)
             {
                 Dictionary<string, double> row = new Dictionary<string, double>();
@@ -250,6 +286,12 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Open table text file with trends {"N1", "N2", "RN1", "RN2", "NTot"}
+        /// </summary>
+        /// <param name="fn"></param>
+        /// <param name="rem"></param>
+        /// <returns></returns>
         public bool OpenSignal(string fn, out string rem)
         {
             rem = ""; Clear();
@@ -278,6 +320,11 @@ namespace Axel_hub
             return true;
         }
 
+        /// <summary>
+        /// Save table text file with trends {"N1", "N2", "RN1", "RN2", "NTot"}
+        /// </summary>
+        /// <param name="fn"></param>
+        /// <param name="rem"></param>
         public void SaveSignal(string fn, string rem)
         {
             if (stackN1.Count == 0)
@@ -286,19 +333,23 @@ namespace Axel_hub
                 return;
             }
             DictFileLogger dlog = new DictFileLogger(new string[] { "XAxis", "N1", "N2", "RN1", "RN2", "NTot"}, prefix, fn);
-            dlog.setMMexecAsHeader(grpMme);
+            dlog.setMMexecAsHeader(grpMme.Clone());
             if (!String.IsNullOrEmpty(rem)) dlog.subheaders.Add("Rem=" + rem);
             dlog.Enabled = true;
+            writeHeaders(dlog);
             for (int i = 0; i < stackN1.Count; i++)
             {
                 Dictionary<string, double> row = new Dictionary<string, double>();
                 row["XAxis"] = stackN1[i].X; row["N1"] = stackN1[i].Y; row["N2"] = stackN2[i].Y;
                 row["RN1"] = stackRN1[i].Y; row["RN2"] = stackRN2[i].Y; row["NTot"] = stackNtot[i].Y;
                 dlog.dictLog(row, genOptions.SaveFilePrec); 
-            }
+            }            
             dlog.Enabled = false;
         }
 
+        /// <summary>
+        /// Update visuals modes from internal ones
+        /// </summary>
         public void OpenDefaultModes()
         {        
             chkAutoScaleMiddle.IsChecked = genModes.AutoScaleMiddle;
@@ -312,6 +363,9 @@ namespace Axel_hub
             chkNtot.IsChecked = genModes.Ntot;
         }
 
+        /// <summary>
+        /// Update internal from visuals modes 
+        /// </summary>
         public void SaveDefaultModes()
         {
             genModes.AutoScaleMiddle = chkAutoScaleMiddle.IsChecked.Value;
@@ -325,22 +379,22 @@ namespace Axel_hub
             genModes.Ntot = chkNtot.IsChecked.Value;
         }
 
+        /// <summary>
+        /// copyGraphToClipboard(graphNs)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void graphNs_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
-            {
-                if (e.Key == Key.C)
-                {
-                    Rect bounds; RenderTargetBitmap bitmap;
-                    bounds = System.Windows.Controls.Primitives.LayoutInformation.GetLayoutSlot(graphNs);
-                    bitmap = new RenderTargetBitmap((int)bounds.Width, (int)bounds.Height, 96, 96, PixelFormats.Pbgra32);
-                    bitmap.Render(graphNs);
-                    Clipboard.SetImage(bitmap);
-                    Utils.TimedMessageBox("The image is in the clipboard");
-                }
-            }
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) && (e.Key == Key.C))
+                Utils.copyGraphToClipboard(graphNs);
         }
 
+        /// <summary>
+        /// Reset zoom on double click
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void graphNs_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             (sender as Graph).ResetZoomPan();
@@ -354,6 +408,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Select/deselect individual trend series
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void chkN1_Checked(object sender, RoutedEventArgs e)
         {
             if (plotN1 != null)

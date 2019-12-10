@@ -18,6 +18,9 @@ using UtilsNS;
 
 namespace OptionsNS
 {
+    /// <summary>
+    /// The mode negotiated with MM2
+    /// </summary>
     public enum RemoteMode
     {
         Disconnected,
@@ -28,12 +31,15 @@ namespace OptionsNS
         Ready_To_Remote       
     }
 
+    /// <summary>
+    /// general options from Options dialog window accesable everywhere
+    /// </summary>
     public class GeneralOptions
     {
         public enum SaveModes { save, ask, nosave }
 
         // General
-        public int AxesChannels { get; set; }
+        public int AxesChannels { get; set; } // X -> 0; Y -> 1; X/Y -> 2
 
         public string SignalCursorPrec { get; set; }
         public string SignalTablePrec { get; set; }
@@ -52,7 +58,7 @@ namespace OptionsNS
         public bool JumboRepeat { get; set; }
         public SaveModes saveModes;
 
-        // MEMS
+        // MEMS options
         public bool MemsInJumbo { get; set; }
         public bool ShowMemsIfRunning { get; set; }
 
@@ -71,8 +77,10 @@ namespace OptionsNS
             File.WriteAllText(Utils.configPath + "genOptions.cfg", fileJson);
         }
     }
-
-    public class ScanModes // visual app and scan modes
+    /// <summary>
+    /// visuals for the app, MEMS aqcuisition params and scan modes
+    /// </summary>
+    public class ScanModes // 
     {
         // visuals
         public double Left { get; set; }
@@ -96,10 +104,15 @@ namespace OptionsNS
             File.WriteAllText(Utils.configPath + "scanDefaults.cfg", fileJson);
         }
     }
-
+    /// <summary>
+    /// Visuals and prameters for
+    /// Top: Axel-chart 
+    /// Middle: Signal panel charts
+    /// Bottom: Scan and Accel trend tabs/charts
+    /// </summary>
     public class Modes
     {
-        // Top Axel-chart
+        // Top
         public double TopFrame { get; set; } // relative height
         public double TopOfTopFrame { get; set; } // in pixels
         public int ShowFreq { get; set; }

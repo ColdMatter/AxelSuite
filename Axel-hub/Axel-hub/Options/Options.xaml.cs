@@ -19,10 +19,13 @@ using UtilsNS;
 namespace OptionsNS
 {
     /// <summary>
-    /// Interaction logic for Options.xaml
+    /// Interaction logic, load & save for GeneralOptions genOptions
     /// </summary>
     public partial class OptionsWindow : Window
     {
+        /// <summary>
+        /// dialog box constructor; reads from file or creates new options object
+        /// </summary>
         public OptionsWindow()
         {
             InitializeComponent();           
@@ -34,7 +37,16 @@ namespace OptionsNS
             else genOptions = new GeneralOptions();
         }
 
+        /// <summary>
+        /// the point of the dialog, readable everywhere
+        /// </summary>
         public GeneralOptions genOptions;
+
+        /// <summary>
+        /// Accepting and saving the changes
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OKButton_Click(object sender, RoutedEventArgs e) // visual to internal 
         {
             // General
@@ -78,7 +90,11 @@ namespace OptionsNS
             
             Hide();
         }
-
+        /// <summary>
+        /// Updating visuals from genOptions
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void frmOptions_Activated(object sender, EventArgs e)
         {
             // General
@@ -120,6 +136,11 @@ namespace OptionsNS
             //(cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content = genOptions.TemperatureHw;
         }
 
+        /// <summary>
+        /// Cancel without modifications
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
             Hide();

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" 
-             mc:Ignorable="d" Width="261.714" Height="270.285" Loaded="UserControl_Loaded" Initialized="UserControl_Initialized">
+             mc:Ignorable="d" Width="261.714" Height="270.285" Loaded="UserControl_Loaded">
     <Grid HorizontalAlignment="Left" Width="259" Margin="6,0,-0.429,0.429">
         <Grid.RowDefinitions>
             <RowDefinition Height="25.143"/>

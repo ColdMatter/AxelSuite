@@ -43,7 +43,7 @@
         </Grid>
         <Grid Grid.Row="1">
             <TabControl x:Name="tabSecPlots" Margin="0,0,-0.429,2.571" SelectionChanged="tabSecPlots_SelectionChanged" SelectedIndex="1" FontSize="14">
-                <TabItem Header=" Hide " Height="24"/>
+                <!-- TabItem Header=" Hide " Height="24"/ -->
                 <TabItem x:Name="tabOverview" Header="Overview" Width="100" Height="24">
                     <Grid>
                         <ni:GraphInteractionPalette x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="25" Margin="28,5,0.571,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphOverview}" TabIndex="217" ScrollViewer.CanContentScroll="True">
@@ -227,7 +227,7 @@
                                 <Grid Grid.Row="1">
                                     <Label Content="Time slice [ms]" HorizontalAlignment="Left" Margin="1,3,0,0" VerticalAlignment="Top" Width="100"/>
                                     <ni:NumericTextBoxDouble x:Name="numTimeSlice" HorizontalAlignment="Left" Height="23" Margin="101,8,0,0" VerticalAlignment="Top" Width="55" Range="-1, Infinity, System.Double" Value="-1"/>
-                                    <CheckBox x:Name="chkResultsLog" Content="Log accel. [mg]" Margin="163,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="103" Height="17" FontSize="12"/>
+                                    <CheckBox x:Name="chkAccelLog" Content="Log accel. [mg]" Margin="163,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="103" Height="17" FontSize="12"/>
                                     <CheckBox x:Name="chkTblUpdate" Content="Tbl Update" Margin="266,10,-0.286,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="92" Height="17" FontSize="13"/>
                                     <Label x:Name="lbErrorStatus" Content="Error status:" Margin="1,49,0,0" Height="28" FontSize="13" Foreground="#FF7F0101" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                     <Label x:Name="lbHWfile" Content="" HorizontalAlignment="Left" Margin="1,29,0,0" VerticalAlignment="Top" Height="31" FontSize="13" Foreground="#FF1F7002"/>

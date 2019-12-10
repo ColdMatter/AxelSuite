@@ -17,14 +17,12 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Diagnostics;
 using NationalInstruments.Controls;
-using RemoteMessagingNS;
 using Newtonsoft.Json;
+using Axel_hub;
 using UtilsNS;
-using AxelChartNS;
 
 namespace Axel_tilt
-{
-    
+{   
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -36,8 +34,13 @@ namespace Axel_tilt
         Tilt tilt;
         // first time -> 0; last time -> 100
         public static readonly int maxTextLen = 10000;
-        public static readonly double[,] trapezePtrn = { { 0, 0 }, { 15, 0 }, { 40, 100 }, { 65, 100 }, { 90, 0 }, { 100, 0 } }; // {time [0..100], ampl [-100..100]}
- //     public static readonly double[,] trapezePtrn = { {0 , 0 }, { 33 , 100 }, { 66 , 100 } , { 100, 0} }; // {time [0..100], ampl [-100..100]}
+
+        /// <summary>
+        /// The way to define a pattern is to define an array of Time/Amplitude pairs
+        /// Time is [0..100] in increasing order, Amplidude is [-100..100] as a percentage from the pattern amplitude
+        /// </summary>
+        public static readonly double[,] trapezePtrn = { { 0, 0 }, { 15, 0 }, { 40, 100 }, { 65, 100 }, { 90, 0 }, { 100, 0 } }; 
+ //     public static readonly double[,] trapezePtrn = { {0 , 0 }, { 33 , 100 }, { 66 , 100 } , { 100, 0} }; 
       
         public static readonly double[,] trianglePtrn = { { 0, 0 }, { 5, 0 }, { 20, -100 }, { 30, -100 }, { 45, 0 }, { 55, 0 }, { 70, 100 }, { 80, 100 }, { 95, 0 }, { 100, 0 }, };
 //      public static readonly double[,] trianglePtrn = { { 0, 0 }, { 25, 100 }, { 50, 0 }, { 75, -100 }, { 100, 0 } };
@@ -56,6 +59,11 @@ namespace Axel_tilt
             ndMoveA.Value = tilt.horizontal.posA; ndMoveB.Value = tilt.horizontal.posB; ndSpeed.Value = Utils.formatDouble(tilt.horizontal.speed,"G3");
             tilt.SetSpeed();
         }
+
+        /// <summary>
+        /// Log text in the left text box
+        /// </summary>
+        /// <param name="txt"></param>
         private void myLog(string txt)
         {
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
@@ -72,6 +80,11 @@ namespace Axel_tilt
                 }));
         }
 
+        /// <summary>
+        /// Conditional to Debug conditions log
+        /// </summary>
+        /// <param name="txt"></param>
+        /// <param name="debug"></param>
         private void log(string txt, bool debug = false)
         {
             if (DebugMode) // in DebugMode show everything
@@ -84,6 +97,10 @@ namespace Axel_tilt
             }
         }
 
+        /// <summary>
+        /// Log for inner (under the hood) commands - moves, settings, etc.
+        /// </summary>
+        /// <param name="txt"></param>
         private void inLog(string txt)
         {
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
@@ -114,19 +131,12 @@ namespace Axel_tilt
         Random random;
         DataStack ds;
 
-        public void DoEvents()
-        {
-            DispatcherFrame frame = new DispatcherFrame();
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
-                new DispatcherOperationCallback(ExitFrame), frame);
-            Dispatcher.PushFrame(frame);
-        }
-        public object ExitFrame(object f)
-        {
-            ((DispatcherFrame)f).Continue = false;
-            return null;
-        }
-
+        /// <summary>
+        /// Query tilt position from another appliaction via RemoteMessaging library
+        /// Useful for comparing the acceleration measurement with the tilt simulating it
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         private bool OnShowReceive(string message)
         {
             try
@@ -143,11 +153,16 @@ namespace Axel_tilt
                 return false;
             }
         }
-
         private void OnShowActiveComm(bool active, bool forced)
         {
             ledAxelShow.Value = active;
         }
+
+        /// <summary>
+        /// Initializing remote access to Axel-show
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Axel_tilt_Loaded(object sender, RoutedEventArgs e)
         {
             remoteShow = new RemoteMessaging("Axel Show", 668);
@@ -158,18 +173,33 @@ namespace Axel_tilt
             tilt.MemsCorr = chkMemsCorr.IsChecked.Value;
             numOffsetDodging.Value = tilt.horizontal.OffsetDodging;
         }
-
+        /// <summary>
+        /// Remote access ON/OFF
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkAxelShow_Checked(object sender, RoutedEventArgs e)
         {
             remoteShow.Enabled = chkAxelShow.IsChecked.Value;
             remoteShow.CheckConnection(true);
         }
 
+        /// <summary>
+        /// Version and copyright info
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void imgAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            MessageBox.Show("           Axel Tilt v1.2 \n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            string ver = Utils.getRunningVersion(); //System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion.ToString();
+            MessageBox.Show("           Axel Tilt v"+ver+"\n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
+        /// <summary>
+        /// Initialte motor A
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnInitaiteA_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(tilt)) return;
@@ -180,6 +210,11 @@ namespace Axel_tilt
             if (m.Zero()) inLog(m.letter() + "> set to zero.");
         }
 
+        /// <summary>
+        /// Move motor A to a specific position 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnMoveA_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(tilt)) return;
@@ -191,6 +226,11 @@ namespace Axel_tilt
             inLog(m.letter() + "> has arrived.");
         }
 
+        /// <summary>
+        /// Get and show the status of motor A from controller
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnStatusA_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(tilt)) return;
@@ -202,19 +242,29 @@ namespace Axel_tilt
             inLog("---------------");
         }
 
+        /// <summary>
+        /// Initialte the tilt by initiating both motors  
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnInitiateTilt_Click(object sender, RoutedEventArgs e)
         {
-            inLog("Tilt> is going home..."); DoEvents();
+            inLog("Tilt> is going home..."); Utils.DoEvents();
             tilt.HomeAndZero();
             inLog("Tilt> is home.");
             lbState.Content = "Cur.State: Tilt is initialized.";
             btnMoveToPreset.IsEnabled = true;
         }
 
+        /// <summary>
+        /// Make the platform horizontal
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnMoveToPreset_Click(object sender, RoutedEventArgs e)
         {
             inLog("Tilt> is going horizontal");
-            inLog("Tilt> at A/B: " + ndMoveA.Value.ToString(doublePrec) + " / " + ndMoveB.Value.ToString(doublePrec) + " ..."); DoEvents();
+            inLog("Tilt> at A/B: " + ndMoveA.Value.ToString(doublePrec) + " / " + ndMoveB.Value.ToString(doublePrec) + " ..."); Utils.DoEvents();
             tilt.SetHorizontal(ndMoveA.Value, ndMoveB.Value);
             inLog("Tilt> is horizontal.");
             lbState.Content = "Cur.State: Tilt is ready to use.";
@@ -222,10 +272,15 @@ namespace Axel_tilt
             btnGoTo_Click(null, null);
         }
 
+        /// <summary>
+        /// Move to a specific tilt in mm
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnMoveMm_Click(object sender, RoutedEventArgs e)
         {
             double dist = ndMoveMm.Value; SetBacklash(true);
-            inLog("Tilt> is going to " + dist.ToString(doublePrec) + " [mm]..."); DoEvents();
+            inLog("Tilt> is going to " + dist.ToString(doublePrec) + " [mm]..."); Utils.DoEvents();
             tilt.MoveDist(dist, false);
             tilt.Wait4Stop();
             inLog("Tilt> has arrived.");
@@ -233,11 +288,15 @@ namespace Axel_tilt
             ndGotoPos.Value = Utils.formatDouble(tilt.tilt2accel(ndMoveMrad.Value), doublePrec);
             ShowAccel(ndGotoPos.Value);
         }
-
+        /// <summary>
+        /// Move to a specific tilt in rad
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnMoveMrad_Click(object sender, RoutedEventArgs e)
         {
             double mrad = ndMoveMrad.Value; SetBacklash(true);
-            inLog("Tilt> is going to " + mrad.ToString(doublePrec) + " [mrad]..."); DoEvents();
+            inLog("Tilt> is going to " + mrad.ToString(doublePrec) + " [mrad]..."); Utils.DoEvents();
             ndMoveMm.Value = Utils.formatDouble(tilt.tilt2dist(mrad), doublePrec);
             tilt.MoveDist(ndMoveMm.Value, false);
             tilt.Wait4Stop();
@@ -246,10 +305,15 @@ namespace Axel_tilt
             ShowAccel(ndGotoPos.Value);
         }
 
+        /// <summary>
+        /// Move to a specific tilt in mg
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnGoTo_Click(object sender, RoutedEventArgs e)
         {
             double accel = ndGotoPos.Value; SetBacklash(true); ShowAccel(accel);
-            inLog("Tilt> is going to " + accel.ToString(doublePrec) + " [mg]..."); DoEvents();
+            inLog("Tilt> is going to " + accel.ToString(doublePrec) + " [mg]..."); Utils.DoEvents();
             ndMoveMrad.Value = Utils.formatDouble(tilt.accel2tilt(accel), doublePrec);            
             ndMoveMm.Value = Utils.formatDouble(tilt.tilt2dist(ndMoveMrad.Value), doublePrec);
             tilt.MoveDist(ndMoveMm.Value);
@@ -258,6 +322,11 @@ namespace Axel_tilt
             //gotoPos(ndGotoPos.Value);
         }
 
+        /// <summary>
+        /// Set desired speed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSpeed_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(tilt)) return;
@@ -265,6 +334,10 @@ namespace Axel_tilt
             else inLog("Problem setting the speed");
         }
 
+        /// <summary>
+        /// Backlash control - set
+        /// </summary>
+        /// <param name="bl"></param>
         private void SetBacklash(bool bl)
         {
             string ss = (bl) ? " (on)" : " (off)";
@@ -279,6 +352,11 @@ namespace Axel_tilt
             }
         }
 
+        /// <summary>
+        /// Backlash control - ON/OFF
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbBacklashON_Checked(object sender, RoutedEventArgs e) // only checked event
         {
             if (Utils.isNull(tilt)) return;
@@ -294,6 +372,11 @@ namespace Axel_tilt
             tilt.AutoBacklash = true;
         }
 
+        /// <summary>
+        /// Move down by stepwisely 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnDown_Click(object sender, RoutedEventArgs e)
         {
             SetBacklash(false);
@@ -301,6 +384,11 @@ namespace Axel_tilt
             tilt.MoveAccel(lastAccel);
             ShowAccel(lastAccel);
         }
+        /// <summary>
+        /// Move up by stepwisely 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnUp_Click(object sender, RoutedEventArgs e)
         {
             SetBacklash(false);
@@ -309,6 +397,11 @@ namespace Axel_tilt
             ShowAccel(lastAccel);
         }
 
+        /// <summary>
+        /// Closing actions
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Axel_tilt_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             btnRun.Value = false; tilt.request2Stop = true;
@@ -318,6 +411,10 @@ namespace Axel_tilt
             File.WriteAllText(Utils.configPath + "horizontal.cfg",fileJson);
         }
 
+        /// <summary>
+        /// Visualise the tilt change on chart
+        /// </summary>
+        /// <param name="target"></param>
         private void DoMove(Point target)
         {
              Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, 
@@ -329,6 +426,12 @@ namespace Axel_tilt
                         log("Move to " + pnt.Y.ToString("G5") + " at "+  pnt.X.ToString("G5"), true);
                     })); 
         }
+
+        /// <summary>
+        /// Running a pattern from a timer
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void dTimer_Tick(object sender, EventArgs e)
         {
              if (!btnRun.Value || tilt.request2Stop) return;
@@ -341,6 +444,9 @@ namespace Axel_tilt
                     }));
         }
 
+        /// <summary>
+        /// Run a single period with specific pattern
+        /// </summary>
         private void SinglePeriod()
         {
             switch (cbDriftType.SelectedIndex)
@@ -354,6 +460,10 @@ namespace Axel_tilt
             }
         }
 
+        /// <summary>
+        /// Finalize running a pattern
+        /// </summary>
+        /// <param name="userCancel"></param>
         private void DoEnd(bool userCancel)
         {
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, 
@@ -394,6 +504,11 @@ namespace Axel_tilt
         Stopwatch sw = new Stopwatch();
         int loopCount = 0;
 
+        /// <summary>
+        /// Run a pattern
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnRun_Click(object sender, RoutedEventArgs e) // main scan
         {
             btnRun.Value = !btnRun.Value;
@@ -401,13 +516,13 @@ namespace Axel_tilt
             {
                 tilt.request2Stop = false; loopCount = 0;
                 log("Start scanning...");
-                tilt.SetSpeed(); tilt.MoveAccel(0); ShowAccel(tilt.GetAccel());                 
-                SetBacklash(false); DoEvents();
+                tilt.SetSpeed(); tilt.MoveAccel(0); ShowAccel(tilt.GetAccel());
+                SetBacklash(false); Utils.DoEvents();
             }
             else 
             { 
-                tilt.request2Stop = true;  DoEnd(true);              
-                DoEvents(); return; 
+                tilt.request2Stop = true;  DoEnd(true);
+                Utils.DoEvents(); return; 
             }
             if (Utils.isNull(dTimer))
             {
@@ -434,13 +549,23 @@ namespace Axel_tilt
             SinglePeriod();          
         }
 
+        /// <summary>
+        /// Button for overall initiation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnHomeAndHoriz_Click(object sender, RoutedEventArgs e)
         {
-            log("Initializing tilt platform..."); DoEvents();
+            log("Initializing tilt platform..."); Utils.DoEvents();
             btnInitiateTilt_Click(null, null); btnMoveToPreset_Click(null, null);
             log("Done!");
         }
 
+        /// <summary>
+        /// Move a mottor to a position (button)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnMM_A_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(tilt)) return;
@@ -450,6 +575,11 @@ namespace Axel_tilt
             inLog(m.letter() + "> is at "+m.GetPosition().ToString(doublePrec)+" [mm]");
         }
 
+        /// <summary>
+        /// Move a tilt to a position (button)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnMM_tilt_Click(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(tilt)) return;
@@ -478,6 +608,12 @@ namespace Axel_tilt
             }
         }
 
+        /// <summary>
+        /// Emergency stop the movement of the platform
+        /// reinitialization might be required
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
             tilt.Stop();

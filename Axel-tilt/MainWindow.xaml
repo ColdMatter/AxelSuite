@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Name="Axel_tilt" x:Class="Axel_tilt.MainWindow"
-        Title="Axel Tilt" Height="680.643" Width="917.937" Loaded="Axel_tilt_Loaded" Icon="Tilt2.png" Closing="Axel_tilt_Closing">
+        Title="Axel Tilt" Height="680.643" Width="917.937" Loaded="Axel_tilt_Loaded" Icon="Properties/Tilt2.png" Closing="Axel_tilt_Closing">
     <Grid Margin="5,0,0,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220"/>
@@ -37,7 +37,7 @@
                         <ComboBoxItem Content="Stairs shape"/>
                         <ComboBoxItem Content="Constant"/>
                     </ComboBox>
-                    <ni:BooleanContentButton x:Name="btnRun" Content="R u n" HorizontalAlignment="Right" Height="37" Margin="0,0,7,3" VerticalAlignment="Bottom" Width="75" FontSize="14" FontWeight="Bold" Click="btnRun_Click" FalseBrush="#FFBFFEC6" TrueBrush="#FFF7B66E" FalseContent="R U N" TrueContent="Cancel" BorderThickness="5" />
+                    <ni:BooleanContentButton x:Name="btnRun" Content="R u n" HorizontalAlignment="Right" Height="37" Margin="0,0,9.714,3" VerticalAlignment="Bottom" Width="72" FontSize="14" FontWeight="Bold" Click="btnRun_Click" FalseBrush="#FFBFFEC6" TrueBrush="#FFF7B66E" FalseContent="R U N" TrueContent="Cancel" BorderThickness="5" />
                 </Grid>
 
             </GroupBox>
@@ -172,7 +172,7 @@
                                         <StackPanel Margin="0" Grid.Row="1" Orientation="Horizontal" Grid.RowSpan="1">
                                             <Label Content="Offset dodging [mg]" Margin="0" HorizontalAlignment="Left" Height="26" FontWeight="Normal" VerticalAlignment="Center"/>
                                             <ni:NumericTextBoxDouble x:Name="numOffsetDodging" Height="23" Width="60" FontWeight="Normal" FontSize="13" Margin="0" ValueChanged="numOffsetDodging_ValueChanged" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                                            <CheckBox x:Name="chkSetZero" Content="Set 0 after scan" HorizontalAlignment="Left" Margin="7,0,0,0" VerticalAlignment="Center" FontWeight="Normal" IsChecked="True"/>
+                                            <CheckBox x:Name="chkSetZero" Content="Set 0 after scan" HorizontalAlignment="Left" Margin="20,11,0,6" VerticalAlignment="Center" FontWeight="Normal" IsChecked="True" RenderTransformOrigin="0.746,0.298" Height="19"/>
                                         </StackPanel>
                                     </Grid>
                                 </GroupBox>

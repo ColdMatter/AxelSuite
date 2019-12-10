@@ -9,13 +9,16 @@ using System.Threading.Tasks;
 using NationalInstruments.Controls;
 using OptionsNS;
 using UtilsNS;
-using AxelHMemsNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
 namespace Axel_hub
 {
+    /// <summary>
+    /// Intermediator between incomming data flow from ucScan user component and AxelAxis user components
+    /// - encapsulate not-axis-specific objects (e.g axelMems) and operations (e.g. DoAcquire)
+    /// </summary>
     public class AxelAxesClass : List<AxelAxisClass>
     {      
         public AxelMems axelMems = null;
@@ -25,7 +28,10 @@ namespace Axel_hub
         Random rnd = new Random();
 
         private int _rCount = 1;
-        public int rCount // number of real (active) Axes
+        /// <summary>
+        /// number of real (active) Axes
+        /// </summary>
+        public int rCount 
         {
             get { return _rCount;  }
             set 
@@ -39,6 +45,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Get an index from a prefix (X/Y)
+        /// </summary>
+        /// <param name="prf"></param>
+        /// <returns></returns>
         public int prfIdx(string prf)
         {
             for (int i = 0; i < rCount; i++)
@@ -49,12 +60,15 @@ namespace Axel_hub
             return -1;
         }
 
+        /// <summary>
+        /// Mask running for the active axelChart 
+        /// </summary>
         public bool memsRunning
         {
             get 
             { 
                 bool r = true;
-                for (int i = 0; i < rCount; i++) r &= this[i].axelChart.Running;
+                for (int i = 0; i < rCount; i++) r &= this[i].axelChart.Running; // all must be true
                 return r;
             }
             set
@@ -63,12 +77,24 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Clear and initialize visuals according to the switches
+        /// </summary>
+        /// <param name="Top">top panel</param>
+        /// <param name="Middle">middle panel</param>
+        /// <param name="Bottom">bottom panel</param>
         public void Clear(bool Top = true, bool Middle = true, bool Bottom = true)
         {
             for (int i = 0; i < rCount; i++) this[i].Clear(Top, Middle, Bottom);
         }
 
         private GeneralOptions genOptions;
+
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="_genOptions">general for the app options</param>
+        /// <param name="_ucScan">the scan user user component ref</param>
         public AxelAxesClass(ref GeneralOptions _genOptions, ref scanClass _ucScan)
         {
             genOptions = _genOptions;
@@ -81,6 +107,11 @@ namespace Axel_hub
             axelMemsTemperature.OnAcquire += new AxelMems.AcquireHandler(DoAcquireTemperature);
         }
 
+        /// <summary>
+        /// The correct way to introduce new axis
+        /// </summary>
+        /// <param name="AxelAxis"></param>
+        /// <param name="prefix">X or Y</param>
         public void AddAxis(ref AxelAxisClass AxelAxis, string prefix)
         {
             AxelAxis.Init(prefix, ref genOptions, ref ucScan.scanModes, ref axelMems);
@@ -89,7 +120,11 @@ namespace Axel_hub
             this[Count - 1].strobes.OnLog += new strobesUC.LogHandler(LogEvent);
             this[Count - 1].OnSend += new AxelAxisClass.SendHandler(ucScan.SendJson);
         }
-
+        /// <summary>
+        /// Get an axis by prefix
+        /// </summary>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
         public AxelAxisClass byName(char prefix)
         {
             AxelAxisClass rslt = null;
@@ -103,6 +138,10 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// When the options change, make everybody knows
+        /// </summary>
+        /// <param name="activeComm"></param>
         public void UpdateFromOptions(bool activeComm)
         {
             if (genOptions.AxesChannels == 0) rCount = 1;
@@ -112,7 +151,11 @@ namespace Axel_hub
                 this[i].UpdateFromOptions(activeComm);
             }
         }
-
+        /// <summary>
+        /// The correct way to log a text on the text-box on the left
+        /// </summary>
+        /// <param name="txt"></param>
+        /// <param name="clr"></param>
         public delegate void LogHandler(string txt, Color? clr = null);
         public event LogHandler OnLog;
         protected void LogEvent(string txt, Color? clr = null)
@@ -120,6 +163,12 @@ namespace Axel_hub
             if (OnLog != null) OnLog(txt, clr);
         }
 
+        /// <summary>
+        /// Initialize ADC24 for a new measurement
+        /// </summary>
+        /// <param name="down"></param>
+        /// <param name="samplingPeriod"></param>
+        /// <param name="InnerBufferSize"></param>
         public void set2startADC24(bool down, double samplingPeriod, int InnerBufferSize)
         {
             for (int i = 0; i < rCount; i++)
@@ -128,12 +177,21 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Save the visual options 
+        /// </summary>
         public void SaveDefaultModes()
         {
             foreach (AxelAxisClass aa in this)
                 aa.SaveDefaultModes();
         }
 
+        /// <summary>
+        /// Start new measurement with ADC24 
+        /// </summary>
+        /// <param name="down"></param>
+        /// <param name="period"></param>
+        /// <param name="InnerBufferSize"></param>
         public void startADC(bool down, double period, int InnerBufferSize)
         {
             double SamplingPeriod = 1 / axelMems.RealConvRate(1 / period);
@@ -180,6 +238,11 @@ namespace Axel_hub
                 axelMemsTemperature.StartAcquisition(InnerBufferSize, 1 / SamplingPeriod);
         }
 
+        /// <summary>
+        /// Get the acquisition buffer and distribute the data to axes
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <param name="next"></param>
         public void DoAcquire(List<Point> dt, out bool next)
         {
             next = ucScan.EndlessMode() && memsRunning && (axelMems.activeChannel.Equals(0) || axelMems.activeChannel.Equals(2)) &&
@@ -224,6 +287,12 @@ namespace Axel_hub
                     break;
             }           
         }
+
+        /// <summary>
+        /// Acquire the temperature measurements and send the average to the corresponding axelChart
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <param name="next"></param>
         public void DoAcquireTemperature(List<Point> dt, out bool next)
         {
             if (!genOptions.TemperatureEnabled) 
@@ -260,6 +329,9 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// It should be in very limited (ideally none) use
+        /// </summary>
         private bool probeMode // simulation of MM2 with AxelProbe
         {
             get
@@ -270,12 +342,15 @@ namespace Axel_hub
         }
 
         private MMexec lastGrpExe;  
+        /// <summary>
+        /// The main MOT data getting method
+        /// format shot.X / shot.Y OR shotData. IMPORTANT for Jumbo-repeat only .X/.Y 
+        /// if .X / .Y runID's are independant for each axis
+        /// </summary>
+        /// <param name="json">Whatever is comming, it must be formatted according to "Book of JaSON"</param>
         public void DoRemote(string json)
         {
             MMexec mme = JsonConvert.DeserializeObject<MMexec>(json);
-
-            // format shot.X / shot.Y OR shotData. IMPORTANT for Jumbo-repeat only .X/.Y 
-            // if .X / .Y runID's are independant for each axis
             string pref = ""; int runID = 0;
             if (mme.prms.ContainsKey("runID")) runID = Convert.ToInt32(mme.prms["runID"]);
             if (mme.cmd.Substring(0, 4).Equals("shot"))
@@ -293,7 +368,7 @@ namespace Axel_hub
             }
             switch (mme.cmd)
             {
-                case ("shot"): // incomming MM2 data
+                case ("shot"): // incomming MM2/probe data
                     {
                         if (ucScan.remoteMode == RemoteMode.Ready_To_Remote) return;
                         if (Utils.isNull(lastGrpExe))
@@ -391,6 +466,10 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// When in Jumbo mode Start/Stop the first part of it
+        /// </summary>
+        /// <param name="down"></param>
         public void DoJumboScan(bool down)
         {
             if (!down) // user jumbo cancel
@@ -452,9 +531,13 @@ namespace Axel_hub
         public void SetChartStrobes(bool enabled)
         {
             for (int i = 0; i < rCount; i++) this[i].visStrobes(enabled);
-            if (enabled) Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information", 2500);
+            if (enabled) Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information");
         }
 
+        /// <summary>
+        /// When in Jumbo mode start the second part of it
+        /// </summary>
+        /// <param name="cycles">set the number of shots or -1 to continues measurement</param>
         public void jumboRepeat(int cycles) // pnt.X - down; pnt.Y - up
         {
             //Clear(); // visual stuff
@@ -520,16 +603,19 @@ namespace Axel_hub
                 }
              }
              ucScan.SendJson(jsonR);
-             
-            
+                         
              for (int i = 0; i < rCount; i++)
              {
                  this[i].tabLowPlots.SelectedIndex = 1;
                  this[i].resetQuantList();
              }
         }
-
-        public void Closing(object sender, System.ComponentModel.CancelEventArgs e) // not destroying anything, just preparing
+        /// <summary>
+        /// Not destroying anything, just preparing for closing
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void Closing(object sender, System.ComponentModel.CancelEventArgs e)  
         {
             axelMems.StopAcquisition(); Thread.Sleep(200);
             for (int i = 0; i < rCount; i++) this[i].Closing(sender, e);

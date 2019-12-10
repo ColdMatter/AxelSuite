@@ -16,6 +16,9 @@ using UtilsNS;
 namespace Axel_hub
 {
 #region DataConvertion
+    /// <summary>
+    /// Averaging the photo diode signals {"N2", "NTot", "B2", "BTot", "Bg"}
+    /// </summary>
     public static class MMDataConverter
     {
         public static Dictionary<string, double> AverageShotSegments(MMexec data, bool initN2, bool stdDev)
@@ -67,7 +70,13 @@ namespace Axel_hub
         {
             return Asymmetry(AverageShotSegments(data, false,false), subtractBackground, subtractDark);
         }
-
+        /// <summary>
+        /// Calculating the result signal from {"N2", "NTot", "B2", "BTot", "Bg"} means
+        /// </summary>
+        /// <param name="avgs"></param>
+        /// <param name="subtractBackground"></param>
+        /// <param name="subtractDark"></param>
+        /// <returns></returns>
         public static double Asymmetry(Dictionary<string, double> avgs, bool subtractBackground = true, bool subtractDark = true)
         {
             var n2 = avgs["N2"];
@@ -94,6 +103,11 @@ namespace Axel_hub
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Restrict phase to 2Pi
+        /// </summary>
+        /// <param name="phi"></param>
+        /// <returns></returns>
         public static double Restrict2twoPI(double phi) 
         {            
             double ph = phi;
@@ -106,6 +120,9 @@ namespace Axel_hub
 #endregion DataConvertion
 
 #region shots collection
+    /// <summary>
+    /// Class representing single shot with both components quant (MOT) and MEMS (ADC24)
+    /// </summary>
     public class SingleShot
     {
         protected string precision = "G5";
@@ -114,6 +131,9 @@ namespace Axel_hub
         private List<Point> _mems; // each point .X - time[s]; .Y - accel.[mg]; the range of mems.X supposed to be 3 times the quant measurement with the quant measuremen in the middle
         public List<Point> mems { get { return _mems; } set { _mems.Clear(); _mems.AddRange(value); } }
 
+        /// <summary>
+        /// Number of constructors
+        /// </summary>
         public SingleShot()
         {
             quant = new Point(-1, 0);
@@ -129,19 +149,28 @@ namespace Axel_hub
             quant = new Point(q.X, q.Y);
             _mems = new List<Point>();
         }
-
         public SingleShot(Point q, List<Point> m)
         {
             quant = new Point(q.X, q.Y);
             _mems = new List<Point>(m);
         }
 
+        /// <summary>
+        /// Check if empty
+        /// </summary>
+        /// <returns></returns>
         public bool IsEmpty()
         {
             if(Utils.isNull(quant) || Utils.isNull(_mems)) return true;
             return (quant.X < 0) || (_mems.Count < 3);
         }
 
+        /// <summary>
+        /// Find index for specific time
+        /// </summary>
+        /// <param name="tm"></param>
+        /// <param name="smart">More direct way with some assumptions</param>
+        /// <returns></returns>
         public int idxByTime(double tm, bool smart = true)
         {
             int idx = -1; int ml = mems.Count - 1; int j = 0;
@@ -164,6 +193,11 @@ namespace Axel_hub
             return Utils.EnsureRange(idx, -1, ml);
         }
 
+        /// <summary>
+        /// Get part of mems within a reange
+        /// </summary>
+        /// <param name="rng"></param>
+        /// <returns></returns>
         public List<Point> memsPortion(Range<double> rng)
         {
             List<Point> ls = new List<Point>();
@@ -172,8 +206,14 @@ namespace Axel_hub
             return ls;
         }
 
-        public double memsWeightAccel(double delay, double duration = -1, bool triangle = true) // delay reference to quant.X
-        // alternative to triangle is uniform
+        /// <summary>
+        /// Calculating mems acceleration time-related to quant point
+        /// </summary>
+        /// <param name="delay">delay reference to quant.X</param>
+        /// <param name="duration">the range length</param>
+        /// <param name="triangle">alternative to triangle is uniform</param>
+        /// <returns></returns>
+        public double memsWeightAccel(double delay, double duration = -1, bool triangle = true) 
         {
             if (IsEmpty()) return Double.NaN;
             double dur = (duration < 0) ? (mems[mems.Count-1].X - mems[0].X)/3: duration;
@@ -207,6 +247,11 @@ namespace Axel_hub
             return sum / len;
         }
 
+        /// <summary>
+        /// Accelerations components in a dictinary with order, resid, etc.
+        /// </summary>
+        /// <param name="fringeScale"></param>
+        /// <returns></returns>
         public Dictionary<string, double> deconstructAccel(double fringeScale)
         {
             Dictionary<string, double> da = new Dictionary<string, double>(); double resid;
@@ -230,6 +275,9 @@ namespace Axel_hub
             return da;
         }
 
+        /// <summary>
+        /// A single shot in JSON format for file import/export
+        /// </summary>
         public string AsString
         {
             get
@@ -260,6 +308,9 @@ namespace Axel_hub
         }
     }
 
+    /// <summary>
+    /// List / series of single shots 
+    /// </summary>
     public class ShotList : List<SingleShot>
     {
         protected int depth = 10000; // max number of last items with direct access; for the whole thing - archyScan
@@ -274,10 +325,15 @@ namespace Axel_hub
         StreamReader streamReader = null;
         FileLogger streamWriter = null;
 
-        public ShotList(bool arch = true, string FN = "", string prefix = "")
-            // if arch -> open file if FN not empty, or create FN if empty
-            // if not arch -> ignore FN and prefix 
-            : base()
+        /// <summary>
+        /// Class constructor
+        /// if arch -> open file if FN not empty, or create FN if empty
+        /// if not arch -> ignore FN and prefix 
+        /// </summary>
+        /// <param name="arch">log the incomming data</param>
+        /// <param name="FN"></param>
+        /// <param name="prefix"></param>
+        public ShotList(bool arch = true, string FN = "", string prefix = ""): base()
         {
             archiveMode = arch; 
             if (arch)
@@ -299,6 +355,10 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// New Add with optional log and size limit
+        /// </summary>
+        /// <param name="ss"></param>
         new public void Add(SingleShot ss) 
         {
             if (!enabled) return;
@@ -313,6 +373,9 @@ namespace Axel_hub
         }
 
         private bool _enabled = true;
+        /// <summary>
+        /// Log ON/OFF
+        /// </summary>
         public bool enabled 
         {
             get { return _enabled; }
@@ -327,6 +390,9 @@ namespace Axel_hub
         }
  
         public int lastIdx { get; private set; }
+        /// <summary>
+        /// Reset scan of archive
+        /// </summary>
         public void resetScan()
         {
             if(savingMode) throw new Exception("No scanning in saving mode!");
@@ -346,14 +412,19 @@ namespace Axel_hub
                 bool next;
                 do
                 {
-                    this.Add(archyScan(out next));
+                    this.Add(archiScan(out next));
                 } while (next);
                 archiveMode = false;
             }
         }
 
         private string buffer = String.Empty;
-        public SingleShot archyScan(out bool next) // next is false on the last item
+        /// <summary>
+        /// Get the next scan from a file
+        /// </summary>
+        /// <param name="next">next is false on the last item</param>
+        /// <returns></returns>
+        public SingleShot archiScan(out bool next) // 
         {            
             if (!archiveMode)
             {
@@ -371,6 +442,11 @@ namespace Axel_hub
             return ss;
         }
 
+        /// <summary>
+        /// Save a file with JSON of single shots per line
+        /// read the format with ResetScan And ArchiScan
+        /// </summary>
+        /// <param name="FN"></param>
         public void Save(string FN = "")
         {
             if (FN.Equals(""))

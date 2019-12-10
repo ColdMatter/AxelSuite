@@ -12,11 +12,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UtilsNS;
 
-namespace AxelHMemsNS
+namespace Axel_hub
 {
+    /// <summary>
+    /// Acceleration calibration with optional temperature compensation 
+    /// particular to each MEMS device
+    /// </summary>
     public struct accelCalibr
     {
-
         public string model;
         public string SN;
         public double rAccel; // in Omhs
@@ -26,6 +29,13 @@ namespace AxelHMemsNS
         public double[] pK0;
         public double[] pK1;
 
+        /// <summary>
+        /// The actual calibration from [V] to [mg] with optional temperature compensation 
+        /// </summary>
+        /// <param name="accelV"></param>
+        /// <param name="temperV"></param>
+        /// <param name="tempComp"></param>
+        /// <returns></returns>
         public double accel(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
         {
             double K0 = 0; double K1 = 0;
@@ -49,11 +59,20 @@ namespace AxelHMemsNS
         }
     } 
 
+    /// <summary>
+    /// The hardware abstraction for MEMS with ADC24 (NI9251) device
+    /// </summary>
     public class AxelMems
     {        
         private Stopwatch sw = null;
-        public bool AdjustTimelineToStopwatch = false;  // false - use the set time interval between points
-                                                        // true - adjust the time interval to stopwatch markers
+        /// <summary>
+        /// false - use the set time interval between points
+        /// true - adjust the time interval to stopwatch markers
+        /// </summary>
+        public bool AdjustTimelineToStopwatch = false;  
+        /// <summary>
+        /// NI9251 support fixed sampling freq listed here
+        /// </summary>
         public readonly double[] FixConvRate = { 102400, 51200, 34133, 25600, 20480, 17067, 14629, 12800, 11378,
             10240, 9309, 8533, 7314, 6400, 5689, 5120, 4655, 4267, 3657, 3200, 2844, 2560, 2327, 2133, 1829,
             1600, 1422, 1280, 1164, 1067, 914, 800, 711, 640, 582, 533, 457, 400, 356, 320, 291, 267 }; // [Hz]
@@ -75,6 +94,10 @@ namespace AxelHMemsNS
         public int Timeout = -1; // [sec] ; -1 - no timeout
         public List<double> rawData = null;
         
+        /// <summary>
+        /// Inner makings of continious (no gaps) data acquisition 
+        /// refer. NI9251 and related documentation
+        /// </summary>
         private Task voltageInputTask = null;
         private AnalogMultiChannelReader VIReader = null;
         private AIChannel axelAIChannel;
@@ -86,6 +109,11 @@ namespace AxelHMemsNS
         private AnalogWaveform<double>[] waveform;
         DispatcherTimer dTimer;
 
+        /// <summary>
+        /// Class contructor
+        /// </summary>
+        /// <param name="hwFile">Hardware file (NI9251 settings)</param>
+        /// <param name="memsFile">Mems calibration and teperature compensation</param>
         public AxelMems(string hwFile = "", string memsFile= "") // memsFile - no ext
         {
             sw = new Stopwatch();
@@ -118,6 +146,9 @@ namespace AxelHMemsNS
             Reset();
         }
 
+        /// <summary>
+        /// Stopwatch routines
+        /// </summary>
         public void StartStopwatch()
         {
             if (Utils.isNull(sw)) sw = new Stopwatch();
@@ -127,7 +158,6 @@ namespace AxelHMemsNS
         {
             if(!Utils.isNull(ext_sw)) sw = ext_sw;
         }
-
         public double TimeElapsed() // [sec]
         {
             if(!sw.IsRunning) return double.NaN;
@@ -143,6 +173,11 @@ namespace AxelHMemsNS
 
         public int activeChannel { get; set; } // 0,1 or 2 for both; 3 for chn.1 of PXIe
 
+        /// <summary>
+        /// Find nearest up sampling freq
+        /// </summary>
+        /// <param name="wantedCR">Desired freq</param>
+        /// <returns></returns>
         public double RealConvRate(double wantedCR)
         {   
             int found = -1;
@@ -170,6 +205,10 @@ namespace AxelHMemsNS
         }
 
         #region async aqcuisition (working) 
+        /// <summary>
+        /// Inner methods of continious (no gaps) data acquisition 
+        /// refer. NI9251 and related documentation
+        /// </summary>
         public double[,] readBurst(int nPoints) // synchro read
         {   
             int np = nSamples;
@@ -182,7 +221,6 @@ namespace AxelHMemsNS
             voltageInputTask.Stop();
             return aiData;
         }
-
         public void configureVITask(string physicalChn, int numbSamples, double samplingRate) // obsolete, but good to have as how to configure acquisition task
         {
             if(Utils.isNull(voltageInputTask)) voltageInputTask = new Task();
@@ -199,6 +237,10 @@ namespace AxelHMemsNS
         }
         #endregion
 
+        /// <summary>
+        /// Check for device presence
+        /// </summary>
+        /// <returns></returns>
         public bool isDevicePlugged()
         {
             if (hw.ContainsKey("device")) return isDevicePresent(hw["device"]);
@@ -215,6 +257,9 @@ namespace AxelHMemsNS
             return rslt;
         }
 
+        /// <summary>
+        /// Reset before new series of measurements
+        /// </summary>
         public void Reset() // for all purposes
         {
             if (!Utils.isNull(axelAIChannel)) axelAIChannel.Dispose();
@@ -249,6 +294,11 @@ namespace AxelHMemsNS
             if (OnAcquire != null) OnAcquire(data, out next);
         }
 
+        /// <summary>
+        /// Set conditions for new data acquisition series
+        /// </summary>
+        /// <param name="samplesPerChannel"></param>
+        /// <param name="samplingRate"></param>
         public void StartAcquisition(int samplesPerChannel, double samplingRate) // acquisition
         {
             try
@@ -319,8 +369,12 @@ namespace AxelHMemsNS
             _running = next;
         }
 
-        double lastTime;
-        long lastCount;
+        double lastTime; long lastCount;
+        /// <summary>
+        /// The smart part of how to avoid the gaps in data-acquisition
+        /// and different way to stitch buffers together with flowless (or almost) time scale
+        /// </summary>
+        /// <param name="ar"></param>
         private void AnalogInCallback(IAsyncResult ar)
         {
             if (!running) return;
@@ -397,6 +451,10 @@ namespace AxelHMemsNS
         }
         #endregion
     }
+
+    /// <summary>
+    /// The temperature in a class abstraction
+    /// </summary>
     public class AxelMemsTemperature
     { 
         public Dictionary<string, string> hw = new Dictionary<string, string>();
@@ -413,6 +471,10 @@ namespace AxelHMemsNS
             if (File.Exists(fn)) hw = Utils.readDict(fn);
         }
 
+        /// <summary>
+        /// The actual temperature measurement
+        /// </summary>
+        /// <returns></returns>
         public double [] TakeTheTemperature()
         {
             double[] rslt = null;
@@ -446,36 +508,5 @@ namespace AxelHMemsNS
             }
             return rslt;
         }
-    }
-/*
-        #region flag (running) synchronized aqcuisition -> OBSOLETE !!!
-        public void readInVoltages()
-        {
-            //int nSamplesOut;
-            _running = true;
-            //voltageInputTask.Start();
-            //aiData =  VIReader.ReadMultiSample(nSamples);           
-            //VIReader.MemoryOptimizedReadMultiSample(nSamples, ref aiData, out nSamplesOut);
-            VIReader.BeginReadMultiSample(nSamples, ReadComplete, null);
-            //if (!nSamplesOut.Equals(nSamples)) Utils.errorMessage("Less than required number of points in aquisition");
-            //voltageInputTask.Stop();
-            //return aiData;
-        }
-
-        private void ReadComplete(IAsyncResult result)
-        {
-            // Because the UI thread calls BeginReadMultiSample,
-            // this callback will execute in the UI thread.
-            double[,] dt = VIReader.EndReadMultiSample(result); // waits the end of acquisition
-            rawData = new List<double>();
-            rawData.Clear();
-            int nSamples = dt.GetLength(1);
-            for (int i = 0; i < nSamples; i++)
-            {
-                rawData.Add(-dt[0, i]); // the minus is to match accelertion by sign, same effect as switching the diff. input over
-            }
-            _running = false;
-        }
-        #endregion
-*/    
+    } 
 }

@@ -13,8 +13,7 @@ IN SOME POSSIBLE FUTURE
 AxelHub
 ==================
 
-- regular check of the contrast, option for that
 - count the disbalance into the quant. accel.
-
-- config - quant - AxelProbe (only 0 order); MEMS - NI9251 
-- tests 
+- log Raw Mems data for sampling rate under ???
+- StackMode of DataStack ?
+- S.G.Filter in Diff term in PID

@@ -24,6 +24,9 @@ using UtilsNS;
 namespace Axel_probe
 {
     /// <summary>
+    /// Axel-probe is replacement simulator for MotMaster2 
+    /// generating signal according to a settings corresponding to some experimental conditions
+    /// 
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
@@ -44,6 +47,9 @@ namespace Axel_probe
 
         ProbeEngine pe; 
 
+        /// <summary>
+        /// Class contructor
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -72,8 +78,11 @@ namespace Axel_probe
             grFringes.DataSource = pe.srsFringes;
             graphNs.Data[0] = pe.srsSignalN;
             graphNs.Data[1] = pe.srsSignalB;
-         }
-
+        }
+        
+        /// <summary>
+        /// Update internal PE params from visual ones
+        /// </summary>
         void Vis2PEparams()
         {
             if (Utils.isNull(pe)) return;
@@ -93,6 +102,10 @@ namespace Axel_probe
             pe.dps["BrthPeriod"] = ndBreathePeriod.Value;
             pe.dps["BrthIO"] = chkBreathing.IsChecked.Value;
         }
+
+        /// <summary>
+        /// Update visual components values from internal PE ones
+        /// </summary>
         void PEparams2Vis()
         {
             if (Utils.isNull(pe)) return;
@@ -114,6 +127,11 @@ namespace Axel_probe
             pe.LockParams = false;
         }
 
+        /// <summary>
+        /// Update simulation params from visual ones (double values)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ndGaussNoiseX_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {
             if (Utils.isNull(pe)) return;
@@ -123,6 +141,11 @@ namespace Axel_probe
             pe.dps["BrthApmpl"] = ndBreatheAmpl.Value;
             pe.dps["BrthPeriod"] = ndBreathePeriod.Value;
         }
+        /// <summary>
+        /// Update simulation params from visual ones (boolean values)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ndGaussNoiseX_ValueChanged(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(pe)) return;
@@ -131,17 +154,31 @@ namespace Axel_probe
             pe.dps["YnoiseIO"] = chkAddGaussY.IsChecked.Value;
             pe.dps["BrthIO"] = chkBreathing.IsChecked.Value;
         }
+        /// <summary>
+        /// Update simulation params from visual ones (selection values)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ndGaussNoiseX_ValueChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Utils.isNull(pe)) return;
             if (pe.LockParams) return;
             pe.dps["BrthPattern"] = cbBrthPattern.SelectedIndex;
         }
+        /// <summary>
+        /// Pause the execution for diagnostics
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkPause_Checked(object sender, RoutedEventArgs e)
         {
             pe.Pause = chkPause.IsChecked.Value;
         }
 
+        /// <summary>
+        /// Event method when acceleration changes
+        /// </summary>
+        /// <param name="newAccel"></param>
         void OnChangeEvent(Point newAccel)
         {
             if (newAccel.X < ndStep.Value) ramp.Clear();
@@ -152,6 +189,11 @@ namespace Axel_probe
             ramp.Add(newAccel);
         }
 
+        /// <summary>
+        /// Log some text on the text-box on the right
+        /// </summary>
+        /// <param name="txt"></param>
+        /// <param name="clr"></param>
         private void log(string txt, System.Windows.Media.Color? clr = null)
         {
             if (txt.Length > 0)
@@ -170,36 +212,39 @@ namespace Axel_probe
             Utils.log(tbLog, txt, clr);
         }
         
+        /// <summary>
+        /// Extensive logs for debuging switchable by debugMode
+        /// </summary>
         private bool debugMode = true;
         private void dlog(string txt)
         {
             if(debugMode) log(txt);
         }
 
-        Random rand = new Random(); 
+        /// <summary>
+        /// New acceleration point with optional noise by X and Y
+        /// </summary>
+        /// <returns></returns>
         public Point Gauss()
         {
             Point g = new Point(0, 0);
             if (chkAddGaussX.IsChecked.Value)
             {
-                g.X = Gauss01() * ndGaussNoiseX.Value;
+                g.X = Utils.Gauss01() * ndGaussNoiseX.Value;
             }
             if (chkAddGaussY.IsChecked.Value)
             {
-                g.Y = Gauss01() * ndGaussNoiseY.Value / 100;
+                g.Y = Utils.Gauss01() * ndGaussNoiseY.Value / 100;
             }
             return g;
         }
 
-        public double Gauss01()  //random normal mean:0 stDev:1
-        {
-            double u1 = 1.0 - rand.NextDouble(); //uniform(0,1] random doubles
-            double u2 = 1.0 - rand.NextDouble();
-            double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
-                         Math.Sin(2.0 * Math.PI * u2); 
-            return randStdNormal;
-        }
-
+        /// <summary>
+        /// Add rescaling of the fringes in Sin pattern
+        /// to simulate changing the overall conditions 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public double Breathing(double x)
         {
             if (!chkBreathing.IsChecked.Value) return 0;
@@ -208,7 +253,12 @@ namespace Axel_probe
             return per * norm;
         }
 
-        private double accelDrift(double pos) // return drift [mg] at pos for selected accel. trend
+        /// <summary>
+        /// Calculates drift [mg] at pos for selected accel. trend
+        /// </summary>
+        /// <param name="pos">[0..driftPeriod]</param>
+        /// <returns>Result drift [mg]</returns>
+        private double accelDrift(double pos) 
         {
             double halfPrd = 0.5*driftPeriod;
             double rng = ndAmplitude.Value;
@@ -239,12 +289,19 @@ namespace Axel_probe
             }
             return drift;
         }
-        // essential calcs
+        /// <summary>
+        /// Claculates centre of the frindge
+        /// </summary>
+        /// <returns></returns>
         private double centreFringe()
         {
             return (((double)crsUpStrobe.AxisValue + (double)crsDownStrobe.AxisValue) / 2);
         }
-        public double zeroFringe() // [rad] [-pi..pi]
+        /// <summary>
+        /// ZeroFringe is centre fringe but limited to [-pi..pi] (by adding / substr 2*Pi)
+        /// </summary>
+        /// <returns>[rad] </returns>
+        public double zeroFringe() 
         {
             double cp = Double.NaN;
             if ((double)crsDownStrobe.AxisValue < (double)crsUpStrobe.AxisValue) cp = Math.PI - centreFringe();
@@ -253,7 +310,15 @@ namespace Axel_probe
             if (Utils.InRange(cp, Math.PI, 3 * Math.PI)) cp -= 2 * Math.PI;
             return cp;
         }
-        private double accelOrder(double accel, double factor, out double resid) // accel [mg]; factor [mg/rad]; resid [rad]
+
+        /// <summary>
+        /// Calculates acceleration order
+        /// </summary>
+        /// <param name="accel">acceleration [mg]</param>
+        /// <param name="factor">conversion factor [mg/rad]</param>
+        /// <param name="resid">residual [rad]</param>
+        /// <returns>acceleration order</returns>
+        private double accelOrder(double accel, double factor, out double resid) // ; ; 
         {
             double accelRad = accel / factor;
             if (Utils.InRange(accelRad, -Math.PI, Math.PI))
@@ -269,7 +334,17 @@ namespace Axel_probe
                 return aOrd; 
             }
         }
-        public double resultAccel(double order, double resid, double factor, out double orderAccel, out double residAccel) // order (from mems); resid (from quantum) [rad]; factor [mg/rad]; returns accel [mg]
+
+        /// <summary>
+        /// Calculates acceleration from MEMS and Quantum
+        /// </summary>
+        /// <param name="order">order (from mems)</param>
+        /// <param name="resid">resid (from quantum) [rad]</param>
+        /// <param name="factor">factor [mg/rad]</param>
+        /// <param name="orderAccel">acceleration order</param>
+        /// <param name="residAccel">acceleration residual</param>
+        /// <returns>accel [mg]</returns>
+        public double resultAccel(double order, double resid, double factor, out double orderAccel, out double residAccel) // ; ; ; returns 
         {
             residAccel = resid * factor;
             if (Utils.InRange(order, -0.01, 0.01)) // 0 order
@@ -283,10 +358,16 @@ namespace Axel_probe
             }       
             return orderAccel + residAccel; 
         }
-
+        
+        /// <summary>
+        /// Decompose acceleration to all possible components (incl. mems &  
+        /// </summary>
+        /// <param name="accel">accelarion [mg] - target(real)</param>
+        /// <param name="mems">mems accel.[mg] - measured (real + noise)</param>
+        /// <param name="factor">conversion factor [mg/rad]</param>
+        /// <returns>Dictionary with all the components</returns>
         public Dictionary<string, double> decomposeAccel(double accel, double mems, double factor)
         {
-            // accel[mg] - target(real); mems[mg] - measured (real + noise); fringeTop[mg] - from PID follow; factor [mg/rad]
             Dictionary<string, double> da = new Dictionary<string, double>();
             da["accel.R"] = accel; // R for refer
             double resid;
@@ -323,7 +404,14 @@ namespace Axel_probe
         }
 
         Dictionary<string, double> lastDecomposedAccel = new Dictionary<string, double>();
-        private double calcAtPos(bool jumbo, double driftPos, bool odd) // driftPos - [0..driftPeriod]; odd - odd/even number for 2 strobe mode
+        /// <summary>
+        /// Calculate acceleration at specific acceleration position in [0..driftPeriod] interval
+        /// </summary>
+        /// <param name="jumbo">Simple or Jumbo mode</param>
+        /// <param name="driftPos">driftPos - [0..driftPeriod]</param>
+        /// <param name="odd">odd - odd/even number for 2 strobe mode</param>
+        /// <returns></returns>
+        private double calcAtPos(bool jumbo, double driftPos, bool odd) // ; 
             // returns drift [mg]
         {
             double err;
@@ -353,6 +441,9 @@ namespace Axel_probe
             return driftAcc;
         }
         
+        /// <summary>
+        /// Clear the visual components
+        /// </summary>
         private void ClearVis()
         {
             double rng = ndAmplitude.Value;
@@ -365,6 +456,9 @@ namespace Axel_probe
             ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
         }
 
+        /// <summary>
+        /// Wrap Run button value as property
+        /// </summary>
         public bool Running 
         {
             get { return bbtnRun.Value; }
@@ -372,6 +466,11 @@ namespace Axel_probe
         }
  
         bool stopRequest = false; List<double> devList = new List<double>();
+        /// <summary>
+        /// Run (stop) something according the active mode 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnRun_Click(object sender, RoutedEventArgs e)
         {
             Running = !Running;
@@ -386,7 +485,12 @@ namespace Axel_probe
                 pe.Stop();
             }
         }
-
+        
+        /// <summary>
+        /// Stuff to do when app closes
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void frmMain_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Vis2PEparams();
@@ -400,6 +504,11 @@ namespace Axel_probe
         }
 
         int iStDepth = 5; int dStDepth = 3; // history depths 
+        /// <summary>
+        /// PID for internal testing
+        /// </summary>
+        /// <param name="diffY"></param>
+        /// <returns></returns>
         public double PID(double diffY) // returns correction
         {
             double pTerm = diffY; // proportional
@@ -423,6 +532,12 @@ namespace Axel_probe
                      "| new:" + pe.srsFringes[curIdx1].X.ToString("G3") + "/" + pe.srsFringes[curIdx1].Y.ToString("G3"));  // new pos X,Y
             return cr;
         }
+
+        /// <summary>
+        /// Convert [rad] in [mg] in fringe
+        /// </summary>
+        /// <param name="rad"></param>
+        /// <returns></returns>
         public double fringeRad2mg(double rad)
         {
             double cp = rad - Math.PI;
@@ -433,7 +548,11 @@ namespace Axel_probe
 
             throw new Exception("Result phase out of range -> " + cp.ToString());
         }
-
+        /// <summary>
+        /// Convert [mg] in [rad] in fringe
+        /// </summary>
+        /// <param name="rad"></param>
+        /// <returns></returns>
         public double fringeMg2rad(double mg)
         {
             double cp = mg / ndOrderFactor.Value;
@@ -444,6 +563,11 @@ namespace Axel_probe
             throw new Exception("Result phase out of range -> " + cp.ToString());
         }
 
+        /// <summary>
+        /// For single strobe (obsolete)
+        /// </summary>
+        /// <param name="drift"></param>
+        /// <returns></returns>
         private double SingleAdjust(double drift) // return error in fringe position/phase
         {
             double curX = (double)crsDownStrobe.AxisValue;
@@ -463,10 +587,14 @@ namespace Axel_probe
         }
 
         double downhillLvl = double.NaN, uphillLvl = double.NaN;
-        private double DoubleAdjust(bool even, double accel) // return error in fringe position/phase
+        /// <summary>
+        /// Calculates the error in fringe position/phase
+        /// </summary>
+        /// <param name="even"></param>
+        /// <param name="accel">accel [mg] - set in fringes </param>
+        /// <returns></returns>
+        private double DoubleAdjust(bool even, double accel) 
         {
-            // accel [mg] - set in fringes 
-
             // simulation of measurement at cursor position
             int curIdx1, curIdx2; double cx, curX1, curX2;
             if (even) // even (down)
@@ -516,12 +644,20 @@ namespace Axel_probe
                 log("Accel= " + ndAmplitude.Value.ToString("G3") + " / " + driftPeriod.ToString("G3") + " / " + ndStep.Value.ToString("G3") + " ;");
             }
         }
-
+        /// <summary>
+        /// Clear log text-box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
             tbLog.Document.Blocks.Clear(); 
         }
-
+        /// <summary>
+        /// Single strobe (obsolete)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbSingle_Checked(object sender, RoutedEventArgs e)
         {
             if ((crsUpStrobe == null) || (crsDownStrobe == null)) return;
@@ -531,7 +667,12 @@ namespace Axel_probe
             downhillLvl = double.NaN; uphillLvl = double.NaN;
             
         }
-
+        
+        /// <summary>
+        /// Actions after the form is loaded
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void frmMain_Loaded(object sender, RoutedEventArgs e)
         {
             remote = new RemoteMessaging("Axel Hub");
@@ -546,6 +687,11 @@ namespace Axel_probe
         }
 
         private MMexec lastGrpExe;
+        /// <summary>
+        /// Event when the communication goes on/off 
+        /// </summary>
+        /// <param name="active"></param>
+        /// <param name="forced"></param>
         private void OnActiveComm(bool active, bool forced)
         {
             ledComm.Value = active;
@@ -564,6 +710,11 @@ namespace Axel_probe
             }
         }
 
+        /// <summary>
+        /// Check the communication validity
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnCommCheck_Click(object sender, RoutedEventArgs e)        
         {
             chkRemoteEnabled.SetCurrentValue(CheckBox.IsCheckedProperty, true);
@@ -576,6 +727,11 @@ namespace Axel_probe
            }
         }
 
+        /// <summary>
+        /// Get next message
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
         private bool OnReceive(string json)
         {
             //if (string.IsNullOrEmpty(json) == true) // throw new Exception("Nothing to receive");
@@ -692,6 +848,9 @@ namespace Axel_probe
             }
         }
 
+        /// <summary>
+        /// Start Jumbo repeat group
+        /// </summary>
         bool wait4adjust = false; double xDownPos = 0, xUpPos = 0;
         private void JumboRepeat(int cycles, string groupID)
         {
@@ -818,6 +977,11 @@ namespace Axel_probe
 12 acc=1.2: 12 down >> 1.257; A= -0.4401
 -----------------------------------
 */
+        /// <summary>
+        /// Simple scan mode initiation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnScan_Click(object sender, RoutedEventArgs e)
         {
             string msg;
@@ -843,7 +1007,11 @@ namespace Axel_probe
                 pe.remoteMode = RemoteMode.Ready_To_Remote;
             }
         }
-
+        /// <summary>
+        /// Simple repeat mode initiation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnRepeat_Click(object sender, RoutedEventArgs e)
         {
             string msg;
@@ -868,6 +1036,11 @@ namespace Axel_probe
             pe.remoteMode = RemoteMode.Ready_To_Remote;
         }
 
+        /// <summary>
+        /// Connect/disconnect
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkRemoteEnabled_Checked(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(remote)) return;
@@ -876,6 +1049,11 @@ namespace Axel_probe
             remote.CheckConnection(true);
         }
 
+        /// <summary>
+        /// Abort here and send Abort to partner
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnAbort_Click(object sender, RoutedEventArgs e)
         {
             switch (pe.remoteMode)
@@ -910,6 +1088,11 @@ namespace Axel_probe
         }
 
         List<double> ress; 
+        /// <summary>
+        /// Customizable from code (HERE) scan
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnCustomScan_Click(object sender, RoutedEventArgs e)
         {
             logger.Enabled = true; ress = new List<double>(); 
@@ -924,12 +1107,22 @@ namespace Axel_probe
             logger.Enabled = false;
         }
 
+        /// <summary>
+        /// Control the flow (pause) with NumPad keys 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void frmMain_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key.Equals(Key.NumPad0)) chkPause.IsChecked = !chkPause.IsChecked.Value;
             if (e.Key.Equals(Key.NumPad1)) pe.pauseSingle();
         }
-
+        
+        /// <summary>
+        /// About applilcation message box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void imgAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
             MessageBox.Show("           Axel Probe v2.0 \n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
@@ -943,86 +1136,14 @@ namespace Axel_probe
             if (rbYaxis.IsChecked.Value) pe.axis = 1;
             if (rbXYaxes.IsChecked.Value) pe.axis = 2;
         }
-
+        /// <summary>
+        /// Control the speed by changing the time gap
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ndTimeGap_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {
             if (!Utils.isNull(pe)) pe.bpps["TimeGap"] = ndTimeGap.Value;
         }
      }
 }
-
-
-/*       private double fringesGenerator(double driftPos, double driftAcc) // return 
-        {
-            double sp = 0; double noise = Gauss().X;
-            fringes.Clear(); double orderFactor = ndOrderFactor.Value; 
-            while ((sp < 4 * Math.PI) && !stopRequest)
-            {
-                fringes.Add(new Point(sp, Breathing(driftPos) + Math.Cos(sp - driftAcc / orderFactor + noise) + Gauss().Y));
-                sp += Math.PI / 200;
-                //if ((k % 10) == 0) { Utils.DoEvents(); k++; }
-            }
-            grFringes.DataSource = fringes;
-            return driftAcc + noise;
-        }*/
-
-/*     private void btnReset_Click(object sender, RoutedEventArgs e)
-{
-stopRequest = true;
-double rng = ndAmplitude.Value;
-double step = ndStep.Value;
-downhillLvl = double.NaN; uphillLvl = double.NaN;
-((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
-((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng * 1.05, rng * 1.05);
-((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
-
-ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
-fringesGenerator(0, 0);
-}*/
-
-
-/*            return;
-            Utils.DoEvents();
-            Running = !Running;
-            if (Running)
-            {
-                logger.AutoSaveFileName = ""; logger.Enabled = true; sw.Start();
-            }
-            else
-            {
-                logger.Enabled = false;
-            }
-            stopRequest = !Running;
-            Utils.DoEvents();
-            if (stopRequest) return;
-
-            double rng = ndAmplitude.Value;
-            double step = ndStep.Value;
-            downhillLvl = double.NaN; uphillLvl = double.NaN;
-            ((AxisDouble)grRslt.Axes[0]).Range = new Range<double>(0, driftPeriod);
-            ((AxisDouble)grRslt.Axes[1]).Range = new Range<double>(-rng*1.05, rng*1.05);
-            ((AxisDouble)grRslt.Axes[2]).Range = new Range<double>(-0.1, 0.1);
-
-            double drift, pos; int j; pauseSingle = false;
-             //tbLog.Text = ""; 
-            log("RUN -> " + cbDriftType.Text);
-            do
-            {
-                ramp.Clear(); corr.Clear(); corrList.Clear(); devList.Clear();
-                pos = 0; j = 0;  
-                while ((pos < driftPeriod + 0.0001) && !stopRequest)
-                {
-                    drift = calcAtPos(true, pos, (j % 2) == 1);
-                    pos += step; j++;
-                    do
-                    {
-                        Utils.DoEvents(); 
-                    } while (chkPause.IsChecked.Value && !pauseSingle);
-                    pauseSingle = false;
-                    System.Threading.Thread.Sleep((int)ndDelay.Value);
-                }                
-                if (corrList.Count > 0)
-                    log("Aver.dev.=" + devList.ToArray().Average().ToString("G4") + "\n====================");
-            } while ((cbFinite.SelectedIndex == 1) && !stopRequest);
-            Running = false; logger.Enabled = false; sw.Stop();*/
-

@@ -37,7 +37,6 @@ using NationalInstruments.Controls.Primitives;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using AxelHMemsNS;
 using UtilsNS;
 using OptionsNS;
 
@@ -53,7 +52,7 @@ namespace Axel_hub
             InitializeComponent();
 
             _Running = false;
-            tabSecPlots.SelectedIndex = 4;
+            tabSecPlots.SelectedIndex = 3;
             //
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
 
@@ -64,6 +63,14 @@ namespace Axel_hub
         Modes modes = null;
         public AxelMems axelMems = null; 
         public string prefix { get; private set; }
+
+        /// <summary>
+        /// Initialize the component with inner structure and context genOptions & Modes 
+        /// </summary>
+        /// <param name="_genOptions">From Options.cs</param>
+        /// <param name="_modes">Modes from parent AxelAxis</param>
+        /// <param name="_axelMems"></param>
+        /// <param name="_prefix"></param>
         public void InitOptions(ref GeneralOptions _genOptions, ref Modes _modes, ref AxelMems _axelMems, string _prefix = "")
         {
             if (Utils.isNull(_genOptions)) Utils.TimedMessageBox("Non-existant options");
@@ -101,6 +108,12 @@ namespace Axel_hub
 
         public double memsTemperature { get; set; }
 
+        /// <summary>
+        /// Calibration V to mg with optional temperature compensation  
+        /// </summary>
+        /// <param name="accelV"></param>
+        /// <param name="temperV"></param>
+        /// <returns></returns>
         public double convertV2mg(double accelV, double temperV = double.NaN)
         {
             double rslt = double.NaN; bool tempComp = genOptions.TemperatureEnabled && genOptions.TemperatureCompensation && !temperV.Equals(double.NaN);
@@ -109,7 +122,9 @@ namespace Axel_hub
             return rslt;
         }
 
-        public bool testProp { get; set; }
+        /// <summary>
+        /// Clear all the data and visual components
+        /// </summary>
         public void Clear() 
         {
             if(!Utils.isNull(Waveform)) Waveform.Clear(); 
@@ -125,6 +140,10 @@ namespace Axel_hub
             chkWindowMode.IsChecked = false; chkVisWindow_Checked(null, null);
         }
 
+        /// <summary>
+        /// Update info label caption
+        /// </summary>
+        /// <param name="info"></param>
         public void SetInfo(string info = "")
         {
             Waveform.logger.header = info;
@@ -136,19 +155,14 @@ namespace Axel_hub
             if(seStackDepth.Value < (depth*1.2)) seStackDepth.Value = (int)(depth*1.2);
         }
 
-        public double SamplingPeriod
-        {
-            get;
-            set;
-        }
+        public double SamplingPeriod { get; set;  }
 
-        public DataStack Waveform
-        {
-            get; 
-            set;
-        }
+        public DataStack Waveform { get; set;  }
 
         private bool _Running;
+        /// <summary>
+        /// Some actions when the acquisition start/stop
+        /// </summary>
         public bool Running
         {
             get { return _Running; }
@@ -171,7 +185,7 @@ namespace Axel_hub
                     Refresh(null, null);
                 }
                 if (Running == value) return;
-                bool bb = value && chkResultsLog.IsChecked.Value;
+                bool bb = value && chkAccelLog.IsChecked.Value;
                 // turn it on
                 resultStack.logger.Enabled = false;
                 if (bb) resultStack.logger = new FileLogger(prefix); 
@@ -186,7 +200,11 @@ namespace Axel_hub
                 _Running = value;
             }
         }
-
+        /// <summary>
+        /// Change horiz scale of waveform (DataStack)
+        /// </summary>
+        /// <param name="pntsIn"></param>
+        /// <returns></returns>
         private DataStack rescaleX(DataStack pntsIn) 
         {
             // internally x must be in sec !!!
@@ -223,6 +241,11 @@ namespace Axel_hub
             Refresh(null, null);
         }
 
+        /// <summary>
+        /// Main updating method when new data is in
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Refresh(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(Waveform)) return;
@@ -246,7 +269,7 @@ namespace Axel_hub
 
             if (Visibility != System.Windows.Visibility.Visible) return; // cut short if collapsed
             
-            if((bb && bc) && (chkTblUpdate.IsChecked.Value && (tabSecPlots.SelectedIndex == 4)))
+            if((bb && bc) && (chkTblUpdate.IsChecked.Value && tabSecPlots.SelectedIndex.Equals(3)))
             {
                 Application.Current.Dispatcher.BeginInvoke( DispatcherPriority.Background,
                     new Action(() =>
@@ -320,17 +343,15 @@ namespace Axel_hub
                   new Action(() => { graphScroll.Data[0] = pB; }));
             
                 switch (tabSecPlots.SelectedIndex) 
-                {
-                    case 0: if(!Utils.isNull(graphOverview.Data[0])) graphOverview.Data[0] = null; // disable
-                            break;
-                    case 1: if (pB.Count > maxVisual) // OVERVIEW
+                {                   
+                    case 0: if (pB.Count > maxVisual) // OVERVIEW
                             {
                                 Utils.TimedMessageBox("The data length is too high (" + pB.Count.ToString() + "). Showing the last "+maxVisual.ToString()+" points.");
                                 while (pB.Count > maxVisual) pB.RemoveAt(0);
                             }
                             graphOverview.Data[0] = pB;
                             break;
-                    case 2: double df; // FFT TRANSFORM
+                    case 1: double df; // FFT TRANSFORM
                             if (SamplingPeriod == 0) SamplingPeriod = (Waveform.pointXs()[Waveform.Count - 1] - Waveform.pointXs()[0]) / Waveform.Count;
                             //Measurements.AmplitudePhaseSpectrum(Ys, false, SamplingPeriod , out ampl, out phase, out df); 
                             double[] ps = Measurements.AutoPowerSpectrum(Waveform.pointYs(), SamplingPeriod, out df);  
@@ -343,7 +364,7 @@ namespace Axel_hub
                             }                        
                             graphPower.Data[0] = pl;
                             break;
-                    case 3: graphHisto.Data[0] = Histogram(Waveform); // HISTOGRAM
+                    case 2: graphHisto.Data[0] = Histogram(Waveform); // HISTOGRAM
                             break;
                 }
                 //DoEvents();
@@ -360,34 +381,33 @@ namespace Axel_hub
                 Mouse.OverrideCursor = null;
             }
         }
-  
-        private double defaultRowRatio = 0;
-        private double hiddenHeight = 28;
-
+        
+        /// <summary>
+        /// Update when turn a tab
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void tabSecPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Utils.isNull(Waveform)) return;
-            if (tabSecPlots.SelectedIndex == 0)
-            {
-                defaultRowRatio = gridAC.RowDefinitions[1].ActualHeight / gridAC.ActualHeight;
-                gridAC.RowDefinitions[1].Height = new GridLength(hiddenHeight);
-            }
-            else
-            {
-                if ((defaultRowRatio > 0) && (gridAC.RowDefinitions[1].ActualHeight < (hiddenHeight+5)))
-                {
-                    gridAC.RowDefinitions[1].Height = new GridLength(gridAC.ActualHeight * defaultRowRatio); 
-                }
-            }
             Refresh();
         }
-
+        /// <summary>
+        /// Zoom out the raw data graph
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnZoomOut_Click(object sender, RoutedEventArgs e)
         {
             curRange = (int)(curRange * 2);            
             Refresh();
         }
 
+        /// <summary>
+        /// Zoom in the raw data graph
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnZoomIn_Click(object sender, RoutedEventArgs e)
         {
             if (curRange > 2) curRange = (int)(curRange / 2);
@@ -408,6 +428,12 @@ namespace Axel_hub
         }
         #region File Operations
         //ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+        /// <summary>
+        /// Save waveform to *.ahf type file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSaveAs_Click(object sender, RoutedEventArgs e)
         {
             if (Waveform.Count == 0) throw new Exception("No data to be saved");
@@ -428,6 +454,10 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Open *.ahf type file to waveform
+        /// </summary>
+        /// <param name="fn"></param>
         public void Open(string fn)
         {
             if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
@@ -471,7 +501,10 @@ namespace Axel_hub
             }
                 
         }
-
+        /// <summary>
+        /// Button to open *.ahf type file to waveform
+        /// </summary>
+        /// <param name="fn"></param>
         private void btnOpen_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
@@ -497,7 +530,12 @@ namespace Axel_hub
         {
             ((Graph)sender).ResetZoomPan();
         }
-
+        
+        /// <summary>
+        /// Copy the image of the active tab to the clipboard
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void btnCpyPic_Click(object sender, RoutedEventArgs e)
         {
             Graph graph = null; Rect bounds; RenderTargetBitmap bitmap;
@@ -526,6 +564,12 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Create a histogram from src data
+        /// </summary>
+        /// <param name="src">Source data</param>
+        /// <param name="numBins">The number of bins</param>
+        /// <returns>The result histogram</returns>
         public DataStack Histogram(DataStack src, int numBins = 300)
         {
             if (src.Count == 0) throw new Exception("No data for the histogram");
@@ -542,6 +586,9 @@ namespace Axel_hub
             return rslt;
         }
 
+        /// <summary>
+        /// Update modes from visuals
+        /// </summary>
         public void modesFromVisual()
         {
             if(Utils.isNull(modes)) return;
@@ -557,11 +604,21 @@ namespace Axel_hub
             Waveform.Depth = (int)seStackDepth.Value;            
         }
 
+        /// <summary>
+        /// Clean it up
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
             Clear();
         }
 
+        /// <summary>
+        /// Shortcut to copy button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void graphOverview_KeyDown(object sender, KeyEventArgs e)
         {
             if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
@@ -571,6 +628,11 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Copy histogram data to clipboard
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnCpyDta3_Click(object sender, RoutedEventArgs e)
         {
             List<Point> ds = graphHisto.Data[0] as List<Point>;
@@ -588,6 +650,11 @@ namespace Axel_hub
             Utils.TimedMessageBox("The data is in the clipboard");
         }
 
+        /// <summary>
+        /// Copy power spectrum (FFT) to clipboard
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnCpyDta2_Click(object sender, RoutedEventArgs e)
         {
             List<Point> ds = graphPower.Data[0] as List<Point>;
@@ -605,6 +672,11 @@ namespace Axel_hub
             Utils.TimedMessageBox("The data is in the clipboard");
         }
 
+        /// <summary>
+        /// Fit gauss (normal) curve to the histogram 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnGaussFit_Click(object sender, RoutedEventArgs e)
         {
             if ((graphHisto.Data[0] as DataStack) == null) 
@@ -662,6 +734,11 @@ namespace Axel_hub
             Range<double> newVal = e.NewValue;            
         }
 
+        /// <summary>
+        /// Split the waveform to level and edges
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSplit_Click(object sender, RoutedEventArgs e)
         {
             DataStack stack = new DataStack(DataStack.maxDepth); int i = 0; bool bl;
@@ -697,6 +774,11 @@ namespace Axel_hub
             Refresh();
         }
 
+        /// <summary>
+        /// Extract part of the waverform
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnExtractPart_Click(object sender, RoutedEventArgs e)
         {
             int highI = Waveform.indexByX(horAxisScroll.Range.Maximum);
@@ -736,6 +818,11 @@ namespace Axel_hub
             if (e.Key == Key.F5) Refresh(); 
         }
 
+        /// <summary>
+        /// Manual or Auto vertical scale
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkAutoScale_Checked(object sender, RoutedEventArgs e)
         {
             if (Utils.isNull(verAxisScroll)) return;
@@ -750,6 +837,12 @@ namespace Axel_hub
             scrollPlot.AdjustVerticalScale = chkAutoScale.IsChecked.Value;
         }
 
+        /// <summary>
+        /// Start/Stop ADC24 acquisition
+        /// </summary>
+        /// <param name="down">Start/Stop</param>
+        /// <param name="samplingPeriod">Sampling period</param>
+        /// <param name="InnerBufferSize">Buffer size defines the freq of visual update</param>
         public void set2startADC24(bool down, double samplingPeriod, int InnerBufferSize)
         {
             if (!down) // user cancel

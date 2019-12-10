@@ -39,40 +39,33 @@ using System.Windows.Markup;
 
 using UtilsNS;
 using OptionsNS;
-using AxelHMemsNS;
-
-//
-// command line arguments (space separated): -remote:<partner> -hw:<config.file>
-// where <partner> is remote partner name (title); hw(hardware), <confog.file>.hw is in Config folder   
-//
 
 namespace Axel_hub
 {
     public delegate void StartDelegate();
     /// <summary>
     /// Interaction logic for MainWindow.xaml
+    /// command line arguments (space separated): -remote:<c>partner</c>  -hw:<c>config.file</c>
+    /// where <c>partner</c> is remote partner name <c>title</c>; hw<c>hardware</c>, <c>config.file.hw</c> is in Config folder
     /// </summary>
     public partial class MainWindow : Window
     {
-        Modes modes;
         scanClass ucScan;
         AxelAxesClass axes;
-        private int nSamples = 1500;
         const bool debugMode = true;
         
         
         List<Point> quantList = new List<Point>();
-        ShotList shotList; // arch - on
         List<string> errList = new List<string>();
 
         Random rnd = new Random();
         private const int dataLength = 10000;
         private List<Point> _fringePoints = new List<Point>();
 
-        RemoteMessaging remoteShow;
-
         OptionsWindow Options; ScanModes scanModes = null;
-
+        /// <summary>
+        /// Class constructor
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -84,10 +77,7 @@ namespace Axel_hub
             ucScan.OnStart += new scanClass.StartHandler(DoStart);
             ucScan.OnRemoteMode += new scanClass.RemoteModeHandler(RemoteModeEvent);
             ucScan.OnLog += new scanClass.LogHandler(log);            
-           //if (axelMems.hw.ContainsKey("filename")) AxelChart1.SetHWfile(axelMems.hw["filename"]);
-            //else AxelChart1.SetHWfile("");
 
-            //iStack = new List<double>(); dStack = new List<double>();
             Options = new OptionsWindow();  
             OpenDefaultModes();
             ucScan.InitOptions(ref Options.genOptions, ref scanModes);
@@ -98,7 +88,7 @@ namespace Axel_hub
             ucScan.OnRemote += new scanClass.RemoteHandler(axes.DoRemote);
             continueJumboRepeat(false); // init (hide) the pointy button
                         
-            if (false)//(System.Windows.Forms.SystemInformation.MonitorCount > 1) // secondary monitor
+            if (false)//(System.Windows.Forms.SystemInformation.MonitorCount > 1) // secondary monitor (temp off)
             {
                 WindowStartupLocation = WindowStartupLocation.Manual;
 
@@ -123,7 +113,11 @@ namespace Axel_hub
             }
             setAxesLayout(Options.genOptions.AxesChannels);
         }
-
+        /// <summary>
+        /// Hook up the main incomming data flow
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void frmAxelHub_Loaded(object sender, RoutedEventArgs e)
         {
             ucScan.OnActiveRemote += new scanClass.ActiveRemoteHandler(OnActiveRemote);
@@ -134,6 +128,11 @@ namespace Axel_hub
             WindowState = WindowState.Maximized;
         }
 
+        /// <summary>
+        /// Log text in the textbox on the left
+        /// </summary>
+        /// <param name="txt">text to log</param>
+        /// <param name="clr"></param>
         private void log(string txt, Color? clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
@@ -144,6 +143,11 @@ namespace Axel_hub
         }
 
         bool DoContinue = false;       
+        /// <summary>
+        /// Shows/Hide continue arrow button and wait 5 min for a click
+        /// </summary>
+        /// <param name="toggle">show/hide state</param>
+        /// <returns>ok -> true; timeout -> false</returns>
         public bool continueJumboRepeat(bool toggle)
         {
             if (toggle)
@@ -165,11 +169,20 @@ namespace Axel_hub
                 return true;
             }
         }
+        /// <summary>
+        /// Make the method above to conclude
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void abtnContinueJumbo_Click(object sender, RoutedEventArgs e)
         {
             DoContinue = true;
         }
-
+        /// <summary>
+        /// Some action when remode mode of ucScan has been changed
+        /// </summary>
+        /// <param name="oldMode"></param>
+        /// <param name="newMode"></param>
         public void RemoteModeEvent(RemoteMode oldMode, RemoteMode newMode)
         {
             if (oldMode.Equals(RemoteMode.Jumbo_Scan) && newMode.Equals(RemoteMode.Ready_To_Remote))
@@ -185,6 +198,13 @@ namespace Axel_hub
             }
         }
 
+        /// <summary>
+        /// Star/Stop jumbo or Mems only
+        /// </summary>
+        /// <param name="jumbo"></param>
+        /// <param name="down">Star/Stop</param>
+        /// <param name="period">sampling rate related</param>
+        /// <param name="sizeLimit">data buffer length</param>
         public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
         {
             if (jumbo)
@@ -199,86 +219,43 @@ namespace Axel_hub
                 axes.startADC(down, period, buffSize);
             } 
         }
-
-  /*    */
-
-        private MMexec lastGrpExe; //
-        
-        private double phaseCorr, phaseRad, fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
-        DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
-        
-
-        // remote MM call
-/*
-        public Dictionary<string, double> Statistics(Dictionary<string, double> dt) // in MEMS [V]; PhiRad -> out - MEMS [mg], etc.
-        {
-            Dictionary<string, double> rslt = new Dictionary<string, double>(dt);
-            if (!(dt.ContainsKey("MEMS_V") || dt.ContainsKey("MEMS")) || (!dt.ContainsKey("PhiRad"))) return rslt; // works only if both are present
-
-            if (!dt.ContainsKey("K")) rslt["K"] = numKcoeff.Value;
-            if (!dt.ContainsKey("Phi0")) rslt["Phi0"] = numPhi0.Value;
-            if (!dt.ContainsKey("Scale")) rslt["Scale"] = numScale.Value;
-
-            if (dt.ContainsKey("MEMS_V")) rslt["MEMS"] = AxelChart1.convertV2mg(dt["MEMS_V"]); // convert V to mg
-            if (dt.ContainsKey("MEMS2_V")) rslt["MEMS2"] = AxelChart1.convertV2mg(dt["MEMS2_V"], true);
-
-            rslt["PhiMg"] = (dt["PhiRad"] - rslt["Phi0"]) * rslt["K"];  // convert rad to mg
-            //  rslt["PhiMg"] = (dt["PhiRad"] ) * rslt["K"];  // convert rad to mg
-            phiMg.AddPoint(rslt["PhiMg"]);
-
-            double ord = (rslt["MEMS"] - rslt["PhiMg"]) / (2 * Math.PI * numKcoeff.Value);
-            rslt["Order"] = Math.Round(ord);
-            rslt["OrdRes"] = ord - Math.Round(ord);
-            rslt["Accel"] = 2 * Math.PI * numKcoeff.Value * rslt["Order"] + rslt["PhiMg"];
-            accelMg.AddPoint(rslt["Accel"]);
-
-            string ss = "";
-            if ((tabSecPlots.SelectedIndex == 4) && chkBigCalcTblUpdate.IsChecked.Value)
-            {
-                if (rslt.ContainsKey("MEMS2")) ss = " / " + rslt["MEMS2"].ToString(Options.genOptions.SignalTablePrec);
-                lbiMEMS.Content = "MEMS[mg] = " + rslt["MEMS"].ToString(Options.genOptions.SignalTablePrec) + ss;
-
-                lbiPhiRad.Content = "Phi[rad] = " + rslt["PhiRad"].ToString(Options.genOptions.SignalTablePrec);
-                lbiPhiMg.Content = "Phi[mg] = " + rslt["PhiMg"].ToString(Options.genOptions.SignalTablePrec);
-
-                lbiOrder.Content = "Order = " + rslt["Order"].ToString(Options.genOptions.SignalTablePrec);
-                lbiOrdRes.Content = "OrdRes[mg] = " + rslt["OrdRes"].ToString(Options.genOptions.SignalTablePrec);
-                lbiAccel.Content = "Accel[mg] = " + rslt["Accel"].ToString(Options.genOptions.SignalTablePrec);
-            }
-            return rslt;
-        }
-
-
+ 
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e) // !!! to AA
         {
             frmAxelHub.Top = 0;
             frmAxelHub.Height = SystemParameters.WorkArea.Height;
             frmAxelHub.Left = SystemParameters.WorkArea.Width * 0.3;
             frmAxelHub.Width = SystemParameters.WorkArea.Width * 0.7;
-        }*/
+        }
 
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
             tbLog.Document.Blocks.Clear();
         }
-
+        /// <summary>
+        /// set the axes visual layout
+        /// </summary>
+        /// <param name="mc">which axis or both</param>
         private void setAxesLayout(int mc)
         {
             tcAxes.SelectedIndex = 0; 
             switch (mc)
             {
-                case 0: tiYAxis.Visibility = Visibility.Collapsed;
+                case 0: // X 
+                    tiYAxis.Visibility = Visibility.Collapsed;
                     colRight.Width = new GridLength(0, GridUnitType.Pixel);
                     splitPanels.Visibility = Visibility.Collapsed;
                     break;
-                case 1: tiYAxis.Visibility = Visibility.Visible;
+                case 1: // Y 
+                    tiYAxis.Visibility = Visibility.Visible;
                     colRight.Width = new GridLength(0, GridUnitType.Pixel);
                     splitPanels.Visibility = Visibility.Collapsed;
                     if (gridPrimary.Children.Contains(Y_AxelAxis)) break;
                     gridSecondary.Children.Remove(Y_AxelAxis);
                     gridPrimary.Children.Add(Y_AxelAxis);
                     break;
-                case 2: tiYAxis.Visibility = Visibility.Collapsed;                    
+                case 2: // X/Y
+                    tiYAxis.Visibility = Visibility.Collapsed;                    
                     colLeft.Width = new GridLength(300, GridUnitType.Star);
                     colRight.Width = new GridLength(300, GridUnitType.Star);
                     splitPanels.Visibility = Visibility.Visible;
@@ -290,7 +267,11 @@ namespace Axel_hub
             bool conn = Utils.isNull(ucScan.remote)? false: ucScan.remote.Connected;
             axes.UpdateFromOptions(conn);
         }
- 
+         /// <summary>
+         /// Open options dialog window
+         /// </summary>
+         /// <param name="sender"></param>
+         /// <param name="e"></param>
         private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
         {
             //if (Utils.isNull(Options)) Options = new OptionsWindow();
@@ -307,8 +288,11 @@ namespace Axel_hub
         }
 
         #region close and modes
-
-        private void OpenDefaultModes(bool Middle = true, bool Bottom = true)
+        /// <summary>
+        /// Configure scan from modes file (scanDefaults.cfg)
+        /// or create scanMode from scratch
+        /// </summary>
+        private void OpenDefaultModes()
         {
             if (File.Exists(Utils.configPath + "scanDefaults.cfg"))
             {
@@ -319,14 +303,22 @@ namespace Axel_hub
                 scanModes = new ScanModes();
         }
 
+        /// <summary>
+        /// When something happens with the remote comm.
+        /// </summary>
+        /// <param name="activeComm"></param>
         private void OnActiveRemote(bool activeComm)
         {
             axes.UpdateFromOptions(activeComm);
         }
 
+        /// <summary>
+        /// closing the shop, with some optional savings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-
             axes.Closing(sender,e);
             ucScan.UpdateModes();
             //visuals
@@ -337,7 +329,6 @@ namespace Axel_hub
                 scanModes.Width = Width;
                 scanModes.Height = Height;
             }
-
             if (Options.genOptions.saveModes.Equals(GeneralOptions.SaveModes.ask))
             {
                 //Save the currently open sequence to a default location
@@ -358,6 +349,5 @@ namespace Axel_hub
             if (!Utils.isNull(Options)) Options.Close();
         }
         #endregion
-
     }
 }
