@@ -7,11 +7,11 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Axel-probe")]
+[assembly: AssemblyTitle("Axel Probe")]
 [assembly: AssemblyDescription("Simulator of MotMaster for Axel-hub test")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Imperial College London")]
-[assembly: AssemblyProduct("Axel-probe")]
+[assembly: AssemblyProduct("Axel Probe")]
 [assembly: AssemblyCopyright("Teodor Krastev for Imperial College London")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

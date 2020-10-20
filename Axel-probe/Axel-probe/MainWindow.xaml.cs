@@ -675,11 +675,11 @@ namespace Axel_probe
         /// <param name="e"></param>
         private void frmMain_Loaded(object sender, RoutedEventArgs e)
         {
-            remote = new RemoteMessaging("Axel Hub");
+            remote = new RemoteMessaging();           
             remote.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
             remote.OnReceive += new RemoteMessaging.ReceiveHandler(OnReceive);
             remote.Enabled = chkRemoteEnabled.IsChecked.Value;
-
+            remote.Connect("Axel Hub");
             pe.remote = remote;
             pe.LoadParams();
             rbXaxis_Checked(null, null);
@@ -699,6 +699,7 @@ namespace Axel_probe
             {
                 grpRemote.Foreground = Brushes.Green;
                 grpRemote.Header = "Remote - is ready <->";
+                btnCommCheck.Content = "Connected";
             }
             else
             {
@@ -706,6 +707,7 @@ namespace Axel_probe
                 {
                     grpRemote.Foreground = Brushes.Red;
                     grpRemote.Header = "Remote - problem -X-";
+                    btnCommCheck.Content = "Disconnected";
                 }
             }
         }
@@ -721,9 +723,10 @@ namespace Axel_probe
             if (remote.CheckConnection(true)) grpRemote.Header = "Remote - is ready <->";
             else {
                 grpRemote.Header = "Remote - not found! ...starting it";
-                System.Diagnostics.Process.Start(File.ReadAllText(Utils.configPath + "axel-hub.bat"), "-remote");
+                System.Diagnostics.Process.Start(File.ReadAllText(Utils.configPath + "axel-hub.bat"), "-remote:\"Axel Probe\"");
                 Thread.Sleep(1000);
                 remote.CheckConnection(true);
+                btnCommCheck.Content = "Wait for it...";
            }
         }
 
@@ -861,10 +864,8 @@ namespace Axel_probe
             md.sender = "Axel-probe";
             md.prms["groupID"] = groupID;
             md.prms["runID"] = 0;
-            
-            double n2 = 1; double ntot = 5; // n2 = 1 .. 3 / A = 1 .. -1              
-            double b2 = 1; double btot = 3; double bg = 0;
 
+            //remote.stopwatch.Restart();
             long realCycles = cycles;
             if (cycles == -1) realCycles = long.MaxValue;
             double A = 0, drift = 0, pos0;
@@ -891,7 +892,7 @@ namespace Axel_probe
                 drift = acc / ndOrderFactor.Value; // [rad]     fringeMg2rad(
                 //-------------------------------------------------
                 wait4adjust = chkFollowPID.IsChecked.Value;
-                md.prms["rTime"] = (string)(remote.elapsedTime().ToString("G6")); 
+                md.prms["iTime"] = DateTime.Now.Ticks; md.prms["iTime"] = 50* TimeSpan.TicksPerMillisecond; // 50[ms]
                 if (lastDecomposedAccel.ContainsKey("mems")) md.prms["MEMS"] = (string)(lastDecomposedAccel["mems"].ToString("G5")); // in [mg]
                               
                 if (pe.contrPhase > -10) md.prms["runID"] = -1;

@@ -169,7 +169,7 @@
                         </GroupBox>
                         <GroupBox Header="Chart opts" Grid.Column="1" Margin="0,0,0,1" HorizontalAlignment="Left" Width="157" FontSize="13" BorderBrush="#FF880D03">
                             <StackPanel Margin="0,0,-1.857,-33.857" Orientation="Vertical">
-                                <GroupBox x:Name="gbAxesX" Header=" X axes " HorizontalAlignment="Left" VerticalAlignment="Top" Height="58" Width="137">
+                                <GroupBox x:Name="gbAxisX" Header=" X-axis units " HorizontalAlignment="Left" VerticalAlignment="Top" Height="58" Width="137">
                                     <WrapPanel Margin="0,-1,-1.143,0" Height="76" VerticalAlignment="Top">
                                         <RadioButton x:Name="rbPoints" Content="Point" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh" IsChecked="True"/>
                                         <RadioButton x:Name="rbSec" Content="[sec]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" IsChecked="True" Click="Refresh"/>

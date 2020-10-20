@@ -30,6 +30,11 @@ namespace Axel_data
             InitializeComponent();
             tmprCompX.OnLog += new TmprCompClass.LogHandler(log);
             tmprCompY.OnLog += new TmprCompClass.LogHandler(log);
+            JoinOptim1.OnLog += new JoinOptimClass.LogHandler(log);
+            QuantVsMems1.OnLog += new QuantVsMems.LogHandler(log);
+            QuantVsMems1.QMfit.OnLog += new QMfitUC.LogHandler(log);
+
+            QuantVsMems1.OnProgress += new QuantVsMems.ProgressHandler(progress);
         }
 
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
@@ -37,66 +42,67 @@ namespace Axel_data
             tbLog.Document.Blocks.Clear();
         }
 
-        private void log(string txt, Color? clr = null)
+        private void log(string txt, bool detail = true, Color? clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
-            if ((chkVerbatim.IsChecked.Value) || (txt.Length < 81)) printOut = txt;
+            if ((chkDetail.IsChecked.Value) || (txt.Length < 81)) printOut = txt;
             else printOut = txt.Substring(0, 80) + "..."; //
-
-            Utils.log(tbLog, printOut, clr);
-        }
-        /*            FileLogger fl = new FileLogger("", "C:/temp/test11.log");
-                    DateTime start, finish; TimeSpan time;
-                    string buff = Utils.randomString(1024);
-                    int dly = (int)(1000 / tbiSpeed.Value); 
-                    start = DateTime.Now; log("start at: " + start.ToString() +" / interval = "+dly.ToString());
-
-                    fl.Enabled = true;          
-                    for (int i = 0; i < 100000; i++)
-                    {
-                        //Thread.Sleep(dly);
-                        fl.log(buff);
-                    }
-                    finish = DateTime.Now;
-                    log("finish at: " + finish.ToString());
-                    time = finish - start;
-                    log("end of it: " + fl.stw.Elapsed.Milliseconds.ToString() + " / " + time.Seconds.ToString()+" [s]");
-                    if (fl.missingData) log("skip some data!!!");
-                    fl.Enabled = false;
-                    fl = null;
-         ===================================================================================
-                     List<string> rec = new List<string>();
-                    rec.Add("aaa"); rec.Add("bbb"); rec.Add("ccc"); 
-                    DictFileLogger fl = new DictFileLogger(rec, "", "C:/temp/test12.log");
-
-                    fl.Enabled = true;
-                    Dictionary<string, double> row = new Dictionary<string, double>();
-                    row["aaa"] = 111; row["bbb"] = 222; row["ccc"] = 333;
-                    for (int i = 0; i < 1000; i++)
-                    {              
-                        fl.dictLog(row);
-                    }
-                    if (fl.missingData) log("skiped some data!!!");
-                    fl.Enabled = false;
-                    fl = null;
-                    log("Done!");
-
-        */
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            string[] rec = new string[]{"aaa","bbb","ccc"};
-            DictFileReader fl = new DictFileReader("C:/temp/test12.log", rec);
-       
-            Dictionary<string, double> row = new Dictionary<string, double>();
-            while (fl.doubleIterator(ref row))            
-            {                              
-                log(row["aaa"].ToString()+" | "+row["bbb"].ToString()+" | "+row["ccc"].ToString());               
+            if (detail)
+            {
+                if (chkDetail.IsChecked.Value) Utils.log(tbLog, txt, clr);
             }
-            fl = null;
-            log("Done!");
+            else Utils.log(tbLog, txt, clr);
+        }
 
+        private int progIdx = 0; private int progMax = 0;
+        // prog <> 0 the iteration counter (progIdx) is set to 0
+        // -2: hide progress bar
+        // -1: normal count including progress bar, when the final count is unknown
+        // 0: one iteration(moves the iteration count 1 up)
+        // n: (n>0) the expected number of iterations, with progress bar
+        private void progress(int prog = 0) // 
+        {
+            if (prog == -2)
+            {
+                lbProgBar.Visibility = Visibility.Collapsed; progBar.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                lbProgBar.Visibility = Visibility.Visible; progBar.Visibility = Visibility.Visible;
+            }
+            if (prog == -1)
+            {
+                progMax = prog; progIdx = 0; lbProgBar.Content = "0"; progBar.Value = 0; progBar.Maximum = 30; 
+            }
+            if (prog > 0)
+            {
+                progMax = prog; progIdx = 0; lbProgBar.Content = "0 %"; progBar.Value = 0; progBar.Maximum = prog; 
+            }
+            if (prog == 0)
+            {
+                progIdx++;
+                if (progMax < 0) // max unknown
+                {
+                    lbProgBar.Content = progIdx.ToString(); progBar.Value = (progIdx % 30);
+                }
+                if (progMax > 0) 
+                {
+                    lbProgBar.Content = (100.0 * progIdx/progMax).ToString("G3")+"%"; progBar.Value = progIdx;
+                }
+            }
+        }
 
+        private void AxelDataWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key.Equals(Key.F1)) System.Diagnostics.Process.Start("http://www.axelsuite.com");
+        }
+
+        private void AxelDataWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            QuantVsMems1.Initialize();
+            tmprCompY.Initialize();
+            JoinOptim1.Initialize();
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Windows;
 using System.Threading.Tasks;
+using System.Windows.Media.Media3D;
 using NationalInstruments.DataInfrastructure.Primitives;
 using NationalInstruments.Controls;
 using NationalInstruments.Analysis.Math;
@@ -57,7 +58,7 @@ namespace Axel_hub
             Dictionary<string,object> tempDict = new Dictionary<string, object>(); 
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key == "rTime") tempDict[key] = data.prms[key];
+                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key == "iTime" || key == "tTime") tempDict[key] = data.prms[key];
                 else
                 {
                     var rawData = (JArray) data.prms[key];
@@ -125,9 +126,10 @@ namespace Axel_hub
     /// </summary>
     public class SingleShot
     {
-        protected string precision = "G5";
-
-        public Point quant; // .X - time of acquisition[s]; .Y - accel.[mg]
+        protected string precision = "G6";
+        public string dmode { get; private set; }
+        public Point3D quant; // .X - time of acquisition[s]; .Y - accel.[mg/mV]; .Z - range (duration) of acquisition[s]
+        public double temperature { get; private set; } 
         private List<Point> _mems; // each point .X - time[s]; .Y - accel.[mg]; the range of mems.X supposed to be 3 times the quant measurement with the quant measuremen in the middle
         public List<Point> mems { get { return _mems; } set { _mems.Clear(); _mems.AddRange(value); } }
 
@@ -136,23 +138,32 @@ namespace Axel_hub
         /// </summary>
         public SingleShot()
         {
-            quant = new Point(-1, 0);
+            quant = new Point3D(-1, 0, -1);
             _mems = new List<Point>();
         }
-        public SingleShot(double qTime, double qSignal)
+        public SingleShot(double qTime, double qSignal, double qRange)
         {
-            quant = new Point(qTime, qSignal);
+            quant = new Point3D(qTime, qSignal, qRange);
             _mems = new List<Point>();
         }
-        public SingleShot(Point q)
+        public SingleShot(Point3D q)
         {
-            quant = new Point(q.X, q.Y);
+            quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>();
         }
-        public SingleShot(Point q, List<Point> m)
+        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "")
         {
-            quant = new Point(q.X, q.Y);
+            quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>(m);
+            temperature = _temperature;
+            dmode = dMode;
+        }
+        public SingleShot(SingleShot ss)
+        {
+            quant = new Point3D(ss.quant.X, ss.quant.Y, ss.quant.Z);
+            _mems = new List<Point>(ss.mems);
+            temperature = ss.temperature;
+            dmode = ss.dmode;
         }
 
         /// <summary>
@@ -164,27 +175,35 @@ namespace Axel_hub
             if(Utils.isNull(quant) || Utils.isNull(_mems)) return true;
             return (quant.X < 0) || (_mems.Count < 3);
         }
+        
+        public bool timeValidation(double dftRange = -1)
+        {
+            double z = quant.Z > 0 ? quant.Z : dftRange;
+            if (z == -1) return false;
+            int i1 = idxByTime(quant.X, false); int i2 = idxByTime(quant.X + z, false);
+            return (i1 > -1) && (i2 > -1);
+        }
 
         /// <summary>
-        /// Find index for specific time
+        /// Find index for specific time in mems array
         /// </summary>
         /// <param name="tm"></param>
         /// <param name="smart">More direct way with some assumptions</param>
-        /// <returns></returns>
+        /// <returns>index; -1 if out of range</returns>
         public int idxByTime(double tm, bool smart = true)
         {
             int idx = -1; int ml = mems.Count - 1; int j = 0;
             if (ml == -1) return idx;
             if (!Utils.InRange(tm, mems[0].X, mems[ml].X)) return idx;
-            if (smart && (mems[ml].X > mems[0].X))// assuming equidistant and increasing seq.
+            if (smart && (mems[ml].X > mems[0].X)) // assuming equidistant and increasing seq.
             {
                 double prd = (mems[ml].X - mems[0].X) / ml;
                 j = (int)(Math.Round((tm - mems[0].X) / prd) - 2);
                 if (j < 0) j = 0;
             }
-            for (int i = j; i < mems.Count; i++)
+            for (int i = j; i < mems.Count-1; i++)
             {
-                if (mems[i].X >= tm)
+                if (Utils.InRange(tm,mems[i].X, mems[i+1].X))
                 {
                     idx = i;
                     break;
@@ -216,7 +235,8 @@ namespace Axel_hub
         public double memsWeightAccel(double delay, double duration = -1, bool triangle = true) 
         {
             if (IsEmpty()) return Double.NaN;
-            double dur = (duration < 0) ? (mems[mems.Count-1].X - mems[0].X)/3: duration;
+            if (quant.Z < 0) quant.Z = (mems[mems.Count - 1].X - mems[0].X) / 3;
+            double dur = (duration < 0) ? quant.Z: duration;
             List<Point> lp = memsPortion(new Range<double>(quant.X + delay, quant.X + delay + dur));
             int len = lp.Count; if (len.Equals(0)) return Double.NaN;
             double a, b, sum = 0;
@@ -252,7 +272,7 @@ namespace Axel_hub
         /// </summary>
         /// <param name="fringeScale"></param>
         /// <returns></returns>
-        public Dictionary<string, double> deconstructAccel(double fringeScale)
+        public Dictionary<string, double> deconstructAccel(double fringeScale) // only for [mg], DOES NOT work for raw data !!! 
         {
             Dictionary<string, double> da = new Dictionary<string, double>(); double resid;
             if (IsEmpty()) return da;
@@ -274,7 +294,6 @@ namespace Axel_hub
             
             return da;
         }
-
         /// <summary>
         /// A single shot in JSON format for file import/export
         /// </summary>
@@ -283,9 +302,11 @@ namespace Axel_hub
             get
             {
                 Dictionary<string, object> dt = new Dictionary<string, object>();
-                double[] q = new double[2]; string timePrec = "G8";
-                q[0] = Utils.formatDouble(quant.X, timePrec); ; q[1] = Utils.formatDouble(quant.Y, precision);
+                double[] q = new double[3]; string timePrec = "G8";
+                q[0] = Utils.formatDouble(quant.X, timePrec); q[1] = Utils.formatDouble(quant.Y, precision); q[2] = Utils.formatDouble(quant.Z, precision);
                 dt["quant"] = q;
+                if (!Double.IsNaN(temperature)) dt["temper"] = Utils.formatDouble(temperature, precision);
+                if (dmode != "") dt["dmode"] = dmode;
                 double[,] m = new double[mems.Count, 2];
                 for (int i = 0; i < mems.Count; i++)
                 {
@@ -297,62 +318,96 @@ namespace Axel_hub
             set
             {
                 Dictionary<string, object> dt = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
-                var jq = (JArray)dt["quant"]; double[] q = jq.ToObject<double[]>(); quant.X = q[0]; quant.Y = q[1];
-                mems.Clear();
-                var jm = (JArray)dt["mems"]; double[,] m = jm.ToObject<double[,]>();
-                for (int i = 0; i < m.GetLength(0); i++)
+                if (dt.ContainsKey("quant"))
                 {
-                    mems.Add(new Point(m[i, 0], m[i, 1]));
+                    var jq = (JArray)dt["quant"]; double[] q = jq.ToObject<double[]>(); 
+                    quant.X = q[0]; quant.Y = q[1]; if (q.Length < 3) quant.Z = -1; 
                 }
-            }
+                if (dt.ContainsKey("dmode")) dmode = Convert.ToString(dt["dmode"]);
+                if (dt.ContainsKey("temper")) temperature = Convert.ToDouble(dt["temper"]);
+                mems.Clear();
+                if (dt.ContainsKey("mems"))
+                {
+                   var jm = (JArray)dt["mems"]; double[,] m = jm.ToObject<double[,]>();
+                    for (int i = 0; i < m.GetLength(0); i++)
+                    {
+                        mems.Add(new Point(m[i, 0], m[i, 1]));
+                    }
+                }
+             }
         }
     }
 
     /// <summary>
-    /// List / series of single shots 
+    /// List / series of single shots; file read & write 
     /// </summary>
     public class ShotList : List<SingleShot>
     {
-        protected int depth = 10000; // max number of last items with direct access; for the whole thing - archyScan
+        protected int maxSize = 10000000; // max size to be loaded as whole thing, otherwise read with archyScan
         public string filename { get; private set; }
-        private string _prefix;
-        public bool archiveMode { get; private set; } // reading or writing file
+        public bool rawData { get; private set; }
+        public string prefix { get; private set; }
+        private bool? _archiveMode;
+        public bool? archiveMode // operate on file(true) or memory(false)
+        {
+            get
+            {
+                if (savingMode) return true; // if savingMode then archiveMode = true - count on FileLogger for efficiency
+                else return _archiveMode; 
+            }
+            private set 
+            {
+                _archiveMode = value;
+            } 
+        } 
+        
+        // else if file.line.count < depth then archiveMode=true else archiveMode=false
         public bool savingMode { get; private set; } // either opening or saving data
 
         public Dictionary<string, double> conditions = new Dictionary<string, double>();
+        public double defaultAqcTime { get; private set; } // used only for read (optionally)
 
-        public int FileCount { get; private set; } // num of shots in the file
+        public long FileSize
+        {
+            get
+            {
+                if (!File.Exists(filename)) return -1;
+                FileInfo fi = new FileInfo(filename);
+                return fi.Length;
+            }
+        }
+
         StreamReader streamReader = null;
-        FileLogger streamWriter = null;
+        public FileLogger streamWriter = null;
 
         /// <summary>
         /// Class constructor
-        /// if arch -> open file if FN not empty, or create FN if empty
+        /// if arch -> open file if FN exists, or create FN if empty
         /// if not arch -> ignore FN and prefix 
         /// </summary>
-        /// <param name="arch">log the incomming data</param>
+        /// <param name="arch">operate on file - true or memory - false if possible</param>
         /// <param name="FN"></param>
         /// <param name="prefix"></param>
-        public ShotList(bool arch = true, string FN = "", string prefix = ""): base()
+        public ShotList(bool save, string FN = "", string _prefix = "", bool rawDt = false): base()
         {
-            archiveMode = arch; 
-            if (arch)
+            archiveMode = null; // undefined (before any operations)
+            savingMode = save; prefix = _prefix; rawData = rawDt; defaultAqcTime = -1;
+            if (savingMode) // write
             {
-                savingMode = FN.Equals("");
-                if (savingMode) 
-                { 
-                    streamWriter = new FileLogger(prefix); 
-                    streamWriter.defaultExt = ".jlg";
-                    streamWriter.Enabled = true;
-                }
-                else 
-                {
-                    if (!File.Exists(FN)) throw new Exception("No such file <" + filename + ">");
-                    filename = FN;
-                    FileCount = Utils.readList(filename).Count;
-                }
-                enabled = true;
+                string fileExt, fileName = "";
+                if (rawDt) fileExt = ".jdt";
+                else fileExt = ".jlg";
+                if (!FN.Equals("")) fileName = System.IO.Path.ChangeExtension(FN, fileExt);
+                streamWriter = new FileLogger(prefix,fileName);
+                streamWriter.defaultExt = fileExt;
+                streamWriter.Enabled = true;
             }
+            else // read
+            {
+                if (!File.Exists(FN)) throw new Exception("No such file <" + filename + ">");
+                filename = FN;                
+            }
+            enabled = true;           
         }
 
         /// <summary>
@@ -362,17 +417,20 @@ namespace Axel_hub
         new public void Add(SingleShot ss) 
         {
             if (!enabled) return;
-            if (Count.Equals(0) && !conditions.Count.Equals(0) && savingMode && archiveMode) 
-            { 
-                streamWriter.log("#"+JsonConvert.SerializeObject(conditions));
+            if (Count.Equals(0) && savingMode) 
+            {   
+                if (!conditions.Count.Equals(0))
+                    streamWriter.log("#"+JsonConvert.SerializeObject(conditions));
+                if (streamWriter.subheaders.Count > 0)
+                    streamWriter.log("#" + streamWriter.subheaders[0]);
             }
             base.Add(ss);
-            while (Count > depth) { this.RemoveAt(0); }
-            if (archiveMode && savingMode) 
+            while (Count > 10000) { this.RemoveAt(0); } // keep it less than 10000 lines
+            if (savingMode) 
                 streamWriter.log(ss.AsString);           
         }
 
-        private bool _enabled = true;
+        private bool _enabled = false;
         /// <summary>
         /// Log ON/OFF
         /// </summary>
@@ -381,7 +439,7 @@ namespace Axel_hub
             get { return _enabled; }
             set 
             {
-                if (archiveMode && savingMode)
+                if (savingMode)
                 {
                     streamWriter.Enabled = value;
                 }                   
@@ -393,11 +451,11 @@ namespace Axel_hub
         /// <summary>
         /// Reset scan of archive
         /// </summary>
-        public void resetScan()
+        public void resetScan() // read 
         {
-            if(savingMode) throw new Exception("No scanning in saving mode!");
+            if (savingMode) throw new Exception("No scanning in saving mode!");
             lastIdx = -1;
-            if (!archiveMode) return;
+            
             if (!File.Exists(filename)) throw new Exception("No such file <"+filename+">");
             streamReader = File.OpenText(filename);            
             buffer = streamReader.ReadLine();
@@ -406,16 +464,30 @@ namespace Axel_hub
                 buffer = buffer.Remove(0, 1);
                 conditions = JsonConvert.DeserializeObject<Dictionary<string, double>>(buffer);
                 buffer = streamReader.ReadLine();
-            }           
-            if (FileCount <= depth) // loading file in memory 
+            }
+            if (FileSize > maxSize) archiveMode = true; // read from disk
+            else // load into memory
             {
+                archiveMode = true; Clear();
                 bool next;
                 do
                 {
-                    this.Add(archiScan(out next));
+                    Add(archiScan(out next));
                 } while (next);
                 archiveMode = false;
             }
+            SingleShot ss; double dur;
+            double dr = 0; int j = Math.Min(10, Count);
+            for (int i = 3; i < j+3; i++)
+            {
+                ss = this[i];
+                if (ss.mems.Count > 10)
+                {
+                    dur = ss.mems[ss.mems.Count - 1].X - ss.mems[0].X; 
+                    dr += dur;
+                }
+            }
+            defaultAqcTime = dr / (j*3);
         }
 
         private string buffer = String.Empty;
@@ -425,21 +497,51 @@ namespace Axel_hub
         /// <param name="next">next is false on the last item</param>
         /// <returns></returns>
         public SingleShot archiScan(out bool next) // 
-        {            
-            if (!archiveMode)
+        {
+            if (Utils.isNull(archiveMode)) throw new Exception("No file opened");
+            if (archiveMode == false) // memory
             {
                 lastIdx++;
                 next = lastIdx < (Count - 1);
-                return this[lastIdx];
+                if (next) return this[lastIdx];
+                else return null;
             }
             SingleShot ss = new SingleShot();
             next = !Utils.isNull(buffer);
             if (!next) return ss;
-            ss.AsString = buffer;
+            if (buffer.Length> 0)
+                if (!buffer[0].Equals('#')) ss.AsString = buffer;
 
-            buffer = streamReader.ReadLine();
+            buffer = streamReader.ReadLine(); // read next line to be deconstructed on the next call
             next = !Utils.isNull(buffer);
             return ss;
+        }
+
+        public List<SingleShot> sectionScan(int sectionSize, bool valid, out bool next) // same as archiScan but for a section (batch of shots)
+        {
+            if (Utils.isNull(archiveMode)) throw new Exception("No file opened");
+            List<SingleShot> ls = new List<SingleShot>(); SingleShot ss;
+            bool nextSS = false; int k = 0;
+            do
+            {
+                ss = archiScan(out nextSS);
+                if (nextSS)
+                {
+                    if (valid)
+                    {
+                        if (ss.timeValidation(defaultAqcTime))
+                        {
+                            ls.Add(ss); k++;
+                        }
+                    }
+                    else
+                    {
+                        ls.Add(ss); k++;
+                    }
+                }
+            } while (nextSS && (k < sectionSize));
+            next = nextSS; // end of file
+            return ls;
         }
 
         /// <summary>
@@ -451,8 +553,8 @@ namespace Axel_hub
         {
             if (FN.Equals(""))
             {
-                if (Utils.isNull(filename)) filename = Utils.dataPath + Utils.timeName(_prefix)+ ".jlg";
-                if (filename.Equals("")) filename = Utils.dataPath + Utils.timeName(_prefix) + ".jlg";
+                if (Utils.isNull(filename)) filename = Utils.dataPath + Utils.timeName(prefix)+ ".jlg";
+                if (filename.Equals("")) filename = Utils.dataPath + Utils.timeName(prefix) + ".jlg";
             }
             else filename = FN;
             StreamWriter sWriter = new StreamWriter(new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None, 65536, true));

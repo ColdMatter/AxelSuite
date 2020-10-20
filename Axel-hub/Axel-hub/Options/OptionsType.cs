@@ -23,12 +23,12 @@ namespace OptionsNS
     /// </summary>
     public enum RemoteMode
     {
-        Disconnected,
+        Disconnected,  // initial neutral state
         Jumbo_Scan,    // scan as part of Jumbo Run
         Jumbo_Repeat,  // repeat as part of Jumbo Run
         Simple_Scan,   // scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
-        Ready_To_Remote       
+        Ready_To_Remote //neutral connected state       
     }
 
     /// <summary>
@@ -49,8 +49,11 @@ namespace OptionsNS
         public bool intN2 { get; set; }        
         public bool saveVisuals { get; set; }
 
+        public bool Diagnostics { get; set; }
         public bool followPID { get; set; }
-        
+        public bool logJoin { get; set; }
+        public bool logRawJdt { get; set; }
+
         public int TrendSignalLen { get; set; }
         public int RawSignalAvg { get; set; }
 
@@ -76,6 +79,14 @@ namespace OptionsNS
             string fileJson = JsonConvert.SerializeObject(this);
             File.WriteAllText(Utils.configPath + "genOptions.cfg", fileJson);
         }
+
+        public delegate void ChangeHandler(GeneralOptions opts);
+        public event ChangeHandler OnChange;
+        public void ChangeEvent(GeneralOptions opts)
+        {
+            if (OnChange != null) OnChange(opts);
+        }
+
     }
     /// <summary>
     /// visuals for the app, MEMS aqcuisition params and scan modes
@@ -135,7 +146,6 @@ namespace OptionsNS
         public bool Ntot { get; set; }
         public bool RsltTblUpdate { get; set; }
         public bool RsltChrtUpdate { get; set; }
-        public bool JoinLog { get; set; }
         public bool SignalLog { get; set; }
 
         // Bottom
@@ -154,7 +164,6 @@ namespace OptionsNS
         public double kP { get; set; }
         public double kI { get; set; }
         public double kD { get; set; }
-        public bool PID_Enabled { get; set; }
         public bool DoubleStrobe { get; set; }
 
         public void Save(string prefix)

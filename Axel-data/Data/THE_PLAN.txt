@@ -1,0 +1,67 @@
+ID 1619268412
+
+22/09/20
+
+3 [s] MEMS buffer (it was 1)
+
+500 Hz 	20-09-22_20-56-39_X
+2 kHz 	20-09-22_21-13-36_X
+5 kHz 	20-09-22_22-05-02_X
+8 kHz 	20-09-22_22-36-34_X  -> looks fine (consistent)
+all > 1500 shots
+
+all fine with slightly decrease of quant freq (up to 2x)
+===================================
+23/09/20
+
+n > 500 shots
+
+14 kHz	20-09-22_23-21-30_X - it does not look good at aqcuis.; in proc. - NP
+25 kHz 	20-09-23_19-31-33_X -   --"-- ; in proc - delta-t 1-4; lenght from 0 to 1200, aver. 300; NOT PRETTY
+
+back to 1 [s]
+
+5 kHz 	20-09-23_20-08-30_X - half rubbish
+12 kHz	20-09-23_20-45-42_X - mostly rubbish
+25 kHz	20-09-23_21-23-28_X ? 20-09-23_21-38-28_X - no point
+
+===================================
+update code
+
+3 [s]
+
+5 kHz	20-09-23_22-21-46_X - acceptable
+14 kHz  20-09-23_23-08-14_X - some len zeros, and delta-t 1-4 (mostly 4) 
+25 kHz    --"--
+-----------------------------------
+1 [s] - NO POINT
+
+5 kHz
+12 kHz
+25 kHz
+
+-----------------------------------
+24/09/20
+
+no charts, 3 [s]
+
+5 kHz	20-09-24_20-25-33_X - not perfect, but good
+8 kHz	20-09-24_20-40-24_X     --"--
+11 kHz	20-09-24_21-07-13_X	--"--
+15 (17) kHz 20-09-24_21-33-05_X - not crashing but on the edge 60% effective
+22 (25) kHz falied
+
+11 kHz 20-09-24_23-01-08_X - fine
+17 kHz 20-09-24_23-27-03_X - same as above (possible to use)
+
+--------------------------------
+
+4 [s] 17 kHz
+
+2 [s] 17 kHz
+
+raw.enabled - off
+
+maybe some other pieces - off
+
+

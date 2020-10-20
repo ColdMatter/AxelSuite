@@ -7,12 +7,12 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Axel-tilt")]
+[assembly: AssemblyTitle("Axel Tilt")]
 [assembly: AssemblyDescription("Software for tilting platform control for acceleration simulation")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Imperial College London")]
-[assembly: AssemblyProduct("Axel-tilt")]
-[assembly: AssemblyCopyright("Teodor Krastev")]
+[assembly: AssemblyProduct("Axel Tilt")]
+[assembly: AssemblyCopyright("Teodor Krastev and Imperial College London")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

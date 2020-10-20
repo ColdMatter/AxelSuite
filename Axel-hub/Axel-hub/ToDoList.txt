@@ -9,6 +9,7 @@ IMMEDIATE
 IN SOME POSSIBLE FUTURE
 - scan will offer to scan individually X or Y or both alternating
 
+- Time-out at wait4adjust loop in diagnostics
 
 AxelHub
 ==================
@@ -17,3 +18,8 @@ AxelHub
 - log Raw Mems data for sampling rate under ???
 - StackMode of DataStack ?
 - S.G.Filter in Diff term in PID
+
+- after repeat in MM2, jumbo-repeat does not run in MM2 ?
+- start problem (no remote)
+- second jumbo repeat problem
+

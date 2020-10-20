@@ -40,13 +40,17 @@ namespace Axel_data
             srsRes = new DataStack(DataStack.maxDepth);
             srsResHisto = new DataStack(1000);
         }
+        public void Initialize()
+        {
 
-        public delegate void LogHandler(string txt, Color? clr = null);
+        }
+
+        public delegate void LogHandler(string txt, bool detail = false, Color? clr = null);
         public event LogHandler OnLog;
 
-        protected void LogEvent(string txt, Color? clr = null)
+        protected void LogEvent(string txt, bool detail = false, Color? clr = null)
         {
-            if (OnLog != null) OnLog(txt, clr);
+            if (OnLog != null) OnLog(txt, detail, clr);
         }
 
         private void btnOpenLog_Click(object sender, RoutedEventArgs e)
@@ -73,7 +77,7 @@ namespace Axel_data
                 k++;
             }
             graphRaw.Data[0] = srsMems; graphRaw.Data[1] = srsTmpr;
-            OnLog("Opened: " + dlg.FileName + " (" + k.ToString() + " pnts)");
+            OnLog("Opened: " + dlg.FileName + " (" + k.ToString() + " pnts)", false, Brushes.Maroon.Color);
             btnFIT.IsEnabled = true;
         }
 

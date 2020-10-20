@@ -1,5 +1,4 @@
-﻿using NationalInstruments.Net;
-using NationalInstruments.Analysis;
+﻿using NationalInstruments.Analysis;
 using NationalInstruments.Analysis.Conversion;
 using NationalInstruments.Analysis.Dsp;
 using NationalInstruments.Analysis.Dsp.Filters;
@@ -48,6 +47,7 @@ namespace Axel_hub
     public partial class signalClass : UserControl
     {
         private const int dd = 1000; // default depth
+        private const bool writeHeadersFlag = false;
         DataStack stackN1 = new DataStack(dd);
         DataStack stackN2 = new DataStack(dd);
         DataStack stackRN1 = new DataStack(dd);
@@ -78,6 +78,7 @@ namespace Axel_hub
 
         GeneralOptions genOptions = null;
         Modes genModes = null;
+        AxelMems axelMems = null;
         public string prefix { get; private set; }
         /// <summary>
         /// Initialization with options from Options dialog and modes from last used ones 
@@ -85,9 +86,9 @@ namespace Axel_hub
         /// <param name="_genOptions">from Options dialog</param>
         /// <param name="_genModes">last used ones</param>
         /// <param name="_prefix">X/Y</param>
-        public void InitOptions(ref GeneralOptions _genOptions, ref Modes _genModes, string _prefix = "")
+        public void Init(ref GeneralOptions _genOptions, ref Modes _genModes, ref AxelMems _axelMems, string _prefix = "")
         {
-            genOptions = _genOptions; genModes = _genModes; prefix = _prefix;
+            genOptions = _genOptions; genModes = _genModes; axelMems = _axelMems;  prefix = _prefix;
             logger = new DictFileLogger(new string[]{ "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "Btot" }, prefix);
         }
 
@@ -101,6 +102,7 @@ namespace Axel_hub
             scanMode = grpMme.cmd.Equals("scan");
             repeatMode = grpMme.cmd.Equals("repeat");
 
+            logger.Enabled = false;
             logger.setMMexecAsHeader(grpMme.Clone());
             logger.defaultExt = ".ahs";
             logger.Enabled = genModes.SignalLog;
@@ -113,6 +115,7 @@ namespace Axel_hub
         /// <param name="logg"></param>
         private void writeHeaders(FileLogger logg)
         {
+            if (!writeHeadersFlag) return;
             FileLogger fl = new FileLogger(logg.prefix, System.IO.Path.ChangeExtension(logg.LogFilename,".ahh"));
             fl.header = logg.header;
             fl.subheaders.AddRange(logg.subheaders);
@@ -218,7 +221,7 @@ namespace Axel_hub
                 d = Math.Max(signalDataStack.pointYs().Max(), backgroundDataStack.pointYs().Max());
                 d = Math.Ceiling(10 * d) / 10;
                 signalYmax = Math.Max(d, signalYmax);
-                d = (signalYmax - signalYmin) * 0.02;
+                d = signalYmax == signalYmin ? 0.5 : (signalYmax - signalYmin) * 0.02;
                 signalYaxis.Range = new Range<double>(signalYmin - d, signalYmax + d);
             }
             //
@@ -226,8 +229,8 @@ namespace Axel_hub
 
             // corrected with background
             double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
-            //double A = cN2 / cNtot;//(N2 - B2) / (NTot - BTot); //
-            A = 1 - 2 * (N2 - B2) / (NTot - BTot);
+            //double A = cN2 / cNtot;
+            A = (N2 - B2) / (NTot - BTot); //1 - 2 * (N2 - B2) / (NTot - BTot);
             currX = 1; double cN2_std = 1, cNtot_std = 1;
             if (chkStdDev.IsChecked.Value)
             {
@@ -237,8 +240,15 @@ namespace Axel_hub
             double cinitN2 = avgs["initN2"] - B2;
             
             if (scanMode) currX = lastScan.sFrom + runID * lastScan.sBy;
-            if (repeatMode) currX = runID;
-                
+            if (repeatMode)
+            {   // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                if (mme.prms.ContainsKey("iTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                {
+                    currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec
+                }
+                else currX = runID;
+            }
+                            
             stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
             stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
             if (chkStdDev.IsChecked.Value)
@@ -250,19 +260,27 @@ namespace Axel_hub
             if (chkAutoScaleMiddle.IsChecked.Value) // Ns auto-Y-limits
             {
                 List<double> ld = new List<double>();
-                ld.Add(stackN1.pointYs().Min()); ld.Add(stackN2.pointYs().Min()); ld.Add(stackNtot.pointYs().Min());
-                ld.Add(stackRN1.pointYs().Min()); ld.Add(stackRN2.pointYs().Min());
+                
+                if (chkN1.IsChecked.Value) ld.Add(stackN1.pointYs().Min());
+                if (chkN2.IsChecked.Value) ld.Add(stackN2.pointYs().Min());
+                if (chkNtot.IsChecked.Value) ld.Add(stackNtot.pointYs().Min());
+                if (chkRN1.IsChecked.Value) ld.Add(stackRN1.pointYs().Min());
+                if (chkRN2.IsChecked.Value) ld.Add(stackRN2.pointYs().Min());
                 double d = ld.Min();
                 d = Math.Floor(10 * d) / 10;
                 NsYmin = Math.Min(d, NsYmin);
                 ld.Clear();
-                ld.Add(stackN1.pointYs().Max()); ld.Add(stackN2.pointYs().Max()); ld.Add(stackNtot.pointYs().Max());
-                ld.Add(stackRN1.pointYs().Max()); ld.Add(stackRN2.pointYs().Max());
+                if (chkN1.IsChecked.Value) ld.Add(stackN1.pointYs().Max());
+                if (chkN2.IsChecked.Value) ld.Add(stackN2.pointYs().Max());
+                if (chkNtot.IsChecked.Value) ld.Add(stackNtot.pointYs().Max());
+                if (chkRN1.IsChecked.Value) ld.Add(stackRN1.pointYs().Max()); 
+                if (chkRN2.IsChecked.Value) ld.Add(stackRN2.pointYs().Max());
                 d = ld.Max();
                 d = Math.Ceiling(10 * d) / 10;
                 NsYmax = Math.Max(d, NsYmax);
                 d = (NsYmax - NsYmin) * 0.02;
-                NsYaxis.Range = new Range<double>(NsYmin - d, NsYmax + d);
+                if(!Double.IsNaN(NsYmin) && !Double.IsNaN(NsYmax) && !Double.IsNaN(d))
+                    NsYaxis.Range = new Range<double>(NsYmin - d, NsYmax + d);
             }
             if (Showing)
             {

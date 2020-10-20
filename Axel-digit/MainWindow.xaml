@@ -1,0 +1,53 @@
+﻿<Window x:Name="frmAxelDigit" x:Class="Axel_digit.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" 
+        xmlns:local="clr-namespace:Axel_digit"
+        
+        Title="  Axel Digit (NI-6541 test panel) BETA" Height="406" Width="587" Closing="frmAxelDigit_Closing" Icon="square_pulse-green-black.png" Loaded="frmAxelDigit_Loaded">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="cdMain"/>
+            <ColumnDefinition x:Name="cdLog" Width="300"/>
+        </Grid.ColumnDefinitions>
+        <GridSplitter Width="2"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="311*"/>
+                <RowDefinition Height="42"/>
+            </Grid.RowDefinitions>
+            <TabControl x:Name="tcMain" Margin="0,5,0,0" SelectedIndex="0" SelectionChanged="tcMain_SelectionChanged" Tag="-1">
+                <TabItem Header="Named Digit.IO" Width="120">
+                    <Grid>
+                        <DataGrid x:Name="dgNamedDIO" ItemsSource="{Binding}" Loaded="dgNamedDIO_Loaded" AutoGenerateColumns="False" UnloadingRow="dgNamedDIO_UnloadingRow"
+                                  LoadingRow="dgNamedDIO_LoadingRow" SelectionChanged="dgNamedDIO_SelectionChanged"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="All Digit.IO" Width="120">
+                    <Grid>
+                        <DataGrid x:Name="dgAllDIO" ItemsSource="{Binding}" Loaded="dgAllDIO_Loaded" AutoGenerateColumns="False"
+                                    CanUserAddRows="False" CanUserDeleteRows="False" SelectionUnit="Cell" SelectionChanged="dgNamedDIO_SelectionChanged" />
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            <CheckBox x:Name="chkLog" Content="Log" IsChecked="True" Margin="0,5,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Checked="chkLog_Checked" Unchecked="chkLog_Checked"/>
+            <Grid Grid.Row="1">
+                <Button x:Name="btnWriteOut" Content="Write Out" HorizontalAlignment="Right" Height="26" VerticalAlignment="Center" Width="97" Margin="0,0,10,0" Click="btnWriteOut_Click" Foreground="Blue" FontWeight="Bold"/>
+                <CheckBox x:Name="chkAutoUpdate" Content="Auto update" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Checked="chkAutoUpdate_Checked" Unchecked="chkAutoUpdate_Checked"/>
+                <Button x:Name="btnReadIn" Content="Read In" HorizontalAlignment="Right" Height="26" VerticalAlignment="Center" Width="97" Margin="0,8,120.962,7.924" Click="btnReadIn_Click" Foreground="#FF059201" FontWeight="Bold"/>
+            </Grid>
+        </Grid>
+        <Grid Grid.Column="1" Margin="0.038,0,-0.139,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="25"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <RichTextBox x:Name="tbLog" Grid.Row="1" Margin="0,3.228,-1,-0.076" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True" HorizontalAlignment="Stretch"/>
+            <Grid x:Name="gridTop" Grid.Row="0">
+                <Button x:Name="btnLogClear" Content="X" Width="26" Click="btnLogClear_Click" Height="20" ToolTip="Clear" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Background="{x:Null}" FontWeight="Bold" FontSize="16" Foreground="#FFC50000" FontFamily="Lucida Console" />
+                <Label x:Name="lblDvc" Content="Device:" HorizontalAlignment="Right" Margin="0,0,70,0" VerticalAlignment="Center"/>
+                <TextBox x:Name="tbDvc" HorizontalAlignment="Right" Height="23" Margin="60,0,5,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" Width="62" TextChanged="tbDvc_TextChanged"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

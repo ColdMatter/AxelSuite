@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
         xmlns:local="clr-namespace:Axel_hub"        
-        Title="Axel Hub" Height="856.652" Width="1176.785" Icon="Properties/rocket1.ico" ResizeMode="CanResizeWithGrip" Closing="frmAxelHub_Closing" Background="White" Loaded="frmAxelHub_Loaded">
+        Title="Axel Hub" Height="856.652" Width="1176.785" Icon="Properties/rocket1.ico" ResizeMode="CanResizeWithGrip" Closing="frmAxelHub_Closing" Background="White" Loaded="frmAxelHub_Loaded" KeyDown="frmAxelHub_KeyDown">
     <Grid x:Name="gridMain" Margin="0,0,-0.143,0.429">
         <Grid.ColumnDefinitions>
             <ColumnDefinition MinWidth="265" Width="265"/>
@@ -31,7 +31,7 @@
             </StackPanel>
         </Grid>
         <Grid x:Name="gridRight" Grid.Column="1" Margin="0">
-            <TabControl x:Name="tcMain" Margin="0,0,-0.286,0.429" SelectedIndex="0">
+            <TabControl x:Name="tcMain" Margin="0" SelectedIndex="0">
                 <TabItem x:Name="tiDataAqc" Header="Data Aqcuisition" FontSize="13" Width="150" Height="26" Visibility="Collapsed" >
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -53,7 +53,7 @@
                         </TabControl>
                         <GridSplitter x:Name="splitPanels" Grid.Column="1" Width="5" Background="#FFD9E4EB" HorizontalAlignment="Left" Margin="1,0,0,0"/>
                         <TabControl x:Name="tcSecondary" Grid.Column="1" Margin="7,0,0,0">
-                            <TabItem x:Name="tiYaxisSecondary" Header="Y  axis"  FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold" >
+                            <TabItem x:Name="tiYaxisSecondary" Header="Y  axis"  FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold">
                                 <Grid x:Name="gridSecondary">
 
                                 </Grid>

@@ -22,7 +22,7 @@
                 <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                 <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFE78302" FontWeight="Bold"/>
                 <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
-                <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="273"/>
+                <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13"/>
             </StackPanel>
             <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
                 <ni:Graph.Axes>
@@ -103,7 +103,7 @@
                 <RowDefinition x:Name="rowUpper" MinHeight="3" Height="130.286"/>
                 <RowDefinition x:Name="rowMiddle" MinHeight="30" Height="189.714"/>
             </Grid.RowDefinitions>
-            <CheckBox x:Name="chkAutoScaleMiddle" Grid.Row="0" Margin="3,2,0,5.286" FontSize="13" Content="Auto-scale Y" RenderTransformOrigin="0.514,-8.657" Foreground="#FF0E7501"/>
+            <CheckBox x:Name="chkAutoScaleMiddle" Grid.Row="0" Margin="3,2,0,111.286" FontSize="13" Content="Auto-scale Y" RenderTransformOrigin="0.514,-8.657" Foreground="#FF0E7501"/>
             <ListBox x:Name="lboxNB" Grid.Row="0" FontSize="13" Margin="3,19,0,0">
                 <ListBoxItem Content="N2"/>
                 <ListBoxItem Content="NTot"/>

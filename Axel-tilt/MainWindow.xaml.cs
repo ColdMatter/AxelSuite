@@ -165,7 +165,8 @@ namespace Axel_tilt
         /// <param name="e"></param>
         private void Axel_tilt_Loaded(object sender, RoutedEventArgs e)
         {
-            remoteShow = new RemoteMessaging("Axel Show", 668);
+            remoteShow = new RemoteMessaging();
+            remoteShow.Connect("Axel Show", 668);
             remoteShow.Enabled = false;
             remoteShow.OnReceive += new RemoteMessaging.ReceiveHandler(OnShowReceive);
             remoteShow.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnShowActiveComm);

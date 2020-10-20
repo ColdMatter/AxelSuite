@@ -21,7 +21,6 @@ using System.Diagnostics;
 using System.Windows.Controls.Primitives;
 using System.Threading.Tasks.Dataflow;
 
-using NationalInstruments.Net;
 using NationalInstruments;
 using NationalInstruments.NetworkVariable;
 using NationalInstruments.NetworkVariable.WindowsForms;
@@ -75,6 +74,8 @@ namespace Axel_hub
         {
             if (Utils.isNull(_genOptions)) Utils.TimedMessageBox("Non-existant options");
             else genOptions = _genOptions;
+            OnOptionsChange(genOptions);
+            genOptions.OnChange += new GeneralOptions.ChangeHandler(OnOptionsChange);
             modes = _modes;
             prefix = _prefix;
             axelMems = _axelMems;
@@ -90,15 +91,18 @@ namespace Axel_hub
             Waveform.OnRefresh += new DataStack.RefreshHandler(Refresh);            
             Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;          
             
-            resultStack = new DataStack(1000,prefix); resultStack.visualCountLimit = -1;   
+            resultStack = new DataStack(1000,prefix); resultStack.visualCountLimit = -1; 
+            
             Refresh();
         }
         public DataStack resultStack;
         public int GetStackDepth() { return (int)seStackDepth.Value; }
-        public void SetHWfile(string fl) 
-        { 
-            if (fl.Equals("")) lbHWfile.Content = "Hardware: (default)";
-            else lbHWfile.Content = "Hardware: "+fl; 
+
+        public void OnOptionsChange(GeneralOptions opts) 
+        {
+            string fl = "HW: "+ genOptions.MemsHw;
+            if (genOptions.Diagnostics) fl += "; diagnostics";
+            lbHWfile.Content = fl; 
         }
         private int IncomingBufferSize = 1000;
         public void SetIncomingBufferSize(int bf)
@@ -122,6 +126,20 @@ namespace Axel_hub
             return rslt;
         }
 
+        public DataStack convertV2mg(DataStack accelV, double temperV = double.NaN)
+        {
+            DataStack rslt = new DataStack(accelV.Depth, accelV.prefix);
+            for (int i = 0; i < accelV.Count; i++ )
+            {
+                rslt.AddPoint(convertV2mg(accelV[i].Y, accelV[i].X), temperV);
+            }
+            return rslt;
+        }
+
+        public DataStack TimePortionMg(double fromTime, double toTime, double temperV = double.NaN)
+        {
+            return convertV2mg(Waveform.TimePortion(fromTime, toTime), temperV);
+        }
         /// <summary>
         /// Clear all the data and visual components
         /// </summary>
@@ -177,6 +195,7 @@ namespace Axel_hub
                     Waveform.visualCountLimit = (int)seStackDepth.Value;
                     Waveform.Depth = (int)seStackDepth.Value;
                     totalCount = 0;
+                    memsTemperature = Double.NaN;
                 }
                 else
                 {
@@ -288,8 +307,9 @@ namespace Axel_hub
 
                         totalCount++;
                         lbi = (ListBoxItem)lbMean.Items[3]; lbi.Content = "# " + totalCount.ToString();
-                        lbi = (ListBoxItem)lbStDev.Items[3]; lbi.Content = (Waveform.stopWatch.ElapsedMilliseconds / 1000.0).ToString("G5"); //resultStack.pointSDev().Y.ToString("G7"); // # and StDev
-
+                        lbi = (ListBoxItem)lbStDev.Items[3];
+                        if (theTime.isTimeRunning) lbi.Content = theTime.elapsedTime.ToString("G5"); //resultStack.pointSDev().Y.ToString("G7"); // # and StDev
+                        else lbi.Content = "Time's up";
                         if (genOptions.TemperatureEnabled)
                         {
                             lbi = (ListBoxItem)lbMean.Items[4]; lbi.Content = (mV * memsTemperature).ToString("G7");
@@ -303,8 +323,8 @@ namespace Axel_hub
                         numTimeSlice.Background = Brushes.White;
                     }));
             }
-            lbErrorStatus.Content = "Error status: "+Waveform.lastError;    
-            
+            lbErrorStatus.Content = axelMems.tracer.message() + ((Waveform.lastError == "") ? "" : " Err: ") + Waveform.lastError;
+
             if (!chkChartUpdate.IsChecked.Value) return;
             //Console.WriteLine("refresh at " + (Waveform.stopWatch.ElapsedMillseconds/1000.0).ToString());
             lblRange.Content = "Vis.Range = " + curRange.ToString() + " pnts";
@@ -339,7 +359,7 @@ namespace Axel_hub
                     double xEnd = pB[pB.Count-1].X; 
                     ((AxisDouble)graphScroll.Axes[0]).Range = new Range<double>(Math.Max(0,xEnd - curRange), xEnd);
                 }
-                Application.Current.Dispatcher.BeginInvoke( DispatcherPriority.Background, 
+                Application.Current.Dispatcher.BeginInvoke( DispatcherPriority.ContextIdle, 
                   new Action(() => { graphScroll.Data[0] = pB; }));
             
                 switch (tabSecPlots.SelectedIndex) 

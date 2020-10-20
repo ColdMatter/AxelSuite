@@ -1,5 +1,4 @@
-﻿using NationalInstruments.Net;
-using NationalInstruments.Analysis;
+﻿using NationalInstruments.Analysis;
 using NationalInstruments.Analysis.Conversion;
 using NationalInstruments.Analysis.Dsp;
 using NationalInstruments.Analysis.Dsp.Filters;
@@ -34,6 +33,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Media.Media3D;
 using UtilsNS;
 using OptionsNS;
 
@@ -66,10 +66,9 @@ namespace Axel_hub
         private const int dataLength = 10000; // default length of data kept in
         private DataStack phiMg = new DataStack(dataLength);
         private DataStack accelMg = new DataStack(dataLength);
-        private DispatcherTimer dTimer; 
         private Random random = new Random();
         public List<Point> timeStack = new List<Point>(); // x - time[s]; y - phi[rad]        
-        List<Point> quantList = new List<Point>(); List<string> errList = new List<string>();
+        private List<Point3D> quantList = new List<Point3D>();
 
         /// <summary>
         /// Class constructor 
@@ -95,7 +94,7 @@ namespace Axel_hub
             scanModes = _scanModes;
             OpenDefaultModes();
             axelChart.InitOptions(ref genOptions, ref modes, ref _axelMems, prefix);
-            strobes.Init(prefix);
+            strobes.Init(prefix, ref genOptions);
 
             tabSecPlots.SelectedIndex = 1;
         }
@@ -123,7 +122,8 @@ namespace Axel_hub
             {
                 if (value)
                 {
-                    rowUpperChart.Height = new GridLength((Application.Current.MainWindow.Height - 60)/3);
+                    if (!Utils.isNull(Application.Current.MainWindow))
+                        rowUpperChart.Height = new GridLength((Application.Current.MainWindow.Height - 60)/3);
                     axelChart.Visibility = System.Windows.Visibility.Visible;
                     topSplitter.Visibility = System.Windows.Visibility.Visible;
                 }
@@ -165,12 +165,11 @@ namespace Axel_hub
 
             if (Middle)
             {
-                ucSignal.InitOptions(ref genOptions, ref modes, prefix);
+                ucSignal.Init(ref genOptions, ref modes, ref axelChart.axelMems, prefix);
                 ucSignal.OpenDefaultModes();
 
                 chkBigCalcTblUpdate.IsChecked = modes.RsltTblUpdate;
                 chkBigCalcChrtUpdate.IsChecked = modes.RsltChrtUpdate;
-                chkJoinLog.IsChecked = modes.JoinLog;
                 chkSignalLog.IsChecked = modes.SignalLog;
             }
             if (Bottom)
@@ -195,7 +194,7 @@ namespace Axel_hub
         private void UpdateStrobesParams()
         {
             if (Utils.isNull(strobes)) return;            
-            strobes.PID_Enabled = genOptions.followPID;
+            strobes.SetPID_Enabled(genOptions.followPID && !genOptions.Diagnostics);
         }
 
         /// <summary>
@@ -256,112 +255,9 @@ namespace Axel_hub
         }
 
         ShotList shotList; // arch - on
-        /// <summary>
-        /// Open joint log file
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnOpenJLog_Click(object sender, RoutedEventArgs e)
-        {
-            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
-            dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".jlg"; // Default file extension
-            dlg.Filter = "Join Log File (.jlg)|*.jlg"; // Filter files by extension
-
-            Nullable<bool> result = dlg.ShowDialog();
-            if (result == true)
-            {
-                lbJoinLogInfo.Content = "File: " + dlg.FileName;
-                shotList = new ShotList(true, dlg.FileName);
-            }
-            btnJDlyScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
-        }
-
-        DataStack srsMdiffQ = new DataStack();
-        public DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
-
-        /// <summary>
-        /// Scan delay between MOT accel data point and MEMS accel array  
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnJDlyScan_Click(object sender, RoutedEventArgs e)
-        {
-            if (Utils.isNull(shotList)) return;
-            btnJDlyScan.Value = !btnJDlyScan.Value;
-            if (!btnJDlyScan.Value) return;
-            if (shotList.savingMode || shotList.filename.Equals("")) throw new Exception("problem with shotList");
-            //tabLowPlots.SelectedIndex = 1;
-            if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(dataLength);
-            if (Utils.isNull(srsCorr)) srsCorr = new DataStack(dataLength);
-            if (Utils.isNull(srsMems)) srsMems = new DataStack(dataLength);
-            if (Utils.isNull(srsAccel)) srsAccel = new DataStack(dataLength);
-
-            srsMdiffQ.Clear(); double xMin = 1E6, xMax = -1e6;
-            double wd = numJFrom.Value / 1000.0;
-            SingleShot ss; bool next; int j;
-            shotList.resetScan();
-            if (!shotList.conditions.Count.Equals(0))
-            {
-                OnLog(">> processing conditions:", Brushes.DarkSlateGray.Color);
-                foreach (KeyValuePair<string, double> pair in shotList.conditions)
-                {
-                    OnLog(pair.Key + " = " + pair.Value, Brushes.Teal.Color);
-                }
-            }
-            shotList.resetScan(); if (!shotList.archiveMode) OnLog("The file is loaded in memory -> " + shotList.FileCount.ToString() + " shots.", Brushes.DarkSlateGray.Color);
-            while ((wd <= (numJTo.Value / 1000.0)) && btnJDlyScan.Value)
-            {
-                srsMotAccel.Clear(); srsCorr.Clear(); srsMems.Clear(); srsAccel.Clear();
-                shotList.resetScan(); j = 0;
-                do
-                {
-                    ss = shotList.archiScan(out next); 
-                    srsMotAccel.Add(ss.quant); xMin = Math.Min(xMin, ss.quant.X); xMax = Math.Max(xMax, ss.quant.X);
-                    double m = ss.memsWeightAccel(wd, genOptions.Mems2SignLen / 1000.0, true);
-
-                    srsMems.AddPoint(m, ss.quant.X + wd);
-                    srsCorr.AddPoint((m - ss.quant.Y) * (m - ss.quant.Y), ss.quant.X);
-                    if (chkChartEachIter.IsChecked.Value)
-                    {
-                        if (!srsMems.Count.Equals(0)) graphAccelTrend.Data[0] = srsMems;
-                        if (!srsCorr.Count.Equals(0)) graphAccelTrend.Data[1] = srsCorr;
-                        if (!srsMotAccel.Count.Equals(0)) graphAccelTrend.Data[2] = srsMotAccel;
-                        if (!srsAccel.Count.Equals(0)) graphAccelTrend.Data[3] = srsAccel;
-                    }
-                    Utils.DoEvents();
-                    j++;
-                } while (next && (numJNPnts.Value.Equals(-1) || (j < numJNPnts.Value)) && btnJDlyScan.Value);
-                lbInfoAccelTrend.Content = "Info: shot # " + j.ToString();
-                if (btnJDlyScan.Value)
-                {
-                    if (chkChartEachIter.IsChecked.Value)
-                    {
-                        double d = 0.02 * (xMax - xMin);
-                        accelXaxis.Adjuster = RangeAdjuster.None;
-                        accelXaxis.Range = new Range<double>(xMin - d, xMax + d);
-                    }
-                    srsMdiffQ.AddPoint(srsCorr.pointYs().Average(), wd * 1000.0);
-                    graphJoinOptim.Data[0] = srsMdiffQ;
-                }
-                lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Delay = " + (wd * 1000.0).ToString("G4");
-                Utils.DoEvents();
-                wd += numJBy.Value / 1000.0;
-            }
-            accelXaxis.Adjuster = RangeAdjuster.FitLoosely;
-            btnJDlyScan.Value = false;
-            double xm = 0; double ym = 1e6;
-            foreach (Point pnt in srsMdiffQ)
-            {
-                if (pnt.Y < ym)
-                {
-                    xm = pnt.X; ym = pnt.Y;
-                }
-            }
-            lbJoinLogInfo.Content = "File: " + shotList.filename + " ; Minimum at " + xm.ToString("G5") + " / " + ym.ToString("G5");
-            lbInfoAccelTrend.Content = "Info:";
-        }
-
+        ShotList shotListRaw;
+        FileLogger errLog;
+ 
         #region File operation
         /// <summary>
         /// Open signal dialog box
@@ -466,6 +362,9 @@ namespace Axel_hub
         }
         #endregion
 
+        DataStack srsMdiffQ = new DataStack(); 
+        public DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
+
         private double phaseCorr, phaseRad, fringesYmin = 10, fringesYmax = -10, accelYmin = 10, accelYmax = -10;
         /// <summary>
         /// Panel-selective clear command
@@ -538,7 +437,7 @@ namespace Axel_hub
         private void btnJoinLogTest_Click(object sender, RoutedEventArgs e) // 
         {
             btnJoinLogTest.Value = !btnJoinLogTest.Value;
-            if (!axelChart.Waveform.stopWatch.IsRunning && btnJoinLogTest.Value)
+            if (!theTime.isTimeRunning && btnJoinLogTest.Value)
             {
                 Utils.TimedMessageBox("Waveform Stopwatch is NOT running.");
                 btnJoinLogTest.Value = false;
@@ -558,18 +457,14 @@ namespace Axel_hub
             else
             {
                 ddTimer.Stop();
-                if (errList.Count > 0)
-                {
-                    Utils.writeList(Utils.dataPath + "errors.jlg", errList);
-                    Utils.TimedMessageBox("Some errors, check <errors.jlg> file");
-                }
             }
             shotList.enabled = btnJoinLogTest.Value;
         }
  
         private void ddTimer_Tick(object sender, EventArgs e)
         {
-            quantList.Add(new Point(axelChart.Waveform.stopWatch.ElapsedMilliseconds / 1000.0, 5)); // 
+            if (theTime.isTimeRunning)
+                quantList.Add(new Point3D(theTime.elapsedTime, 3.0, 5.0)); 
         }
 
         /// <summary>
@@ -619,14 +514,28 @@ namespace Axel_hub
         }
 
         /// <summary>
-        /// Reinitialize quant list
+        /// Reinitialize quant list 
         /// </summary>
         public void resetQuantList()
         {
             quantList.Clear(); // [time,MOTaccel] list of pairs
-            errList.Clear(); // accumulates errors
-            shotList = new ShotList(chkJoinLog.IsChecked.Value,"",prefix); 
-            setConditions(ref shotList.conditions); 
+            string fn = "";
+            if (!Utils.isNull(ucSignal.logger)) 
+                if (ucSignal.logger.Enabled) fn = System.IO.Path.ChangeExtension(ucSignal.logger.LogFilename,".jlg");
+
+            shotList = new ShotList(true, fn, prefix, false);
+            shotList.enabled = !genOptions.Diagnostics;
+            setConditions(ref shotList.conditions);           
+            
+            shotListRaw = new ShotList(true, fn, prefix, true);
+            shotListRaw.enabled = genOptions.logRawJdt;
+            setConditions(ref shotListRaw.conditions);
+            accelCalibr mems = (prefix == "X") ? axelChart.axelMems.memsX : axelChart.axelMems.memsY;
+            shotListRaw.streamWriter.subheaders.Add(mems.IdString());
+
+            errLog = new FileLogger("", System.IO.Path.ChangeExtension(fn, ".err"));
+            errLog.defaultExt = ".err";
+            errLog.Enabled = true;//Utils.designTime;
         }
         private void setConditions(ref Dictionary<string, double> dc)
         {
@@ -712,6 +621,7 @@ namespace Axel_hub
             return (coefficients[0] * Math.Sin(x / coefficients[1] + coefficients[2])) + coefficients[3];
         }
 
+        bool combLock = false;
         /// <summary>
         /// Create SingleShot and add it to shotList for further processing
         /// </summary>
@@ -720,48 +630,90 @@ namespace Axel_hub
         /// <param name="dly">[s] - time delay of mems start ref to quant</param>
         /// <returns></returns>
         public bool CombineQuantMems(List<Point> mds, double dur = 0.005, double dly = 0) 
-        {                                                                                 
-            if (mds.Count.Equals(0) || quantList.Count.Equals(0) || !shotList.enabled || (dur <= 0)) return false;
-            int pCount = shotList.Count;
-            List<Point> ds; 
-            for (int i = 0; i < quantList.Count; i++)
+        {
+            if (combLock || mds.Count.Equals(0) || quantList.Count.Equals(0) || (dur <= 0))
             {
-                if (quantList[i].X < 0) continue; // already processed
-                double from = quantList[i].X + dly; // shifted beginning
-                double w0 = from - dur; double w1 = from + 2 * dur; // window of interest 
-                if (w0 < mds[0].X) // if the window starts before the beginning of the buffer, then go to the Waveform
+                if (combLock) errLog.log("Comb lock !");
+                if (mds.Count.Equals(0)) errLog.log("mds.Count.Equals(0) !");
+                if (quantList.Count.Equals(0)) errLog.log("quantList.Count.Equals(0) !");
+                if (dur <= 0) errLog.log("dur <= 0 !");
+                return false;
+            }               
+            combLock = true;
+            try
+            {   int pCount = shotList.Count; 
+                double temper = (genOptions.TemperatureEnabled) ? axelChart.memsTemperature : Double.NaN;
+
+                DataStack ds;
+                for (int i = 0; i < quantList.Count; i++)
                 {
-                    ds = axelChart.Waveform.TimePortion(w0, w1);
-                    if (ds.Count > 0)
-                        shotList.Add(new SingleShot(quantList[i], ds)); // if empty skip that quantList point
-                    else errList.Add("quant.t <limits> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5")+", "+w1.ToString("G5")+">");
-                    quantList[i] = new Point(-quantList[i].X, quantList[i].Y); // mark as processed (good or bad)
-                    continue;
+                    if (quantList[i].X < 0) continue; // already processed
+                    double from = quantList[i].X + dly; // shifted aqc. start
+                    double w0 = from - dur; double w1 = from + 2 * dur; // the window of interest - defined by quant time (X) and dur/dly
+
+                    if (w0 < mds[0].X) // if the window of interest starts before the beginning of the buffer, then go to the Waveform for history data
+                    {
+                        if (shotListRaw.enabled)
+                        {
+                            ds = axelChart.Waveform.TimePortion(w0, w1); // ds in volts
+                            if (ds.Count > 0)  // if empty skip that quantList point 
+                                shotListRaw.Add(new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), ds, temper));
+                            else errLog.log("raw> quant.t <limits> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
+                        }
+                        if (shotList.enabled)
+                        {
+                            ds = axelChart.TimePortionMg(w0, w1); // ds in mg
+                            if (ds.Count > 0)  // if empty skip that quantList point
+                                shotList.Add(new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), ds));
+                            else errLog.log("quant.t <range> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
+                        }
+                        quantList[i] = new Point3D(-quantList[i].X, quantList[i].Y, quantList[i].Z); // mark as processed (good or bad)
+                        continue;
+                    }
+                    if ((mds[0].X < w0) && (w1 < mds[mds.Count - 1].X)) // the window of interest is well inside the MEMS buffer
+                    {
+                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper); 
+                        ss.mems = ss.memsPortion(new Range<double>(w0, w1)); // cut mems to size
+                        if (ss.mems.Count > 0) // there is something there
+                        {
+                            shotListRaw.Add(ss);
+
+                            ds = new DataStack(axelChart.Waveform.Depth, prefix);
+                            ds.AddRange(ss.mems);
+                            SingleShot ss2 = new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), axelChart.convertV2mg(ds));
+                            shotList.Add(ss2);
+                        }
+                        else errLog.log("quant <range> 2: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
+                            
+                        quantList[i] = new Point3D(-quantList[i].X, quantList[i].Y, quantList[i].Z); // mark as processed if good
+                        continue;
+                    }
+                    errLog.log("quant <range> 3: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">  "+
+                               "inBuff ["+ mds[0].X.ToString("G5") + ", " + mds[mds.Count - 1].X.ToString("G5")+"]");
+                    // in any other case - keep going
                 }
-                if ((mds[0].X < w0) && (w1 < mds[mds.Count - 1].X)) // the window of interest is well inside the MEMS buffer
+                for (int i = quantList.Count - 1; i > -1; i--)
+                    if (quantList[i].X < 0) quantList.RemoveAt(i); // remove processed points
+                                                                   // if any points left in quantList they will go for the next turn
+                string st = (theTime.isTimeRunning) ? "; time[s] = " + theTime.elapsedTime.ToString("G5") : "; no time";
+                lbInfoAccelTrend.Content = "Info: shots # " + shotList.Count.ToString() + st;
+                if (shotList.enabled)
                 {
-                    SingleShot ss = new SingleShot(quantList[i], mds);
-                    ss.mems = ss.memsPortion(new Range<double>(w0, w1));
-                    if (ss.mems.Count > 0) shotList.Add(ss);
-                    else errList.Add("quant <limits> 2: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
-                    quantList[i] = new Point(-quantList[i].X, quantList[i].Y); // mark as processed if good
+                    for (int i = pCount; i < shotList.Count; i++)
+                    {
+                        Dictionary<string, double> dt = shotList[i].deconstructAccel(strobes.fringeScale);
+                        if (dt.Count.Equals(0))
+                        {
+                            LogEvent("Error: empty shot #" + i.ToString(), Brushes.Red.Color);
+                            continue;
+                        }
+                        showResults(i, dt);
+                    }
                 }
-                // in any other case - keep going
             }
-            for (int i = quantList.Count - 1; i > 0; i--)
-                if (quantList[i].X < 0) quantList.RemoveAt(i); // remove processed points
-            // if any points left in quantList they will go for the next turn
-            string st = (axelChart.Waveform.stopWatch.IsRunning) ? "; time[s] = "+(axelChart.Waveform.stopWatch.ElapsedMilliseconds / 1000.0).ToString("G5") : "";
-            lbInfoAccelTrend.Content = "Info: shots # " + shotList.Count.ToString()+st;
-            for (int i = pCount; i < shotList.Count; i++)
+            finally
             {
-                Dictionary<string, double> dt = shotList[i].deconstructAccel(strobes.fringeScale);
-                if (dt.Count.Equals(0))
-                {
-                    LogEvent("Error: empty shot #" + i.ToString(), Brushes.Red.Color);
-                    continue;
-                }
-                showResults(i, dt);
+                combLock = false;
             }
             return true;
         }
@@ -786,7 +738,6 @@ namespace Axel_hub
 
                 modes.RsltTblUpdate = chkBigCalcTblUpdate.IsChecked.Value;
                 modes.RsltChrtUpdate = chkBigCalcChrtUpdate.IsChecked.Value;
-                modes.JoinLog = chkJoinLog.IsChecked.Value;
                 modes.SignalLog = chkSignalLog.IsChecked.Value;
             }
             if (Bottom)
@@ -802,7 +753,6 @@ namespace Axel_hub
                 modes.offset = numOffset.Value;
 
                 modes.AutoScaleBottom = chkAutoScaleBottom.IsChecked.Value;
-                modes.PID_Enabled = genOptions.followPID;
 
                 strobes.SaveConfigFile();
             }
@@ -870,9 +820,7 @@ namespace Axel_hub
 
             if (!Double.IsNaN(phi)) rslt["PhiRad"] = phi;
 
-            double tm = axelChart.axelMems.TimeElapsed(); // default reference time stamp to look backwards
-            if (Double.IsNaN(tm)) LogEvent("Error: ADC24 stopwatch not running !", Brushes.Red.Color);
-            else rslt["time"] = tm;
+            rslt["time"] = theTime.elapsedTime;
             
             return rslt;
         } 
@@ -1056,7 +1004,7 @@ namespace Axel_hub
             bool repeatMode = lastGrpExe.cmd.Equals("repeat");
             ucSignal.Showing = (tabSecPlots.SelectedIndex == 1); // when the charts are shown
             string s1 = (string)lastGrpExe.prms["groupID"];
-            if (!s1.Equals((string)mme.prms["groupID"])) throw new Exception("Wrong groupID");
+            if (!s1.Equals((string)mme.prms["groupID"])) LogEvent("Ussue with groupID > " + s1 + " : " + (string)mme.prms["groupID"], Brushes.Coral.Color);
 
             MMDataConverter.ConvertToDoubleArray(ref mme);
 
@@ -1097,8 +1045,7 @@ namespace Axel_hub
             {
                 double xVl = runID;
                 if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
-                {
-                    if (axelChart.Waveform.stopWatch.IsRunning) xVl = axelChart.Waveform.stopWatch.ElapsedMilliseconds / 1000.0;
+                {                    
                     UpdateStrobesParams(); statDt.Clear();
                     MMexec mmeOut = strobes.backMME(runID, A, mme); // creates strobes.accelSet if in probeMode
                     bool contrastMode = mmeOut.mmexec.Equals("contrastCheck") && mmeOut.prms.ContainsKey("phase." + prefix);
@@ -1135,21 +1082,44 @@ namespace Axel_hub
                         if (scanModes.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(A);
                         if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
-                            if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
-                            else phaseRad = Double.NaN;
-
-                            measr = nextMeasure(phaseRad);
-
-                            if (mme.prms.ContainsKey("rTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
-                            {
-                                measr["time"] = Convert.ToDouble(mme.prms["rTime"]);                                 
+                            if (genOptions.Diagnostics)
+                            {                               
+                                if (mme.prms.ContainsKey("iTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                {
+                                    xVl = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); 
+                                }
+                                else throw new Exception("No shot time specified.");
+                                if (mme.prms.ContainsKey("tTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                {
+                                    genOptions.Mems2SignLen = Utils.tick2sec(Convert.ToInt32(mme.prms["tTime"])) * 1000;  // in ms                                
+                                }
+                                quantList.Add(new Point3D(xVl, A, -1));
+                                if (genOptions.Diagnostics) log_out += " (" + xVl.ToString("F1") + ")";
                             }
-                            rslt = Statistics(measr);
-                            if (rslt.ContainsKey("PhiMg")) quantList.Add(new Point(rslt["time"], rslt["PhiMg"]));
+                            else
+                            {                           
+                                if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
+                                else phaseRad = Double.NaN;
+
+                                measr = nextMeasure(phaseRad);
+
+                                if (mme.prms.ContainsKey("iTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                {
+                                    measr["time"] = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); // in sec                                
+                                }
+                                if (mme.prms.ContainsKey("tTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                {
+                                    measr["T"] = Utils.tick2sec(Convert.ToInt32(mme.prms["tTime"])); genOptions.Mems2SignLen = measr["T"] * 1000.0;
+                                }
+                                rslt = Statistics(measr);                           
+                                if (rslt.ContainsKey("PhiMg") && (rslt.ContainsKey("PhiRad"))) quantList.Add(new Point3D(rslt["time"], rslt["PhiRad"], rslt["PhiMg"]));
+                            }
                         }                       
                         if (rslt.ContainsKey("Accel")) log_out += ": accel = " + rslt["Accel"].ToString(genOptions.SignalTablePrec);
                     }
-                    else LogEvent("problem with MEMS !", Brushes.Red.Color);
+                    else
+                        if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)    
+                            LogEvent("problem with MEMS !", Brushes.Red.Color);
                 }
                 else
                 {
@@ -1160,20 +1130,33 @@ namespace Axel_hub
                 {
                     if (scanModes.remoteMode == RemoteMode.Simple_Repeat)
                     {
-                        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
-                            new Action(() =>
-                            {
-                                srsMotAccel.AddPoint(A, xVl); graphAccelTrend.Data[2] = srsMotAccel.Portion(genOptions.TrendSignalLen);
-                            }));
+                        if (!Double.IsNaN(A))
+                            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
+                                new Action(() =>
+                                {
+                                    srsMotAccel.AddPoint(A, xVl); graphAccelTrend.Data[2] = srsMotAccel.Portion(genOptions.TrendSignalLen);
+                                }));
                     }
-                    if ((scanModes.remoteMode == RemoteMode.Jumbo_Repeat) && probeMode && !genOptions.MemsInJumbo) showResults(xVl, rslt);                 
+                    if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
+                    {
+                        if (genOptions.Diagnostics)
+                        {
+                            srsMotAccel.AddPoint(A, xVl); 
+                            graphAccelTrend.Data[2] = srsMotAccel.Portion(genOptions.TrendSignalLen);
+                        }
+                        else
+                            if (probeMode && !genOptions.MemsInJumbo) showResults(xVl, rslt);
+                    }               
                 }
                 if (chkAutoScaleBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis
                 {
                     if (scanModes.remoteMode == RemoteMode.Simple_Repeat || scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                     {
-                        accelYmin = Math.Min(Math.Floor(10 * srsMotAccel.pointYs().Min()) / 10, accelYmin);
-                        accelYmax = Math.Max(Math.Ceiling(10 * srsMotAccel.pointYs().Max()) / 10, accelYmax);
+                        if (srsMotAccel.Count > 0)
+                        {
+                            accelYmin = Math.Min(Math.Floor(10 * srsMotAccel.pointYs().Min()) / 10, accelYmin);
+                            accelYmax = Math.Max(Math.Ceiling(10 * srsMotAccel.pointYs().Max()) / 10, accelYmax);
+                        }
                         if (rslt.ContainsKey("MEMS"))
                         {
                             accelYmin = Math.Min(Math.Floor(10 * srsMems.pointYs().Min()) / 10, accelYmin);
@@ -1256,6 +1239,35 @@ namespace Axel_hub
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e) // not destroying anything, just preparing
         {
 
+        }
+
+        private void btnExtractHeader_Click(object sender, RoutedEventArgs e)
+        {
+            using (var fbd = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                System.Windows.Forms.DialogResult result = fbd.ShowDialog();
+
+                if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    string[] fls = Directory.GetFiles(fbd.SelectedPath, "*.ahs");
+                    LogEvent("Extract headers from *.ahs files in folder:", Brushes.DarkBlue.Color);
+                    LogEvent(fbd.SelectedPath, Brushes.DarkBlue.Color);
+                    foreach (string fl in fls)
+                    {
+                        LogEvent("> " + fl, Brushes.Blue.Color);
+                        List<string> ls = Utils.readList(fl, false);
+                        List<string> lt = new List<string>();
+                        foreach (string ln in ls)
+                        {
+                            if (ln.Length.Equals(0)) continue;
+                            if (ln[0].Equals('#'))
+                                lt.Add(ln.Remove(0, 1));
+                        }
+                        Utils.writeList(System.IO.Path.ChangeExtension(fl, ".ahh"), lt);
+                    }
+                    LogEvent("<><><><><><><><><><><><><><>", Brushes.Navy.Color);
+                }
+            }
         }
     }
 }

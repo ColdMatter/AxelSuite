@@ -19,7 +19,6 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.Windows.Controls.Primitives;
-using System.Threading.Tasks.Dataflow;
 
 using NationalInstruments.Analysis.Math;
 
@@ -48,7 +47,6 @@ namespace Axel_hub
             TimeSeriesMode = false;
             if (StackMode) Depth = depth;
             else Depth = 1000;
-            stopWatch = new Stopwatch();
             prefix = _prefix;
             logger = new FileLogger(prefix);
             random = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
@@ -72,7 +70,6 @@ namespace Axel_hub
         }
 
         public FileLogger logger;
-        public Stopwatch stopWatch;
 
         public delegate void RefreshHandler();
         public event RefreshHandler OnRefresh;
@@ -89,12 +86,7 @@ namespace Axel_hub
         public bool Running
         {
             get { return _running; }
-            set
-            {
-                _running = value;
-                if (value) stopWatch.Restart();
-                else stopWatch.Stop();
-            }
+            set { _running = value; }
         }
         public const int maxDepth = 15000000;
         public int Depth { get; set; }
@@ -371,15 +363,37 @@ namespace Axel_hub
                 double prd = (Last.X - First.X) / (Count - 1);
                 j = (int)Math.Round((X - First.X) / prd);
                 if (j < 0) j = 0;
-            }
-            for (int i = j - 2; i < Count; i++)
-            {
-                if (this[i].X >= X)
+                for (int i = 0; i < 50; i++) // 100 steps range
                 {
-                    idx = i;
-                    break;
+                    if ((j + i + 1) < Count)
+                    {
+                        if (Utils.InRange(X, this[j + i].X, this[j + i + 1].X)) // forward
+                        {
+                            idx = j + i;
+                            break;
+                        }
+                    }
+                    if ((j - i - 1) >= 0)
+                    {
+                        if (Utils.InRange(X, this[j - i - 1].X, this[j - i].X )) // backward
+                        {
+                            idx = j - i;
+                            break;
+                        }
+                    }
                 }
             }
+            if (idx == -1) 
+            {           
+                for (int i = 0; i < Count-1; i++) 
+                {
+                    if (Utils.InRange(X,this[i].X, this[i+1].X))
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+             }
             return Utils.EnsureRange(idx, -1, Count - 1);
         }
 
