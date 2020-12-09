@@ -103,9 +103,9 @@ namespace OptionsNS
         private void frmOptions_Activated(object sender, EventArgs e)
         {
             // General
-            rbSingle.IsChecked = (genOptions.AxesChannels == 0) || Utils.isSingleChannel;
-            rbDoubleTabs.IsChecked = genOptions.AxesChannels == 1; rbDoubleTabs.IsEnabled = !Utils.isSingleChannel;
-            rbDoublePanels.IsChecked = genOptions.AxesChannels == 2; rbDoublePanels.IsEnabled = !Utils.isSingleChannel;
+            rbSingle.IsChecked = (genOptions.AxesChannels == 0) || Utils.isSingleChannelMachine;
+            rbDoubleTabs.IsChecked = genOptions.AxesChannels == 1; rbDoubleTabs.IsEnabled = !Utils.isSingleChannelMachine;
+            rbDoublePanels.IsChecked = genOptions.AxesChannels == 2; rbDoublePanels.IsEnabled = !Utils.isSingleChannelMachine;
 
             tbSignalCursorPrec.Text = genOptions.SignalCursorPrec;
             tbSignalTablePrec.Text = genOptions.SignalTablePrec;
@@ -144,7 +144,7 @@ namespace OptionsNS
 
             //(cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content = genOptions.MemsHw;
             //(cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content = genOptions.TemperatureHw;
-            if (Utils.isSingleChannel)
+            if (Utils.isSingleChannelMachine)
             {
                 cbTemperatureHw.IsEnabled = false; cbTemperatureHw.SelectedIndex = -1;
             }
