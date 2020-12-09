@@ -119,7 +119,7 @@ namespace Axel_data
                 shotListDly.resetScan(); j = 0; // next wd for the scan
                 do
                 {
-                    ss = shotListDly.archiScan(out next);
+                    ss = shotListDly.archiScan(out next); if (Utils.isNull(ss) || !next) break;
                     srsMotAccel.Add(new Point(ss.quant.X, ss.quant.Y)); xMin = Math.Min(xMin, ss.quant.X); xMax = Math.Max(xMax, ss.quant.X);
                     double m = ss.memsWeightAccel(wd, -1, true);
 

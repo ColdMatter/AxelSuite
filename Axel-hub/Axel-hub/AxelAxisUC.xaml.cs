@@ -1084,12 +1084,12 @@ namespace Axel_hub
                         {
                             if (genOptions.Diagnostics)
                             {                               
-                                if (mme.prms.ContainsKey("iTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                if (mme.prms.ContainsKey("iTime")) // remote acquis. start time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
                                 {
                                     xVl = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); 
                                 }
                                 else throw new Exception("No shot time specified.");
-                                if (mme.prms.ContainsKey("tTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                if (mme.prms.ContainsKey("tTime")) // remote acquisition duration; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
                                 {
                                     genOptions.Mems2SignLen = Utils.tick2sec(Convert.ToInt32(mme.prms["tTime"])) * 1000;  // in ms                                
                                 }

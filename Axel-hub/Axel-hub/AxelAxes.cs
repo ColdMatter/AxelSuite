@@ -103,7 +103,7 @@ namespace Axel_hub
             axelMems = new AxelMems(genOptions.MemsHw);
             axelMems.OnAcquire += new AxelMems.AcquireHandler(DoAcquire);
             axelMems.OnRealSampling += new AxelMems.RealSamplingHandler(ucScan.OnRealSampling);
-            if (!Utils.isSingleChannel)
+            if (!Utils.isSingleChannelMachine) // not Plexal ???
             {
                 axelMemsTemperature = new AxelMems(genOptions.TemperatureHw);
                 axelMemsTemperature.OnAcquire += new AxelMems.AcquireHandler(DoAcquireTemperature);
@@ -229,7 +229,7 @@ namespace Axel_hub
                         axelMemsTemperature.TimingMode = AxelMems.TimingModes.byNone;
                 }
 
-            if ((genOptions.AxesChannels == 0) && !Utils.isSingleChannel) axelMems.activeChannel = 0;
+            if ((genOptions.AxesChannels == 0) && !Utils.isSingleChannelMachine) axelMems.activeChannel = 0;
             else axelMems.activeChannel = 2;
 
             if ((ucScan.remoteMode == RemoteMode.Jumbo_Repeat) || (ucScan.remoteMode == RemoteMode.Simple_Repeat)
@@ -280,7 +280,7 @@ namespace Axel_hub
                         else ds2.Add(dt[i]);              // channel 1
                     }                
                     this[0].axelChart.SetIncomingBufferSize(ds.Count);
-                    if (!Utils.isSingleChannel)
+                    if (!Utils.isSingleChannelMachine)
                         this[1].axelChart.SetIncomingBufferSize(ds2.Count);
                     else
                     {
@@ -293,12 +293,12 @@ namespace Axel_hub
                     }
 
                     this[0].axelChart.Waveform.AddRange(ds);
-                    if (!Utils.isSingleChannel) 
+                    if (!Utils.isSingleChannelMachine) 
                         this[1].axelChart.Waveform.AddRange(ds2);
                     if (isCombineQuantMems)
                     {
                         this[0].CombineQuantMems(ds, genOptions.Mems2SignLen / 1000.0);
-                        if (!Utils.isSingleChannel) 
+                        if (!Utils.isSingleChannelMachine) 
                             this[1].CombineQuantMems(ds2, genOptions.Mems2SignLen / 1000.0); 
                     }
                     break;

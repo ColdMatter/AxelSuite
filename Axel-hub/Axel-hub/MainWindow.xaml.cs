@@ -253,7 +253,7 @@ namespace Axel_hub
             switch (mc)
             {
                 case 0: // X 
-                    if (Utils.isSingleChannel) tiXAxis.Visibility = Visibility.Collapsed;
+                    if (Utils.isSingleChannelMachine) tiXAxis.Visibility = Visibility.Collapsed;
                     else tiXAxis.Visibility = Visibility.Visible;
                     tiYAxis.Visibility = Visibility.Collapsed;
                     colRight.Width = new GridLength(0, GridUnitType.Pixel);

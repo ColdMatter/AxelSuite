@@ -261,15 +261,11 @@
                                 <ni:RadixNumericTextBoxInt32 x:Name="numCycles"  HorizontalAlignment="Left" Height="24" Margin="54,139,0,0" VerticalAlignment="Top" Width="65" Range="-1, 2147483647, System.Int32" Value="-1" RadixVisibility="Collapsed" RenderTransformOrigin="0.457,1.125"/>
                             </Grid>
                         </GroupBox>
-
                     </Grid>
                 </TabItem>
-
-
             </TabControl>
             <CheckBox x:Name="chkAutoScaleBottom" Content="Auto-scale Y" Grid.Column="1" HorizontalAlignment="Left" Margin="8,5,0,0" VerticalAlignment="Top" Foreground="#FF0E7501" FontSize="13"/>
             <local:strobesUC x:Name="strobes" Margin="0,25,0,0" Grid.Column="1"/>
         </Grid>
-
     </Grid>
 </UserControl>

@@ -25,13 +25,12 @@ namespace Axel_data
     /// </summary>
     public partial class QMfitUC : UserControl
     {
-        private string doubleFormat = "G4";
+        private string doubleFormat = "G5";
         public QMfitUC()
         {
             InitializeComponent();
             Clear();
         }
-
         public void Clear()
         {
             data = null; curShotList = null; sectSize = -1;
@@ -42,14 +41,12 @@ namespace Axel_data
         {
             if (OnLog != null) OnLog(txt, detail, clr);
         }
-
         public Dictionary<string, double> GetInitials()
         {
             Dictionary<string, double> r = new Dictionary<string, double>();
             r["period"] = numPeriod.Value; r["phase"] = numPhase.Value; r["ampl"] = numAmpl.Value; r["offset"] = numOffset.Value;
             return r;
         }
-
         public int curSectIdx 
         { 
             get 
@@ -77,7 +74,7 @@ namespace Axel_data
             else data = null;
             if (!btnJFitSingle.IsEnabled) LogEvent("no data in section " + curSectIdx.ToString(), false, Brushes.Red.Color);
             if (!btnJFitSingle.IsEnabled || !andFit) return rslt;
-            rslt = FIT();
+            rslt = BigFIT();
             if (rslt.Count == 0) LogEvent("error at section " + curSectIdx.ToString(), false, Brushes.Red.Color);
             else
             {
@@ -125,14 +122,19 @@ namespace Axel_data
             ls = shotList.sectionScan(sectLen, true, out next);  // sequential access                        
             return LoadFromListOfShots(ls, andFit);
         }
-
         private void reportFit(Dictionary<string, double> fitCoeff)
-        {           
+        {
+            tabControl.SelectedIndex = 1;
             liPeriod.Content = "Period  " + fitCoeff["period"].ToString(doubleFormat); 
             liPhase.Content = "Phase  " + fitCoeff["phase"].ToString(doubleFormat);
+            liRealPhase.Content = "R.Phase  " + fitCoeff["rphase"].ToString(doubleFormat);
             liAmpl.Content = "Ampl.  " + fitCoeff["ampl"].ToString(doubleFormat); 
             liOffset.Content = "Offset  " + fitCoeff["offset"].ToString(doubleFormat); 
-            liRMSE.Content = "RMSE  " + fitCoeff["rmse"].ToString(doubleFormat);
+            liRMSE.Content = "RMSE  " + (100*fitCoeff["rmse"]).ToString(doubleFormat)+" [%]";
+            if (fitCoeff["rmse"] < 0.01) liRMSE.Foreground = Brushes.ForestGreen;
+            if (Utils.InRange(fitCoeff["rmse"],0.01,0.02)) liRMSE.Foreground = Brushes.Coral;
+            if (fitCoeff["rmse"] > 0.02) liRMSE.Foreground = Brushes.OrangeRed;
+            liCoD.Content = "R^2   " + fitCoeff["r^2"].ToString(doubleFormat);
         }
         private void chartFit(double[] xData, double[] fittedData)
         {
@@ -148,7 +150,42 @@ namespace Axel_data
                   graphMEMSvsQuant.Data[1] = lp; 
               }));
         }
-
+        private bool goodFit(Dictionary<string, double> fitRslt)
+        {
+            if (fitRslt.Count == 0) return false;
+            return (fitRslt["ampl"] > 0) && (fitRslt["rmse"] < 0.01);
+        }
+        public Dictionary<string, double> BigFIT(bool report = true, bool chart = true)
+        {
+            Dictionary<string, double> rslt = FIT(report, chart); rslt["in_prd"] = numPeriod.Value;
+            if (!chkPerturbation.IsChecked.Value || goodFit(rslt)) return rslt;
+            List<Dictionary<string, double>> ls = new List<Dictionary<string, double>>();
+            double prd0 = numPeriod.Value; double prd = prd0;
+            ls.Add(rslt);
+            while (!goodFit(rslt) && (ls.Count < 11))
+            {
+                int cnt = ls.Count;
+                if (cnt % 2 == 1) prd = prd0 + (cnt/2 + 1) * 0.05;
+                else prd = prd0 - ((cnt - 1)/2 +1) * 0.05;
+                numPeriod.Value = prd;
+                rslt = FIT(report, chart); rslt["in_prd"] = prd;
+                ls.Add(rslt);
+            }
+            for (int k = ls.Count-1; k > -1; k--)            
+            {
+                if (ls[k].Count == 0) { ls.RemoveAt(k); continue; }
+                if (ls[k]["ampl"] < 0) { ls.RemoveAt(k); continue; }
+            }
+            int j = 0; double rmse = 1000; int irmse = -1;
+            foreach (Dictionary<string, double> rs in ls)
+            {  
+                if (rs["rmse"] < rmse) { rmse = rs["rmse"]; irmse = j; }
+                j++;
+            }           
+            if (irmse > -1) rslt = ls[irmse];
+            numPeriod.Value = rslt["in_prd"]; FIT(report, chart);
+            return rslt;
+        }
         public Dictionary<string, double> FIT(bool report = true, bool chart = true) 
         {
             Dictionary<string, double> rslt = new Dictionary<string, double>();
@@ -161,6 +198,7 @@ namespace Axel_data
             {
                 xData[i] = data[i].X; yData[i] = data[i].Y;
             }
+            Array.Sort(xData, yData);
             double[] coefficients = new double[4];
             coefficients[0] = numPeriod.Value; coefficients[1] = numPhase.Value; coefficients[2] = numAmpl.Value; coefficients[3] = numOffset.Value; 
             double meanSquaredError;
@@ -177,8 +215,23 @@ namespace Axel_data
                 LogEvent("Error: " + e.Message, false, Brushes.Red.Color);
                 return rslt;
             }
-            rslt["period"] = coefficients[0]; rslt["phase"] = coefficients[1]; rslt["ampl"] = coefficients[2]; rslt["offset"] = coefficients[3];
+            rslt["period"] = coefficients[0]; double phase = coefficients[1];
+            rslt["phase"] = phase;
+            while (!Utils.InRange(phase, 0, 2 * Math.PI)) // confine in 0 .. 2*Math.PI
+            {
+                if (phase < 0) phase += 2 * Math.PI;
+                else phase -= 2 * Math.PI;
+            }
+            rslt["rphase"] = phase;
+            rslt["ampl"] = coefficients[2]; rslt["offset"] = coefficients[3];
             rslt["rmse"] = Math.Sqrt(meanSquaredError);
+            double SSres = 0; double SStot = 0; double yAver = yData.Average();
+            for (int i = 0; i < numSamples; i++)
+            {
+                SSres += Math.Pow(yData[i] - fittedData[i], 2);
+                SStot += Math.Pow(yData[i] - yAver, 2);
+            }
+            rslt["r^2"] = 1 - SSres / SStot;
             if (report) reportFit(rslt);
             if (chart) chartFit(xData, fittedData);
             Utils.DoEvents();
@@ -193,7 +246,39 @@ namespace Axel_data
 
         private void btnJFitSingle_Click(object sender, RoutedEventArgs e)
         {
-            if (!Utils.isNull(data)) FIT();
+            if (!Utils.isNull(data)) BigFIT();
+        }
+
+        private void btnTest_Click(object sender, RoutedEventArgs e)
+        {
+            if (Utils.isNull(data)) return;
+            int numSamples = data.Count;
+            if (numSamples < 5) return;
+            double[] coefficients = new double[4];
+            coefficients[0] = numPeriod.Value; coefficients[1] = numPhase.Value; coefficients[2] = numAmpl.Value; coefficients[3] = numOffset.Value;
+            double[] xData = new double[numSamples];
+            double[] yData = new double[numSamples];
+            for (int i = 0; i < numSamples; i++)
+            {
+                xData[i] = data[i].X; yData[i] = ModelFunction(data[i].X, coefficients);
+            }
+            Array.Sort(xData, yData);
+            chartFit(xData, yData);
+        }
+
+        private void btnEval_Click(object sender, RoutedEventArgs e)
+        {
+            if (Utils.isNull(data)) return;
+            int numSamples = data.Count;
+            if (numSamples < 5) return;
+            double[] xData = new double[numSamples];
+            double[] yData = new double[numSamples];
+            for (int i = 0; i < numSamples; i++)
+            {
+                xData[i] = data[i].X; yData[i] = data[i].Y;
+            }
+            numAmpl.Value = (yData.Max() - yData.Min())/2;
+            numOffset.Value = yData.Average();
         }
     }
 }

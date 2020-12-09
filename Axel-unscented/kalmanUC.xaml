@@ -1,0 +1,154 @@
+﻿<UserControl x:Name="kalmanNm" x:Class="Axel_unscented.kalmanUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Axel_unscented"
+             mc:Ignorable="d" 
+             d:DesignHeight="597.646" d:DesignWidth="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Margin="5,0,10,0">
+            <ni:BooleanContentButton x:Name="btnRun" Height="38" FontWeight="Bold" Foreground="#FF105A01" Click="btnRun_Click" VerticalAlignment="Center" FalseContent="R U N" Margin="42,7,40.709,5" TrueContent="Stop" FontSize="14" FalseBrush="#FFDBF9CD" Background="#FFFFFDFD" BorderBrush="#FF4AAE38" TrueBrush="#FFFA8441" BorderThickness="8"/>
+            <GroupBox x:Name="groupBox" Header="Common trend" Height="128" BorderBrush="#FF9F16F4" Margin="0,0,-0.291,0">
+                <Grid Margin="0">
+                    <ni:NumericTextBoxDouble x:Name="numFreq" HorizontalAlignment="Left" Height="24" Margin="86,39,0,0" VerticalAlignment="Top" Width="77" FontSize="13" Range="0, Infinity, System.Double" Value="5"/>
+                    <Label x:Name="label" Content="Frequency" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="71" FontSize="13"/>
+                    <ni:NumericTextBoxDouble x:Name="numAmpl" HorizontalAlignment="Left" Height="24" Margin="86,71,0,0" VerticalAlignment="Top" Width="77" FontSize="13" Range="0.01, Infinity, System.Double" Value="1" Interval="0.1"/>
+                    <Label x:Name="label_Copy" Content="Amplitude" HorizontalAlignment="Left" Margin="10,71,0,0" VerticalAlignment="Top" Width="71" FontSize="13"/>
+                    <ComboBox x:Name="cbCommonTrend" HorizontalAlignment="Left" Margin="18,10,0,0" VerticalAlignment="Top" Width="145" Background="#FFFBFBF0" SelectedIndex="0">
+                        <ComboBoxItem Content="Sine function"/>
+                        <ComboBoxItem Content="Square function"/>
+                        <ComboBoxItem Content="Manual change"/>
+                    </ComboBox>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="groupBox1" Header="Measurement source 1" Height="65" BorderBrush="#FF489BED" Margin="0,0,-0.291,0">
+                <Grid Margin="0">
+                    <ni:NumericTextBoxDouble x:Name="numGaussM1" HorizontalAlignment="Left" Height="24" Margin="102,10,0,0" VerticalAlignment="Top" Width="61" FontSize="13" Range="0, Infinity, System.Double" Value="0.2" Interval="0.1"/>
+                    <CheckBox x:Name="chkGuassM1" Content="Gauss noise" HorizontalAlignment="Left" Margin="3,14,0,0" VerticalAlignment="Top" FontSize="13" IsChecked="True"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="groupBox2" Header="Measurement source 2" Height="157" Margin="0,0,-0.291,0" BorderBrush="#FF08C208">
+                <Grid Margin="0">
+                    <ni:NumericTextBoxDouble x:Name="numFreqM2" HorizontalAlignment="Left" Height="24" Margin="86,28,0,0" VerticalAlignment="Top" Width="77" FontSize="13" Interval="0.1" Range="0, Infinity, System.Double" Value="20"/>
+                    <Label x:Name="label_Copy3" Content="Frequency" HorizontalAlignment="Left" Margin="10,28,0,0" VerticalAlignment="Top" Width="71" FontSize="13"/>
+                    <ni:NumericTextBoxDouble x:Name="numAmplM2" HorizontalAlignment="Left" Height="24" Margin="86,60,0,0" VerticalAlignment="Top" Width="77" FontSize="13" Interval="0.1" Value="0.1"/>
+                    <Label x:Name="label_Copy4" Content="Amplitude" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Width="71" FontSize="13"/>
+                    <ni:NumericTextBoxDouble x:Name="numGaussM2" HorizontalAlignment="Left" Height="24" Margin="101,100,0,0" VerticalAlignment="Top" Width="62" FontSize="13" Range="0, Infinity, System.Double" Value="0.2" Interval="0.1"/>
+                    <CheckBox x:Name="chkGuassM2" Content="Gauss noise" HorizontalAlignment="Left" Margin="3,104,0,0" VerticalAlignment="Top" FontSize="13" IsChecked="True"/>
+                    <CheckBox x:Name="chkEnabledM2" Content="Enabled" HorizontalAlignment="Left" Margin="12,7,0,0" VerticalAlignment="Top" FontSize="13"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="groupBox3" Header="Alter. inference as source" Height="100" Visibility="Collapsed">
+                <Grid Margin="0"/>
+            </GroupBox>
+            <GroupBox x:Name="groupBox4" Header="UKF parameters" Height="190" Margin="0" BorderBrush="#FFC84A02">
+                <Grid Margin="0">
+                    <local:ValueListUC x:Name="vlUFKparams" Margin="0"/>
+                </Grid>
+            </GroupBox>
+        </StackPanel>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="28"/>
+                <RowDefinition/>
+                <RowDefinition Height="2"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" >
+                <CheckBox x:Name="chkT" Content="Trend" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold" Visibility="Collapsed"/>
+                <CheckBox x:Name="chkM1" Content="MS1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" FontWeight="Bold" Foreground="#FF0A14C1" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" />
+                <CheckBox x:Name="chkM2" Content="MS2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FF07B484" FontWeight="Bold"/>
+                <CheckBox x:Name="chkP" Content="Predict" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold" Visibility="Collapsed"/>
+                <CheckBox x:Name="chkK" Content="Kalman" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FFE05100" FontWeight="Bold"/>
+                <CheckBox x:Name="chkK2" Content="Kalman2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FFE6006D" FontWeight="Bold" IsChecked="True"/>
+                <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Height="31" Width="640" FontSize="13" Grid.RowSpan="2"/>
+            </StackPanel>
+            <ni:Graph x:Name="graphMove" Margin="0,3" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ni:Graph.Axes>
+                    <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Range="0, 280, System.Double" Adjuster="ContinuousChart"/>
+                    <ni:AxisDouble x:Name="accelYAxis" Orientation="Vertical" Adjuster="FitLoosely" />
+                </ni:Graph.Axes>
+                <ni:Graph.Plots>
+                    <ni:Plot x:Name="plotT" Label="Trend">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FF9F16F4" StrokeThickness="1.2"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+
+                    <ni:Plot x:Name="plotM1" Label="M1">
+                        <ni:PointPlotRenderer Fill="#FF489BED" Stroke="#FF001AB9"/>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotM2" Label="M2">
+                        <ni:PointPlotRenderer Fill="#FF09E709" Stroke="#FF087A0C"/>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotP" Label="Predict" Visibility="Collapsed">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFB6CC01" StrokeThickness="1.3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+
+                    <ni:Plot x:Name="plotK" Label="Kalman">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFE05100" StrokeThickness="1.3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotK2" Label="Kalman2">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFE6006D" StrokeThickness="1.3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+
+                </ni:Graph.Plots>
+            </ni:Graph>
+            <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Height="5" Margin="0" Grid.Row="2" VerticalAlignment="Top" Cursor="SizeNS" ResizeDirection="Rows"/>
+            <ni:Graph x:Name="graphUKFParam" Margin="0,8,0,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <ni:Graph.Axes>
+                    <ni:AxisDouble x:Name="accelXaxis1" Orientation="Horizontal" Adjuster="FitLoosely"/>
+                    <ni:AxisDouble x:Name="accelAxis1" Orientation="Vertical" Adjuster="FitLoosely" />
+                    <ni:AxisDouble x:Name="corrAxis1" Orientation="Vertical" Adjuster="FitLoosely" BaselineStroke="#FF009064">
+                        <ni:AxisDouble.MinorDivisions>
+                            <ni:RangeDivisions TickBrush="#FF0F801E"/>
+                        </ni:AxisDouble.MinorDivisions>
+                        <ni:AxisDouble.MajorDivisions>
+                            <ni:RangeLabeledDivisions LabelBrush="#FF097F12"/>
+                        </ni:AxisDouble.MajorDivisions>
+                        <ni:AxisDouble.MajorGridLines>
+                            <ni:GridLines/>
+                        </ni:AxisDouble.MajorGridLines>
+                    </ni:AxisDouble>
+                </ni:Graph.Axes>
+                <ni:Graph.Children>
+                    <ni:MultiPlotCursor x:Name="plotcursorAccel1" Label="multiPlotCursor2" LabelVisibility="Hidden" ToolTip=""/>
+                </ni:Graph.Children>
+                <ni:Graph.Plots>
+                    <ni:Plot x:Name="plotMems1" Label="MEMS Accel.">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FF0A14C1" StrokeThickness="1.5"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotCorr1" Label="Corrections" >
+                        <ni:BarPlotRenderer BarWidth="0.35" Fill="#FF07B484" Stroke="#FF07B484"/>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotMotAccel1" Label="Quantum Accel." >
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer StrokeThickness="1.5" Stroke="#FF9F16F4"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotAccel1" Label="Acceleration">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFE05100" StrokeThickness="1.5"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                </ni:Graph.Plots>
+                <ni:Graph.SelectionFill>
+                    <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                </ni:Graph.SelectionFill>
+            </ni:Graph>
+        </Grid>
+    </Grid>
+</UserControl>

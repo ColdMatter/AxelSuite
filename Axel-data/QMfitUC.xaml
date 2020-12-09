@@ -5,8 +5,7 @@
              xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Axel_data"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d" d:DesignWidth="800">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -48,15 +47,32 @@
                         <ni:NumericTextBoxDouble x:Name="numOffset" HorizontalAlignment="Left" Height="23" Margin="52,104,0,0" VerticalAlignment="Top" Width="67" Range="-100, 100, System.Double" FontSize="13" Interval="0.1"/>
                     </Grid>
                 </GroupBox>
-                <Label x:Name="label" Content="Fit resilts" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Top" FontWeight="Bold" FontSize="13"/>
-                <ListBox x:Name="listBox" FontSize="14">
-                    <ListBoxItem x:Name="liPeriod" Content="Period" Foreground="#FF001BA2"/>
-                    <ListBoxItem x:Name="liPhase" Content="Phase" Foreground="#FF011DA4"/>
-                    <ListBoxItem x:Name="liAmpl" Content="Ampl" Foreground="#FF550801"/>
-                    <ListBoxItem x:Name="liOffset" Content="Offset" Foreground="#FF800C02"/>
-                    <Separator/>
-                    <ListBoxItem x:Name="liRMSE" Content="RMSE" Foreground="#FF016D1C"/>
-                </ListBox>
+                <TabControl x:Name="tabControl" Height="180" FontSize="13" Margin="0,3,0.316,0">
+                    <TabItem Header="Prepar.">
+                        <Grid>
+                            <StackPanel Height="26" Margin="0,4,0,0" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button x:Name="btnTest" Content="Test" Width="60" Margin="1,0,2,0.127" Click="btnTest_Click"/>
+                                <Button x:Name="btnEval" Content="Eval" Width="60" Margin="2,0,0,0.127" Click="btnEval_Click"/>
+                            </StackPanel>
+                            <CheckBox x:Name="chkPerturbation" Content=" Use perturbations" Margin="1,43,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"></CheckBox>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Fit resilts">
+                        <Grid>
+                            <ListBox x:Name="listBox" FontSize="14">
+                                <ListBoxItem x:Name="liPeriod" Content="Period" Foreground="#FF001BA2"/>
+                                <ListBoxItem x:Name="liPhase" Content="Phase" Foreground="#FF011DA4"/>
+                                <ListBoxItem x:Name="liRealPhase" Content="R.Phase" Foreground="#FF011DA4"/>
+                                <ListBoxItem x:Name="liAmpl" Content="Ampl" Foreground="#FF550801"/>
+                                <ListBoxItem x:Name="liOffset" Content="Offset" Foreground="#FF800C02"/>
+                                <Separator/>
+                                <ListBoxItem x:Name="liRMSE" Content="RMSE" Foreground="#FF016D1C"/>
+                                <ListBoxItem x:Name="liCoD" Content="CoD"/>
+                            </ListBox>
+
+                        </Grid>
+                    </TabItem>
+                </TabControl>
             </StackPanel>
         </Grid>
     </Grid>

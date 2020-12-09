@@ -1,0 +1,35 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Axel_scented"
+        xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Name="Axel_scened" x:Class="Axel_scented.MainWindow"
+        mc:Ignorable="d"
+        Title=" Axel Scented  v1.0" Height="600" Width="1100" WindowStartupLocation="CenterScreen" Icon="Properties/small_filter_orange.png" Loaded="Axel_scened_Loaded">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition  Width="230"/>
+        </Grid.ColumnDefinitions>
+        <local:kalmanUC x:Name="kalmanUC1" Margin="0"/>
+        <Grid Grid.Column="1" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="570*"/>
+                <RowDefinition Height="30"/>
+            </Grid.RowDefinitions>
+            <RichTextBox x:Name="tbLog" Grid.Row="1" Margin="0,0.286,-0.714,0" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True"/>
+            <StackPanel HorizontalAlignment="Left" Height="30" Grid.Row="0" VerticalAlignment="Top" Width="231" Orientation="Horizontal" Background="#FFF9FEFF" Margin="0,0,-0.722,0">
+                <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="10,5,0,0" Grid.Row="1" VerticalAlignment="Center" IsChecked="True"/>
+                <CheckBox x:Name="chkDetail" Content="Detail" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Center" IsChecked="True"/>
+                <Button x:Name="btnLogClear" Content="Clear" HorizontalAlignment="Left" Margin="10,6,0,3.714" Grid.Row="1" VerticalAlignment="Center" Width="57" Click="btnLogClear_Click" Background="#FFE5EDFF"/>
+                <Image x:Name="imgMenu" Margin="15,3,0,3"  Stretch="Fill" Width="29" HorizontalAlignment="Right" Source="Properties/TripleBar.bmp" VerticalAlignment="Center"  />
+            </StackPanel>
+            <Grid Margin="0" Grid.Row="2">
+                <ProgressBar x:Name="progBar" Margin="0" Foreground="#FFB3F8E9" Background="{x:Null}"/>
+                <Label x:Name="lbProgBar" Content="0 %" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center" FontSize="13"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

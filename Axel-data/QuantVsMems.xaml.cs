@@ -68,19 +68,41 @@ namespace Axel_data
             dlg.FileName = ""; // Default file name
             dlg.InitialDirectory = Utils.dataPath;
             dlg.DefaultExt = ".jdt"; // Default file extension
-            dlg.Filter = "Join Data File (.jdt)|*.jdt"; // Filter files by extension
+            dlg.Filter = "Join Data File (.jdt)|*.jdt|CSV File (.csv)|*.csv"; // Filter files by extension
 
             Nullable<bool> result = dlg.ShowDialog();
             if (result == false) return;
             //dlg.FileName = @"f:\Work\AxelSuite\Axel-data\Data\5120Hz.jdt";
             //lbJoinLogInfo.Content = "File: " + dlg.FileName;
-            shotList = new ShotList(false, dlg.FileName); 
-            btnScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
-            if (btnScan.IsEnabled)
+            if (System.IO.Path.GetExtension(dlg.FileName).Equals(".jdt"))
             {
-                LogEvent("Opened: " + shotList.filename);
+                shotList = new ShotList(false, dlg.FileName);
+                btnScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
+                if (btnScan.IsEnabled)
+                {
+                    LogEvent("Opened: " + shotList.filename);
+                }
+                gbSectScroll.Header = "Sect.Scroll";
             }
-            gbSectScroll.Header = "Sect.Scroll";
+            else
+            {
+                btnScan.IsEnabled = false;
+                List<Point> lp = new List<Point>();
+                foreach (string line in File.ReadLines(dlg.FileName))
+                {
+                    if (line.Equals("")) continue;
+                    if (line[0].Equals('#')) continue;
+                    string[] sa = line.Split(',');
+                    if (sa.Length.Equals(2)) lp.Add(new Point(Convert.ToDouble(sa[0]), Convert.ToDouble(sa[1])));
+                    if (sa.Length.Equals(3)) lp.Add(new Point(Convert.ToDouble(sa[1]), Convert.ToDouble(sa[2])));
+                }
+                if (lp.Count < 3)
+                {
+                    LogEvent("Too few points in " + dlg.FileName);
+                    return;
+                }
+                QMfit.LoadFromPoints(lp, false);
+            }
             //shotList = new ShotList(true, false, fn);
             //shotList.enabled = true;
             //setConditions(ref shotList.conditions);
@@ -125,8 +147,7 @@ namespace Axel_data
                 //LogEvent("-------------------", true, Brushes.Blue.Color);
             }
             if (inChart)
-            {
-                
+            {                
                 if (Double.IsNaN(rFit["rmse"])) return false;
                 srsPeriod.AddPoint(rFit["period"]); graphTrends.Data[0] = srsPeriod;
                 srsPhase.AddPoint(rFit["phase"]);   graphTrends.Data[1] = srsPhase;

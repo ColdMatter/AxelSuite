@@ -58,7 +58,7 @@ namespace Axel_data
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
             dlg.DefaultExt = ".ahf"; // Default file extension
-            dlg.Filter = "Axel Hub File (.ahf)|*.ahf|" + "All files (*.*)|*.*"; ; // Filter files by extension
+            dlg.Filter = "Axel Hub File (.ahf)|*.ahf|" + "All files (*.*)|*.*";  // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
