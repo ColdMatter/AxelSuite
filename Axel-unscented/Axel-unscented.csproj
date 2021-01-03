@@ -104,7 +104,6 @@
     <Compile Include="..\Axel-hub\Axel-hub\DataStackLib.cs">
       <Link>DataStackLib.cs</Link>
     </Compile>
-    <Compile Include="linearKF.cs" />
     <Compile Include="UnscentedKalmanFilter.cs" />
     <Compile Include="ValueListUC.xaml.cs">
       <DependentUpon>ValueListUC.xaml</DependentUpon>
@@ -164,27 +163,11 @@
   <ItemGroup>
     <Resource Include="filter_blue.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="ThirdParty\" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Properties\small_filter_orange.png" />
-    <Content Include="ThirdParty\cudart64_40_17.dll" />
-    <Content Include="ThirdParty\cufft64_40_17.dll" />
-    <Content Include="ThirdParty\cvextern.dll" />
-    <Content Include="ThirdParty\cvextern_gpu.dll" />
-    <Content Include="ThirdParty\npp64_40_17.dll" />
-    <Content Include="ThirdParty\opencv_calib3d231.dll" />
-    <Content Include="ThirdParty\opencv_contrib231.dll" />
-    <Content Include="ThirdParty\opencv_core231.dll" />
-    <Content Include="ThirdParty\opencv_features2d231.dll" />
-    <Content Include="ThirdParty\opencv_ffmpeg_64.dll" />
-    <Content Include="ThirdParty\opencv_flann231.dll" />
-    <Content Include="ThirdParty\opencv_gpu231.dll" />
-    <Content Include="ThirdParty\opencv_highgui231.dll" />
-    <Content Include="ThirdParty\opencv_imgproc231.dll" />
-    <Content Include="ThirdParty\opencv_legacy231.dll" />
-    <Content Include="ThirdParty\opencv_ml231.dll" />
-    <Content Include="ThirdParty\opencv_objdetect231.dll" />
-    <Content Include="ThirdParty\opencv_video231.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

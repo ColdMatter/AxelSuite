@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Axel_scented"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Name="Axel_scened" x:Class="Axel_scented.MainWindow"
         mc:Ignorable="d"
-        Title=" Axel Scented  v1.0" Height="600" Width="1100" WindowStartupLocation="CenterScreen" Icon="Properties/small_filter_orange.png" Loaded="Axel_scened_Loaded">
+        Title=" Axel Scented  v1.0" Height="600" Width="1100" WindowStartupLocation="CenterScreen" Icon="Properties/filter_blue.png" Loaded="Axel_scened_Loaded">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>

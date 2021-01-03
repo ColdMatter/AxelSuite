@@ -11,6 +11,7 @@ using NationalInstruments.DAQmx;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UtilsNS;
+using OptionsNS;
 using System.Windows.Navigation;
 
 namespace Axel_hub
@@ -128,7 +129,7 @@ namespace Axel_hub
         {
             if (trouble) return "Error status: MEMS timing overflow !";
             else return "Info: acq.cycle " + ((int)(fulfillment * 100)).ToString() + "% busy";
-            //return "Info [ms]: p=" + ((int)(period * 1000.0)).ToString() + "; d1=" + d1.ToString() + "; d2=" + d2.ToString();
+                //return "Info [ms]: p=" + ((int)(period * 1000.0)).ToString() + "; d1=" + d1.ToString() + "; d2=" + d2.ToString();
         }
     }
 
@@ -187,7 +188,7 @@ namespace Axel_hub
         /// Class contructor
         /// </summary>
         /// <param name="hwFile">Hardware file (NI9251 settings)</param>
-        /// <param name="memsFile">Mems calibration and teperature compensation</param>
+        /// <param name="memsFile">Mems calibration and temperature compensation</param>
         public AxelMems(string hwFile = "", string memsFile = "") // memsFile - no ext
         {
             activeChannel = 0;
@@ -195,7 +196,7 @@ namespace Axel_hub
             nSamples = 1500;
             dTimer = new DispatcherTimer();
             dTimer.Tick += new EventHandler(dTimer_Tick);
-            dTimer.Interval = new TimeSpan(10 * 10000); // 10ms
+            dTimer.Interval = new TimeSpan(100 * 10000); // 100 ms
 
             // default hardware
             hw["device"] = "cDAQ1Mod1_2";
@@ -491,8 +492,13 @@ namespace Axel_hub
                             break;
                     }
                     dataBuffer = new List<Point>(data);
-                    if (!dTimer.IsEnabled && !tracer.trouble) dTimer.Start();
-                    else Utils.TimedMessageBox("Timing problem: skip a buffer of data"); //Console.WriteLine
+                    if (!dTimer.IsEnabled) dTimer.Start();
+                    else Utils.TimedMessageBox("Timing problem: skip a buffer of data");
+                    if (tracer.trouble)
+                    {
+                        Utils.TimedMessageBox("Timing sequence problem"); 
+                        tracer.trouble = false;
+                    }                       
                     analogInReader.BeginMemoryOptimizedReadWaveform(nSamples, analogCallback, myTask, waveform);
                 }
             }
@@ -529,7 +535,64 @@ namespace Axel_hub
             string fn = Utils.configPath + hwFile + ".hw";
             if (File.Exists(fn)) hw = Utils.readDict(fn);
         }
+        public bool isDevicePlugged()
+        {
+            if (hw.ContainsKey("device")) return isDevicePresent(hw["device"]);
+            else return false;
+        }
 
+        private bool isDevicePresent(string dev)
+        {
+            bool rslt = false;
+            foreach (string dv in DaqSystem.Local.Devices)
+            {
+                rslt |= dev.Equals(dv);
+            }
+            return rslt;
+        }
+
+        public void StartAcquisition(int samplesPerChannel = 100, double samplingRate = 267)
+        {
+            if (!Utils.isNull(tmpTask)) return; // fix later !!!
+            try
+            {
+                //Create a new task locally
+                tmpTask = new Task();
+                
+                //Create a virtual channel
+                tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel1"], "", AITerminalConfiguration.Differential,
+                                                    Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
+                tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential,
+                                                    Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
+
+                tmpTask.Stop();
+                tmpTask.Timing.ConfigureSampleClock("", samplingRate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples, samplesPerChannel);
+                tmpTask.Timing.SamplesPerChannel = samplesPerChannel;   //tmpTask.Stream.Timeout = Timeout;
+                tmpTask.Control(TaskAction.Commit);
+
+                //Verify the Task
+                tmpTask.Control(TaskAction.Verify);               
+            }
+            catch (DaqException exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
+            finally
+            {
+
+            }
+        }
+
+        public void StopAcquisition()
+        {
+            return; // fix later !!!
+            if (!Utils.isNull(tmpTask)) tmpTask.Dispose();
+            if (isDevicePresent(hw["device"]))
+            {
+                Device dev = DaqSystem.Local.LoadDevice(hw["device"]);
+                //dev.Reset();
+            }
+        }
         /// <summary>
         /// The actual temperature measurement by channel 
         /// </summary>
@@ -539,23 +602,9 @@ namespace Axel_hub
             double[] rslt = null;
             try
             {
-                //Create a new task locally
-                using (tmpTask = new Task())
-                {
-                    //Create a virtual channel
-                    tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel1"], "", AITerminalConfiguration.Differential,
-                                                        Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
-                    tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential,
-                                                        Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
-
-                    AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);
-
-                    //Verify the Task
-                    tmpTask.Control(TaskAction.Verify);
-
-                    //Plot Multiple Channels to the table
-                    rslt = reader.ReadSingleSample();
-                }
+                 AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);
+                 //Plot Multiple Channels to the table
+                 rslt = reader.ReadSingleSample();               
             }
             catch (DaqException exception)
             {

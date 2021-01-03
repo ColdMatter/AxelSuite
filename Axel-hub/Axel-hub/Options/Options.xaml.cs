@@ -35,6 +35,7 @@ namespace OptionsNS
                 genOptions = JsonConvert.DeserializeObject<GeneralOptions>(fileJson);
             }
             else genOptions = new GeneralOptions();
+            Title = "  Axel Hub Options  v" + Utils.getRunningVersion();
         }
 
         /// <summary>

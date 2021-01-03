@@ -230,7 +230,8 @@ namespace Axel_hub
             // corrected with background
             double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2;
             //double A = cN2 / cNtot;
-            A = (N2 - B2) / (NTot - BTot); //1 - 2 * (N2 - B2) / (NTot - BTot);
+            A = (N2 - B2) / (NTot - BTot); // Plexal
+            //A = 1 - 2 * (N2 - B2) / (NTot - BTot); // Thalassa
             currX = 1; double cN2_std = 1, cNtot_std = 1;
             if (chkStdDev.IsChecked.Value)
             {

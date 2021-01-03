@@ -22,7 +22,7 @@ namespace Axel_hub
     public class AxelAxesClass : List<AxelAxisClass>
     {      
         public AxelMems axelMems = null;
-        private AxelMems axelMemsTemperature = null;
+        private AxelMemsTemperature axelMemsTemperature = null;
         private scanClass ucScan; 
 
         Random rnd = new Random();
@@ -103,11 +103,8 @@ namespace Axel_hub
             axelMems = new AxelMems(genOptions.MemsHw);
             axelMems.OnAcquire += new AxelMems.AcquireHandler(DoAcquire);
             axelMems.OnRealSampling += new AxelMems.RealSamplingHandler(ucScan.OnRealSampling);
-            if (!Utils.isSingleChannelMachine) // not Plexal ???
-            {
-                axelMemsTemperature = new AxelMems(genOptions.TemperatureHw);
-                axelMemsTemperature.OnAcquire += new AxelMems.AcquireHandler(DoAcquireTemperature);
-            }
+
+            axelMemsTemperature = new AxelMemsTemperature(genOptions.TemperatureHw);
         }
 
         /// <summary>
@@ -212,26 +209,22 @@ namespace Axel_hub
                 theTime.stopTime();
                 return;
             }
-            else LogEvent("Start MEMS series...", Brushes.Navy.Color);
+            else LogEvent("Start MEMS series...", Brushes.Teal.Color);
             //nSamples = InnerBufferSize;
 
             for (int i = 0; i < rCount; i++)
                 if (this[i].axelChart.Waveform.TimeSeriesMode)
                 {
                     axelMems.TimingMode = AxelMems.TimingModes.byStopwatch;
-                    if (!Utils.isNull(axelMemsTemperature))
-                        axelMemsTemperature.TimingMode = AxelMems.TimingModes.byStopwatch;
                 }
                 else
                 {
                     axelMems.TimingMode = AxelMems.TimingModes.byNone;
-                    if (!Utils.isNull(axelMemsTemperature))
-                        axelMemsTemperature.TimingMode = AxelMems.TimingModes.byNone;
                 }
 
             if ((genOptions.AxesChannels == 0) && !Utils.isSingleChannelMachine) axelMems.activeChannel = 0;
             else axelMems.activeChannel = 2;
-
+            
             if ((ucScan.remoteMode == RemoteMode.Jumbo_Repeat) || (ucScan.remoteMode == RemoteMode.Simple_Repeat)
                 || (ucScan.remoteMode == RemoteMode.Disconnected))
             {
@@ -240,11 +233,11 @@ namespace Axel_hub
             axelMems.StartAcquisition(InnerBufferSize, 1 / SamplingPeriod);    // async acquisition  
             if (!Utils.isNull(axelMemsTemperature))
                 if (genOptions.TemperatureEnabled && axelMemsTemperature.isDevicePlugged())
-                    axelMemsTemperature.StartAcquisition(InnerBufferSize, 1 / SamplingPeriod);
+                    axelMemsTemperature.StartAcquisition();
         }
 
         /// <summary>
-        /// Get the acquisition buffer and distribute the data to axes
+        /// Get the acquisition buffer and split the data to axes
         /// </summary>
         /// <param name="dt"></param>
         /// <param name="next"></param>
@@ -262,6 +255,16 @@ namespace Axel_hub
                 for (int i = 0; i < rCount; i++) this[i].axelChart.Refresh();
                 return;
             }
+            if (genOptions.TemperatureEnabled)
+            {
+                if (!axelMemsTemperature.isDevicePlugged()) 
+                    LogEvent("No temperature device connected !", Brushes.Red.Color);
+                else
+                {
+                    double[] temper = axelMemsTemperature.TakeTheTemperature();
+                    this[0].axelChart.memsTemperature = temper[0]; this[1].axelChart.memsTemperature = temper[1];
+                }
+            } 
             switch (axelMems.activeChannel)
             {
                 case 0:
@@ -282,16 +285,7 @@ namespace Axel_hub
                     this[0].axelChart.SetIncomingBufferSize(ds.Count);
                     if (!Utils.isSingleChannelMachine)
                         this[1].axelChart.SetIncomingBufferSize(ds2.Count);
-                    else
-                    {
-                        if (ds.Count > 0)
-                        {
-                            DataStack DS2 = new DataStack(ds2.Count);
-                            DS2.AddRange(ds2);
-                            this[0].axelChart.memsTemperature = DS2.pointYs().Average();
-                        }
-                    }
-
+                    
                     this[0].axelChart.Waveform.AddRange(ds);
                     if (!Utils.isSingleChannelMachine) 
                         this[1].axelChart.Waveform.AddRange(ds2);
@@ -303,47 +297,6 @@ namespace Axel_hub
                     }
                     break;
             }           
-        }
-
-        /// <summary>
-        /// Acquire the temperature measurements and send the average to the corresponding axelChart
-        /// </summary>
-        /// <param name="dt"></param>
-        /// <param name="next"></param>
-        public void DoAcquireTemperature(List<Point> dt, out bool next)
-        {
-            if (!genOptions.TemperatureEnabled) 
-            {
-                next = false; return;
-            }
-            next = ucScan.EndlessMode() && memsRunning && (axelMemsTemperature.activeChannel.Equals(0) || axelMemsTemperature.activeChannel.Equals(2)) &&
-                (ucScan.Running || (ucScan.remoteMode == RemoteMode.Simple_Repeat) || (ucScan.remoteMode == RemoteMode.Jumbo_Repeat));
-            if (!next)
-            {
-                axelMemsTemperature.StopAcquisition(); // cancel only axelMems / main cancel is above (DoAcquire)
-                next = false; return;
-            }
-            DataStack ds = new DataStack();
-            switch (axelMemsTemperature.activeChannel)
-            {
-                case 0:
-                    for (int i = 0; i < dt.Count; i++)
-                        ds.Add(dt[i]);
-                    this[0].axelChart.memsTemperature = ds.pointYs().Average();
-                    break;
-                case 1: Utils.TimedMessageBox("Y channel mode is not implemented", "Error", 2500);                    
-                    break;
-                case 2:
-                    DataStack ds2 = new DataStack();
-                    for (int i = 0; i < dt.Count; i++)
-                    {
-                        if ((i % 2) == 0) ds.Add(dt[i]);  // channel 0
-                        else ds2.Add(dt[i]); // channel 1
-                    }
-                    this[0].axelChart.memsTemperature = ds.pointYs().Average();
-                    this[1].axelChart.memsTemperature = ds2.pointYs().Average();
-                    break;
-            }
         }
 
         /// <summary>
@@ -382,6 +335,7 @@ namespace Axel_hub
                     else pref = "Y";
                 }
                 mme.cmd = "shot";
+                if (mme.prms.ContainsKey("iTime") && (runID == 0)) theTime.startSeqSeries = Convert.ToInt64(mme.prms["iTime"]);
             }
             switch (mme.cmd)
             {
@@ -534,7 +488,7 @@ namespace Axel_hub
                 if (probeMode)
                 {
                     GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
-                    srsFringes.OpenPair(Utils.configPath+"fringes.ahf", ref gb);
+                    srsFringes.OpenPair(Utils.configPath+"fringes.sdt", ref gb);
                     graphFringes.DataSource = srsFringes;
                     lbInfoFringes.Content = srsFringes.rem;
                     tbRemFringes.Text = srsFringes.rem;
@@ -645,7 +599,7 @@ namespace Axel_hub
              for (int i = 0; i < rCount; i++)
              {
                  this[i].tabLowPlots.SelectedIndex = 1;
-                 this[i].resetQuantList();
+                 this[i].resetQuantList(Utils.dataPath+Utils.timeName());
              }
         }
         /// <summary>

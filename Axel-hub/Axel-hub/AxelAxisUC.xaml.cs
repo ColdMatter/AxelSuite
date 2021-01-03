@@ -311,8 +311,8 @@ namespace Axel_hub
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".ahf"; // Default file extension
-            dlg.Filter = "Axel Hub File (.ahf)|*.ahf"; // Filter files by extension
+            dlg.DefaultExt = ".sdt"; // Default file extension
+            dlg.Filter = "Scan Data file (.sdt)|*.sdt"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -336,8 +336,8 @@ namespace Axel_hub
         {
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".ahf"; // Default file extension
-            dlg.Filter = "Axel Hub File (.ahf)|*.ahf"; // Filter files by extension
+            dlg.DefaultExt = ".sdt"; // Default file extension
+            dlg.Filter = "Scan Data file (.sdt)|*.sdt"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -445,7 +445,7 @@ namespace Axel_hub
             }
             if (btnJoinLogTest.Value)
             {
-                resetQuantList();
+                resetQuantList("");
                 if (Utils.isNull(ddTimer))
                 {
                     ddTimer = new DispatcherTimer();
@@ -516,26 +516,24 @@ namespace Axel_hub
         /// <summary>
         /// Reinitialize quant list 
         /// </summary>
-        public void resetQuantList()
+        public void resetQuantList(string filename)
         {
             quantList.Clear(); // [time,MOTaccel] list of pairs
-            string fn = "";
-            if (!Utils.isNull(ucSignal.logger)) 
-                if (ucSignal.logger.Enabled) fn = System.IO.Path.ChangeExtension(ucSignal.logger.LogFilename,".jlg");
 
-            shotList = new ShotList(true, fn, prefix, false);
+            string fn = Utils.dataPath + "errorLog." + prefix;
+            bool enb = File.Exists(fn);
+            errLog = new FileLogger("", fn); 
+            errLog.Enabled = enb; //Utils.designTime;
+
+            shotList = new ShotList(true, filename, prefix, false);
             shotList.enabled = !genOptions.Diagnostics;
             setConditions(ref shotList.conditions);           
             
-            shotListRaw = new ShotList(true, fn, prefix, true);
+            shotListRaw = new ShotList(true, filename, prefix, true);
             shotListRaw.enabled = genOptions.logRawJdt;
             setConditions(ref shotListRaw.conditions);
             accelCalibr mems = (prefix == "X") ? axelChart.axelMems.memsX : axelChart.axelMems.memsY;
-            shotListRaw.streamWriter.subheaders.Add(mems.IdString());
-
-            errLog = new FileLogger("", System.IO.Path.ChangeExtension(fn, ".err"));
-            errLog.defaultExt = ".err";
-            errLog.Enabled = true;//Utils.designTime;
+            shotListRaw.streamWriter.subheaders.Add(mems.IdString());           
         }
         private void setConditions(ref Dictionary<string, double> dc)
         {
@@ -607,7 +605,6 @@ namespace Axel_hub
 
             visStrobes(true);
             //numScale.Value = coeffs[0]; numKcoeff.Value = coeffs[1]; numPhi0.Value = coeffs[2];  numOffset.Value = coeffs[3]; 
-
         }
         
         /// <summary>
@@ -641,7 +638,8 @@ namespace Axel_hub
             }               
             combLock = true;
             try
-            {   int pCount = shotList.Count; 
+            {   
+                int pCount = shotList.Count; 
                 double temper = (genOptions.TemperatureEnabled) ? axelChart.memsTemperature : Double.NaN;
 
                 DataStack ds;
@@ -657,7 +655,7 @@ namespace Axel_hub
                         {
                             ds = axelChart.Waveform.TimePortion(w0, w1); // ds in volts
                             if (ds.Count > 0)  // if empty skip that quantList point 
-                                shotListRaw.Add(new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), ds, temper));
+                                shotListRaw.Add(new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), ds, temper, "m1"));
                             else errLog.log("raw> quant.t <limits> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
                         }
                         if (shotList.enabled)
@@ -672,16 +670,20 @@ namespace Axel_hub
                     }
                     if ((mds[0].X < w0) && (w1 < mds[mds.Count - 1].X)) // the window of interest is well inside the MEMS buffer
                     {
-                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper); 
-                        ss.mems = ss.memsPortion(new Range<double>(w0, w1)); // cut mems to size
+                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper, "m2"); 
+                        ss.mems = ss.memsPortion(w0, w1); // cut mems to size
                         if (ss.mems.Count > 0) // there is something there
                         {
-                            shotListRaw.Add(ss);
+                            if (shotListRaw.enabled) shotListRaw.Add(ss);
 
-                            ds = new DataStack(axelChart.Waveform.Depth, prefix);
-                            ds.AddRange(ss.mems);
-                            SingleShot ss2 = new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), axelChart.convertV2mg(ds));
-                            shotList.Add(ss2);
+                            if (shotList.enabled)
+                            {
+                                ds = new DataStack(axelChart.Waveform.Depth, prefix);
+                                ds.AddRange(ss.mems);
+                                SingleShot ss2 = new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), axelChart.convertV2mg(ds));
+                                shotList.Add(ss2);
+                            }
+                               
                         }
                         else errLog.log("quant <range> 2: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
                             
@@ -819,9 +821,8 @@ namespace Axel_hub
             Dictionary<string, double> rslt = new Dictionary<string, double>();
 
             if (!Double.IsNaN(phi)) rslt["PhiRad"] = phi;
+            if (theTime.isTimeRunning) rslt["time"] = theTime.elapsedTime;
 
-            rslt["time"] = theTime.elapsedTime;
-            
             return rslt;
         } 
         
@@ -1089,9 +1090,13 @@ namespace Axel_hub
                                     xVl = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); 
                                 }
                                 else throw new Exception("No shot time specified.");
-                                if (mme.prms.ContainsKey("tTime")) // remote acquisition duration; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
-                                {
-                                    genOptions.Mems2SignLen = Utils.tick2sec(Convert.ToInt32(mme.prms["tTime"])) * 1000;  // in ms                                
+                                if (mme.prms.ContainsKey("tTime")) // remote acquisition duration; if not - the default is genOptions.Mems2SignLen
+                                {   
+                                    long tTimeTicks = Convert.ToInt64(mme.prms["tTime"]);
+                                    if (tTimeTicks > 0)
+                                    {
+                                        genOptions.Mems2SignLen = Utils.tick2sec(tTimeTicks)* 1000.0;
+                                    }
                                 }
                                 quantList.Add(new Point3D(xVl, A, -1));
                                 if (genOptions.Diagnostics) log_out += " (" + xVl.ToString("F1") + ")";
@@ -1107,10 +1112,17 @@ namespace Axel_hub
                                 {
                                     measr["time"] = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); // in sec                                
                                 }
-                                if (mme.prms.ContainsKey("tTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                                if (mme.prms.ContainsKey("tTime")) // inteferometer steps duration, if not - the default is genOptions.Mems2SignLen
                                 {
-                                    measr["T"] = Utils.tick2sec(Convert.ToInt32(mme.prms["tTime"])); genOptions.Mems2SignLen = measr["T"] * 1000.0;
+                                    long tTimeTicks = Convert.ToInt64(mme.prms["tTime"]);
+                                    if (tTimeTicks > 0)
+                                    {
+                                        measr["T"] = Utils.tick2sec(tTimeTicks); genOptions.Mems2SignLen = measr["T"] * 1000.0;
+                                    }
+                                    else measr["T"] = genOptions.Mems2SignLen / 1000;
                                 }
+                                else measr["T"] = genOptions.Mems2SignLen / 1000;
+
                                 rslt = Statistics(measr);                           
                                 if (rslt.ContainsKey("PhiMg") && (rslt.ContainsKey("PhiRad"))) quantList.Add(new Point3D(rslt["time"], rslt["PhiRad"], rslt["PhiMg"]));
                             }

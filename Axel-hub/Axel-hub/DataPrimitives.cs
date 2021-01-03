@@ -224,6 +224,10 @@ namespace Axel_hub
                 if (Utils.InRange(mems[i].X, rng.Minimum,rng.Maximum)) ls.Add(mems[i]);
             return ls;
         }
+        public List<Point> memsPortion(double first, double last)
+        {           
+            return memsPortion(new Range<double>(first, last));
+        }
 
         /// <summary>
         /// Calculating mems acceleration time-related to quant point

@@ -158,9 +158,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Properties\small_filter_orange.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="EmguCV_KF\" />
     <Folder Include="ThirdParty\" />
   </ItemGroup>
@@ -219,6 +216,7 @@
     <Content Include="opencv_video231.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Properties\filter_blue.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
