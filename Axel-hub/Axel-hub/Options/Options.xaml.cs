@@ -90,8 +90,7 @@ namespace OptionsNS
                 genOptions.TemperatureHw = (cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content.ToString();
 
             genOptions.TemperatureEnabled = chkTemperatureEnabled.IsChecked.Value;
-            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;
-            
+            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;           
 
             genOptions.Save();
             genOptions.ChangeEvent(genOptions);
