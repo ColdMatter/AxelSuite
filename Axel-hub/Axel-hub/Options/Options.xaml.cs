@@ -20,7 +20,7 @@ namespace OptionsNS
 {
     /// <summary>
     /// Interaction logic, load & save for GeneralOptions genOptions
-    /// some changes 5
+    /// some changes 6
     /// </summary>
     public partial class OptionsWindow : Window
     {
