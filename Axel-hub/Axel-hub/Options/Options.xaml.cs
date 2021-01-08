@@ -30,7 +30,7 @@ namespace OptionsNS
         public OptionsWindow()
         {
             InitializeComponent();           
-            if (File.Exists(Utils.configPath + "genOptions"+".cfg"))
+            if (File.Exists(Utils.configPath + "genOptions.cfg"))
             {
                 string fileJson = File.ReadAllText(Utils.configPath + "genOptions.cfg");
                 genOptions = JsonConvert.DeserializeObject<GeneralOptions>(fileJson);
