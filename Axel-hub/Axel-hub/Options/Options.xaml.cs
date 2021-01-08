@@ -20,7 +20,7 @@ namespace OptionsNS
 {
     /// <summary>
     /// Interaction logic, load & save for GeneralOptions genOptions
-    /// some changes 4
+    /// some changes 9
     /// </summary>
     public partial class OptionsWindow : Window
     {
@@ -90,8 +90,7 @@ namespace OptionsNS
                 genOptions.TemperatureHw = (cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content.ToString();
 
             genOptions.TemperatureEnabled = chkTemperatureEnabled.IsChecked.Value;
-            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;
-            
+            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;           
 
             genOptions.Save();
             genOptions.ChangeEvent(genOptions);

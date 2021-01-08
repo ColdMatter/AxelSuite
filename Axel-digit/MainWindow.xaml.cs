@@ -551,7 +551,10 @@ namespace Axel_digit
         }
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
-            tbLog.Document.Blocks.Clear();
+            //tbLog.Document.Blocks.Clear();
+            Task.Delay(new TimeSpan(0, 0, 5)).ContinueWith(o => { tbLog.Document.Blocks.Clear(); });
+
+            
         }
         public void ErrorMsg(string msg)
         {
