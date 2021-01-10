@@ -20,12 +20,13 @@ namespace OptionsNS
 {
     /// <summary>
     /// Interaction logic, load & save for GeneralOptions genOptions
-    /// some changes 17
+    /// some changes 18
     /// </summary>
     public partial class OptionsWindow : Window
     {
         /// <summary>
         /// dialog box constructor; reads from file or creates new options object
+        /// some other changes
         /// </summary>
         public OptionsWindow()
         {

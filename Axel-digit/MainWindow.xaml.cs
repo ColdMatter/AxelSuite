@@ -552,10 +552,15 @@ namespace Axel_digit
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
             //tbLog.Document.Blocks.Clear();
-            Task.Delay(new TimeSpan(0, 0, 5)).ContinueWith(o => { tbLog.Document.Blocks.Clear(); });
+            ErrorMsg("some texxxt");
+            Utils.DelayExec(3000, () => { tbLog.Document.Blocks.Clear(); });
 
-            
+            Utils.DelayExec(5000, () => { ErrorMsg("some text"); });
+            Utils.DelayExec(8000, () => { tbLog.Document.Blocks.Clear(); ErrorMsg("back");  });
+
+            ErrorMsg("some texxxxxt");
         }
+
         public void ErrorMsg(string msg)
         {
             if (chkLog.IsChecked.Value) Utils.log(tbLog, msg, Brushes.Red.Color);
