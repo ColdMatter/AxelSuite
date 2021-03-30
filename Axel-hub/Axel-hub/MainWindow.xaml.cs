@@ -1,4 +1,4 @@
-﻿using NationalInstruments.Net;
+﻿//using NationalInstruments.Net;
 using NationalInstruments.Analysis;
 using NationalInstruments.Analysis.Conversion;
 using NationalInstruments.Analysis.Dsp;
@@ -191,10 +191,12 @@ namespace Axel_hub
                 if (Utils.TheosComputer()) axes.SetChartStrobes(true);
 
                 // wait for user confirmation
-                if (!continueJumboRepeat(true)) return; // main call, out - if timeout
-                axes.SetChartStrobes(false);
-                int nc = (int)axes[0].numCycles.Value;
-                axes.jumboRepeat(nc);
+                if (!Options.genOptions.Diagnostics)
+                {
+                    if (!continueJumboRepeat(true)) return; // main call, out - if timeout
+                    axes.SetChartStrobes(false);
+                }
+                axes.jumboRepeat(axes[0].numCycles.Value);
             }
         }
 
@@ -207,16 +209,24 @@ namespace Axel_hub
         /// <param name="sizeLimit">data buffer length</param>
         public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
         {
-            if (jumbo)
+            if (jumbo)               
             {
-                axes.DoJumboScan(down);                                                             
+                if (Options.genOptions.JumboRepeat)
+                {
+                    if (down) theTime.startTime(false);
+
+                    if (down) axes.jumboRepeat(axes[0].numCycles.Value);
+
+                    if (!down) theTime.stopTime();
+                }
+                if (Options.genOptions.JumboScan) axes.DoJumboScan(down);
             }
             else
             {
-                if (down) axes.Clear(true, false, false);
-                int buffSize = 200;
-                if (sizeLimit > -1) buffSize = sizeLimit;
-                axes.startADC(down, period, buffSize);
+            if (down) axes.Clear(true, false, false); // reset before start
+            int buffSize = 200;
+            if (sizeLimit > -1) buffSize = sizeLimit;
+            axes.startADC(down, period, buffSize);
             } 
         }
  
@@ -230,7 +240,7 @@ namespace Axel_hub
 
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
-            tbLog.Document.Blocks.Clear();
+            tbLog.Document.Blocks.Clear();           
         }
         /// <summary>
         /// set the axes visual layout
@@ -242,6 +252,8 @@ namespace Axel_hub
             switch (mc)
             {
                 case 0: // X 
+                    if (Utils.isSingleChannelMachine) tiXAxis.Visibility = Visibility.Collapsed;
+                    else tiXAxis.Visibility = Visibility.Visible;
                     tiYAxis.Visibility = Visibility.Collapsed;
                     colRight.Width = new GridLength(0, GridUnitType.Pixel);
                     splitPanels.Visibility = Visibility.Collapsed;
@@ -264,8 +276,7 @@ namespace Axel_hub
                     gridSecondary.Children.Add(Y_AxelAxis);
                     break;
             }
-            bool conn = Utils.isNull(ucScan.remote)? false: ucScan.remote.Connected;
-            axes.UpdateFromOptions(conn);
+            axes.OnOptionsChange(Options.genOptions);
         }
          /// <summary>
          /// Open options dialog window
@@ -275,6 +286,9 @@ namespace Axel_hub
         private void imgMenu_MouseUp(object sender, MouseButtonEventArgs e)
         {
             //if (Utils.isNull(Options)) Options = new OptionsWindow();
+            if (ucScan.Running){
+                Utils.TimedMessageBox("Options are disabled while a measurement is running"); return;
+            }
             if (!Utils.isNull(sender))
             {
                 int mc = Options.genOptions.AxesChannels;
@@ -283,7 +297,7 @@ namespace Axel_hub
                 {
                     setAxesLayout(Options.genOptions.AxesChannels);
                 }
-                else axes.UpdateFromOptions(ucScan.remote.Connected);
+                else axes.OnOptionsChange(Options.genOptions);
             }
         }
 
@@ -309,7 +323,7 @@ namespace Axel_hub
         /// <param name="activeComm"></param>
         private void OnActiveRemote(bool activeComm)
         {
-            axes.UpdateFromOptions(activeComm);
+            axes.OnOptionsChange(Options.genOptions);
         }
 
         /// <summary>
@@ -317,7 +331,7 @@ namespace Axel_hub
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void frmAxelHub_Closing(object sender, System.ComponentModel.CancelEventArgs e) 
         {
             axes.Closing(sender,e);
             ucScan.UpdateModes();
@@ -349,5 +363,10 @@ namespace Axel_hub
             if (!Utils.isNull(Options)) Options.Close();
         }
         #endregion
+
+        private void frmAxelHub_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key.Equals(Key.F1)) System.Diagnostics.Process.Start("http://www.axelsuite.com");
+        }
     }
 }

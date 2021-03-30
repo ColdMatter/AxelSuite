@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" xmlns:System="clr-namespace:System;assembly=mscorlib" 
         x:Name="frmMain" x:Class="Axel_probe.MainWindow"
-        Title="Axel Probe" Height="900.714" Width="1297.857" Icon="Properties/dashboard_widgets_speed_fs7_icon.ico" ResizeMode="CanResizeWithGrip" Closing="frmMain_Closing" Loaded="frmMain_Loaded" KeyDown="frmMain_KeyDown">
+        Title="Axel Probe" Height="900.714" Width="1297.857" Icon="Properties/probe3.png" ResizeMode="CanResizeWithGrip" Closing="frmMain_Closing" Loaded="frmMain_Loaded" KeyDown="frmMain_KeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="225"/>
@@ -30,7 +30,7 @@
                         <ComboBoxItem Content="Trapeze shape"/>
                         <ComboBoxItem Content="Sine"/>
                     </ComboBox>
-                    <Image x:Name="imgAbout" HorizontalAlignment="Left" Height="38" Margin="159,0,0,0" VerticalAlignment="Top" Width="40" Source="Properties/dashboard_widgets_speed_fs7_icon.ico" MouseDown="imgAbout_MouseDown"/>
+                    <Image x:Name="imgAbout" HorizontalAlignment="Left" Height="38" Margin="154,0,0,0" VerticalAlignment="Top" Width="45" Source="Properties/probe3.png" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
             </GroupBox>
             <GroupBox Header="Add Gauss Noise to Fringes" Height="85" Margin="0,5,0,0" BorderBrush="#FF7302B2">
@@ -64,7 +64,7 @@
             </GroupBox>
             <GroupBox x:Name="grpRemote" Header="Remote" Height="130" Foreground="Black" BorderBrush="#FF015E95">
                 <Grid Margin="0,0,-0.429,0.429">
-                    <Button x:Name="btnCommCheck" Content="Comm.Check" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click" Background="#FFE2F5F8"/>
+                    <Button x:Name="btnCommCheck" Content="Connect ->" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="btnCommCheck_Click" Background="#FFE2F5F8"/>
                     <Button x:Name="btnScan" Content="Scan" HorizontalAlignment="Left" Margin="99,40,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnScan_Click" Background="#FFFDFEE2" FontSize="14"/>
                     <Button x:Name="btnRepeat" Content="Repeat" HorizontalAlignment="Left" Margin="99,74,0,0" VerticalAlignment="Top" Width="100" Height="29" Click="btnRepeat_Click" Background="#FFE6FBD9" FontSize="14"/>
                     <CheckBox x:Name="chkRemoteEnabled" Content="Enabled" HorizontalAlignment="Left" Margin="30,10,0,0" VerticalAlignment="Top" Checked="chkRemoteEnabled_Checked" Unchecked="chkRemoteEnabled_Checked" RenderTransformOrigin="0.401,2.519" IsChecked="True"/>

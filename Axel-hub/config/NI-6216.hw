@@ -1,5 +1,5 @@
 # for now, device1 must be equal to device2
-device=Dev2
+device=Dev22
 channel1=/ai1
 channel2=/ai2 
 min=-3.5

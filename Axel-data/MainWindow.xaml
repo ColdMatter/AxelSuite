@@ -1,30 +1,20 @@
 ﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:Axel_data" xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Class="Axel_data.MainWindow"
+        xmlns:local="clr-namespace:Axel_data" xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" 
+        x:Class="Axel_data.MainWindow"
         Title="Axel Data Processing Desk" Height="675.714" Width="1262.857" Icon="Properties/dataProc2.ico">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="380*"/>
-                <RowDefinition Height="380*"/>
-            </Grid.RowDefinitions>
-
-            <local:TmprCompClass x:Name="tmprCompX" Margin="0"/>
-            <GridSplitter HorizontalAlignment="Stretch" Height="5" Margin="0" Grid.Row="1" VerticalAlignment="Top" Cursor="SizeNS" Background="#FFF9EFAB"/>
-            <local:TmprCompClass x:Name="tmprCompY" Margin="0,8,0,0" Grid.Row="1"/>
-
-        </Grid>
 
         <Grid Margin="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="570*"/>
-                <RowDefinition Height="47*"/>
+                <RowDefinition Height="47"/>
             </Grid.RowDefinitions>
             <RichTextBox x:Name="tbLog" Grid.Row="1" Margin="0,0.286,-0.714,0" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True"/>
             <StackPanel HorizontalAlignment="Left" Height="30" Grid.Row="0" VerticalAlignment="Top" Width="250" Orientation="Horizontal" Background="#FFF9FEFF" Grid.RowSpan="2">
@@ -39,5 +29,37 @@
                 <Label Content="kB/sec" HorizontalAlignment="Left" Margin="60,7,0,0" VerticalAlignment="Top"/>
             </Grid>
         </Grid>
+        <TabControl x:Name="tabControl" Grid.Column="1" SelectedIndex="0">
+            <TabItem x:Name="tiQuantVsMems" Header="Quant.Vs Mems" Width="125" FontSize="13" Foreground="#FF175B00">
+                <Grid Background="#FFFFFDFD">
+                    <local:QuantVsMems x:Name="QuantVsMems1"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="tiTempComp" Header="Temp. Comp." Width="110" Height="27" FontSize="13" Foreground="#FF001477">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="380*"/>
+                        <RowDefinition Height="380*"/>
+                    </Grid.RowDefinitions>
+
+                    <local:TmprCompClass x:Name="tmprCompX" Margin="0"/>
+                    <GridSplitter HorizontalAlignment="Stretch" Height="5" Margin="0" Grid.Row="1" VerticalAlignment="Top" Cursor="SizeNS" Background="#FFDDE5FD"/>
+                    <local:TmprCompClass x:Name="tmprCompY" Margin="0,8,0,0" Grid.Row="1"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="tiJoinOptim" Header="Join Dly Optim." HorizontalAlignment="Left" Height="26.7341772151899" VerticalAlignment="Top" Width="130" FontSize="13" Foreground="#FF761E01">
+                <TabItem.Background>
+                    <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                        <GradientStop Color="#FFF3F3F3" Offset="0"/>
+                        <GradientStop Color="#FFEBEBEB" Offset="0.5"/>
+                        <GradientStop Color="#FFDDDDDD" Offset="0.5"/>
+                        <GradientStop Color="#FFE4E3E3" Offset="1"/>
+                    </LinearGradientBrush>
+                </TabItem.Background>
+                <Grid Background="White">
+                    <local:JoinOptimClass x:Name="JoinOptim1" Width="Auto" Height="Auto"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

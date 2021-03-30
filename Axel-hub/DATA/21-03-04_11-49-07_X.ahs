@@ -1,0 +1,51 @@
+#{"prms":{"sampleRate":200000,"runID":0,"groupID":"21-03-04_11-49-04","cycles":2147483647},"mmexec":"","sender":"MOTMaster","cmd":"repeat","id":936590580}
+#{"params":{"runID":0.0,"aChn":0.0,"ElapsedTime":0.0,"PLLFreq":6834.87,"ChirpRate":0.28,"ChirpDuration":0.2,"Pulse1Power":22.0,"Pulse1Duration":30.0,"Pulse1Phase":0.0,"Pulse2Power":22.0,"Pulse2Duration":30.0,"Pulse2Phase":0.0,"Pulse3Power":22.0,"Pulse3Duration":30.0,"Pulse3Phase":0.0,"VelPulsePower":22.0,"VelPulseDuration":100.0,"VelPulsePhase":0.0,"IntTime1":10.0,"IntTime2":10.0,"test":0.0,"AnalogClockFrequncy":100000.0,"AnalogLength":0.0,"HSClockFrequency":200000000.0,"2DCoil":9.0,"AnalogClockFrequency":100000.0,"yBiasImg":0.0,"2DAtten":4.15,"YpFreqMOT":6.785,"YmFreqLaunch":6.815,"YmFreqMOT":6.828,"DetFreq":7.5,"DetAttn":2.1,"y2DBias":0.0,"ZmAttenState":9.0,"YmAttenMOT":1.67,"YmAttenImg":2.65,"x2DBias":0.0,"PushAtten":7.5,"XpFreqMOT":6.735,"3DCoil":3.1,"2DFreq":7.11,"2DPushFreq":6.5,"ZmAttenImg":10.0,"mwTime":10.0,"YBiasState":9.9,"yBiasState":9.9,"zBiasMW":3.0,"YBiasMW":9.0,"zBiasInt":9.0,"YpAttenLaunch":2.5,"XpFreqLaunch":6.741,"YpFreqLaunch":6.799,"xBiasInt":9.0,"ZmAttenMOT":3.72,"ZpAttenMOT":7.08,"xBiasMot":-2.5,"yBiasMot":-0.25,"zBiasMot":-0.5,"XBiasState":0.0,"xBiasState":-2.5,"zBiasImg":-9.0,"ZBiasState":-0.5,"YBiasInt":-0.5,"ZpFreqMOT":6.807,"ZmFreqMOT":6.833,"XmFreqLaunch":6.896,"XmFreqMOT":6.901,"XmAttenLaunch":9.0,"ZpAttenState":3.2,"ZpAttenImg":6.7,"XpAttenLaunch":4.0,"XpAttenImg":2.8,"XpAttenMOT":6.27,"YpAttenMOT":2.11,"YpAttenImg":4.0,"XmAttenMOT":4.75,"XmAttenImg":2.5,"xBiasMW":-3.0,"ZmFreqLaunch":6.878,"ZpFreqLaunch":6.762,"rPhase0":0.0,"rPhase":50.0,"PLLFreqX":6834.87,"PLLFreqY":6834.475,"ChirpRateX":0.65,"ChirpRateY":0.28,"MWFreq":6834.682,"xBiasImg":0.0,"MWFreq1":6834.68325,"RamanPhase":6.400000000000003,"ramanPhase":0.0}}
+#{"steps":{"Initialization 1":0.1,"Initialization 2":0.01,"2D3D":200.0,"3Donly":10.0,"B field off":6.0,"Launch":1.0,"Freq Ramp":0.1,"Wait":5.74,"Intensity ramp":0.2,"BSwitch0":1.0,"Step1":0.03,"Step2":0.06,"BSwitch1":2.0,"BSwitch2":1.0,"MW0":0.107,"BA 1":5.0,"Wait2":5.71,"VelSel":0.058,"B3":1.0,"Pulse 1":0.053,"Delay":0.1,"Dark2":0.4,"Pulse 2":0.02,"Dark 3":0.5,"Pulse 3":0.053,"Detection B field 1":3.21,"Detection field 2":2.5,"Dwell":2.0,"N2":1.0,"NTot":0.3,"BlowAway2":100.0,"DetWait":1.7,"B2":0.3,"BTot":0.3,"Bg":0.3,"Off":100.0}}
+
+
+XAxis	N1	N2	RN1	RN2	NTot	B2	Btot
+0	<none>	0.36817318	<none>	<none>	0.367035	0.011578448	<none>
+0.6886668	<none>	0.0035918834	<none>	<none>	0.0035566542	0.0034493112	<none>
+1.3183657	<none>	0.36843941	<none>	<none>	0.36680512	0.011398227	<none>
+1.8765882	<none>	0.36341293	<none>	<none>	0.36239727	0.011303447	<none>
+2.4372977	<none>	0.36480352	<none>	<none>	0.36204518	0.011482886	<none>
+3.0135998	<none>	0.36908723	<none>	<none>	0.36648532	0.01168614	<none>
+3.5643343	<none>	0.36610254	<none>	<none>	0.3649868	0.011387964	<none>
+4.1287272	<none>	0.3684365	<none>	<none>	0.36640481	0.011702708	<none>
+4.6884354	<none>	0.37212158	<none>	<none>	0.36955216	0.011683511	<none>
+5.2451772	<none>	0.37580601	<none>	<none>	0.37362613	0.011661156	<none>
+5.8099752	<none>	0.37491451	<none>	<none>	0.37376436	0.011630169	<none>
+6.3617859	<none>	0.37697894	<none>	<none>	0.37485028	0.011818316	<none>
+6.942261	<none>	0.37703662	<none>	<none>	0.37504722	0.011637567	<none>
+7.5106157	<none>	0.38097608	<none>	<none>	0.38068489	0.011542617	<none>
+8.1113046	<none>	0.38206976	<none>	<none>	0.38016081	0.011622781	<none>
+8.6887871	<none>	0.38120161	<none>	<none>	0.37981924	0.011644249	<none>
+9.2485194	<none>	0.39071526	<none>	<none>	0.3884637	0.012109905	<none>
+9.8152501	<none>	0.38505004	<none>	<none>	0.38173642	0.012077193	<none>
+10.374016	<none>	0.38241641	<none>	<none>	0.38010347	0.012043746	<none>
+10.945013	<none>	0.39053212	<none>	<none>	0.38839774	0.012114174	<none>
+11.506488	<none>	0.3908098	<none>	<none>	0.38576889	0.012065884	<none>
+12.072218	<none>	0.38993204	<none>	<none>	0.38538065	0.012172087	<none>
+12.627952	<none>	0.39297006	<none>	<none>	0.39129921	0.011892212	<none>
+13.197365	<none>	0.39553945	<none>	<none>	0.39307273	0.011953697	<none>
+13.771097	<none>	0.39271136	<none>	<none>	0.38959901	0.012187543	<none>
+14.341601	<none>	0.39655705	<none>	<none>	0.39175261	0.012283812	<none>
+14.901333	<none>	0.39169991	<none>	<none>	0.38939097	0.012285772	<none>
+15.493049	<none>	0.3955411	<none>	<none>	0.39142242	0.01220248	<none>
+16.057802	<none>	0.3949156	<none>	<none>	0.3929846	0.012114259	<none>
+16.611075	<none>	0.39406476	<none>	<none>	0.3894838	0.012021505	<none>
+17.172836	<none>	0.39464245	<none>	<none>	0.39372508	0.01216434	<none>
+17.725265	<none>	0.39753779	<none>	<none>	0.39502667	0.012047318	<none>
+18.30299	<none>	0.40234466	<none>	<none>	0.40036659	0.012132589	<none>
+18.86772	<none>	0.40105284	<none>	<none>	0.39403843	0.012283671	<none>
+19.444055	<none>	0.40049602	<none>	<none>	0.39955907	0.012122222	<none>
+19.990797	<none>	0.39231579	<none>	<none>	0.39366068	0.011865052	<none>
+20.527581	<none>	0.39334082	<none>	<none>	0.39027838	0.011951011	<none>
+21.088661	<none>	0.40612947	<none>	<none>	0.40418591	0.012370525	<none>
+21.66104	<none>	0.40777865	<none>	<none>	0.40487369	0.012210905	<none>
+22.229769	<none>	0.39986146	<none>	<none>	0.39659721	0.012010733	<none>
+22.798739	<none>	0.40361799	<none>	<none>	0.40202757	0.011961623	<none>
+23.374112	<none>	0.4033955	<none>	<none>	0.40135265	0.0124243	<none>
+23.990819	<none>	0.41066788	<none>	<none>	0.40743699	0.012329011	<none>
+24.594529	<none>	0.41196516	<none>	<none>	0.40909376	0.012409297	<none>
+25.163897	<none>	0.41003136	<none>	<none>	0.40865458	0.012297015	<none>

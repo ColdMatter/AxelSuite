@@ -30,6 +30,8 @@ namespace Axel_data
             InitializeComponent();
             tmprCompX.OnLog += new TmprCompClass.LogHandler(log);
             tmprCompY.OnLog += new TmprCompClass.LogHandler(log);
+            JoinOptim1.OnLog += new JoinOptimClass.LogHandler(log);
+            QuantVsMems1.OnLog += new QuantVsMems.LogHandler(log);
         }
 
         private void btnLogClear_Click(object sender, RoutedEventArgs e)

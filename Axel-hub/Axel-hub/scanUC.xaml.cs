@@ -47,7 +47,7 @@ namespace Axel_hub
         private string ArrangedPartner = ""; //MOTMaster2";Axel Probe"; 
 
         TimeSpan totalTime, currentTime;
-        public DispatcherTimer dTimer;
+        public DispatcherTimer dTimer; // progress visualization
 
         /// <summary>
         /// Class constructor - set defaults
@@ -59,6 +59,12 @@ namespace Axel_hub
             dTimer = new DispatcherTimer(DispatcherPriority.Send);
             dTimer.Tick += new EventHandler(dispatcherTimer_Tick);
             dTimer.Interval = new TimeSpan(0, 0, 1);
+
+            remote = new RemoteMessaging();
+            remote.Enabled = false;
+            remote.OnReceive += new RemoteMessaging.ReceiveHandler(OnReceive);
+            remote.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
+            remote.OnAsyncSent += new RemoteMessaging.AsyncSentHandler(OnAsyncSend);
 
             _remoteMode = RemoteMode.Disconnected;
             tabControl.SelectedIndex = 0;
@@ -219,7 +225,7 @@ namespace Axel_hub
             set
             {
                 lbMode.Content = "Oper.Mode: " + value.ToString();
-                if (value == RemoteMode.Simple_Repeat || value == RemoteMode.Simple_Scan || value == RemoteMode.Disconnected) bbtnStart.Visibility = System.Windows.Visibility.Collapsed;
+                if (value == RemoteMode.Simple_Repeat || value == RemoteMode.Simple_Scan) bbtnStart.Visibility = System.Windows.Visibility.Collapsed;
                 else bbtnStart.Visibility = System.Windows.Visibility.Visible;
                 RemoteMode tempRemoteMode = _remoteMode; _remoteMode = value; scanModes.remoteMode = value;
                 if (!tempRemoteMode.Equals(value)) RemoteModeEvent(tempRemoteMode, value);
@@ -233,7 +239,7 @@ namespace Axel_hub
             if (!Utils.isNull(OnRemoteMode)) OnRemoteMode(oldMode, newMode);
         }
 
-        public RemoteMessaging remote { get; set; }
+        public RemoteMessaging remote;
         /// <summary>
         /// Incomming from MM2/Axel-probe message
         /// </summary>
@@ -304,8 +310,7 @@ namespace Axel_hub
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            string ver = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion.ToString();
-            MessageBox.Show("           Axel Hub v" + ver + "\n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Hub v" + Utils.getAppFileVersion + "\n         by Teodor Krastev \nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         /// <summary>
@@ -396,7 +401,7 @@ namespace Axel_hub
             if (OnStart == null) return;
             bbtnStart.Value = !bbtnStart.Value;
             Running = bbtnStart.Value;
-            if (!bbtnStart.Value) Abort(true);
+            if (!bbtnStart.Value) Abort(true); // send out abort
 
             double period = GetSamplingPeriod(); // sampling rate in sec
                         
@@ -422,7 +427,8 @@ namespace Axel_hub
         public void Abort(bool local)  
         {
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
-            remoteMode = RemoteMode.Ready_To_Remote;
+            if (remote.Connected) remoteMode = RemoteMode.Ready_To_Remote;
+            else remoteMode = RemoteMode.Disconnected;
             jumboButton = (tabControl.SelectedIndex == 2); // remote tab
             Running = false;
             bbtnStart.Value = false;            
@@ -432,6 +438,7 @@ namespace Axel_hub
                 SendJson(mme.Abort("Axel-hub"));
             }
             else OnStart(jumbo, false, 0, 0);
+            theTime.stopTime();
          }
          
         /// <summary>
@@ -473,14 +480,14 @@ namespace Axel_hub
              if (active)
              {
                  Status("Ready to remote <->");
-                 bbtnStart.Visibility = System.Windows.Visibility.Visible;
+                 //bbtnStart.Visibility = System.Windows.Visibility.Visible;
                  jumboButton = true; 
                  remoteMode = RemoteMode.Ready_To_Remote;
               }
              else
              {
                  Status("Disconnected -X-");
-                 bbtnStart.Visibility = System.Windows.Visibility.Hidden;
+                 //bbtnStart.Visibility = System.Windows.Visibility.Hidden;
                  remoteMode = RemoteMode.Disconnected;
              }
              ActiveRemote(active);
@@ -516,12 +523,9 @@ namespace Axel_hub
                      case "NAVIGATOR-ANAL":
                      case "DESKTOP-IHEEQUU": partner = "MOTMaster2"; break;
                      case "DESKTOP-U334RMA": partner = "Axel Probe"; break; //"MOTMaster2"
+                     default: partner = "MOTMaster2"; break;
                  }
-             remote = new RemoteMessaging(partner); 
-             remote.Enabled = false;
-             remote.OnReceive += new RemoteMessaging.ReceiveHandler(OnReceive);
-             remote.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnActiveComm);
-             remote.OnAsyncSent += new RemoteMessaging.AsyncSentHandler(OnAsyncSend);
+             remote.Connect(partner);
 
              if(bRemote) tabControl.SelectedIndex = 2;
          }

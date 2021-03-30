@@ -1,0 +1,5 @@
+#{"prms":{"groupID":"21-03-25_8-18-12","site":"MSquared:Raman Phase [rad]","param":"RamanPhase","from":0.0,"to":6.4,"by":0.2},"mmexec":"test_drive","sender":"Axel-hub","cmd":"scan","id":1628724642}
+
+
+XAxis	N1	N2	RN1	RN2	NTot	B2	BTot	Bg
+0	7.4404124E-07	-2.5896022E-05	-0.029581815	1.0295818	-2.5151981E-05	-2.4313311E-05	-2.5806569E-05	-1.8231525E-05

@@ -11,6 +11,8 @@ using NationalInstruments.DAQmx;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UtilsNS;
+using OptionsNS;
+using System.Windows.Navigation;
 
 namespace Axel_hub
 {
@@ -29,6 +31,12 @@ namespace Axel_hub
         public double[] pK0;
         public double[] pK1;
 
+        public string IdString()
+        {
+            Dictionary<string, string> dt = new Dictionary<string, string>();
+            dt["model"] = model; dt["SN"] = SN;
+            return JsonConvert.SerializeObject(dt);
+        }
         /// <summary>
         /// The actual calibration from [V] to [mg] with optional temperature compensation 
         /// </summary>
@@ -39,37 +47,102 @@ namespace Axel_hub
         public double accel(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
         {
             double K0 = 0; double K1 = 0;
-            if (tempComp) 
-            {                
+            if (tempComp)
+            {
                 if (!pK0.Length.Equals(pK1.Length)) throw new Exception("Wrong coeff arrays lenghts");
-                double degC = ((temperV/rTemper)+1E6) - 272.3;               
+                double degC = ((temperV / rTemper) + 1E6) - 272.3;
                 for (int i = 0; i < pK0.Length; i++)
                 {
                     K0 += pK0[i] + Math.Pow(degC, i);
                     K1 += pK1[i] + Math.Pow(degC, i);
                 }
             }
-            else 
+            else
             {
                 K0 = cK0; K1 = cK1;
             }
-            return K0/1000.0 +                    // bias in mg
+            return K0 / 1000.0 +                    // bias in mg
                    ((accelV / rAccel) * 1000.0) * // mA
                    K1 * 1000.0;                   // mg
         }
-    } 
+
+    }
+    public enum tracerStage { neutral, readAcq, startComb, endComb }
+    public struct AcqTracer
+    {
+        public AcqTracer(bool isEnabled)
+        {
+            enabled = isEnabled;
+            trouble = false;
+            stopWatch = new Stopwatch();
+            _stage = tracerStage.neutral;
+            period = -1;
+            fulfillment = -1;
+            d1 = -1; d2 = -1;
+        }
+        Stopwatch stopWatch; long d1, d2;
+        public bool trouble;
+        tracerStage _stage;
+        public tracerStage stage
+        {
+            get { return _stage; }
+            set
+            {
+                if (!enabled) return;
+                switch (value)
+                {
+                    case tracerStage.neutral:
+                        _stage = value; trouble = false;
+                        break;
+                    case tracerStage.readAcq:
+                        if ((_stage == tracerStage.neutral) || (_stage == tracerStage.endComb))
+                        {
+                            _stage = value; stopWatch.Restart(); trouble = false;
+                        }
+                        else trouble = true;
+                        break;
+                    case tracerStage.startComb:
+                        if (_stage == tracerStage.readAcq)
+                        {
+                            _stage = value; d1 = stopWatch.ElapsedMilliseconds;
+                        }
+                        else trouble = true;
+                        break;
+                    case tracerStage.endComb:
+                        if (_stage == tracerStage.startComb)
+                        {
+                            _stage = value; d2 = stopWatch.ElapsedMilliseconds;
+                            if (stopWatch.IsRunning) fulfillment = d2 / (period * 1000.0);
+                            else fulfillment = -1;
+                            stopWatch.Stop();
+                        }
+                        else trouble = true;
+                        break;
+                }
+            }
+        }
+        public bool enabled;
+        public double period; // [s]
+
+        public double fulfillment; // 0-1
+        public string message()
+        {
+            if (trouble) return "Error status: MEMS timing overflow !";
+            else return "Info: acq.cycle " + ((int)(fulfillment * 100)).ToString() + "% busy";
+                //return "Info [ms]: p=" + ((int)(period * 1000.0)).ToString() + "; d1=" + d1.ToString() + "; d2=" + d2.ToString();
+        }
+    }
 
     /// <summary>
     /// The hardware abstraction for MEMS with ADC24 (NI9251) device
     /// </summary>
     public class AxelMems
-    {        
-        private Stopwatch sw = null;
+    {
         /// <summary>
         /// false - use the set time interval between points
         /// true - adjust the time interval to stopwatch markers
         /// </summary>
-        public bool AdjustTimelineToStopwatch = false;  
+        public bool AdjustTimelineToStopwatch = false;
         /// <summary>
         /// NI9251 support fixed sampling freq listed here
         /// </summary>
@@ -80,11 +153,12 @@ namespace Axel_hub
         public enum TimingModes { byNone, byADCtimer, byStopwatch, byBoth };
         public TimingModes TimingMode = TimingModes.byNone;
 
-//        private const string NI9251 = "cDAQ1Mod1_1"; // ADC24 box
-//        private readonly string physicalChannel0 = NI9251+"/ai0"; 
-//        private readonly string physicalChannel1 = "/ai1";
+        //        private const string NI9251 = "cDAQ1Mod1_1"; // ADC24 box
+        //        private readonly string physicalChannel0 = NI9251+"/ai0"; 
+        //        private readonly string physicalChannel1 = "/ai1";
         private const string PXIe = "Dev4";         // in PXIe
         private readonly string physicalChannel2 = PXIe + "/ai1";
+        private int forceChn;
         public accelCalibr memsX, memsY;
 
         public Dictionary<string, string> hw = new Dictionary<string, string>();
@@ -93,7 +167,7 @@ namespace Axel_hub
         public double sampleRate { get; private set; }
         public int Timeout = -1; // [sec] ; -1 - no timeout
         public List<double> rawData = null;
-        
+
         /// <summary>
         /// Inner makings of continious (no gaps) data acquisition 
         /// refer. NI9251 and related documentation
@@ -107,22 +181,22 @@ namespace Axel_hub
         private Task runningTask;
         private AsyncCallback analogCallback;
         private AnalogWaveform<double>[] waveform;
-        DispatcherTimer dTimer;
+        private DispatcherTimer dTimer; // delay timer
+        public AcqTracer tracer;
 
         /// <summary>
         /// Class contructor
         /// </summary>
         /// <param name="hwFile">Hardware file (NI9251 settings)</param>
-        /// <param name="memsFile">Mems calibration and teperature compensation</param>
-        public AxelMems(string hwFile = "", string memsFile= "") // memsFile - no ext
+        /// <param name="memsFile">Mems calibration and temperature compensation</param>
+        public AxelMems(string hwFile = "", string memsFile = "") // memsFile - no ext
         {
-            sw = new Stopwatch();
             activeChannel = 0;
             sampleRate = 2133;
             nSamples = 1500;
             dTimer = new DispatcherTimer();
             dTimer.Tick += new EventHandler(dTimer_Tick);
-            dTimer.Interval = new TimeSpan(10*10000); // 10ms
+            dTimer.Interval = new TimeSpan(100 * 10000); // 100 ms
 
             // default hardware
             hw["device"] = "cDAQ1Mod1_2";
@@ -142,27 +216,8 @@ namespace Axel_hub
             if (!File.Exists(FN)) throw new Exception("File " + FN + " not found.");
             fileJson = File.ReadAllText(FN);
             memsY = JsonConvert.DeserializeObject<accelCalibr>(fileJson);
-
             Reset();
-        }
-
-        /// <summary>
-        /// Stopwatch routines
-        /// </summary>
-        public void StartStopwatch()
-        {
-            if (Utils.isNull(sw)) sw = new Stopwatch();
-            sw.Restart();
-        }
-        public void SetStopwatch(Stopwatch ext_sw)
-        {
-            if(!Utils.isNull(ext_sw)) sw = ext_sw;
-        }
-        public double TimeElapsed() // [sec]
-        {
-            if(!sw.IsRunning) return double.NaN;
-            if (Stopwatch.IsHighResolution) return sw.ElapsedTicks / Stopwatch.Frequency;
-            else return sw.ElapsedMilliseconds/1000;
+            tracer = new AcqTracer(true);
         }
 
         private bool _running = false;
@@ -179,7 +234,7 @@ namespace Axel_hub
         /// <param name="wantedCR">Desired freq</param>
         /// <returns></returns>
         public double RealConvRate(double wantedCR)
-        {   
+        {
             int found = -1;
             if (wantedCR > FixConvRate[0]) found = 0;
             int len = FixConvRate.Length;
@@ -210,7 +265,7 @@ namespace Axel_hub
         /// refer. NI9251 and related documentation
         /// </summary>
         public double[,] readBurst(int nPoints) // synchro read
-        {   
+        {
             int np = nSamples;
             if (nPoints > 0) np = nPoints;
             double[,] aiData = new double[1, np];
@@ -223,17 +278,17 @@ namespace Axel_hub
         }
         public void configureVITask(string physicalChn, int numbSamples, double samplingRate) // obsolete, but good to have as how to configure acquisition task
         {
-            if(Utils.isNull(voltageInputTask)) voltageInputTask = new Task();
+            if (Utils.isNull(voltageInputTask)) voltageInputTask = new Task();
 
-            if(Utils.isNull(axelAIChannel)) axelAIChannel = voltageInputTask.AIChannels.CreateVoltageChannel(physicalChn, "", AITerminalConfiguration.Differential,
-                (double)-3.5, (double)3.5, AIVoltageUnits.Volts);
+            if (Utils.isNull(axelAIChannel)) axelAIChannel = voltageInputTask.AIChannels.CreateVoltageChannel(physicalChn, "", AITerminalConfiguration.Differential,
+                 (double)-3.5, (double)3.5, AIVoltageUnits.Volts);
 
             voltageInputTask.Timing.ConfigureSampleClock("", sampleRate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples);
             voltageInputTask.Timing.SamplesPerChannel = numbSamples;
             voltageInputTask.Stream.Timeout = Timeout;
             voltageInputTask.Control(TaskAction.Commit);
 
-            if(Utils.isNull(VIReader)) VIReader = new AnalogMultiChannelReader(voltageInputTask.Stream);
+            if (Utils.isNull(VIReader)) VIReader = new AnalogMultiChannelReader(voltageInputTask.Stream);
         }
         #endregion
 
@@ -281,7 +336,8 @@ namespace Axel_hub
                 Device dev = DaqSystem.Local.LoadDevice(PXIe);
                 dev.Reset();
             }
-            _running = false;          
+            _running = false;
+            tracer.stage = tracerStage.neutral;
         }
 
         #region sync (separate thread) Aqcuisition 
@@ -314,11 +370,11 @@ namespace Axel_hub
                         myTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel1"], "", AITerminalConfiguration.Differential,
                                                                 Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
                     if ((activeChannel == 1) || (activeChannel == 2))
-                        myTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential, 
-                                                                Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts); 
+                        myTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential,
+                                                                Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
                     if (activeChannel == 3)
                     {
-                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", AITerminalConfiguration.Differential, 
+                        myTask.AIChannels.CreateVoltageChannel(physicalChannel2, "", AITerminalConfiguration.Differential,
                                                                 Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
                     }
                 }
@@ -343,12 +399,10 @@ namespace Axel_hub
                 }
                 nSamples = samplesPerChannel;
                 sampleRate = RealConvRate(samplingRate);
- 
-                // sw must be started manually from StartTime
-                if (!sw.IsRunning) throw new Exception("The stopwatch has not been started");
+                tracer.period = samplesPerChannel / sampleRate;
                 lastTime = 0.0;
                 lastCount = 0;
-                
+
                 _running = true;
                 analogInReader.BeginReadWaveform(samplesPerChannel, analogCallback, myTask);
             }
@@ -361,11 +415,13 @@ namespace Axel_hub
         }
 
         List<Point> dataBuffer = new List<Point>();
-        private void dTimer_Tick(object sender, EventArgs e)
+        private void dTimer_Tick(object sender, EventArgs e) // delay timer
         {
             dTimer.Stop();
             bool next;
+            tracer.stage = tracerStage.startComb;
             AcquireEvent(dataBuffer, out next); // when 2 channels data list has them both: odd - chn0; even - chn1
+            tracer.stage = tracerStage.endComb;
             _running = next;
         }
 
@@ -382,11 +438,12 @@ namespace Axel_hub
             {
                 if (!Utils.isNull(runningTask) && runningTask.Equals(ar.AsyncState))
                 {
+                    tracer.stage = tracerStage.readAcq;
                     // Read the available data from the channels
                     waveform = analogInReader.EndReadWaveform(ar);
 
                     const int actChn = 0; // for single channel (any)
-                    if((activeChannel == 2) && (waveform.Length < 2)) throw new Exception("Set for two channels but only one appears!");                   
+                    if ((activeChannel == 2) && (waveform.Length < 2)) throw new Exception("Set for two channels but only one appears!");
                     List<Point> data = new List<Point>();
                     double ts, prd;
                     switch (TimingMode)
@@ -395,45 +452,53 @@ namespace Axel_hub
                             for (int sample = 0; sample < waveform[actChn].Samples.Count; sample++)
                             {
                                 data.Add(new Point(sample + lastCount, waveform[actChn].Samples[sample].Value));
-                                if(activeChannel == 2)
-                                    data.Add(new Point(sample + lastCount, waveform[actChn+1].Samples[sample].Value));
+                                if (activeChannel == 2)
+                                    data.Add(new Point(sample + lastCount, waveform[actChn + 1].Samples[sample].Value));
                             }
                             lastCount += waveform[actChn].Samples.Count; // total count marker
                             break;
-                       case (TimingModes.byStopwatch): // time markers from Stopwatch, samplePer -> (time makers diff) / nSamples (recommended)
-                            ts = sw.ElapsedMilliseconds/1000.0;
-                            prd = (ts - lastTime) / waveform[actChn].Samples.Count;
-                            for (int sample = 0; sample < waveform[actChn].Samples.Count; sample++)
+                        case (TimingModes.byStopwatch): // time markers from theTime, samplePer -> (time makers diff) / nSamples (recommended)
+                            if (theTime.isTimeRunning)
                             {
-                                data.Add(new Point(lastTime + sample * prd, waveform[actChn].Samples[sample].Value));
-                                if(activeChannel == 2)
-                                    data.Add(new Point(lastTime + sample * prd, waveform[actChn+1].Samples[sample].Value));
+                                ts = theTime.elapsedTime;
+                                prd = (ts - lastTime) / waveform[actChn].Samples.Count;
+                                for (int sample = 0; sample < waveform[actChn].Samples.Count; sample++)
+                                {
+                                    data.Add(new Point(lastTime + sample * prd, waveform[actChn].Samples[sample].Value));
+                                    if (activeChannel == 2)
+                                        data.Add(new Point(lastTime + sample * prd, waveform[actChn + 1].Samples[sample].Value));
+                                }
+                                lastTime = ts;
                             }
-                            lastTime = ts;
                             break;
                         case (TimingModes.byADCtimer): // samplePer -> 1 / , time markers calculated from samplePer and nSamples 
                             ts = lastTime;
                             for (int sample = 0; sample < waveform[actChn].Samples.Count; sample++)
-                            {   
+                            {
                                 lastTime = ts + sample / sampleRate;
                                 data.Add(new Point(lastTime, waveform[actChn].Samples[sample].Value));
-                                if(activeChannel == 2)
-                                    data.Add(new Point(lastTime, waveform[actChn+1].Samples[sample].Value));
+                                if (activeChannel == 2)
+                                    data.Add(new Point(lastTime, waveform[actChn + 1].Samples[sample].Value));
                             }
                             break;
                         case (TimingModes.byBoth): // time markers from Stopwatch, sampleRate from ADC setting
                             for (int sample = 0; sample < waveform[activeChannel].Samples.Count; sample++)
                             {
                                 data.Add(new Point(lastTime + sample / sampleRate, waveform[actChn].Samples[sample].Value));
-                                if(activeChannel == 2)
-                                    data.Add(new Point(lastTime + sample / sampleRate, waveform[actChn+1].Samples[sample].Value));
+                                if (activeChannel == 2)
+                                    data.Add(new Point(lastTime + sample / sampleRate, waveform[actChn + 1].Samples[sample].Value));
                             }
-                            lastTime = sw.ElapsedMilliseconds/1000.0;
+                            if (theTime.isTimeRunning) lastTime = theTime.elapsedTime;
                             break;
                     }
                     dataBuffer = new List<Point>(data);
                     if (!dTimer.IsEnabled) dTimer.Start();
-                    else Console.WriteLine("Timing problem: skip a buffer");
+                    else Utils.TimedMessageBox("Timing problem: skip a buffer of data");
+                    if (tracer.trouble)
+                    {
+                        Utils.TimedMessageBox("Timing sequence problem"); 
+                        tracer.trouble = false;
+                    }                       
                     analogInReader.BeginMemoryOptimizedReadWaveform(nSamples, analogCallback, myTask, waveform);
                 }
             }
@@ -456,7 +521,7 @@ namespace Axel_hub
     /// The temperature in a class abstraction
     /// </summary>
     public class AxelMemsTemperature
-    { 
+    {
         public Dictionary<string, string> hw = new Dictionary<string, string>();
         private Task tmpTask = null;
         public AxelMemsTemperature(string hwFile = "")
@@ -464,49 +529,92 @@ namespace Axel_hub
             // default hardware
             hw["device"] = "Dev2";
             hw["channel1"] = "/ai1";
-            hw["channel2"] = "/ai2"; 
+            hw["channel2"] = "/ai2";
             hw["min"] = "-3.5";
             hw["max"] = "3.5";
             string fn = Utils.configPath + hwFile + ".hw";
             if (File.Exists(fn)) hw = Utils.readDict(fn);
         }
-
-        /// <summary>
-        /// The actual temperature measurement
-        /// </summary>
-        /// <returns></returns>
-        public double [] TakeTheTemperature()
+        public bool isDevicePlugged()
         {
-            double[] rslt = null;
-            try 
-            {
-                //Create a new task
-                using (tmpTask = new Task())
-                {
-                    //Create a virtual channel
-                    tmpTask.AIChannels.CreateVoltageChannel(hw["device"]+hw["channel1"],"",AITerminalConfiguration.Differential,
-                                                        Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]),AIVoltageUnits.Volts);
-                    tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential,
-                                                        Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);  
+            if (hw.ContainsKey("device")) return isDevicePresent(hw["device"]);
+            else return false;
+        }
 
-                    AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);
+        private bool isDevicePresent(string dev)
+        {
+            bool rslt = false;
+            foreach (string dv in DaqSystem.Local.Devices)
+            {
+                rslt |= dev.Equals(dv);
+            }
+            return rslt;
+        }
+
+        public void StartAcquisition(int samplesPerChannel = 100, double samplingRate = 267)
+        {
+            if (!Utils.isNull(tmpTask)) return; // fix later !!!
+            try
+            {
+                //Create a new task locally
+                tmpTask = new Task();
                 
-                    //Verify the Task
-                    tmpTask.Control(TaskAction.Verify);
-                                            
-                    //Plot Multiple Channels to the table
-                    rslt = reader.ReadSingleSample(); 
-                }
+                //Create a virtual channel
+                tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel1"], "", AITerminalConfiguration.Differential,
+                                                    Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
+                tmpTask.AIChannels.CreateVoltageChannel(hw["device"] + hw["channel2"], "", AITerminalConfiguration.Differential,
+                                                    Convert.ToDouble(hw["min"]), Convert.ToDouble(hw["max"]), AIVoltageUnits.Volts);
+
+                tmpTask.Stop();
+                tmpTask.Timing.ConfigureSampleClock("", samplingRate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples, samplesPerChannel);
+                tmpTask.Timing.SamplesPerChannel = samplesPerChannel;   //tmpTask.Stream.Timeout = Timeout;
+                tmpTask.Control(TaskAction.Commit);
+
+                //Verify the Task
+                tmpTask.Control(TaskAction.Verify);               
             }
             catch (DaqException exception)
             {
                 MessageBox.Show(exception.Message);
             }
-            finally 
+            finally
             {
-                    
+
+            }
+        }
+
+        public void StopAcquisition()
+        {
+            return; // fix later !!!
+            if (!Utils.isNull(tmpTask)) tmpTask.Dispose();
+            if (isDevicePresent(hw["device"]))
+            {
+                Device dev = DaqSystem.Local.LoadDevice(hw["device"]);
+                //dev.Reset();
+            }
+        }
+        /// <summary>
+        /// The actual temperature measurement by channel 
+        /// </summary>
+        /// <returns></returns>
+        public double[] TakeTheTemperature()
+        {
+            double[] rslt = null;
+            try
+            {
+                 AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);
+                 //Plot Multiple Channels to the table
+                 rslt = reader.ReadSingleSample();               
+            }
+            catch (DaqException exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
+            finally
+            {
+
             }
             return rslt;
         }
-    } 
+    }
 }

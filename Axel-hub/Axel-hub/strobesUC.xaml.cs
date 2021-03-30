@@ -17,6 +17,7 @@ using System.Windows.Shapes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
+using OptionsNS;
 using UtilsNS;
 
 namespace Axel_hub
@@ -110,20 +111,15 @@ namespace Axel_hub
     {
         private const string dPrec = "G4";
         private MMexec grpMME, lastMMEin, lastMMEout;
+        GeneralOptions genOptions;
 
-        private bool _PID_Enabled;
         /// <summary>
-        /// PID follow the strobe position
+        /// PID follow the strobe position; now only for show
         /// </summary>
-        public bool PID_Enabled
+        public void SetPID_Enabled(bool pid)
         {
-            get { return _PID_Enabled; }
-            set
-            {
-                _PID_Enabled = value;
-                if (value) lbTitle.Content = "PID - ON";
-                else lbTitle.Content = "PID - OFF";
-            }
+            if (pid) lbTitle.Content = "PID - ON";
+            else lbTitle.Content = "PID - OFF";          
         }
         private bool LogPID { get { return chkPIDlog.IsChecked.Value; } }
         private bool Rpr2file { get { return chkRpr2file.IsChecked.Value; } }
@@ -186,9 +182,10 @@ namespace Axel_hub
         /// Initiate strobe from file settings 
         /// </summary>
         /// <param name="_prefix"></param>
-        public void Init(string _prefix)
+        public void Init(string _prefix, ref GeneralOptions _genOptions)
         {
             prefix = _prefix;
+            genOptions = _genOptions;
             configFile = Utils.configPath + "PID_" + prefix + ".cfg";
             OpenConfigFile();
         }
@@ -324,7 +321,7 @@ namespace Axel_hub
             Color clr1 = Brushes.MediumSeaGreen.Color;
             if (Math.Abs(disbalNorm) > 0.8) clr1 = Brushes.Red.Color;
             double corr = 0, piCorr = 0;
-            if (PID_Enabled)
+            if (genOptions.followPID)
             {
                 corr = PID(disbalNorm); // [rad]      
                 if (PiWeight > 1)
@@ -384,32 +381,41 @@ namespace Axel_hub
             // mmeOut.mmexec is "downhill" : "uphill" : "contrastCheck" only for probe 
             // for MM2 only runID counts -> even:odd:-1 
             // runID 
-            double newPhase = 0;
-            bool bb = !FreqContrast.Equals(0) && !Utils.isNull(lastMMEout);
-            if (bb) FreqContrast = Utils.EnsureRange(FreqContrast, 10, 1000);
-            if (bb) bb &= (runID % FreqContrast).Equals(0) && (runID > 0); //!lastMMEout.mmexec.Equals("");
-            if (bb) // contrastCheck !!!
+            if (genOptions.Diagnostics)
             {
-                mmeOut = new MMexec("contrastCheck", "Axel-hub", "phaseAdjust");
-                mmeOut.prms.Clear();
-                mmeOut.prms["runID"] = -1;
-                newPhase = centreFringe();
-                if (Down.X > Up.X) newPhase += Math.PI; // (centreFringe() > 0) ? centreFringe() - Math.PI : centreFringe() + Math.PI;              
-                mmeOut.prms["phase." + prefix] = newPhase.ToString("G6");                
-            }
-            else // regular phaseAdjust
-            {
-                mmeOut = new MMexec((runID % 2).Equals(0) ? "downhill" : "uphill", "Axel-hub", "phaseAdjust");
+                mmeOut = new MMexec("diagnostics", "Axel-hub", "phaseAdjust");
                 mmeOut.prms.Clear();
                 mmeOut.prms["runID"] = runID;
-                double correction = 0;                
-                newPhase = nextShot(runID, asymmetry, out correction);
-                if (newPhase > -10)
+            }
+            else
+            { 
+                double newPhase = 0;
+                bool bb = !FreqContrast.Equals(0) && !Utils.isNull(lastMMEout);
+                if (bb) FreqContrast = Utils.EnsureRange(FreqContrast, 10, 1000);
+                if (bb) bb &= (runID % FreqContrast).Equals(0) && (runID > 0); //!lastMMEout.mmexec.Equals("");
+                if (bb) // contrastCheck !!!
                 {
-                    mmeOut.prms["phase." + prefix] = newPhase.ToString("G6");
-                    mmeOut.prms["corr." + prefix] = correction.ToString("G6");
+                    mmeOut = new MMexec("contrastCheck", "Axel-hub", "phaseAdjust");
+                    mmeOut.prms.Clear();
+                    mmeOut.prms["runID"] = -1;
+                    newPhase = centreFringe();
+                    if (Down.X > Up.X) newPhase += Math.PI; // (centreFringe() > 0) ? centreFringe() - Math.PI : centreFringe() + Math.PI;              
+                    mmeOut.prms["phase." + prefix] = newPhase.ToString("G6");                
                 }
-            }           
+                else // regular phaseAdjust
+                {
+                    mmeOut = new MMexec((runID % 2).Equals(0) ? "downhill" : "uphill", "Axel-hub", "phaseAdjust");
+                    mmeOut.prms.Clear();
+                    mmeOut.prms["runID"] = runID;
+                    double correction = 0;                
+                    newPhase = nextShot(runID, asymmetry, out correction);
+                    if (newPhase > -10)
+                    {
+                        mmeOut.prms["phase." + prefix] = newPhase.ToString("G6");
+                        mmeOut.prms["corr." + prefix] = correction.ToString("G6");
+                    }
+                }              
+            }        
             lastMMEout = mmeOut.Clone(); return mmeOut;
             //if (newPhase > -10) 
             //else return null;

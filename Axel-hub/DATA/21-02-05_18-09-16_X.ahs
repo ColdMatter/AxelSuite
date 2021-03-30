@@ -1,0 +1,5 @@
+#{"prms":{"groupID":"21-02-05_18-09-15","cycles":1,"follow":0},"mmexec":"diagnostics","sender":"Axel-hub","cmd":"repeat","id":398517957}
+
+
+XAxis	N1	N2	RN1	RN2	NTot	B2	Btot
+0	-7.539458E-06	0.00062735826	-0.012163971	1.012164	0.0006198188	0.00058822847	0.0005906411

@@ -9,7 +9,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200*"/>
             <ColumnDefinition Width="100*"/>
-            <ColumnDefinition Width="120"/>
+            <ColumnDefinition Width="150"/>
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0" Margin="0">
             <Grid.RowDefinitions>
@@ -22,7 +22,9 @@
                 <CheckBox x:Name="chkRN1" Content="RN1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkN1_Checked" Unchecked="chkN1_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                 <CheckBox x:Name="chkRN2" Content="RN2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFE78302" FontWeight="Bold"/>
                 <CheckBox x:Name="chkNtot" Content="Ntot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFB02415" FontWeight="Bold"/>
-                <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13" Width="273"/>
+                <CheckBox x:Name="chkB2" Content="B2" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FFE70228" FontWeight="Bold"/>
+                <CheckBox x:Name="chkBtot" Content="Btot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FF586601" FontWeight="Bold"/>
+                <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13"/>
             </StackPanel>
             <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
                 <ni:Graph.Axes>
@@ -70,6 +72,19 @@
                             <ni:PointPlotRenderer Fill="#FFF9C0B6" Stroke="#FFC02409" Size="3,3"/>
                         </ni:PlotRendererGroup>
                     </ni:Plot>
+                    <ni:Plot x:Name="plotB2" Label="B2">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFE70228" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FFFBA6B2" Stroke="#FFE70228" Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                    <ni:Plot x:Name="plotBtot" Label="Btot">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FF586601" StrokeThickness="1.3"/>
+                            <ni:PointPlotRenderer Fill="#FFF7F9B6" Stroke="#FF586601" Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+
                 </ni:Graph.Plots>
                 <ni:Graph.SelectionFill>
                     <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
@@ -103,18 +118,21 @@
                 <RowDefinition x:Name="rowUpper" MinHeight="3" Height="130.286"/>
                 <RowDefinition x:Name="rowMiddle" MinHeight="30" Height="189.714"/>
             </Grid.RowDefinitions>
-            <CheckBox x:Name="chkAutoScaleMiddle" Grid.Row="0" Margin="3,2,0,5.286" FontSize="13" Content="Auto-scale Y" RenderTransformOrigin="0.514,-8.657" Foreground="#FF0E7501"/>
-            <ListBox x:Name="lboxNB" Grid.Row="0" FontSize="13" Margin="3,19,0,0">
+            <CheckBox x:Name="chkAutoScaleMiddle" Grid.Row="0" Margin="3,2,0,0" FontSize="13" Content="Auto-scale Y" RenderTransformOrigin="0.514,-8.657" Foreground="#FF0E7501"/>
+            <ListBox x:Name="lboxNB" Grid.Row="0" FontSize="13" Margin="3,21,0,0">
                 <ListBoxItem Content="N2"/>
                 <ListBoxItem Content="NTot"/>
                 <ListBoxItem Content="B2"/>
                 <ListBoxItem Content="BTot"/>
                 <ListBoxItem Content="Bg"/>
             </ListBox>
-            <CheckBox x:Name="chkBackgroung" Grid.Row="1" Margin="3,25,0,0" FontSize="12" Content="- Backgroung" IsChecked="True" VerticalAlignment="Top"/>
-            <CheckBox x:Name="chkDarkcurrent" Grid.Row="1" Margin="3,8,0,5" FontSize="12" Content="- Dark Current" IsChecked="True" VerticalAlignment="Top"/>
-            <CheckBox x:Name="chkStdDev" Grid.Row="1" Margin="3,43,0,0" FontSize="12" Content="- Std.Dev." IsChecked="True" Height="18" VerticalAlignment="Top"/>
             <GridSplitter Height="4" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="#FFE3E4E4"/>
+            <StackPanel Grid.Row="1" Margin="5,3,0,0">
+                <CheckBox x:Name="chkDarkcurrent" Margin="0,5,0,0" FontSize="12" Content=" Dark Current Corr." IsChecked="True" VerticalAlignment="Top"/>
+                <CheckBox x:Name="chkStdDev" Margin="0,8,0,0" FontSize="12" Content=" Std.Dev. in Table" IsChecked="True" Height="18" VerticalAlignment="Top" Foreground="#FF0E6101"/>
+                <CheckBox x:Name="chkSDSave" Margin="0,0,0,0" FontSize="12" Content=" Std.Dev. to Log" IsChecked="False" Height="18" VerticalAlignment="Top" Foreground="#FF0E6101"/>
+                <CheckBox x:Name="chkRawSave" Margin="0,5,0,0" FontSize="12" Content=" Raw Data to Log" IsChecked="False" Height="18" VerticalAlignment="Top" Foreground="#FF012072"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

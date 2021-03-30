@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Name="frmOptions" x:Class="OptionsNS.OptionsWindow"
-        Title="  Axel Hub Options" Height="425.714" Width="407.857" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Activated="frmOptions_Activated" Icon="/Axel-hub;component/Properties/TripleBar.bmp">
+        Title="  Axel Hub Options" Height="491.087" Width="416.279" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Activated="frmOptions_Activated" Icon="/Axel-hub;component/Properties/TripleBar.bmp">
     <Grid Margin="0,0,14.286,1.143">
         <Grid.RowDefinitions>
             <RowDefinition/>
@@ -15,6 +15,7 @@
                         <RowDefinition Height="60"/>
                         <RowDefinition Height="154.857"/>
                         <RowDefinition/>
+                        <RowDefinition Height="60"/>
                     </Grid.RowDefinitions>
                     <GroupBox Header="Axes channels" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="302" Margin="5,4,0,0" FontSize="13" BorderBrush="#FFC3051A">
                         <Grid>
@@ -25,57 +26,77 @@
                     </GroupBox>
                     <Grid Margin="0" Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="187"/>
+                            <ColumnDefinition Width="190"/>
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
                         <GroupBox Header=" Number Presicion" Margin="0" BorderBrush="#FF03830F">
                             <Grid Margin="0,0,0.429,0.143">
                                 <Label Content="Signal cursor label" HorizontalAlignment="Left" Margin="5,7,0,0" VerticalAlignment="Top"/>
                                 <Label Content="Signal summary table" HorizontalAlignment="Left" Margin="5,33,0,0" VerticalAlignment="Top"/>
-                                <TextBox x:Name="tbSignalCursorPrec" HorizontalAlignment="Left" Height="23" Margin="134,5,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
-                                <TextBox x:Name="tbSignalTablePrec" HorizontalAlignment="Left" Height="23" Margin="134,36,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13" RenderTransformOrigin="0.371,0.137"/>
+                                <TextBox x:Name="tbSignalCursorPrec" HorizontalAlignment="Left" Height="23" Margin="137,5,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
+                                <TextBox x:Name="tbSignalTablePrec" HorizontalAlignment="Left" Height="23" Margin="137,36,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13" RenderTransformOrigin="0.371,0.137"/>
                                 <Label Content="Save file" HorizontalAlignment="Left" Margin="5,67,0,0" VerticalAlignment="Top"/>
-                                <TextBox x:Name="tbSaveFilePrec" HorizontalAlignment="Left" Height="23" Margin="134,65,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
+                                <TextBox x:Name="tbSaveFilePrec" HorizontalAlignment="Left" Height="23" Margin="137,65,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
                                 <Label Content="Log files" HorizontalAlignment="Left" Margin="5,92,0,0" VerticalAlignment="Top"/>
-                                <TextBox x:Name="tbLogFilePrec" HorizontalAlignment="Left" Height="23" Margin="134,95,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
+                                <TextBox x:Name="tbLogFilePrec" HorizontalAlignment="Left" Height="23" Margin="137,95,0,0" TextWrapping="Wrap" Text="G4" VerticalAlignment="Top" Width="32" FontSize="13"/>
                             </Grid>
                         </GroupBox>
-                        <GroupBox Header=" Misc" Margin="0.143,0,0,-0.143" Grid.Column="1" HorizontalAlignment="Left" Width="185" BorderBrush="#FF0E9602">
+                        <GroupBox Header=" Jumbo Repeat sub-modes" Margin="0.143,0,0,-0.143" Grid.Column="1" HorizontalAlignment="Left" Width="190" BorderBrush="#FF0E9602">
                             <Grid>
-                                <CheckBox x:Name="chkInitN2" Content="initN2 in sum. table" HorizontalAlignment="Left" Margin="3,10,0,0" VerticalAlignment="Top" Width="130"/>
-                                <CheckBox x:Name="chkSaveVisuals" Content="Save visual arrangement" HorizontalAlignment="Left" Margin="3,38,0,0" VerticalAlignment="Top" Width="152"/>
-                                <CheckBox x:Name="chkFollowPID" Content="Follow PID (Jumbo-rept)" HorizontalAlignment="Left" Margin="4,98,0,0" VerticalAlignment="Top" Width="161" FontSize="13"/>
+                                <CheckBox x:Name="chkLogRaw" Content="Log join raw (.jdt)" HorizontalAlignment="Left" Margin="10,104,0,0" VerticalAlignment="Top" Width="152"/>
+                                <TabControl x:Name="tcJumboRepeatModes" Margin="0,7,0,0" VerticalAlignment="Top">
+                                    <TabItem x:Name="tiAcceleration" Header="Acceleration">
+                                        <Grid>
+                                            <CheckBox x:Name="chkFollowPID" Content="Follow fringe via PID" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="152" FontSize="13"/>
+                                            <CheckBox x:Name="chkJoinLog" Margin="10,33,0,0" Content="Join Log (.jlg)" IsChecked="True" VerticalAlignment="Top" HorizontalAlignment="Left" Height="20" Width="103"/>
+                                        </Grid>
+                                    </TabItem>
+                                    <TabItem x:Name="tiDiagnostics" Header="Diagnostics">
+                                        <Grid>
+                                            <Label Content="No acceleration calculated," VerticalAlignment="Top"/>
+                                            <Label Content="only raw data recorded (.jdt)" VerticalAlignment="Top" Margin="0,20,0,0"/>
+                                        </Grid>
+                                    </TabItem>
 
+                                </TabControl>
                             </Grid>
                         </GroupBox>
                     </Grid>
-                    <Grid Grid.Row="1" Margin="0,108,-0.429,0.286" Grid.RowSpan="2">
+                    <Grid Grid.Row="2" Margin="0" >
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="187"/>
+                            <ColumnDefinition Width="94.13"/>
+                            <ColumnDefinition Width="177.039"/>
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
-                        <GroupBox Header="Save on exit" HorizontalAlignment="Left" VerticalAlignment="Top" Height="87" Width="85" Margin="117,52,0,0" Grid.ColumnSpan="2" BorderBrush="#FF086DAA">
+                        <GroupBox Header="Save on exit" HorizontalAlignment="Left" VerticalAlignment="Top" Height="90" Width="90" Margin="0"  BorderBrush="#FF086DAA">
                             <Grid>
                                 <RadioButton x:Name="rbSaveSeqYes" Content="Save" HorizontalAlignment="Center" Margin="2,5,0,0" VerticalAlignment="Top" Height="15" Width="55" RenderTransformOrigin="-2.119,0.79"/>
-                                <RadioButton x:Name="rbSaveSeqAsk" Content="Ask" HorizontalAlignment="Center" Margin="0,26,16,0" VerticalAlignment="Top" IsChecked="True" Height="15" Width="38"/>
+                                <RadioButton x:Name="rbSaveSeqAsk" Content="Ask" HorizontalAlignment="Center" Margin="12,26,21.922,0" VerticalAlignment="Top" IsChecked="True" Height="15" Width="44"/>
                                 <RadioButton x:Name="rbSaveSeqNo" Content="No save" HorizontalAlignment="Center" Margin="5,46,0.286,0" VerticalAlignment="Top" RenderTransformOrigin="-0.184,-0.833" Height="15" Width="61" />
                             </Grid>
                         </GroupBox>
-                        <GroupBox Header="Signal Visual Optimization" HorizontalAlignment="Left" VerticalAlignment="Top" Height="87" Width="165" Margin="20.143,52,0,0" Grid.Column="1" BorderBrush="#FF06659E">
+                        <GroupBox Header="Signal Visual Optimization" HorizontalAlignment="Left" VerticalAlignment="Top" Height="90" Width="171" Margin="94,0,0,0" BorderBrush="#FF06659E" Grid.ColumnSpan="2">
                             <Grid>
                                 <Label Content="Trend signal len." HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Top" Width="104"/>
-                                <ni:RadixNumericTextBoxInt32 x:Name="numTrendSignalLen" HorizontalAlignment="Left" Height="23" Margin="96,6,-0.286,0" VerticalAlignment="Top" Width="50" RadixVisibility="Collapsed"/>
+                                <ni:RadixNumericTextBoxInt32 x:Name="numTrendSignalLen" HorizontalAlignment="Left" Height="23" Margin="100,7,0,0" VerticalAlignment="Top" Width="50" RadixVisibility="Collapsed"/>
                                 <Label Content="Raw signal avg." HorizontalAlignment="Left" Margin="0,30,0,0" VerticalAlignment="Top" Width="104"/>
-                                <ni:RadixNumericTextBoxInt32 x:Name="numRawSignalAvg" HorizontalAlignment="Left" Height="23" Margin="96,33,-0.286,0" VerticalAlignment="Top" Width="50" RadixVisibility="Collapsed" Range="1, 100, System.Int32" Value="5"/>
+                                <ni:RadixNumericTextBoxInt32 x:Name="numRawSignalAvg" HorizontalAlignment="Left" Height="23" Margin="100,34,0,0" VerticalAlignment="Top" Width="50" RadixVisibility="Collapsed" Range="1, 100, System.Int32" Value="5"/>
+                            </Grid>
+                        </GroupBox>
+                        <GroupBox Header="Jumbo modes" HorizontalAlignment="Left" Width="112" Margin="0" Grid.Column="2" VerticalAlignment="Top" Height="90" BorderBrush="#FF055A8E">
+                            <Grid Margin="0">
+                                <RadioButton x:Name="rbScanOnly" Content="Scan Only" HorizontalAlignment="Center" Margin="7,6,10.364,0" VerticalAlignment="Top" Height="15" Width="83" RenderTransformOrigin="-2.119,0.79"/>
+                                <RadioButton x:Name="rbRepeatOnly" Content="Repeat Only" HorizontalAlignment="Center" Margin="6,28,3.364,0" VerticalAlignment="Top" IsChecked="True" Height="15" Width="91"/>
+                                <RadioButton x:Name="rbBothModes" Content="Both Modes" HorizontalAlignment="Center" Margin="2,50,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.184,-0.833" Height="15" Width="91" IsChecked="True" />
                             </Grid>
                         </GroupBox>
 
                     </Grid>
-                    <GroupBox Header="Jumbo modes" HorizontalAlignment="Left" Width="112" Margin="0,5.143,0,0" Grid.Row="2" VerticalAlignment="Top" Height="89" BorderBrush="#FF055A8E">
-                        <Grid Margin="0">
-                            <RadioButton x:Name="rbScanOnly" Content="Scan Only" HorizontalAlignment="Center" Margin="0,6,12,0" VerticalAlignment="Top" Height="15" Width="75" RenderTransformOrigin="-2.119,0.79"/>
-                            <RadioButton x:Name="rbRepeatOnly" Content="Repeat Only" HorizontalAlignment="Center" Margin="0,28,0,0" VerticalAlignment="Top" IsChecked="True" Height="15" Width="88"/>
-                            <RadioButton x:Name="rbBothModes" Content="Both Modes" HorizontalAlignment="Center" Margin="2,50,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.184,-0.833" Height="15" Width="91" IsChecked="True" />
+                    <GroupBox Header="Misc" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="3"  Height="50" Width="381" Margin="0" FontSize="13">
+                        <Grid>
+                            <CheckBox x:Name="chkInitN2" Content="initN2 in sum. table" HorizontalAlignment="Left" Margin="3,5
+                                      ,0,0" VerticalAlignment="Top" Width="142"/>
+                            <CheckBox x:Name="chkSaveVisuals" Content="Save visual arrangement" HorizontalAlignment="Left" Margin="150,5,0,-0.065" VerticalAlignment="Top" Width="169"/>
                         </Grid>
                     </GroupBox>
                 </Grid>
@@ -88,12 +109,14 @@
                             <CheckBox x:Name="chkShowMemsIfRunning" Content="Show MEMS only when running" Margin="10,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header=" Averaging MEMS over " HorizontalAlignment="Left" VerticalAlignment="Top" Height="65" Width="242" Margin="5,0,0,0" BorderBrush="#FF0583CF">
+                    <GroupBox Header=" MEMS sector " HorizontalAlignment="Left" VerticalAlignment="Top" Height="65" Width="242" Margin="5,0,0,0" BorderBrush="#FF0583CF">
                         <Grid>
-                            <Label Content="Delay[ms]" HorizontalAlignment="Left" Margin="120,10,0,0" VerticalAlignment="Top"/>
-                            <ni:NumericTextBoxDouble x:Name="numMems2SignalDelay" HorizontalAlignment="Left" Height="23" Margin="180,12,0,0" VerticalAlignment="Top" Width="50" RenderTransformOrigin="0.501,-0.217" Range="-1000, 1000, System.Double"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="54*"/>
+                                <ColumnDefinition Width="61*"/>
+                            </Grid.ColumnDefinitions>
                             <Label Content="Lenght[ms]" HorizontalAlignment="Left" Margin="0,10,0,0" VerticalAlignment="Top"/>
-                            <ni:NumericTextBoxDouble x:Name="numMems2SignalLen" HorizontalAlignment="Left" Height="23" Margin="67,10,0,0" VerticalAlignment="Top" Width="50" RenderTransformOrigin="0.501,-0.217" Range="1, 100, System.Double" Value="5"/>
+                            <ni:NumericTextBoxDouble x:Name="numMems2SignalLen" HorizontalAlignment="Left" Height="23" Margin="74,12,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.501,-0.217" Range="1, 100, System.Double" Value="20" Grid.ColumnSpan="2" IsEnabled="False"/>
                         </Grid>
                     </GroupBox>
 
@@ -114,9 +137,10 @@
                                         <GradientStop Color="#FFF2F1F1" Offset="1"/>
                                     </LinearGradientBrush>
                                 </ComboBox.Background>
-                                <ComboBoxItem Content="NI-9251"/>
+                                <ComboBoxItem Content="NI-9251-1"/>
                             </ComboBox>
                             <ComboBox x:Name="cbTemperatureHw" HorizontalAlignment="Left" Margin="98,43,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="0">
+                                <ComboBoxItem Content="NI-9251-2"/>
                                 <ComboBoxItem Content="NI-6216"/>
                             </ComboBox>
                         </Grid>

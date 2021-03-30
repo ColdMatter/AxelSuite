@@ -19,7 +19,6 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.Windows.Controls.Primitives;
-using System.Threading.Tasks.Dataflow;
 
 using NationalInstruments.Analysis.Math;
 
@@ -48,7 +47,6 @@ namespace Axel_hub
             TimeSeriesMode = false;
             if (StackMode) Depth = depth;
             else Depth = 1000;
-            stopWatch = new Stopwatch();
             prefix = _prefix;
             logger = new FileLogger(prefix);
             random = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
@@ -72,7 +70,6 @@ namespace Axel_hub
         }
 
         public FileLogger logger;
-        public Stopwatch stopWatch;
 
         public delegate void RefreshHandler();
         public event RefreshHandler OnRefresh;
@@ -89,12 +86,7 @@ namespace Axel_hub
         public bool Running
         {
             get { return _running; }
-            set
-            {
-                _running = value;
-                if (value) stopWatch.Restart();
-                else stopWatch.Stop();
-            }
+            set { _running = value; }
         }
         public const int maxDepth = 15000000;
         public int Depth { get; set; }

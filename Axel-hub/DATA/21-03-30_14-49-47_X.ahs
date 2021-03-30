@@ -1,0 +1,20 @@
+#{"prms":{"sampleRate":200000,"runID":0,"groupID":"21-03-30_14-49-44","site":"","param":"mwTime","from":1.0,"to":70.0,"by":1.0},"mmexec":"","sender":"MOTMaster","cmd":"scan","id":301663064}
+#{"params":{"runID":0.0,"aChn":0.0,"ElapsedTime":0.0,"PLLFreq":6834.495,"ChirpRate":0.28,"ChirpDuration":0.2,"Pulse1Power":22.0,"Pulse1Duration":30.0,"Pulse1Phase":0.0,"Pulse2Power":22.0,"Pulse2Duration":30.0,"Pulse2Phase":0.0,"Pulse3Power":22.0,"Pulse3Duration":30.0,"Pulse3Phase":0.0,"VelPulsePower":22.0,"VelPulseDuration":100.0,"VelPulsePhase":0.0,"IntTime1":1.0,"IntTime2":10.0,"test":0.0,"AnalogClockFrequncy":100000.0,"AnalogLength":0.0,"HSClockFrequency":200000000.0,"2DCoil":9.89,"AnalogClockFrequency":100000.0,"yBiasImg":1.2,"2DAtten":4.15,"YpFreqMOT":6.7845,"YmFreqLaunch":6.815,"YmFreqMOT":6.8255,"DetFreq":7.7,"DetAttn":2.05,"y2DBias":0.0,"ZmAttenState":9.0,"YmAttenMOT":1.7,"YmAttenImg":2.65,"x2DBias":0.0,"PushAtten":7.5,"XpFreqMOT":6.7338,"3DCoil":3.1,"2DFreq":7.11,"2DPushFreq":6.5,"ZmAttenImg":10.0,"mwTime":1.0,"yBiasState":-9.9,"zBiasMW":-2.0,"yBiasMW":-9.99,"zBiasInt":9.99,"YpAttenLaunch":2.5,"XpFreqLaunch":6.741,"YpFreqLaunch":6.799,"xBiasInt":9.0,"ZmAttenMOT":2.58,"ZpAttenMOT":7.04,"xBiasMot":-1.4,"yBiasMot":-0.57,"zBiasMot":-1.1,"xBiasState":-0.6,"zBiasImg":9.9,"zBiasState":-0.9,"yBiasInt":-0.5,"ZpFreqMOT":6.8035,"ZmFreqMOT":6.829,"XmFreqLaunch":6.896,"XmFreqMOT":6.899,"XmAttenLaunch":9.0,"ZpAttenState":3.2,"ZpAttenImg":6.7,"XpAttenLaunch":4.0,"XpAttenImg":2.8,"XpAttenMOT":6.16,"YpAttenMOT":5.9,"YpAttenImg":4.0,"XmAttenMOT":3.52,"XmAttenImg":2.5,"xBiasMW":0.0,"ZmFreqLaunch":6.878,"ZpFreqLaunch":6.762,"rPhase0":0.0,"rPhase":50.0,"PLLFreqX":6834.88,"PLLFreqY":6834.48,"ChirpRateX":0.68,"ChirpRateY":0.28,"MWFreq":6834.682,"xBiasImg":-2.0,"MWFreq1":6834.6828,"RamanPhase":1.0,"ramanPhase":0.0,"ZpFreqImg":6.807,"ZmFreqImg":6.833,"ZpAttenBA":3.2,"YpAttenBA":5.75,"XpAttenBA":4.0,"xBiasBA":-9.99,"yBiasBA":-2.0,"zBiasBA":2.0}}
+#{"steps":{"Initialization 1":0.1,"Initialization 2":0.0065000000000000006,"2D3D":200.0,"3Donly":10.0,"B field off":6.0,"Launch":1.0,"Freq Ramp":0.1,"Wait1":0.8,"Intensity ramp":1.0,"BSwitch0":1.0,"Wait2":4.71,"Step1":0.015,"Step2":0.03,"Wait3":0.2,"BSwitch1":2.0,"BSwitch2":1.0,"MW0":0.155,"BA 1":3.0,"MW1":0.155,"Wait4":5.555,"VelSel":0.092,"BA BField":2.0,"Wait5":3.71,"B3":3.0,"Wait6":8.74,"Pulse 1":0.0339,"Delay":0.01,"Dark2":0.01,"Pulse 2":0.001,"Dark 3":0.02,"Pulse 3":0.0339,"Detection B field 1":3.21,"Detection field 2":8.5,"Dwell1":0.3,"N2":0.675,"NTot":0.675,"Dwell2":1.0,"BlowAway2":100.0,"DetWait":1.7,"Dwell3":0.3,"B2":0.675,"BTot":0.675,"Dwell4":2.0,"Bg":0.675,"Off":50.0,"Off2":50.0}}
+
+
+XAxis	N1	N2	RN1	RN2	NTot	B2	BTot	Bg
+1	0.010881548	0.013697577	0.44271503	0.55728497	0.024579125	0.013188744	0.013708826	-0.00062781342
+2	0.010773892	0.013367734	0.44627863	0.55372137	0.024141626	0.012986031	0.013505863	-0.00064534963
+3	0.010927349	0.013743591	0.44292391	0.55707609	0.02467094	0.013084395	0.013624437	-0.00062206667
+4	0.010989719	0.013814272	0.44306254	0.55693746	0.024803991	0.01315983	0.013694869	-0.00062628039
+5	0.010714551	0.013816649	0.43677241	0.56322759	0.0245312	0.013033213	0.013569448	-0.0006364056
+6	0.01064758	0.01392772	0.43326346	0.56673654	0.0245753	0.013262832	0.013816208	-0.00063880985
+7	0.010686354	0.014378686	0.42634497	0.57365503	0.02506504	0.01333591	0.01389062	-0.00062101394
+8	0.010669949	0.01420287	0.42898028	0.57101972	0.024872819	0.013134164	0.013695854	-0.00062939949
+9	0.010590465	0.014913012	0.41525573	0.58474427	0.025503477	0.013052815	0.013597116	-0.0006153398
+10	0.010379269	0.014594229	0.41561134	0.58438866	0.024973497	0.013415103	0.013984589	-0.00063320273
+11	0.010379738	0.015107576	0.40725114	0.59274886	0.025487314	0.013458654	0.0140292	-0.00061827461
+12	0.010318097	0.015412073	0.40101161	0.59898839	0.025730169	0.013548114	0.014101462	-0.00061464729
+13	0.010068077	0.015619264	0.39194703	0.60805297	0.025687341	0.013564908	0.014134513	-0.00062182374
+14	0.0098086155	0.015497384	0.38760041	0.61239959	0.025305999	0.012853641	0.013414051	-0.00062430059

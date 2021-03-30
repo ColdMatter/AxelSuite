@@ -165,7 +165,8 @@ namespace Axel_tilt
         /// <param name="e"></param>
         private void Axel_tilt_Loaded(object sender, RoutedEventArgs e)
         {
-            remoteShow = new RemoteMessaging("Axel Show", 668);
+            remoteShow = new RemoteMessaging();
+            remoteShow.Connect("Axel Show", 668);
             remoteShow.Enabled = false;
             remoteShow.OnReceive += new RemoteMessaging.ReceiveHandler(OnShowReceive);
             remoteShow.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnShowActiveComm);
@@ -191,8 +192,7 @@ namespace Axel_tilt
         /// <param name="e"></param>
         private void imgAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            string ver = Utils.getRunningVersion(); //System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion.ToString();
-            MessageBox.Show("           Axel Tilt v"+ver+"\n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Tilt v"+Utils.getAppFileVersion+"\n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         /// <summary>

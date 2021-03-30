@@ -35,6 +35,7 @@ namespace OptionsNS
                 genOptions = JsonConvert.DeserializeObject<GeneralOptions>(fileJson);
             }
             else genOptions = new GeneralOptions();
+            Title = "  Axel Hub Options  v" + Utils.getAppFileVersion;
         }
 
         /// <summary>
@@ -61,8 +62,12 @@ namespace OptionsNS
 
             genOptions.intN2 = chkInitN2.IsChecked.Value;            
             genOptions.saveVisuals = chkSaveVisuals.IsChecked.Value;
+
+            genOptions.Diagnostics = tcJumboRepeatModes.SelectedIndex == 1;
             genOptions.followPID = chkFollowPID.IsChecked.Value;
-            
+            genOptions.logJoin = chkJoinLog.IsChecked.Value;
+            genOptions.logRawJdt = chkLogRaw.IsChecked.Value;
+
             genOptions.TrendSignalLen = numTrendSignalLen.Value;
             genOptions.RawSignalAvg = numRawSignalAvg.Value;
 
@@ -77,17 +82,17 @@ namespace OptionsNS
             genOptions.MemsInJumbo = chkRunMemsInJumbo.IsChecked.Value;
             genOptions.ShowMemsIfRunning = chkShowMemsIfRunning.IsChecked.Value;
 
-            genOptions.Mems2SignDelay = numMems2SignalDelay.Value;
             genOptions.Mems2SignLen = numMems2SignalLen.Value;
 
             genOptions.MemsHw = (cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content.ToString();
-            genOptions.TemperatureHw = (cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content.ToString();
+            if (cbTemperatureHw.SelectedIndex > -1)
+                genOptions.TemperatureHw = (cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content.ToString();
 
             genOptions.TemperatureEnabled = chkTemperatureEnabled.IsChecked.Value;
-            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;
+            genOptions.TemperatureCompensation = chkTemperatureCompensation.IsChecked.Value;           
 
             genOptions.Save();
-            
+            genOptions.ChangeEvent(genOptions);
             Hide();
         }
         /// <summary>
@@ -98,9 +103,9 @@ namespace OptionsNS
         private void frmOptions_Activated(object sender, EventArgs e)
         {
             // General
-            rbSingle.IsChecked = genOptions.AxesChannels == 0;
-            rbDoubleTabs.IsChecked = genOptions.AxesChannels == 1;
-            rbDoublePanels.IsChecked = genOptions.AxesChannels == 2;
+            rbSingle.IsChecked = (genOptions.AxesChannels == 0) || Utils.isSingleChannelMachine;
+            rbDoubleTabs.IsChecked = genOptions.AxesChannels == 1; rbDoubleTabs.IsEnabled = !Utils.isSingleChannelMachine;
+            rbDoublePanels.IsChecked = genOptions.AxesChannels == 2; rbDoublePanels.IsEnabled = !Utils.isSingleChannelMachine;
 
             tbSignalCursorPrec.Text = genOptions.SignalCursorPrec;
             tbSignalTablePrec.Text = genOptions.SignalTablePrec;
@@ -109,7 +114,13 @@ namespace OptionsNS
 
             chkInitN2.IsChecked = genOptions.intN2;
             chkSaveVisuals.IsChecked = genOptions.saveVisuals;
+
+            if (genOptions.Diagnostics) tcJumboRepeatModes.SelectedIndex = 1;
+            else tcJumboRepeatModes.SelectedIndex = 0; 
+
+            chkLogRaw.IsChecked = genOptions.logRawJdt;
             chkFollowPID.IsChecked = genOptions.followPID;
+            chkJoinLog.IsChecked = genOptions.logJoin;
 
             numTrendSignalLen.Value = genOptions.TrendSignalLen;
             numRawSignalAvg.Value = genOptions.RawSignalAvg;
@@ -126,7 +137,6 @@ namespace OptionsNS
             chkRunMemsInJumbo.IsChecked = genOptions.MemsInJumbo;
             chkShowMemsIfRunning.IsChecked = genOptions.ShowMemsIfRunning;
 
-            numMems2SignalDelay.Value = genOptions.Mems2SignDelay;
             numMems2SignalLen.Value = genOptions.Mems2SignLen;
 
             chkTemperatureEnabled.IsChecked = genOptions.TemperatureEnabled;
@@ -134,6 +144,10 @@ namespace OptionsNS
 
             //(cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content = genOptions.MemsHw;
             //(cbTemperatureHw.Items[cbTemperatureHw.SelectedIndex] as ComboBoxItem).Content = genOptions.TemperatureHw;
+            if (Utils.isSingleChannelMachine)
+            {
+                cbTemperatureHw.IsEnabled = false; cbTemperatureHw.SelectedIndex = -1;
+            }
         }
 
         /// <summary>
