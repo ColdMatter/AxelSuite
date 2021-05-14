@@ -60,7 +60,7 @@ namespace OptionsNS
             genOptions.SaveFilePrec = tbSaveFilePrec.Text;
             genOptions.LogFilePrec = tbLogFilePrec.Text;
 
-            genOptions.intN2 = chkInitN2.IsChecked.Value;            
+            genOptions.intN2 = false;            
             genOptions.saveVisuals = chkSaveVisuals.IsChecked.Value;
 
             genOptions.Diagnostics = tcJumboRepeatModes.SelectedIndex == 1;
@@ -79,10 +79,13 @@ namespace OptionsNS
             if (rbSaveSeqNo.IsChecked.Value) genOptions.saveModes = GeneralOptions.SaveModes.nosave;
 
             // MEMS
-            genOptions.MemsInJumbo = chkRunMemsInJumbo.IsChecked.Value;
+            genOptions.memsInJumbo = (GeneralOptions.MemsInJumbo)cbRunMemsInJumbo.SelectedIndex;
             genOptions.ShowMemsIfRunning = chkShowMemsIfRunning.IsChecked.Value;
 
             genOptions.Mems2SignLen = numMems2SignalLen.Value;
+            genOptions.Mems2SignLenMult = numMems2SignalLenMult.Value;
+            genOptions.Mems2ExtInfCap = numMems2ExtraCap.Value;
+            genOptions.MemsAverOver = numMemsAverOver.Value;
 
             genOptions.MemsHw = (cbMemsHw.Items[cbMemsHw.SelectedIndex] as ComboBoxItem).Content.ToString();
             if (cbTemperatureHw.SelectedIndex > -1)
@@ -112,7 +115,7 @@ namespace OptionsNS
             tbSaveFilePrec.Text = genOptions.SaveFilePrec;
             tbLogFilePrec.Text = genOptions.LogFilePrec;
 
-            chkInitN2.IsChecked = genOptions.intN2;
+            chkInitN2.IsChecked = false;
             chkSaveVisuals.IsChecked = genOptions.saveVisuals;
 
             if (genOptions.Diagnostics) tcJumboRepeatModes.SelectedIndex = 1;
@@ -134,10 +137,13 @@ namespace OptionsNS
             rbSaveSeqNo.IsChecked = genOptions.saveModes.Equals(GeneralOptions.SaveModes.nosave);
 
             // MEMS
-            chkRunMemsInJumbo.IsChecked = genOptions.MemsInJumbo;
+            cbRunMemsInJumbo.SelectedIndex = (int)genOptions.memsInJumbo;
             chkShowMemsIfRunning.IsChecked = genOptions.ShowMemsIfRunning;
 
             numMems2SignalLen.Value = genOptions.Mems2SignLen;
+            numMems2SignalLenMult.Value = genOptions.Mems2SignLenMult;
+            numMems2ExtraCap.Value = genOptions.Mems2ExtInfCap;
+            numMemsAverOver.Value = genOptions.MemsAverOver;            
 
             chkTemperatureEnabled.IsChecked = genOptions.TemperatureEnabled;
             chkTemperatureCompensation.IsChecked = genOptions.TemperatureCompensation;
@@ -158,6 +164,14 @@ namespace OptionsNS
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
             Hide();
+        }
+
+        private void cbRunMemsInJumbo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (Utils.isNull(tcMemsSection)) return;
+            gbMemsSection.IsEnabled = !cbRunMemsInJumbo.SelectedIndex.Equals(0);
+            if (!gbMemsSection.IsEnabled) return;
+            tcMemsSection.SelectedIndex = cbRunMemsInJumbo.SelectedIndex - 1;
         }
     }
 }

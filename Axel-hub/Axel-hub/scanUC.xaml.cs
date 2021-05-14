@@ -43,7 +43,6 @@ namespace Axel_hub
     /// </summary>
     public partial class scanClass : UserControl
     {
-        private double realSampling;
         private string ArrangedPartner = ""; //MOTMaster2";Axel Probe"; 
 
         TimeSpan totalTime, currentTime;
@@ -86,10 +85,8 @@ namespace Axel_hub
             SetSamplingRate(scanModes.SamplingFreq);
             if (scanModes.TimeLimitMode) cbTimeEndless.SelectedIndex = 1;
             else cbTimeEndless.SelectedIndex = 0;
-            tbTimeLimit.Text = scanModes.TimeLimit.ToString();
-            if (scanModes.SizeLimitMode) cbSizeEndless.SelectedIndex = 1;
-            else cbSizeEndless.SelectedIndex = 0;
-            tbBifferSize.Text = scanModes.SizeLimit.ToString();           
+            numTimeLimit.Value = scanModes.TimeLimit;           
+            numBifferSize.Value = scanModes.SizeLimit;           
         }
 
         /// <summary>
@@ -97,11 +94,10 @@ namespace Axel_hub
         /// </summary>
         public void UpdateModes()
         {
-            scanModes.SamplingFreq = (int)Math.Round(1 / GetSamplingPeriod());
+            scanModes.SamplingFreq = (int)GetSamplingFreq(true);
             scanModes.TimeLimitMode = cbTimeEndless.SelectedIndex == 1;
-            scanModes.TimeLimit = Convert.ToInt32(tbTimeLimit.Text);
-            scanModes.SizeLimitMode = cbSizeEndless.SelectedIndex == 1;
-            scanModes.SizeLimit = Convert.ToInt32(tbBifferSize.Text);
+            scanModes.TimeLimit = numTimeLimit.Value;
+            scanModes.SizeLimit =numBifferSize.Value;
         }
 
         /// <summary>
@@ -125,9 +121,8 @@ namespace Axel_hub
         public void SetSamplingRate(int rate) // rate is in Hz
         {
             cbSamplingMode.SelectedIndex = 0;
-            tbSamplingRate.Text = rate.ToString();
+            numSamplingRate.Value = rate;
         }
-
         /// <summary>
         /// Show fringes params
         /// </summary>
@@ -136,12 +131,6 @@ namespace Axel_hub
         {
             lbActivity.Content = "Fringe Prm: per= " + fp.period.ToString() + "; phase= " + fp.phase.ToString() + "; off= " + fp.offset.ToString();
         }
-
-        public void OnRealSampling(double _realSampling) 
-        {
-            realSampling = _realSampling;
-            groupDigit.Header = " Conversion rate (" + realSampling.ToString() + " [Hz])"; 
-        }  
 
         /// <summary>
         /// Shows visual progress of ADC24 acquisition
@@ -199,7 +188,6 @@ namespace Axel_hub
                 _Running = value;
             }
         }
-
         /// <summary>
         /// Continuois mode
         /// </summary>
@@ -209,8 +197,7 @@ namespace Axel_hub
             switch (tabControl.SelectedIndex) 
             {
                 case 0: return (cbTimeEndless.SelectedIndex == 1);
-                case 1: return (cbSizeEndless.SelectedIndex == 1);
-                case 2: return true;
+                case 1: return true;
                 default: return false;
             }
         }
@@ -290,9 +277,9 @@ namespace Axel_hub
         /// </summary>
         /// <param name="txt"></param>
         /// <param name="clr"></param>
-        public delegate void LogHandler(string txt, Color? clr = null);
+        public delegate void LogHandler(string txt, SolidColorBrush clr = null);
         public event LogHandler OnLog;
-        protected void LogEvent(string txt, Color? clr = null)
+        protected void LogEvent(string txt, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, clr);
         }
@@ -304,7 +291,7 @@ namespace Axel_hub
         /// <param name="json2send"></param>
         protected void OnAsyncSend(bool OK, string json2send)
         {
-            if (!OK) LogEvent("Error sending -> " + json2send, Brushes.Red.Color);
+            if (!OK) LogEvent("Error sending -> " + json2send, Brushes.Red);
             //else LogEvent("sending OK -> " + json2send);
         }
 
@@ -317,27 +304,24 @@ namespace Axel_hub
         /// Get the sampling period regardless the units
         /// </summary>
         /// <returns>[s]</returns>
-        public double GetSamplingPeriod()
+        public double GetSamplingFreq(bool actual)
         {
+            if (Utils.isNull(numSamplingRate)) return Double.NaN;
             double freq = 1; // in seconds
-            double vl = 0;
             switch (cbSamplingMode.SelectedIndex)
             {
-                case 0: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // Hz
-                        freq = vl;
+                case 0: freq = numSamplingRate.Value; // Hz                       
                         break;
-                case 1: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // kHz
-                        freq = 1000 * vl;
+                case 1: freq = 1000 * numSamplingRate.Value; // kHz                       
                         break;
-                case 2: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // s
-                        freq = 1 / vl;
+                case 2: freq = 1 / numSamplingRate.Value; // s                        
                         break;
-                case 3: if (!double.TryParse(tbSamplingRate.Text, out vl)) throw new Exception("Not number for digit. value");  // ms
-                        freq = 1000 / vl;
+                case 3: freq = 1000 / numSamplingRate.Value;  // ms                       
                         break;
                 case 4: throw new Exception("Not implemented yet");                    
             }
-            return 1 / Utils.EnsureRange(freq, 0.001, 1e6);
+            if (actual) freq = MEMSmodel.RealConvRate(freq);
+            return Utils.EnsureRange(freq,MEMSmodel.FixConvRate[41], MEMSmodel.FixConvRate[0]);
         }
 
         /// <summary>
@@ -346,17 +330,15 @@ namespace Axel_hub
         /// <returns></returns>
         public int GetBufferSize()
         {
+            if (Utils.isNull(tcTimeBuffer)) return 1;
             int sizeLimit = 0; // [s]
-            double Limit = 1;
-            switch (tabControl.SelectedIndex)
+            switch (tcTimeBuffer.SelectedIndex)
             {
-                case 0: case 2:
-                    if (!double.TryParse(tbTimeLimit.Text, out Limit)) throw new Exception("Not number for Time limit");
-                    sizeLimit = (int)(Limit / GetSamplingPeriod());
+                case 0:                     
+                    sizeLimit = (int)(numTimeLimit.Value * GetSamplingFreq(true));
                     break;
                 case 1: 
-                    if (!double.TryParse(tbBifferSize.Text, out Limit)) throw new Exception("Not number for Buffer size");
-                    sizeLimit = (int)Limit;
+                    sizeLimit = numBifferSize.Value;
                     break;
             }
             return Utils.EnsureRange(sizeLimit, 2, 1000000);
@@ -382,8 +364,8 @@ namespace Axel_hub
                 }
                 else
                 {
-                    bbtnStart.TrueContent = "Cancel";
-                    bbtnStart.FalseContent = "Start";
+                    bbtnStart.TrueContent = "Cancel MEMS";
+                    bbtnStart.FalseContent = "Start MEMS";
                     bbtnStart.FalseBrush = Brushes.LightBlue;
                     bbtnStart.TrueBrush = Brushes.Orange;
                 }               
@@ -403,7 +385,7 @@ namespace Axel_hub
             Running = bbtnStart.Value;
             if (!bbtnStart.Value) Abort(true); // send out abort
 
-            double period = GetSamplingPeriod(); // sampling rate in sec
+            double period = 1 / GetSamplingFreq(true); // sampling rate in sec
                         
             if (EndlessMode())
             {
@@ -429,10 +411,10 @@ namespace Axel_hub
             bool jumbo = (remoteMode == RemoteMode.Jumbo_Scan) || (remoteMode == RemoteMode.Jumbo_Repeat);
             if (remote.Connected) remoteMode = RemoteMode.Ready_To_Remote;
             else remoteMode = RemoteMode.Disconnected;
-            jumboButton = (tabControl.SelectedIndex == 2); // remote tab
+            jumboButton = (tabControl.SelectedIndex == 1); // remote tab
             Running = false;
             bbtnStart.Value = false;            
-            if (local)
+            if (local && remote.Connected)
             {
                 MMexec mme = new MMexec();
                 SendJson(mme.Abort("Axel-hub"));
@@ -448,17 +430,19 @@ namespace Axel_hub
         /// <param name="e"></param>
          private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
          {
-             if (remote != null) remote.Enabled = (tabControl.SelectedIndex == 2);
-             if (tabControl.SelectedIndex == 2) 
+             if (remote != null) remote.Enabled = (tabControl.SelectedIndex == 1);
+             if (tabControl.SelectedIndex == 1) // remote
              {
                  jumboButton = remote.CheckConnection(true);
              }                     
-             else
+             else // MEMS
              {
                  bbtnStart.Visibility = System.Windows.Visibility.Visible;
                  Status("Ready to go ");
                  jumboButton = false;
-             }
+                 _remoteMode = RemoteMode.Disconnected;
+                 cbSamplingMode_SelectionChanged(sender, e);
+            }
              ActiveRemote(jumboButton);
          }
          
@@ -475,7 +459,7 @@ namespace Axel_hub
          /// <param name="active"></param>
          private void OnActiveComm(bool active, bool forced)
          {
-             if (tabControl.SelectedIndex != 2) return;
+             if (tabControl.SelectedIndex != 1) return;
              ledRemote.Value = active;
              if (active)
              {
@@ -492,13 +476,28 @@ namespace Axel_hub
              }
              ActiveRemote(active);
          }
-         
+
+        private void numTimeLimit_ValueChanged(object sender, NationalInstruments.Controls.ValueChangedEventArgs<double> e)
+        {
+            groupDigit.Header = "MEMS s.rate (" + GetSamplingFreq(true).ToString() + " [Hz]) / buffer (" + GetBufferSize().ToString() + ")       ";
+        }
+
+        private void cbSamplingMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            numTimeLimit_ValueChanged(sender, null);
+        }
+
+        private void numBifferSize_ValueChanged(object sender, NationalInstruments.Controls.ValueChangedEventArgs<int> e)
+        {
+            numTimeLimit_ValueChanged(sender, null);
+        }
+
         /// <summary>
         /// Some secondary to contructor initialilzations
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-         private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
          {
              string callingPartner = ""; bool bRemote = false;
              string[] args = Environment.GetCommandLineArgs();
@@ -516,18 +515,18 @@ namespace Axel_hub
              }
              string computerName = (string)System.Environment.GetEnvironmentVariables()["COMPUTERNAME"];
              string partner = ArrangedPartner; // default 
-             if(!callingPartner.Equals("")) partner = callingPartner; //highest priority             
-             if(partner == "")
+             if (!callingPartner.Equals("")) partner = callingPartner; //highest priority             
+             if (partner == "")
                  switch (computerName) 
                  {
                      case "NAVIGATOR-ANAL":
                      case "DESKTOP-IHEEQUU": partner = "MOTMaster2"; break;
                      case "DESKTOP-U334RMA": partner = "Axel Probe"; break; //"MOTMaster2"
-                     default: partner = "MOTMaster2"; break;
+                     default: partner = "Axel Probe"; break;
                  }
              remote.Connect(partner);
 
-             if(bRemote) tabControl.SelectedIndex = 2;
+             if (bRemote) tabControl.SelectedIndex = 1;
          }
      }
 }

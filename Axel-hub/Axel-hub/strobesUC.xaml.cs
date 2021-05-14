@@ -223,10 +223,10 @@ namespace Axel_hub
         /// </summary>
         /// <param name="txt"></param>
         /// <param name="clr"></param>
-        public delegate void LogHandler(string txt, Color? clr = null);
+        public delegate void LogHandler(string txt, SolidColorBrush clr = null);
         public event LogHandler OnLog;
 
-        public void LogEvent(string txt, Color? clr = null)
+        public void LogEvent(string txt, SolidColorBrush clr = null)
         {
             if (!Utils.isNull(OnLog)) OnLog(txt, clr);
         }
@@ -318,8 +318,8 @@ namespace Axel_hub
             else { Up.Y = asymmetry; }
             disbalance =  Up.Y - Down.Y; 
             disbalNorm = (disbalance / fringeScale) / 2; // normilized disbalance over fringeScale (vert.)
-            Color clr1 = Brushes.MediumSeaGreen.Color;
-            if (Math.Abs(disbalNorm) > 0.8) clr1 = Brushes.Red.Color;
+            SolidColorBrush clr1 = Brushes.MediumSeaGreen;
+            if (Math.Abs(disbalNorm) > 0.8) clr1 = Brushes.Coral;
             double corr = 0, piCorr = 0;
             if (genOptions.followPID)
             {
@@ -338,7 +338,7 @@ namespace Axel_hub
                     }
                     double npw = PiWeight/100;
                     if (Math.Abs(corr - piCorr) < (Math.PI / 3)) corr = piCorr * npw + corr * (1 - npw);
-                    else { LogEvent("SKIP piCorr=" + piCorr.ToString("G4") + "; corr= " + corr.ToString("G4"), Brushes.Red.Color); }
+                    else { LogEvent("SKIP piCorr=" + piCorr.ToString("G4") + "; corr= " + corr.ToString("G4"), Brushes.Red); }
                 }
             }
             if ((runID % 2) == 0) //MMDataConverter.Restrict2twoPI(
@@ -367,14 +367,14 @@ namespace Axel_hub
             accelSet.Clear(); lastMMEin = null;
             if (!Utils.isNull(mme))
             {
-                if (mme.sender.Equals("Axel-probe")) // take MEMS if probeMode
+                double mems = 0;
+                if (mme.prms.ContainsKey("InterferometerS")) mems = Convert.ToDouble(mme.prms["Interferometer"]);
+                if (mme.getWhichSender().Equals(MMexec.SenderType.AxelProbe)) // take MEMS if probeMode
                 {
                     lastMMEin = mme.Clone();
-                    double mems = 0;
-                    if (mme.prms.ContainsKey("MEMS")) mems = Convert.ToDouble(mme.prms["MEMS"]);
                     double accel = mems;
                     if (mme.prms.ContainsKey("accel")) accel = Convert.ToDouble(mme.prms["accel"]); // the noiseless accel, only to compare
-                    accelSet = deconstructAccel(accel, mems);
+                    if (!genOptions.Diagnostics) accelSet = deconstructAccel(accel, mems);
                 }                 
             }            
             MMexec mmeOut = null;
@@ -495,9 +495,9 @@ namespace Axel_hub
             fillReport(rpr);
             if (LogPID)
             {
-                LogEvent("PID> " + pTerm.ToString("G3") + "  " + iTerm.ToString("G3") + "  " + dTerm.ToString("G3"), Brushes.Navy.Color);
+                LogEvent("PID> " + pTerm.ToString("G3") + "  " + iTerm.ToString("G3") + "  " + dTerm.ToString("G3"), Brushes.Navy);
                 // PID X correction and Y value after the correction
-                LogEvent("+corr " + cr.ToString(dPrec) + " DB " + disbalance.ToString(dPrec) + " iSD " + rpr["iSD-R"].ToString(dPrec), Brushes.Navy.Color);
+                LogEvent("+corr " + cr.ToString(dPrec) + " DB " + disbalance.ToString(dPrec) + " iSD " + rpr["iSD-R"].ToString(dPrec), Brushes.Navy);
             }
             return cr;
         }

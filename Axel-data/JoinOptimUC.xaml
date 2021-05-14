@@ -14,40 +14,59 @@
         <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Top" Grid.Row="1" Height="3" Margin="0,0,0,3" Background="#FFF8EE7D"></GridSplitter>
         <Grid Margin="0,0,0.203,3" >
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="137.316"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="137.316"/>
             </Grid.ColumnDefinitions>
-            <Grid VerticalAlignment="Top" Height="35">
+            <StackPanel>
+                <Button x:Name="btnOpenJLog" Content="Load Join Log..." Margin="10,6,0,0" Background="#FFF6F6F6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Click="btnOpenJLog_Click" Height="32" FontWeight="Bold" />
+                <GroupBox x:Name="gbShotScroll" Header="Shot Scroll" Margin="0,10,5.316,0" VerticalAlignment="Top" Height="88" FontSize="13">
+                    <Grid>
+                        <Label Content="Index" HorizontalAlignment="Left" Margin="4,2,0,0" VerticalAlignment="Top" FontSize="13" Width="42"/>
+                        <ni:RadixNumericTextBoxInt32 x:Name="numShotIndex" HorizontalAlignment="Left" Height="24" Margin="51,2,0,0" VerticalAlignment="Top" Width="61" Interval="10" Value="100" RadixVisibility="Collapsed" Range="0, 1000000, System.Int32" SelectOnFocus="True" FontSize="13" ValueChanged="numShotIndex_ValueChanged" />
+                        <ni:ArrowButton x:Name="btnScrollLeft" Content="-" HorizontalAlignment="Left" Margin="0,4,0,3" VerticalAlignment="Bottom" Width="55" Direction="Left" FontSize="18" FontWeight="Bold"  FontFamily="Gill Sans Ultra Bold" Foreground="#FF02549D" Height="25" Click="btnScrollLeft_Click"/>
+                        <ni:ArrowButton x:Name="btnScrollRight" Content="+" HorizontalAlignment="Right" Margin="0,4,0,3" VerticalAlignment="Bottom" Width="55" FontSize="18" FontWeight="Bold" Foreground="#FFD10000" FontFamily="Stencil Std" Height="25" Click="btnScrollRight_Click"/>
+                    </Grid>
+                </GroupBox>
+                <ListBox x:Name="lboxStats" Height="133" Margin="5,5,5.316,0">
+                </ListBox>
+                   <ni:BooleanContentButton x:Name="btnDlyScan" Content="Test Axel Show" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top" Width="116" Background="White" Height="33" Click="btnDlyScan_Click" FalseBrush="#FFFAEB8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Pulse Scan" TrueContent="Stop Scan" IsEnabled="False" FontWeight="Bold"/>
+            </StackPanel>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="37.316"/>
+                    <RowDefinition Height="200*"/>
+                </Grid.RowDefinitions>
                 <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Left" Height="30" Margin="15,5,0.886,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphJoinOptim}">
                 </ni:GraphInteractionPalette>
-               <Label x:Name="lbInfoAccelTrend" Content="Info:" Margin="240,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" Grid.RowSpan="2"/>
+                <TextBox x:Name="lbInfo" Text="Info:" Margin="240,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" Background="{x:Null}" BorderBrush="{x:Null}" IsReadOnly="True" />
+
+                <Label x:Name="lbJoinLogInfo" Content="" Margin="236,0,0,0" Height="31" FontSize="13"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="10"/>
+                <ni:Graph x:Name="graphJoinOptim" Margin="0" FontSize="12" Grid.Row="1">
+                    <ni:Graph.Plots>
+                        <ni:Plot x:Name="srsLine" Label="Plot 3">
+                            <ni:LinePlotRenderer/>
+                        </ni:Plot>
+                        <ni:Plot x:Name="srsPoints" Label="Plot 4">
+                            <ni:PointPlotRenderer/>
+                        </ni:Plot>
+                    </ni:Graph.Plots>
+                </ni:Graph>
             </Grid>
-            <Label x:Name="lbJoinLogInfo" Content="" Margin="236,0,0,0" Height="31" FontSize="13" HorizontalAlignment="Left" VerticalAlignment="Top" Width="10"/>
-            <ni:Graph x:Name="graphJoinOptim" Margin="3,30,0.886,-0.772" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto">
-                <ni:Graph.Plots>
-                    <ni:Plot Label="Plot 3">
-                        <ni:LinePlotRenderer/>
-                    </ni:Plot>
-                    <ni:Plot Label="Plot 4">
-                        <ni:PointPlotRenderer/>
-                    </ni:Plot>
-                </ni:Graph.Plots>
-            </ni:Graph>
-            <Grid Margin="0" Grid.Column="1">
-                <Button x:Name="btnOpenJLog" Content="Load Join Log..." Margin="10,6,0,0" Background="#FFF6F6F6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Click="btnOpenJLog_Click" Height="32" />
-                <Label Content="From" HorizontalAlignment="Left" Margin="9,87,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJFrom" HorizontalAlignment="Left" Height="23" Margin="56,89,0,0" VerticalAlignment="Top" Width="67" Value="-2" FontSize="13"/>
-                <Label Content="To" HorizontalAlignment="Left" Margin="9,116,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJTo" HorizontalAlignment="Left" Height="23" Margin="56,120,0,0" VerticalAlignment="Top" Width="67" Value="2" FontSize="13"/>
-                <Label Content="By" HorizontalAlignment="Left" Margin="9,144,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJBy" HorizontalAlignment="Left" Height="23" Margin="56,150,0,0" VerticalAlignment="Top" Width="67" Value="0.2" Range="0, Infinity, System.Double" FontSize="13"/>
-                <Label Content="N.Pnts" HorizontalAlignment="Left" Margin="3,178,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF640C03" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJNPnts" HorizontalAlignment="Left" Height="23" Margin="56,181,0,0" VerticalAlignment="Top" Width="67" Value="-1" Range="-1, 1000000, System.Double" Interval="100" FontSize="13"/>
-                <Label Content="(-1 for all)" HorizontalAlignment="Left" Margin="3,202,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF7B0F03" FontSize="13"/>
-                <Label Content="MEMS vs Quant" HorizontalAlignment="Left" Margin="13,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
-                <Label Content="delay [ms] scan" HorizontalAlignment="Left" Margin="13,60,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
-                <ni:BooleanContentButton x:Name="btnJDlyScan" Content="Test Axel Show" HorizontalAlignment="Left" Margin="10,232,0,0" VerticalAlignment="Top" Width="116" Background="White" Height="33" Click="btnJDlyScan_Click" FalseBrush="#FFFAEB8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Delay Scan" TrueContent="Stop Scan" IsEnabled="False" FontWeight="Bold"/>
-                <CheckBox x:Name="chkChartEachIter" Content="Chart each iter." HorizontalAlignment="Left" Margin="13,277,0,0" VerticalAlignment="Top" FontSize="12" IsChecked="True"/>
+            <Grid Margin="0" Grid.Column="2">
+                <Label Content="From" HorizontalAlignment="Left" Margin="9,58,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
+                <ni:NumericTextBoxDouble x:Name="numJFrom" HorizontalAlignment="Left" Height="23" Margin="56,60,0,0" VerticalAlignment="Top" Width="67" Value="-2" FontSize="13"/>
+                <Label Content="To" HorizontalAlignment="Left" Margin="9,87,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
+                <ni:NumericTextBoxDouble x:Name="numJTo" HorizontalAlignment="Left" Height="23" Margin="56,91,0,0" VerticalAlignment="Top" Width="67" Value="2" FontSize="13"/>
+                <Label Content="By" HorizontalAlignment="Left" Margin="9,115,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
+                <ni:NumericTextBoxDouble x:Name="numJBy" HorizontalAlignment="Left" Height="23" Margin="56,121,0,0" VerticalAlignment="Top" Width="67" Value="0.2" Range="0, Infinity, System.Double" FontSize="13"/>
+                <Label Content="N.Pnts" HorizontalAlignment="Left" Margin="3,149,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF640C03" FontSize="13"/>
+                <ni:NumericTextBoxDouble x:Name="numJNPnts" HorizontalAlignment="Left" Height="23" Margin="56,152,0,0" VerticalAlignment="Top" Width="67" Value="-1" Range="-1, 1000000, System.Double" Interval="100" FontSize="13"/>
+                <Label Content="(-1 for all)" HorizontalAlignment="Left" Margin="3,173,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF7B0F03" FontSize="13"/>
+                <Label Content="MEMS vs Quant" HorizontalAlignment="Left" Margin="13,6,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13" FontWeight="Bold"/>
+                <Label Content="delay [ms] scan" HorizontalAlignment="Left" Margin="13,26,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13" FontWeight="Bold"/>
+                <ni:BooleanContentButton x:Name="btnJDlyScan" Content="Test Axel Show" HorizontalAlignment="Left" Margin="10,212,0,0" VerticalAlignment="Top" Width="116" Background="White" Height="33" Click="btnJDlyScan_Click" FalseBrush="#FFFAEB8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Delay Scan" TrueContent="Stop Scan" IsEnabled="False" FontWeight="Bold"/>
+                <CheckBox x:Name="chkChartEachIter" Content="Chart each iter." HorizontalAlignment="Left" Margin="13,257,0,0" VerticalAlignment="Top" FontSize="12" IsChecked="True"/>
             </Grid>
         </Grid>
         <Grid Grid.Row="1">

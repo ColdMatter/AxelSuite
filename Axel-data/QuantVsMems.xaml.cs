@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,19 +25,37 @@ namespace Axel_data
     /// </summary>
     public partial class QuantVsMems : UserControl
     {
+        const string prec = "G5";
         public QuantVsMems()
         {
             InitializeComponent();
+
         }
-        public delegate void LogHandler(string txt, Color? clr = null);
+        public void Initialize()
+        {
+            Window window = Window.GetWindow(this);
+            window.Closing += window_Closing;
+
+            numSectionSize_ValueChanged(null, null);
+        }
+
+        public delegate void LogHandler(string txt, bool detail = false, SolidColorBrush clr = null);
         public event LogHandler OnLog;
 
-        protected void LogEvent(string txt, Color? clr = null)
+        protected void LogEvent(string txt, bool detail = false, SolidColorBrush clr = null)
         {
-            if (OnLog != null) OnLog(txt, clr);
+            if (OnLog != null) OnLog(txt, detail, clr);
         }
+        public delegate void ProgressHandler(int prog);
+        public event ProgressHandler OnProgress;
+
+        protected void ProgressEvent(int prog)
+        {
+            if (OnProgress != null) OnProgress(prog);
+        }
+
         #region Scan timing of MEMS vs quant. Delay
-        ShotList shotListDly;
+        ShotList shotList; List<SingleShot> validShotList;
         private const int dataLength = 10000; // default length of data kept in
         /// <summary>
         /// Open joint log file
@@ -47,20 +66,43 @@ namespace Axel_data
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".jlg"; // Default file extension
-            dlg.Filter = "Join Log File (.jlg)|*.jlg"; // Filter files by extension
-
+            dlg.InitialDirectory = Utils.dataPath;
+            dlg.DefaultExt = ".jdt"; // Default file extension
+            dlg.Filter = "Join Data File (.jdt)|*.jdt|CSV File (.csv)|*.csv"; // Filter files by extension
+            btnScan.IsEnabled = false;
             Nullable<bool> result = dlg.ShowDialog();
-            if (result == true)
+            if (result == false) return;
+            //dlg.FileName = @"f:\Work\AxelSuite\Axel-data\Data\5120Hz.jdt";
+            //lbJoinLogInfo.Content = "File: " + dlg.FileName;
+            if (System.IO.Path.GetExtension(dlg.FileName).Equals(".jdt") && File.Exists(dlg.FileName))
             {
-                lbJoinLogInfo.Content = "File: " + dlg.FileName;
-                shotListDly = new ShotList(true, false, dlg.FileName);
+                shotList = new ShotList(false, dlg.FileName, "", true); shotList.resetScan(); 
+                btnScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
+                if (btnScan.IsEnabled)
+                {
+                    LogEvent("Opened: " + shotList.filename); LogEvent(shotList.Count.ToString() + " shots loaded in memory");
+                }
+                gbSectScroll.Header = "Section Scroll";
+                actIdx = 0; btnScrollRight_Click(null, null);
             }
-            btnJFitScan.IsEnabled = File.Exists(shotListDly.filename) && !shotListDly.savingMode;
-
-            if (btnJFitScan.IsEnabled)
+            else
             {
-                LogEvent("Opened: " + shotListDly.filename);
+                btnScan.IsEnabled = false;
+                List<Point> lp = new List<Point>();
+                foreach (string line in File.ReadLines(dlg.FileName))
+                {
+                    if (line.Equals("")) continue;
+                    if (line[0].Equals('#')) continue;
+                    string[] sa = line.Split(',');
+                    if (sa.Length.Equals(2)) lp.Add(new Point(Convert.ToDouble(sa[0]), Convert.ToDouble(sa[1])));
+                    if (sa.Length.Equals(3)) lp.Add(new Point(Convert.ToDouble(sa[1]), Convert.ToDouble(sa[2])));
+                }
+                if (lp.Count < 3)
+                {
+                    LogEvent("Too few points in " + dlg.FileName);
+                    return;
+                }
+                QMfit.LoadFromPoints(lp, false);
             }
             //shotList = new ShotList(true, false, fn);
             //shotList.enabled = true;
@@ -68,8 +110,69 @@ namespace Axel_data
         }
 
         DataStack srsMdiffQ = new DataStack(); //ShotList shotList;
-        public DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
+        public DataStack srsFringes = null; DataStack srsPeriod = null; DataStack srsPhase = null; DataStack srsAmpl = null; DataStack srsRMSE = null;
 
+        public List<DataStack> M_size()
+        {
+            List<DataStack> all = new List<DataStack>(); SingleShot ss;
+            DataStack srs = new DataStack(dataLength); DataStack srs2 = new DataStack(dataLength);  
+
+            shotList.resetScan(); double prT = -1;
+            bool next; int k = 0;
+            do
+            {                
+                ss = shotList.archiScan(out next); 
+                k++; if (k < 4) continue;
+                if (next)
+                {
+                    srs.AddPoint(ss.mems.Count);
+                    if (prT > 0) srs2.AddPoint(ss.quant.X - prT);
+                    prT = ss.quant.X;
+                }                                      
+            } while (next);
+            all.Add(srs); all.Add(srs2);
+            return all; 
+        }
+ 
+        private bool ShowResults(Dictionary<string, double> rFit, bool inLog, bool inChart)
+        {
+            if (Utils.isNull(rFit)) return false;
+            if (!rFit.ContainsKey("rmse")) return false;
+            if (inLog)
+            {   
+                LogEvent("============= sect: "+QMfit.curSectIdx.ToString(), true, Brushes.Blue);
+                foreach (KeyValuePair<string, double> keyVal in rFit)
+                {
+                    LogEvent(keyVal.Key + " = " + keyVal.Value.ToString(prec), true, Brushes.Navy);
+                }
+                //LogEvent("-------------------", true, Brushes.Blue.Color);
+            }
+            if (inChart)
+            {                
+                if (Double.IsNaN(rFit["rmse"])) return false;
+                srsPeriod.AddPoint(rFit["period"]); graphTrends.Data[0] = srsPeriod;
+                srsPhase.AddPoint(rFit["phase"]);   graphTrends.Data[1] = srsPhase;
+                srsAmpl.AddPoint(rFit["ampl"]);     graphTrends.Data[2] = srsAmpl;
+                srsRMSE.AddPoint(rFit["rmse"]);     graphTrends.Data[3] = srsRMSE;               
+            }
+            return true;
+        }
+
+        private int ValidateMemsData(bool detail)
+        {
+           validShotList = new List<SingleShot>(); bool next; SingleShot ss;
+           shotList.resetScan(); if (shotList.Count == 0) LogEvent("Join -Data (.jdt) file seems to be empty.",false,Brushes.Red);
+           LogEvent("Estim.aqc.range: " + shotList.defaultAqcTime.ToString(prec) + " [s]", detail, Brushes.DarkGreen);
+           do
+            {
+                ss = shotList.archiScan(out next);
+                if (next)
+                    if (ss.timeValidation(shotList.defaultAqcTime)) validShotList.Add(new SingleShot(ss));
+            } while (next);
+            LogEvent("Total shots: " + shotList.Count.ToString() + "; valid: " + validShotList.Count.ToString(), detail, Brushes.Navy);
+            
+            return validShotList.Count;
+        }
         /// <summary>
         /// Scan delay between MOT accel data point and MEMS accel array  
         /// </summary>
@@ -77,84 +180,117 @@ namespace Axel_data
         /// <param name="e"></param>
         private void btnJFitScan_Click(object sender, RoutedEventArgs e)
         {
-            if (Utils.isNull(shotListDly)) throw new Exception("No shotList opened");
-            btnJFitScan.Value = !btnJFitScan.Value;
-            if (!btnJFitScan.Value) return;
-            if (shotListDly.savingMode || shotListDly.filename.Equals("")) throw new Exception("problem with shotList");
-            //tabLowPlots.SelectedIndex = 1;
-            if (Utils.isNull(srsMotAccel)) srsMotAccel = new DataStack(dataLength);
-            if (Utils.isNull(srsCorr)) srsCorr = new DataStack(dataLength);
-            if (Utils.isNull(srsMems)) srsMems = new DataStack(dataLength);
-            if (Utils.isNull(srsAccel)) srsAccel = new DataStack(dataLength);
-
-            srsMdiffQ.Clear(); double xMin = 1E6, xMax = -1e6;
-            double wd = numJPeriod.Value / 1000.0;
-            SingleShot ss; bool next; int j;
-            shotListDly.resetScan();
-            if (!shotListDly.conditions.Count.Equals(0))
+            if (cbAction.SelectedIndex != 2)
             {
-                OnLog(">> processing conditions:", Brushes.DarkSlateGray.Color);
-                foreach (KeyValuePair<string, double> pair in shotListDly.conditions)
-                {
-                    OnLog(pair.Key + " = " + pair.Value, Brushes.Teal.Color);
-                }
+                if (Utils.isNull(shotList)) throw new Exception("No Join-Data (.jdt) file loaded.");                
             }
-            if (!shotListDly.archiveMode) OnLog("The file is loaded in memory -> " + shotListDly.FileCount.ToString() + " shots.", Brushes.DarkSlateGray.Color);
-            while ((wd <= (numJTo.Value / 1000.0)) && btnJFitScan.Value)
+            btnScan.Value = !btnScan.Value;
+            switch (cbAction.SelectedIndex)
             {
-                srsMotAccel.Clear(); srsCorr.Clear(); srsMems.Clear(); srsAccel.Clear();
-                shotListDly.resetScan(); j = 0; // next wd for the scan
-                do
-                {
-                    ss = shotListDly.archiScan(out next);
-                    srsMotAccel.Add(ss.quant); xMin = Math.Min(xMin, ss.quant.X); xMax = Math.Max(xMax, ss.quant.X);
-                    double m = ss.memsWeightAccel(wd, -1, true);
-
-                    srsMems.AddPoint(m, ss.quant.X + wd);
-                    srsCorr.AddPoint((m - ss.quant.Y) * (m - ss.quant.Y), ss.quant.X);
-
-                    if (!srsMems.Count.Equals(0)) graphAccelTrend.Data[0] = srsMems;
-                    if (!srsCorr.Count.Equals(0)) graphAccelTrend.Data[1] = srsCorr;
-                    if (!srsMotAccel.Count.Equals(0)) graphAccelTrend.Data[2] = srsMotAccel;
-                    if (!srsAccel.Count.Equals(0)) graphAccelTrend.Data[3] = srsAccel;
+                case(0): // Scan Fit                    
+                    bool next; 
+                    shotList.resetScan(); 
+                    // validation stats
+                     ProgressEvent((int)(ValidateMemsData(true)/ numSectionSize.Value) + 1);
+                    // initialte series
+                    if (Utils.isNull(srsPeriod)) srsPeriod = new DataStack();
+                    else srsPeriod.Clear();
+                    if (Utils.isNull(srsPhase)) srsPhase = new DataStack();
+                    else srsPhase.Clear();                   
+                    if (Utils.isNull(srsAmpl)) srsAmpl = new DataStack();
+                    else srsAmpl.Clear();                   
+                    if (Utils.isNull(srsRMSE)) srsRMSE = new DataStack();
+                    else srsRMSE.Clear();
                     
-                    Utils.DoEvents();
-                    j++;
-                } while (next && (numJNPnts.Value.Equals(-1) || (j < numJNPnts.Value)) && btnJFitScan.Value);
-                LogEvent("shot #" + j.ToString());
-                if (btnJFitScan.Value)
-                {
-                    srsMdiffQ.AddPoint(srsCorr.pointYs().Average(), wd * 1000.0);
-                    graphMEMSvsQuant.Data[0] = srsMdiffQ;
-                }
-                lbJoinLogInfo.Content = "File: " + shotListDly.filename + " ; Delay = " + (wd * 1000.0).ToString("G4");
-                Utils.DoEvents();
-                wd += numJBy.Value / 1000.0;
-            } // wd
-            btnJFitScan.Value = false;
-            double xm = 0; double ym = 1e6;
-            foreach (Point pnt in srsMdiffQ)
-            {
-                if (pnt.Y < ym)
-                {
-                    xm = pnt.X; ym = pnt.Y;
-                }
+                    // the real action
+                    shotList.resetScan();  Dictionary<string, double> rFit; 
+                    do
+                    {
+                        rFit = QMfit.ScanSection(ref shotList, numSectionSize.Value, out next);
+                        ShowResults(rFit, true, true); //LogEvent("error at sect: "+((int)(shotList.lastIdx/ numSectionSize.Value)).ToString(), false, Brushes.Red.Color);
+                        ProgressEvent(0);
+                    } while (next);
+                    
+                    btnScan.Value = false;
+                    break;
+                case(1): // M-size
+                    ValidateMemsData(false);
+                    List<DataStack> all = M_size();
+                    graphTrends.Data[0] = all[0]; graphTrends.Data[1] = all[1];
+                    btnScan.Value = false;
+                    break;
+                case(2): // Simulation
+                    while (btnScan.Value)
+                    {
+                        btnScrollRight_Click(null, null);
+                        //Utils.DoEvents();
+                        Thread.Sleep(500);
+                    }
+                    break;
             }
-            LogEvent("Minimum at " + xm.ToString("G5") + " / " + ym.ToString("G5"));
-            LogEvent("=================================");
+            return;
         }
         #endregion
         private void chkMEMS_Checked(object sender, RoutedEventArgs e)
         {
-            if (Utils.isNull(plotMems)) return;
-            if (chkMEMS.IsChecked.Value) plotMems.Visibility = System.Windows.Visibility.Visible;
-            else plotMems.Visibility = System.Windows.Visibility.Hidden;
-            if (chkCorr.IsChecked.Value) plotCorr.Visibility = System.Windows.Visibility.Visible;
-            else plotCorr.Visibility = System.Windows.Visibility.Hidden;
-            if (chkMOT.IsChecked.Value) plotMotAccel.Visibility = System.Windows.Visibility.Visible;
-            else plotMotAccel.Visibility = System.Windows.Visibility.Hidden;
-            if (chkAccel.IsChecked.Value) plotAccel.Visibility = System.Windows.Visibility.Visible;
-            else plotAccel.Visibility = System.Windows.Visibility.Hidden;
+            if (Utils.isNull(plotPeriod)) return;
+            if (chkPeriod.IsChecked.Value) plotPeriod.Visibility = System.Windows.Visibility.Visible;
+            else plotPeriod.Visibility = System.Windows.Visibility.Hidden;
+            if (chkPhase.IsChecked.Value) plotPhase.Visibility = System.Windows.Visibility.Visible;
+            else plotPhase.Visibility = System.Windows.Visibility.Hidden;
+            if (chkAmpl.IsChecked.Value) plotAmpl.Visibility = System.Windows.Visibility.Visible;
+            else plotAmpl.Visibility = System.Windows.Visibility.Hidden;
+            if (chkRMSE.IsChecked.Value) plotRMSE.Visibility = System.Windows.Visibility.Visible;
+            else plotRMSE.Visibility = System.Windows.Visibility.Hidden;
+        }
+
+        private int actIdx = 0; // active section index
+        private void btnScrollRight_Click(object sender, RoutedEventArgs e)
+        {
+            if ((cbAction.SelectedIndex != 2) && Utils.isNull(shotList))
+            {
+                  LogEvent("No Join-Data (.jdt) file loaded.", false, Brushes.Red); return;
+                  //if (shotList.Count == 0) throw new Exception("Join-Data (.jdt) file is empty.");
+            }
+            switch (cbAction.SelectedIndex)
+            {
+                case (0): // Scan Fit
+                    int sz = numSectionSize.Value;
+                    if (sender == btnScrollLeft) actIdx--;
+                    if (sender == btnScrollRight) actIdx++;
+                    actIdx = Utils.EnsureRange(actIdx, 0, shotList.Count/sz);
+                    gbSectScroll.Header = "Section Scroll #" + actIdx.ToString();
+                    QMfit.LoadFromShotList(ref shotList, sz, actIdx * sz, false);
+                    break;
+                case (1): // M-size
+                    break;
+                case (2): // Simulation
+                    List<Point> lp = new List<Point>();
+                    Dictionary<string, double> ini = QMfit.GetInitials(); 
+                    double st = 26.0 / numSectionSize.Value; // step in rad (4 periods)
+                    for (int i = 0; i < numSectionSize.Value; i++)
+                    {                    
+                        double x = i * st;
+                        double y = Math.Cos(ini["period"] * x + ini["phase"]) * ini["ampl"] + ini["offset"];
+                        lp.Add(new Point(x, y+Utils.Gauss01()* numSimulNoise.Value/100));
+                    }
+                    QMfit.LoadFromPoints(lp, Utils.isNull(sender));
+                    break;
+            }
+        }
+
+        private void window_Closing(object sender, global::System.ComponentModel.CancelEventArgs e)
+        {
+            if (btnScan.Value)
+            {
+                btnScan.Value = false; Thread.Sleep(600);
+            }
+        }
+
+        private void numSectionSize_ValueChanged(object sender, NationalInstruments.Controls.ValueChangedEventArgs<int> e)
+        {
+            if (Utils.isNull(QMfit)) return;
+            QMfit.sectSize = numSectionSize.Value;
         }
     }
 }

@@ -31,13 +31,15 @@ namespace OptionsNS
         Ready_To_Remote //neutral connected state       
     }
 
+
     /// <summary>
     /// general options from Options dialog window accesable everywhere
     /// </summary>
     public class GeneralOptions
     {
         public enum SaveModes { save, ask, nosave }
-
+        public enum MemsInJumbo  { None, USB9251, PXI4462 }
+        
         // General
         public int AxesChannels { get; set; } // X -> 0; Y -> 1; X/Y -> 2
 
@@ -62,11 +64,14 @@ namespace OptionsNS
         public SaveModes saveModes;
 
         // MEMS options
-        public bool MemsInJumbo { get; set; }
+        public MemsInJumbo memsInJumbo;
         public bool ShowMemsIfRunning { get; set; }
 
         public double Mems2SignDelay { get; set; }
         public double Mems2SignLen { get; set; }
+        public int Mems2SignLenMult { get; set; }
+        public double Mems2ExtInfCap { get; set; }
+        public int MemsAverOver { get; set; }
 
         public bool TemperatureEnabled { get; set; }
         public bool TemperatureCompensation { get; set; }
@@ -86,7 +91,6 @@ namespace OptionsNS
         {
             if (OnChange != null) OnChange(opts);
         }
-
     }
     /// <summary>
     /// visuals for the app, MEMS aqcuisition params and scan modes
@@ -102,8 +106,7 @@ namespace OptionsNS
         // scanUC
         public int SamplingFreq { get; set; } // in Hz
         public bool TimeLimitMode { get; set; } // false - finite; true - cont.
-        public int TimeLimit { get; set; } // in sec
-        public bool SizeLimitMode { get; set; } // false - finite; true - cont.
+        public double TimeLimit { get; set; } // in sec
         public int SizeLimit { get; set; } // in points
 
         // working modes (not to load back)

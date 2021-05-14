@@ -69,10 +69,12 @@ namespace Axel_hub
         public MainWindow()
         {
             InitializeComponent();
-            
+
+            Utils.extendedDataPath = true;
+            if (!Directory.Exists(Utils.dataPath)) Directory.CreateDirectory(Utils.dataPath);
             ucScan = new scanClass();
             gridLeft.Children.Add(ucScan);
-            ucScan.Height = 266;
+            ucScan.Height = 285;
             ucScan.VerticalAlignment = System.Windows.VerticalAlignment.Top; ucScan.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
             ucScan.OnStart += new scanClass.StartHandler(DoStart);
             ucScan.OnRemoteMode += new scanClass.RemoteModeHandler(RemoteModeEvent);
@@ -133,7 +135,7 @@ namespace Axel_hub
         /// </summary>
         /// <param name="txt">text to log</param>
         /// <param name="clr"></param>
-        private void log(string txt, Color? clr = null)
+        private void log(string txt, SolidColorBrush clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
@@ -158,7 +160,7 @@ namespace Axel_hub
                 {
                     Thread.Sleep(100); Utils.DoEvents(); k++;
                 }
-                if (k > 2990) log("Time out (5 min) !!!", Brushes.Red.Color);
+                if (k > 2990) log("Time out (5 min) !!!", Brushes.Red);
                 rowContinueJumbo.Height = new GridLength(0);
                 DoContinue = false;
                 return (k < 2990);
@@ -196,7 +198,7 @@ namespace Axel_hub
                     if (!continueJumboRepeat(true)) return; // main call, out - if timeout
                     axes.SetChartStrobes(false);
                 }
-                axes.jumboRepeat(axes[0].numCycles.Value);
+                axes.DoJumboRepeat(ucScan.bbtnStart.Value, axes[0].numCycles.Value);
             }
         }
 
@@ -211,23 +213,18 @@ namespace Axel_hub
         {
             if (jumbo)               
             {
-                if (Options.genOptions.JumboRepeat)
-                {
-                    if (down) theTime.startTime(false);
-
-                    if (down) axes.jumboRepeat(axes[0].numCycles.Value);
-
-                    if (!down) theTime.stopTime();
-                }
                 if (Options.genOptions.JumboScan) axes.DoJumboScan(down);
+                else               
+                    if (Options.genOptions.JumboRepeat) axes.DoJumboRepeat(down, axes[0].numCycles.Value);               
             }
             else
             {
-            if (down) axes.Clear(true, false, false); // reset before start
-            int buffSize = 200;
-            if (sizeLimit > -1) buffSize = sizeLimit;
-            axes.startADC(down, period, buffSize);
+                if (down) axes.Clear(true, false, false); // reset before start
+                int buffSize = 200;
+                if (sizeLimit > -1) buffSize = sizeLimit;
+                axes.startADC(down, period, buffSize);
             } 
+            if (!down) log("End of series!", Brushes.Red);
         }
  
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e) // !!! to AA

@@ -169,23 +169,23 @@
                         </GroupBox>
                         <GroupBox Header="Chart opts" Grid.Column="1" Margin="0,0,0,1" HorizontalAlignment="Left" Width="157" FontSize="13" BorderBrush="#FF880D03">
                             <StackPanel Margin="0,0,-1.857,-33.857" Orientation="Vertical">
-                                <GroupBox x:Name="gbAxisX" Header=" X-axis units " HorizontalAlignment="Left" VerticalAlignment="Top" Height="58" Width="137">
+                                <GroupBox x:Name="gbAxisX" Header=" X-axis units " HorizontalAlignment="Left" VerticalAlignment="Top" Height="62" Width="137">
                                     <WrapPanel Margin="0,-1,-1.143,0" Height="76" VerticalAlignment="Top">
                                         <RadioButton x:Name="rbPoints" Content="Point" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh" IsChecked="True"/>
                                         <RadioButton x:Name="rbSec" Content="[sec]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" IsChecked="True" Click="Refresh"/>
-                                        <RadioButton x:Name="rbMiliSec" Content="[ms]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh"/>
-                                        <RadioButton x:Name="rbMicroSec" Content="[us]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Width="42" Click="Refresh" Margin="0,3,0,0"/>
+                                        <RadioButton x:Name="rbMiliSec" Content="[ms]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,5,8,0" Click="Refresh"/>
+                                        <RadioButton x:Name="rbMicroSec" Content="[us]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Width="42" Click="Refresh" Margin="0,5,0,0"/>
                                     </WrapPanel>
 
                                 </GroupBox>
-                                <GroupBox Header="Roll.mean(R) Each pnt(V)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                <GroupBox Header="Roll.mean(R) Each pnt(V)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="53">
                                     <Grid>
-                                        <ni:NumericTextBoxDouble x:Name="seRollMean" Height="23" Margin="6,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Left" />
-                                        <ni:NumericTextBoxDouble x:Name="seShowFreq" Height="23" Margin="75,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Double" Value="1" HorizontalAlignment="Left" />
+                                        <ni:RadixNumericTextBoxInt32 x:Name="seRollMean" Height="23" Margin="6,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Int32" Value="1" HorizontalAlignment="Left" RadixVisibility="Collapsed" />
+                                        <ni:RadixNumericTextBoxInt32 x:Name="seShowFreq" Height="23" Margin="75,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Int32" Value="1" HorizontalAlignment="Left" RadixVisibility="Collapsed" />
                                     </Grid>
                                 </GroupBox>
-                                <GroupBox Header="Keep last pnts (depth)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50">
-                                    <ni:NumericTextBoxDouble x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 15000000, System.Double" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" FontSize="13" Interval="100"/>
+                                <GroupBox Header="Keep last pnts (depth)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="56">
+                                    <ni:RadixNumericTextBoxInt32 x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 15000000, System.Int32" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" FontSize="13" Interval="100" RadixVisibility="Collapsed"/>
                                 </GroupBox>
                                 <CheckBox x:Name="chkChartUpdate" Content="Chart update" Height="18" Margin="10,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" FontWeight="Bold"/>
                             </StackPanel>
@@ -234,7 +234,7 @@
                                 </Grid>
                             </Grid>
                         </GroupBox>
-                        <GroupBox x:Name="grpSplit" Grid.Column="3" Header=" Split Data " Margin="6,1,0,0.429" FontSize="12" BorderBrush="#FF760803">
+                        <GroupBox x:Name="grpSplit" Grid.Column="3" Header=" Split Data " Margin="6,1,0,0.429" FontSize="12" BorderBrush="#FF760803" Visibility="Collapsed">
                             <StackPanel HorizontalAlignment="Left" Height="248" VerticalAlignment="Top" Width="78" Margin="0,0,-0.857,0">
                                 <Button x:Name="btnSplit" Content="Split" Margin="10,5,10,0"  Background="#F1E6F8F6" VerticalAlignment="Top" Click="btnSplit_Click"/>
                                 <CheckBox x:Name="chkUpperSplit" Content="Upper" VerticalAlignment="Top" Margin="5,8,0,0"/>

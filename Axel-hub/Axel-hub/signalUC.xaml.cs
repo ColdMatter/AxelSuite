@@ -105,7 +105,7 @@ namespace Axel_hub
             repeatMode = grpMme.cmd.Equals("repeat");
             
             string timeName = Utils.dataPath + Utils.timeName();
-            logger = new DictFileLogger(new string[] { "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg" }, prefix, timeName);
+            logger = new DictFileLogger(new string[] {"Index", "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg" }, prefix, timeName);
             logger.Enabled = false;
             logger.setMMexecAsHeader(grpMme.Clone());
             logger.defaultExt = ".ahs";
@@ -168,7 +168,7 @@ namespace Axel_hub
         /// <param name="A">Asymetry calculated</param>
         public void Update(MMexec mme, out double currX, out double A) // 
         {
-            rawDataLog.log(JsonConvert.SerializeObject(mme));
+            if (!Utils.isNull(rawDataLog)) rawDataLog.log(JsonConvert.SerializeObject(mme));
             runID = Convert.ToInt32(mme.prms["runID"]);
             Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, genOptions.intN2, chkStdDev.IsChecked.Value);
             if (Showing)
@@ -256,31 +256,39 @@ namespace Axel_hub
                 cN2_std = Math.Sqrt(Math.Pow(avgs["N2_std"], 2) + Math.Pow(avgs["B2_std"], 2));
                 cNtot_std = Math.Sqrt(Math.Pow(avgs["NTot_std"], 2) + Math.Pow(avgs["BTot_std"], 2));
             }*/
-            double cinitN2 = avgs["initN2"] - B2;
+            double cinitN2 = 0;
+            if (avgs.ContainsKey("initN2")) cinitN2 = avgs["initN2"] - B2;
             Dictionary<string, double> cavgs = MMDataConverter.SignalCorrected(avgs, chkDarkcurrent.IsChecked.Value);           
 
             if (scanMode) currX = lastScan.sFrom + runID * lastScan.sBy;
             if (repeatMode)
             {   // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
-                if (mme.prms.ContainsKey("iTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
-                {
-                    currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec
+                if (mme.prms.ContainsKey("iTime")) // remote time
+                {  
+                    if (grpMme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) // jumbo
+                    {
+                        if (theTime.isTimeRunning)
+                        {
+                            double sh = 0; if (mme.prms.ContainsKey("bTime") && mme.prms.ContainsKey("samplingRate")) sh = Convert.ToDouble(mme.prms["bTime"]) / Convert.ToDouble(mme.prms["samplingRate"]);
+                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))) + sh; // in sec
+                        }
+                    }
+                    else
+                    {
+                        if (theTime.isTimeRunning)
+                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec
+                        else theTime.startTime();
+                    }
                 }
                 else currX = runID;
             }
-            avgs["XAxis"] = currX; SDlog.dictLog(avgs, genOptions.SaveFilePrec);
+            avgs["Index"] = runID; avgs["XAxis"] = currX; if (!Utils.isNull(SDlog)) SDlog.dictLog(avgs, genOptions.SaveFilePrec);
             //stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
             //stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
 
             stackN1.Add(new Point(currX, cavgs["N1"])); stackN2.Add(new Point(currX, cavgs["N2"])); stackNtot.Add(new Point(currX, cavgs["NTot"]));
             stackRN1.Add(new Point(currX, cavgs["RN1"])); stackRN2.Add(new Point(currX, cavgs["RN2"]));
             stackB2.Add(new Point(currX, cavgs["B2"])); stackBtot.Add(new Point(currX, cavgs["BTot"]));
-
-            /*if (chkStdDev.IsChecked.Value)
-            {
-                stackN2_std.Add(new Point(currX, cN2_std)); stackNtot_std.Add(new Point(currX, cNtot_std));
-            }
-            stackN2_int.Add(new Point(currX, cinitN2));*/
 
             if (chkAutoScaleMiddle.IsChecked.Value) // Ns auto-Y-limits
             {

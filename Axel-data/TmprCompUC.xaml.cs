@@ -40,13 +40,17 @@ namespace Axel_data
             srsRes = new DataStack(DataStack.maxDepth);
             srsResHisto = new DataStack(1000);
         }
+        public void Initialize()
+        {
 
-        public delegate void LogHandler(string txt, Color? clr = null);
+        }
+
+        public delegate void LogHandler(string txt, bool detail = false, SolidColorBrush clr = null);
         public event LogHandler OnLog;
 
-        protected void LogEvent(string txt, Color? clr = null)
+        protected void LogEvent(string txt, bool detail = false, SolidColorBrush clr = null)
         {
-            if (OnLog != null) OnLog(txt, clr);
+            if (OnLog != null) OnLog(txt, detail, clr);
         }
 
         private void btnOpenLog_Click(object sender, RoutedEventArgs e)
@@ -54,7 +58,7 @@ namespace Axel_data
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
             dlg.DefaultExt = ".ahf"; // Default file extension
-            dlg.Filter = "Axel Hub File (.ahf)|*.ahf|" + "All files (*.*)|*.*"; ; // Filter files by extension
+            dlg.Filter = "Axel Hub File (.ahf)|*.ahf|" + "All files (*.*)|*.*";  // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -73,7 +77,7 @@ namespace Axel_data
                 k++;
             }
             graphRaw.Data[0] = srsMems; graphRaw.Data[1] = srsTmpr;
-            OnLog("Opened: " + dlg.FileName + " (" + k.ToString() + " pnts)");
+            OnLog("Opened: " + dlg.FileName + " (" + k.ToString() + " pnts)", false, Brushes.Maroon);
             btnFIT.IsEnabled = true;
         }
 
@@ -137,10 +141,10 @@ namespace Axel_data
                 double[] fittedData = CurveFit.NonLinearFit(inputXData, inputYData, callback, coefficients, out meanSquaredError, maximumIterations);    
                 Histogram(Residuals(fittedData), 50);
 
-                Utils.log(richResults, "Raw signal stDev = " + mDev.ToString("G5"), Brushes.Navy.Color);
+                Utils.log(richResults, "Raw signal stDev = " + mDev.ToString("G5"), Brushes.Navy);
                 double rDev = Statistics.StandardDeviation(srsRes.pointYs());
-                Utils.log(richResults, "Resid. stDev = " + rDev.ToString("G5"), Brushes.Navy.Color);
-                Utils.log(richResults, "Improvement = " + (mDev / rDev).ToString("G5") + " times", Brushes.Blue.Color);
+                Utils.log(richResults, "Resid. stDev = " + rDev.ToString("G5"), Brushes.Navy);
+                Utils.log(richResults, "Improvement = " + (mDev / rDev).ToString("G5") + " times", Brushes.Blue);
             }
             catch (Exception exp)
             {
@@ -151,7 +155,7 @@ namespace Axel_data
                 string txt = '['+i.ToString()+"] "+coefficients[i].ToString("G6");
                 Utils.log(richResults, txt);
             }
-            Utils.log(richResults, "MeanSqError= " + meanSquaredError.ToString("G5"), Brushes.Maroon.Color);           
+            Utils.log(richResults, "MeanSqError= " + meanSquaredError.ToString("G5"), Brushes.Maroon);           
         }
 
         private DataStack Residuals(double[] fittedData)

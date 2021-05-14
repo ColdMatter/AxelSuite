@@ -130,8 +130,8 @@
             <StackPanel Grid.Row="1" Margin="5,3,0,0">
                 <CheckBox x:Name="chkDarkcurrent" Margin="0,5,0,0" FontSize="12" Content=" Dark Current Corr." IsChecked="True" VerticalAlignment="Top"/>
                 <CheckBox x:Name="chkStdDev" Margin="0,8,0,0" FontSize="12" Content=" Std.Dev. in Table" IsChecked="True" Height="18" VerticalAlignment="Top" Foreground="#FF0E6101"/>
-                <CheckBox x:Name="chkSDSave" Margin="0,0,0,0" FontSize="12" Content=" Std.Dev. to Log" IsChecked="False" Height="18" VerticalAlignment="Top" Foreground="#FF0E6101"/>
-                <CheckBox x:Name="chkRawSave" Margin="0,5,0,0" FontSize="12" Content=" Raw Data to Log" IsChecked="False" Height="18" VerticalAlignment="Top" Foreground="#FF012072"/>
+                <CheckBox x:Name="chkSDSave" Margin="0,0,0,0" FontSize="12" Content=" Std.Dev. to Log(.asd)" IsChecked="False" Height="18" VerticalAlignment="Top" Foreground="#FF0E6101"/>
+                <CheckBox x:Name="chkRawSave" Margin="0,5,0,0" FontSize="12" Content=" Raw Data to Log(.rws)" IsChecked="False" Height="18" VerticalAlignment="Top" Foreground="#FF012072"/>
             </StackPanel>
         </Grid>
     </Grid>

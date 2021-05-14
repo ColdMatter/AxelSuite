@@ -219,9 +219,9 @@ namespace Axel_probe
             busy = false;
         }
 
-        public delegate void LogHandler(string txt, Color? clr = null); // ...and general message up; commands with @ 
+        public delegate void LogHandler(string txt, SolidColorBrush clr = null); // ...and general message up; commands with @ 
         public event LogHandler OnLog;
-        public void LogEvent(string txt, Color? clr = null)
+        public void LogEvent(string txt, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, clr);
         }
@@ -356,16 +356,6 @@ namespace Axel_probe
             }
             return -1;
         } 
-
-        /* 
-           
-            
-										
-           			
-           		
-										
-            			
-            	*/
         public double contrPhase = -11; public int b4ConstrID = 0;
         /// <summary>
         /// Generates the simulated to photo diode signal to be send to Axel-hub 
@@ -486,8 +476,8 @@ namespace Axel_probe
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 srsFringes.Add(new Point(ph, A));
 
-                LogEvent(" Ph/Amp= " + ph.ToString("G4") + " / " + A.ToString("G5"), Brushes.DarkGreen.Color);
-                if (Utils.InRange(ph, mms.sTo - 0.99 * mms.sBy, mms.sTo + 0.99 * mms.sBy) || cancelScan)
+                LogEvent(" Ph/Amp= " + ph.ToString("G4") + " / " + A.ToString("G5"), Brushes.DarkGreen);
+                if (Utils.InRange(ph, mms.sTo - 0.9 * mms.sBy, mms.sTo + 0.9 * mms.sBy) || cancelScan)
                 {
                     md.prms["last"] = 1;
                 }
@@ -535,7 +525,7 @@ namespace Axel_probe
                 srsFringes.Add(new Point(j, A));
                 //drift = calcAtPos(jumbo, A, (j % 2) == 1);
                 md.prms["runID"] = j; frAmpl = A;
-                LogEvent(" #/A= " + j.ToString() + " / " + A.ToString("G5"), Brushes.Navy.Color);
+                LogEvent(" #/A= " + j.ToString() + " / " + A.ToString("G5"), Brushes.Navy);
                 if (!SingleShot(frAmpl, axis, ref md)) break;
 
                 if (cancelRepeat) break; 

@@ -71,8 +71,9 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="UtilsLib">
-      <HintPath>..\Utils\bin\UtilsLib.dll</HintPath>
+    <Reference Include="UtilsLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Utils\bin\UtilsLib.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
@@ -98,6 +99,9 @@
     </Compile>
     <Compile Include="JoinOptimUC.xaml.cs">
       <DependentUpon>JoinOptimUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="QMfitUC.xaml.cs">
+      <DependentUpon>QMfitUC.xaml</DependentUpon>
     </Compile>
     <Compile Include="QuantVsMems.xaml.cs">
       <DependentUpon>QuantVsMems.xaml</DependentUpon>
@@ -126,6 +130,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="QMfitUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="QuantVsMems.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

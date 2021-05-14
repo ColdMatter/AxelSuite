@@ -153,7 +153,7 @@ namespace Axel_hub
                 modes = new Modes();
 
             //double h = Application.Current.MainWindow.Height - 60;
-            bool wannaShowMems = (genOptions.ShowMemsIfRunning && genOptions.MemsInJumbo) || !genOptions.ShowMemsIfRunning;
+            bool wannaShowMems = (genOptions.ShowMemsIfRunning && !genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None)) || !genOptions.ShowMemsIfRunning;
 
             if (wannaShowMems)
             {
@@ -202,9 +202,9 @@ namespace Axel_hub
         /// </summary>
         /// <param name="txt"></param>
         /// <param name="clr"></param>
-        public delegate void LogHandler(string txt, Color? clr = null);
+        public delegate void LogHandler(string txt, SolidColorBrush clr = null);
         public event LogHandler OnLog;
-        public void LogEvent(string txt, Color? clr = null)
+        public void LogEvent(string txt, SolidColorBrush clr = null)
         {
             if (!Utils.isNull(OnLog)) OnLog(txt, clr);
         }
@@ -395,8 +395,7 @@ namespace Axel_hub
                 if (!Utils.isNull(srsMems)) srsMems.Clear();
                 if (!Utils.isNull(srsAccel)) srsAccel.Clear();
                 graphAccelTrend.Data[0] = srsMems; graphAccelTrend.Data[1] = srsCorr;
-                graphAccelTrend.Data[2] = srsMotAccel; graphAccelTrend.Data[3] = srsAccel;
-                Utils.DoEvents();
+                graphAccelTrend.Data[2] = srsMotAccel; graphAccelTrend.Data[3] = srsAccel;                
                 fringesYmin = 10; fringesYmax = -10; accelYmin = 10; accelYmax = -10;
             }
         }
@@ -597,11 +596,11 @@ namespace Axel_hub
             fit.importFromArrays(xs, fittedData);
             graphFringes.Data[1] = fit;
 
-            LogEvent("FIT.meanSqError = " + meanSquaredError.ToString("G5"), Brushes.DarkCyan.Color);
-            LogEvent("K = " + coeffs[1].ToString("G5"), Brushes.DarkCyan.Color);
-            LogEvent("Phase0 = " + coeffs[2].ToString("G5"), Brushes.DarkCyan.Color);
-            LogEvent("Scale = " + coeffs[0].ToString("G5"), Brushes.DarkCyan.Color);
-            LogEvent("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan.Color);
+            LogEvent("FIT.meanSqError = " + meanSquaredError.ToString("G5"), Brushes.DarkCyan);
+            LogEvent("K = " + coeffs[1].ToString("G5"), Brushes.DarkCyan);
+            LogEvent("Phase0 = " + coeffs[2].ToString("G5"), Brushes.DarkCyan);
+            LogEvent("Scale = " + coeffs[0].ToString("G5"), Brushes.DarkCyan);
+            LogEvent("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan);
 
             visStrobes(true);
             //numScale.Value = coeffs[0]; numKcoeff.Value = coeffs[1]; numPhi0.Value = coeffs[2];  numOffset.Value = coeffs[3]; 
@@ -616,6 +615,40 @@ namespace Axel_hub
         private double ModelFunction(double x, double[] coefficients)
         {
             return (coefficients[0] * Math.Sin(x / coefficients[1] + coefficients[2])) + coefficients[3];
+        }
+
+        public bool RecordQuantMems(double[] md, ref Dictionary<string,double> tm, double A)
+        {
+            bool rslt = true;
+            double iTime = tm["iTime"]; // actual interferometer start [s]
+            double tTime = tm["tTime"];  // actual interferometer duration [s]
+            double step = 1.0 / tm["samplingRate"];
+            double cap =  genOptions.Mems2ExtInfCap / 1000.0 ; // all in [s]            
+            double bTime = tm["bTime"] * step;        double aTime = tm["aTime"] * step;
+            double bTimeCap = Math.Min(bTime, cap);   double aTimeCap = Math.Min(aTime, cap);
+
+            tm["eiTime"] = iTime - bTime; // md start iTime [s]
+            tm["etTime"] = tTime + (bTime + aTime); // md duration tTime [s]
+            DataStack adm = new DataStack(md.Length+100);
+            double time = tm["eiTime"]; 
+            for (int i = 0; i < md.Length; i++)
+            {
+                adm.AddPoint(md[i], time);
+                time += step;
+            }
+            DataStack adm2 = new DataStack(md.Length+100);
+            for (int i = 0; i < adm.Count; i++)
+                if ((adm[i].X < (iTime - bTimeCap)) || (adm[i].X > (iTime + tTime + aTimeCap))) continue;
+                else  adm2.AddPoint(adm[i].Y, adm[i].X);
+            DataStack adm3 = adm2.Compress(genOptions.MemsAverOver);
+            axelChart.Waveform.AddRange(adm3);
+            axelChart.Refresh();
+            if (shotListRaw.enabled)
+            {
+                SingleShot ss = new SingleShot(new Point3D(iTime, A, tTime), adm3, Double.NaN, "r"+ genOptions.MemsAverOver.ToString());                
+                shotListRaw.Add(ss);
+            }
+            return rslt;
         }
 
         bool combLock = false;
@@ -647,39 +680,39 @@ namespace Axel_hub
                 {
                     if (quantList[i].X < 0) continue; // already processed
                     double from = quantList[i].X + dly; // shifted aqc. start
-                    double w0 = from - dur; double w1 = from + 2 * dur; // the window of interest - defined by quant time (X) and dur/dly
+                    double w0 = from - genOptions.Mems2SignLenMult * dur; double w1 = from + 2 * genOptions.Mems2SignLenMult * dur; // the window of interest - defined by quant time (X) and dur/dly
+                    if (w0 < 0) continue;
 
                     if (w0 < mds[0].X) // if the window of interest starts before the beginning of the buffer, then go to the Waveform for history data
                     {
+                        if ((axelChart.Waveform.First.X > w0) || (w1 > axelChart.Waveform.Last.X)) continue;
                         if (shotListRaw.enabled)
                         {
-                            ds = axelChart.Waveform.TimePortion(w0, w1); // ds in volts
-                            if (ds.Count > 0)  // if empty skip that quantList point 
-                                shotListRaw.Add(new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), ds, temper, "m1"));
-                            else errLog.log("raw> quant.t <limits> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
+                            SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), axelChart.Waveform, temper, "m1");
+                            ss.cutMems(w0, w1); // cut mems to size
+                            shotListRaw.Add(ss);
+                            if (ss.mems.Count.Equals(0)) errLog.log("raw> quant.t <limits> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
                         }
                         if (shotList.enabled)
                         {
-                            ds = axelChart.TimePortionMg(w0, w1); // ds in mg
-                            if (ds.Count > 0)  // if empty skip that quantList point
-                                shotList.Add(new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), ds));
-                            else errLog.log("quant.t <range> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
+                            SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), axelChart.TimePortionMg(w0, w1), temper, "m1"); // ds in mg
+                            shotListRaw.Add(ss);
+                            if (ss.mems.Count.Equals(0)) errLog.log("quant.t <range> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
                         }
                         quantList[i] = new Point3D(-quantList[i].X, quantList[i].Y, quantList[i].Z); // mark as processed (good or bad)
                         continue;
                     }
                     if ((mds[0].X < w0) && (w1 < mds[mds.Count - 1].X)) // the window of interest is well inside the MEMS buffer
                     {
-                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper, "m2"); 
-                        ss.mems = ss.memsPortion(w0, w1); // cut mems to size
+                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper, "m2");
+                        ss.cutMems(w0, w1); // cut mems to size
                         if (ss.mems.Count > 0) // there is something there
                         {
                             if (shotListRaw.enabled) shotListRaw.Add(ss);
 
                             if (shotList.enabled)
                             {
-                                ds = new DataStack(axelChart.Waveform.Depth, prefix);
-                                ds.AddRange(ss.mems);
+                                ds = new DataStack(axelChart.Waveform.Depth, prefix);  ds.AddRange(ss.mems);
                                 SingleShot ss2 = new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), axelChart.convertV2mg(ds));
                                 shotList.Add(ss2);
                             }
@@ -706,7 +739,7 @@ namespace Axel_hub
                         Dictionary<string, double> dt = shotList[i].deconstructAccel(strobes.fringeScale);
                         if (dt.Count.Equals(0))
                         {
-                            LogEvent("Error: empty shot #" + i.ToString(), Brushes.Red.Color);
+                            LogEvent("Error: empty shot #" + i.ToString(), Brushes.Red);
                             continue;
                         }
                         showResults(i, dt);
@@ -806,7 +839,7 @@ namespace Axel_hub
             {
                 ValueFormatters = { new GeneralValueFormatter(genOptions.SignalCursorPrec) }
             };
-            if (connected) AxelChartVisible = (genOptions.ShowMemsIfRunning && genOptions.MemsInJumbo) || !genOptions.ShowMemsIfRunning;
+            if (connected) AxelChartVisible = (genOptions.ShowMemsIfRunning && !genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None)) || !genOptions.ShowMemsIfRunning;
             else AxelChartVisible = true;
             UpdateStrobesParams();
         }
@@ -867,7 +900,7 @@ namespace Axel_hub
 
         public MMscan lastScan = null; private MMexec lastGrpExe = null;
         /// <summary>
-        /// Prepare for particular scanning mode
+        /// Prepare for particular proc mode
         /// </summary>
         /// <param name="mme"></param>
         public void DoPrepare(MMexec mme)
@@ -881,27 +914,26 @@ namespace Axel_hub
                         // chkMEMS_Checked(null, null); !!!
                         Clear();
                         lastGrpExe = mme.Clone();
-                        if (genOptions.MemsInJumbo)
+                        if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None))
+                        {
+                            plotcursorAccel.Visibility = System.Windows.Visibility.Visible;
+                        }
+                        else
                         {
                             axelChart.Waveform.TimeSeriesMode = true;
-                            plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
+                            plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;                 
                         }
-                        else
-                        {
-                            plotcursorAccel.Visibility = System.Windows.Visibility.Visible;                            
-                        }
-                        string ss = ";  Data Src: Quant-> ";
-                        if(probeMode) ss += "Axel-probe";
-                        else ss += "MM2";
-
+                        string ss = ";  Data Src: Quant-> MM2";
                         ss += "; MEMS-> ";
-                        if (genOptions.MemsInJumbo) ss += "NI-9251";
-                        else
+                        switch (genOptions.memsInJumbo)
                         {
-                            if (probeMode) ss += "Axel-probe";
-                            else ss += "<NA>";
+                            case GeneralOptions.MemsInJumbo.USB9251:
+                                ss += "USB-9251";
+                                break;
+                            case GeneralOptions.MemsInJumbo.PXI4462:
+                                ss += "PXI-4462";
+                                break;
                         }
-                         
                         lbInfoAccelTrend.Content = "grpID: " + mme.prms["groupID"] + ss; //lastGrpExe
                     }
                     break;
@@ -1001,17 +1033,17 @@ namespace Axel_hub
         /// <param name="mme">The actual shot</param>
         /// <param name="lastGrpExe">The context (scanning mode) of the shot</param>
         public void DoShot(MMexec mme, MMexec lastGrpExe) // the main call
-        {             
-            Color clr = Brushes.Black.Color;
-            if (prefix.Equals("X")) clr = Brushes.DarkGreen.Color;
-            if (prefix.Equals("Y")) clr = Brushes.Navy.Color;
+        {
+            SolidColorBrush clr = Brushes.Black;
+            if (prefix.Equals("X")) clr = Brushes.DarkGreen;
+            if (prefix.Equals("Y")) clr = Brushes.Navy;
 
             #region shotData
             bool scanMode = lastGrpExe.cmd.Equals("scan");
             bool repeatMode = lastGrpExe.cmd.Equals("repeat");
             ucSignal.Showing = (tabSecPlots.SelectedIndex == 1); // when the charts are shown
             string s1 = (string)lastGrpExe.prms["groupID"];
-            if (!s1.Equals((string)mme.prms["groupID"])) LogEvent("Ussue with groupID > " + s1 + " : " + (string)mme.prms["groupID"], Brushes.Coral.Color);
+            if (!s1.Equals((string)mme.prms["groupID"])) LogEvent("Ussue with groupID > " + s1 + " : " + (string)mme.prms["groupID"], Brushes.Coral);
 
             MMDataConverter.ConvertToDoubleArray(ref mme);
 
@@ -1021,7 +1053,7 @@ namespace Axel_hub
             if (scanMode) endBit = ";  scanX = " + (lastScan.sFrom + runID * lastScan.sBy).ToString("G4");
             ucSignal.lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: " + runID.ToString() + endBit;
 
-            double A, currX;
+            double A; double currX = Double.NaN;
             ucSignal.Update(mme, out currX, out A); // phase (currX) and Asymmetry (quantum Y)
             // currX - scanning param in scan mode and runID in repeat
             //
@@ -1050,101 +1082,133 @@ namespace Axel_hub
             Dictionary<string, double> statDt = new Dictionary<string, double>();
             if (repeatMode)
             {
-                double xVl = runID;
-                if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
-                {                    
-                    UpdateStrobesParams(); statDt.Clear();
-                    MMexec mmeOut = strobes.backMME(runID, A, mme); // creates strobes.accelSet if in probeMode
-                    bool contrastMode = mmeOut.mmexec.Equals("contrastCheck") && mmeOut.prms.ContainsKey("phase." + prefix);
-                    if (contrastMode)
+                double xVl = runID;  
+                /*if (theTime.isTimeRunning) xVl = theTime.elapsedTime;
+                else
+                    if (runID == 0) theTime.startTime();*/
+                if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat) // react back to MM2
+                {   
+                    if (genOptions.Diagnostics) 
                     {
-                        statDt["phase.low"] = Convert.ToDouble(mmeOut.prms["phase." + prefix]);
-                        LogEvent("phase.low -> " + statDt["phase.low"].ToString(genOptions.SignalTablePrec), Brushes.Coral.Color);
-                    }                        
-                    SendEvent(JsonConvert.SerializeObject(mmeOut));
-                    phaseRad = strobes.zeroFringe();
-                    statDt["PhiRad"] = phaseRad - numPhi0.Value;
-                    statDt["PhiMg"] = statDt["PhiRad"] * numKcoeff.Value;
-
-                    if (strobes.accelSet.ContainsKey("mems") && probeMode && !genOptions.MemsInJumbo && !contrastMode) // mems feed from probe
-                    {
-                        statDt["MEMS"] = strobes.accelSet["mems"];
-                        statDt["Order"] = strobes.accelSet["order.M"];
-                        statDt["OrdRes"] = strobes.accelSet["resid.M"];
-                        statDt["Accel"] = strobes.accelSet["accel.M"];
+                        MMexec mmeOut = strobes.backMME(runID, A, mme);
+                        SendEvent(JsonConvert.SerializeObject(mmeOut));
                     }
-                    if (mmeOut.prms.ContainsKey("corr." + prefix) && !contrastMode)
+                    else // acceleration
                     {
-                        phaseCorr = Convert.ToDouble(mmeOut.prms["corr." + prefix]);
-                        statDt["PhiCorr"] = phaseCorr;
-                    }                                        
+                        UpdateStrobesParams(); statDt.Clear();
+                        MMexec mmeOut = strobes.backMME(runID, A, mme); // creates strobes.accelSet if in probeMode
+                        bool contrastMode = mmeOut.mmexec.Equals("contrastCheck") && mmeOut.prms.ContainsKey("phase." + prefix);
+                        if (contrastMode)
+                        {
+                            statDt["phase.low"] = Convert.ToDouble(mmeOut.prms["phase." + prefix]);
+                            LogEvent("phase.low -> " + statDt["phase.low"].ToString(genOptions.SignalTablePrec), Brushes.Coral);
+                        }                        
+                        SendEvent(JsonConvert.SerializeObject(mmeOut));
+                        phaseRad = strobes.zeroFringe();
+                        statDt["PhiRad"] = phaseRad - numPhi0.Value;
+                        statDt["PhiMg"] = statDt["PhiRad"] * numKcoeff.Value;
+
+                        if (strobes.accelSet.ContainsKey("mems") && probeMode && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None) && !contrastMode) // mems feed from probe
+                        {
+                            statDt["MEMS"] = strobes.accelSet["mems"];
+                            statDt["Order"] = strobes.accelSet["order.M"];
+                            statDt["OrdRes"] = strobes.accelSet["resid.M"];
+                            statDt["Accel"] = strobes.accelSet["accel.M"];
+                        }
+                        if (mmeOut.prms.ContainsKey("corr." + prefix) && !contrastMode)
+                        {
+                            phaseCorr = Convert.ToDouble(mmeOut.prms["corr." + prefix]);
+                            statDt["PhiCorr"] = phaseCorr;
+                        }                                        
+                    }
                 }
                 Dictionary<string, double> measr = new Dictionary<string, double>();
                 Dictionary<string, double> rslt = new Dictionary<string, double>();
                 // the MEMS bit in RemoteMode.xxx_Repeat mode
-                if (genOptions.MemsInJumbo)
+                if (!genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None))
                 {                
-                    if (axelChart.Running)
+                    if (axelChart.Active)
                     {
-                        if (scanModes.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(A);
+                        if (scanModes.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(A); //???
                         if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
-                            if (genOptions.Diagnostics)
-                            {                               
-                                if (mme.prms.ContainsKey("iTime")) // remote acquis. start time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
-                                {
-                                    xVl = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); 
-                                }
-                                else throw new Exception("No shot time specified.");
-                                if (mme.prms.ContainsKey("tTime")) // remote acquisition duration; if not - the default is genOptions.Mems2SignLen
-                                {   
-                                    long tTimeTicks = Convert.ToInt64(mme.prms["tTime"]);
-                                    if (tTimeTicks > 0)
-                                    {
-                                        genOptions.Mems2SignLen = Utils.tick2sec(tTimeTicks)* 1000.0;
-                                    }
-                                }
-                                quantList.Add(new Point3D(xVl, A, -1));
-                                if (genOptions.Diagnostics) log_out += " (" + xVl.ToString("F1") + ")";
+                            // Timing section
+                            measr["bTime"] = (mme.prms.ContainsKey("bTime")) ? Convert.ToInt32(mme.prms["bTime"]) : 0; // before
+                            measr["aTime"] = (mme.prms.ContainsKey("aTime")) ? Convert.ToInt32(mme.prms["aTime"]) : 0; // after
+                            measr["samplingRate"] = (mme.prms.ContainsKey("samplingRate")) ? Convert.ToInt32(mme.prms["samplingRate"]) : 200000;
+                            
+                            if (mme.prms.ContainsKey("iTime")) // remote acquis. start time; if not - out
+                            {
+                                measr["iTime"] = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])) + measr["bTime"] / measr["samplingRate"];  // now in sec
+                                xVl = Double.IsNaN(currX) ? measr["iTime"] : currX;
                             }
-                            else
-                            {                           
-                                if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
-                                else phaseRad = Double.NaN;
-
-                                measr = nextMeasure(phaseRad);
-
-                                if (mme.prms.ContainsKey("iTime")) // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                            else throw new Exception("No interfermeter start time specified at MM2.");
+                            if (mme.prms.ContainsKey("tTime")) // inteferometer steps duration, if not - the default is genOptions.Mems2SignLen
+                            {
+                                long tTimeTicks = Convert.ToInt64(mme.prms["tTime"]);
+                                if (tTimeTicks > 0)
                                 {
-                                    measr["time"] = theTime.relativeTime((long)Convert.ToInt64(mme.prms["iTime"])); // in sec                                
+                                    measr["tTime"] = Utils.tick2sec(tTimeTicks) - (measr["bTime"] + measr["aTime"] )/ measr["samplingRate"]; // now in sec
+                                    genOptions.Mems2SignLen = measr["tTime"] * 1000.0;
                                 }
-                                if (mme.prms.ContainsKey("tTime")) // inteferometer steps duration, if not - the default is genOptions.Mems2SignLen
-                                {
-                                    long tTimeTicks = Convert.ToInt64(mme.prms["tTime"]);
-                                    if (tTimeTicks > 0)
-                                    {
-                                        measr["T"] = Utils.tick2sec(tTimeTicks); genOptions.Mems2SignLen = measr["T"] * 1000.0;
-                                    }
-                                    else measr["T"] = genOptions.Mems2SignLen / 1000;
-                                }
-                                else measr["T"] = genOptions.Mems2SignLen / 1000;
-
-                                rslt = Statistics(measr);                           
-                                if (rslt.ContainsKey("PhiMg") && (rslt.ContainsKey("PhiRad"))) quantList.Add(new Point3D(rslt["time"], rslt["PhiRad"], rslt["PhiMg"]));
+                                else throw new Exception("Wrong interferometer section duration specified at MM2.");
                             }
-                        }                       
-                        if (rslt.ContainsKey("Accel")) log_out += ": accel = " + rslt["Accel"].ToString(genOptions.SignalTablePrec);
+                            else throw new Exception("No interferometer section duration specified at MM2.");
+
+                            switch (genOptions.memsInJumbo)
+                            {
+                                case GeneralOptions.MemsInJumbo.USB9251:
+                                    if (genOptions.Diagnostics)
+                                    {
+                                        quantList.Add(new Point3D(xVl, A, -1));
+                                        log_out += " (" + xVl.ToString("F1") + ")";
+                                    }
+                                    else
+                                    {
+                                        if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
+                                        else phaseRad = Double.NaN;
+
+                                        measr = nextMeasure(phaseRad); // dealing with phase
+                                        rslt = Statistics(measr);
+
+                                        if (rslt.ContainsKey("PhiMg") && (rslt.ContainsKey("PhiRad"))) quantList.Add(new Point3D(rslt["time"], rslt["PhiRad"], rslt["PhiMg"]));
+                                    }
+                                    break;
+                                case GeneralOptions.MemsInJumbo.PXI4462:
+                                    if (genOptions.Diagnostics)
+                                    {
+                                        if (mme.prms.ContainsKey("Interferometer"))
+                                        {
+                                            RecordQuantMems((double[])mme.prms["Interferometer"], ref measr, A);
+                                        }
+                                        else throw new Exception("No interferometer data comming from MM2.");
+                                        log_out += " (" + xVl.ToString("F1") + ")";
+                                    }
+                                    else
+                                    {
+                                        /*if (statDt.ContainsKey("PhiRad")) phaseRad = statDt["PhiRad"];
+                                        else phaseRad = Double.NaN;
+
+                                        measr = nextMeasure(phaseRad); // dealing with phase
+                                        rslt = Statistics(measr);
+
+                                        if (rslt.ContainsKey("PhiMg") && (rslt.ContainsKey("PhiRad"))) quantList.Add(new Point3D(rslt["time"], rslt["PhiRad"], rslt["PhiMg"]));*/
+                                    }
+                                    break;
+                            }
+                            if (rslt.ContainsKey("Accel")) log_out += ": accel = " + rslt["Accel"].ToString(genOptions.SignalTablePrec);
+                        }
                     }
                     else
                         if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)    
-                            LogEvent("problem with MEMS !", Brushes.Red.Color);
+                            LogEvent("problem with MEMS !", Brushes.Red);
                 }
                 else
                 {
                     rslt = Statistics(statDt);
                 }
                 LogEvent(log_out + "   A = "+ A.ToString(genOptions.SignalTablePrec), clr);
-                if (repeatMode)
+                if (repeatMode) // visuals
                 {
                     if (scanModes.remoteMode == RemoteMode.Simple_Repeat)
                     {
@@ -1161,9 +1225,12 @@ namespace Axel_hub
                         {
                             srsMotAccel.AddPoint(A, xVl); 
                             graphAccelTrend.Data[2] = srsMotAccel.Portion(genOptions.TrendSignalLen);
+                            double[] da = (double[])mme.prms["Interferometer"];
+                            srsMems.AddPoint(da.Average(), xVl);
+                            graphAccelTrend.Data[0] = srsMems.Portion(genOptions.TrendSignalLen);
                         }
                         else
-                            if (probeMode && !genOptions.MemsInJumbo) showResults(xVl, rslt);
+                            if (probeMode) showResults(xVl, rslt);
                     }               
                 }
                 if (chkAutoScaleBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis
@@ -1268,11 +1335,11 @@ namespace Axel_hub
                 if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
                 {
                     string[] fls = Directory.GetFiles(fbd.SelectedPath, "*.ahs");
-                    LogEvent("Extract headers from *.ahs files in folder:", Brushes.DarkBlue.Color);
-                    LogEvent(fbd.SelectedPath, Brushes.DarkBlue.Color);
+                    LogEvent("Extract headers from *.ahs files in folder:", Brushes.DarkBlue);
+                    LogEvent(fbd.SelectedPath, Brushes.DarkBlue);
                     foreach (string fl in fls)
                     {
-                        LogEvent("> " + fl, Brushes.Blue.Color);
+                        LogEvent("> " + fl, Brushes.Blue);
                         List<string> ls = Utils.readList(fl, false);
                         List<string> lt = new List<string>();
                         foreach (string ln in ls)
@@ -1283,7 +1350,7 @@ namespace Axel_hub
                         }
                         Utils.writeList(System.IO.Path.ChangeExtension(fl, ".ahh"), lt);
                     }
-                    LogEvent("<><><><><><><><><><><><><><>", Brushes.Navy.Color);
+                    LogEvent("<><><><><><><><><><><><><><>", Brushes.Navy);
                 }
             }
         }

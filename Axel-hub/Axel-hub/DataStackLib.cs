@@ -234,21 +234,11 @@ namespace Axel_hub
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
             if (Count == 0) return rslt;
-
-            int ti0 = indexByX(fromTime); int ti1 = indexByX(toTime);
-            if (ti0 == -1 || ti1 == -1)
-            {
-                Console.WriteLine("Index problem in TimePortion " + fromTime.ToString("G7") + " / " + toTime.ToString("G7"));
-                return rslt;
-                //throw new Exception("Index problem in TimePortion");
-            }
-            for (int i = ti0; i <= ti1; i++)
-            {
-                if (Utils.InRange(i, 0, Count - 1)) rslt.Add(new Point(this[i].X, this[i].Y));
-            }
+            foreach (Point pnt in this)
+                if (Utils.InRange(pnt.X, fromTime, toTime)) rslt.Add(new Point(pnt.X, pnt.Y));
             return rslt;
         }
-        
+
         /// <summary>
         /// Extract sub-DataStack for an index range
         /// </summary>
@@ -284,8 +274,8 @@ namespace Axel_hub
             DataStack rslt = new DataStack((int)(Depth/dg)+1);
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
-            if (Count == 0) return rslt;             
-            for (int i = 0; i < (Count-dg-1); i++)
+            if (Count == 0) return rslt;
+            /*for (int i = 0; i < (Count-dg-1); i++)
             {
                 if ((i % dg) != 0) continue;
                 Point avg = new Point(0,0);
@@ -295,6 +285,18 @@ namespace Axel_hub
                 }   
                 avg.X /= dg; avg.Y /= dg;
                 rslt.Add(avg);
+            }*/
+            int i = 0; Point avg = new Point(0, 0);
+            foreach (Point p in this)
+            {
+                if (((i % dg) == 0) && (i > 0))
+                {
+                    avg.X /= dg; avg.Y /= dg;
+                    rslt.Add(avg);
+                    avg.X = 0; avg.Y = 0;
+                }
+                avg.X += p.X; avg.Y += p.Y;
+                i++;
             }
             return rslt;
         }

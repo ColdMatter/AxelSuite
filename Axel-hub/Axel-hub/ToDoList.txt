@@ -1,25 +1,7 @@
 ﻿To Do In MotMaster2
 ===================
 
-IMMEDIATE
-- scan to change both (X/Y) phases in sequence (alternating), e.g. 0..5;0.5 -> phX=0; phY=0.5; phX=1...
-
-- Jumbo Repeat will accept 
-
-IN SOME POSSIBLE FUTURE
-- scan will offer to scan individually X or Y or both alternating
-
-- Time-out at wait4adjust loop in diagnostics
 
 AxelHub
 ==================
-
-- count the disbalance into the quant. accel.
-- log Raw Mems data for sampling rate under ???
-- StackMode of DataStack ?
-- S.G.Filter in Diff term in PID
-
-- after repeat in MM2, jumbo-repeat does not run in MM2 ?
-- start problem (no remote)
-- second jumbo repeat problem
 

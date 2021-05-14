@@ -6,50 +6,57 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Axel_data"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" >
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="97*"/>
             <RowDefinition Height="48*"/>
         </Grid.RowDefinitions>
-        <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Top" Grid.Row="1" Height="3" Margin="0,0,0,3" Background="#FFE4FBBB"></GridSplitter>
-        <Grid Margin="0,0,0.203,3" >
+        <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Top" Grid.Row="1" Height="4" Margin="0,0,0,3">
+            <GridSplitter.Background>
+                <LinearGradientBrush EndPoint="1,1" StartPoint="0,0">
+                    <GradientStop Color="#FF6AFB61" Offset="0.154"/>
+                    <GradientStop Color="#FF7979F9" Offset="1"/>
+                </LinearGradientBrush>
+            </GridSplitter.Background>
+        </GridSplitter>
+        <Grid Margin="0" >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="137.316"/>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <Grid VerticalAlignment="Top" Height="35">
-                <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Left" Height="30" Margin="15,5,0.886,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphMEMSvsQuant}">
-                </ni:GraphInteractionPalette>
-                <Label x:Name="lbInfoAccelTrend" Content="Info:" Margin="240,0,0,0" VerticalAlignment="Center" Height="31" FontSize="13" Grid.RowSpan="2"/>
+            <Grid Margin="0" Grid.Column="0" >
+                <Button x:Name="btnOpenJLog" Content="Load Join Data..." Margin="10,6,0,0" Background="#FFF6F6F6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Click="btnOpenJLog_Click" Height="32" Foreground="#FF016304" FontWeight="Bold" />
+                <Label Content="Sect. size" HorizontalAlignment="Left" Margin="4,56,0,0" VerticalAlignment="Top" FontSize="13" Width="62"/>
+                <ni:RadixNumericTextBoxInt32 x:Name="numSectionSize" HorizontalAlignment="Left" Height="24" Margin="71,57,0,0" VerticalAlignment="Top" Width="52" Interval="10" Value="100" RadixVisibility="Collapsed" Range="10, 1000000, System.Int32" SelectOnFocus="True" FontSize="13" ValueChanged="numSectionSize_ValueChanged"/>
+                <ni:BooleanContentButton x:Name="btnScan" Content="Test Axel Show" HorizontalAlignment="Center" Margin="0,0,0,7" VerticalAlignment="Bottom" Width="116" Background="White" Height="33" Click="btnJFitScan_Click" FalseBrush="#FFCAFA8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Run Scan" TrueContent="Stop Scan" FontWeight="Bold"/>
+                <GroupBox x:Name="gbSectScroll" Header="Section Scroll" Margin="0,90,0,0" VerticalAlignment="Top" Height="55" FontSize="13">
+                    <Grid>
+                        <ni:ArrowButton x:Name="btnScrollLeft" Content="-" HorizontalAlignment="Left" Margin="0,4,0,3" VerticalAlignment="Top" Width="55" Direction="Left" FontSize="18" FontWeight="Bold" Click="btnScrollRight_Click" FontFamily="Gill Sans Ultra Bold" Foreground="#FF02549D"/>
+                        <ni:ArrowButton x:Name="btnScrollRight" Content="+" HorizontalAlignment="Right" Margin="0,4,0,3" VerticalAlignment="Top" Width="55" FontSize="18" FontWeight="Bold" Click="btnScrollRight_Click" Foreground="#FFD10000" FontFamily="Stencil Std"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox x:Name="gbSimul" Header="Simulation" Margin="0,150,0.025,0" VerticalAlignment="Top" Height="60" FontSize="13">
+                    <Grid >
+                        <ni:NumericTextBoxDouble x:Name="numSimulNoise" HorizontalAlignment="Left" Height="23" Margin="60,10,-0.127,0" VerticalAlignment="Top" Width="56" Value="20" FontSize="13" Range="0, 1000, System.Double"/>
+                        <Label x:Name="label" Content="Noise %" HorizontalAlignment="Left" Margin="2,9,0,0" VerticalAlignment="Top"/>
+                    </Grid>
+                </GroupBox>
+                <ComboBox x:Name="cbAction" HorizontalAlignment="Center" Margin="0,0,0,50" VerticalAlignment="Bottom" Width="115" FontSize="13" SelectedIndex="0">
+                    <ComboBox.Background>
+                        <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                            <GradientStop Color="#FFF3F3F3" Offset="0"/>
+                            <GradientStop Color="#FFEBEBEB" Offset="0.624"/>
+                            <GradientStop Color="#FFDDDDDD" Offset="0.786"/>
+                            <GradientStop Color="#FFCDCDCD" Offset="0.965"/>
+                        </LinearGradientBrush>
+                    </ComboBox.Background>
+                    <ComboBoxItem Content="Fit Scan"/>
+                    <ComboBoxItem Content="Valid M-data"/>
+                    <ComboBoxItem Content="Simulation" Foreground="#FFBA0505"/>
+                </ComboBox>
             </Grid>
-            <Label x:Name="lbJoinLogInfo" Content="" Margin="236,0,0,0" Height="31" FontSize="13" HorizontalAlignment="Left" VerticalAlignment="Top" Width="10"/>
-            <ni:Graph x:Name="graphMEMSvsQuant" Margin="3,30,0.886,-0.772" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto">
-                <ni:Graph.Plots>
-                    <ni:Plot Label="Plot 3">
-                        <ni:LinePlotRenderer/>
-                    </ni:Plot>
-                    <ni:Plot Label="Plot 4">
-                        <ni:PointPlotRenderer/>
-                    </ni:Plot>
-                </ni:Graph.Plots>
-            </ni:Graph>
-            <Grid Margin="0" Grid.Column="1">
-                <Button x:Name="btnOpenJLog" Content="Load Join Log..." Margin="10,6,0,0" Background="#FFF6F6F6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Click="btnOpenJLog_Click" Height="32" />
-                <Label Content="Section" HorizontalAlignment="Left" Margin="4,69,0,0" VerticalAlignment="Top" Foreground="#FF0A6E01" FontSize="13" RenderTransformOrigin="0.453,-1.529" Width="55"/>
-                <ni:NumericTextBoxDouble x:Name="numJSection" HorizontalAlignment="Left" Height="23" Margin="56,134,0,0" VerticalAlignment="Top" Width="67" FontSize="13" Range="0, 100, System.Double" Interval="0.1" Value="1"/>
-                <Label Content="Period" HorizontalAlignment="Left" Margin="4,132,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJPeriod" HorizontalAlignment="Left" Height="23" Margin="56,69,0,0" VerticalAlignment="Top" Width="67" Value="100" FontSize="13" Range="0, 1000, System.Double" Interval="10"/>
-                <Label Content="Phase" HorizontalAlignment="Left" Margin="4,161,0,0" VerticalAlignment="Top" Foreground="#FF054593" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJTo" HorizontalAlignment="Left" Height="23" Margin="56,165,0,0" VerticalAlignment="Top" Width="67" FontSize="13" Range="0, 10, System.Double" SelectOnFocus="True"/>
-                <Label Content="Ampl." HorizontalAlignment="Left" Margin="4,189,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF640C03" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJBy" HorizontalAlignment="Left" Height="23" Margin="56,195,0,0" VerticalAlignment="Top" Width="67" Value="1" Range="0, 100, System.Double" FontSize="13"/>
-                <Label Content="Offset" HorizontalAlignment="Left" Margin="4,223,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF640C03" FontSize="13"/>
-                <ni:NumericTextBoxDouble x:Name="numJNPnts" HorizontalAlignment="Left" Height="23" Margin="56,226,0,0" VerticalAlignment="Top" Width="67" Range="-100, 100, System.Double" FontSize="13"/>
-                <Label Content="MEMS vs Quant" HorizontalAlignment="Left" Margin="13,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
-                <Label Content="Initial fit values" HorizontalAlignment="Left" Margin="13,105,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.601,3.165" Foreground="#FF054593" FontSize="13"/>
-                <ni:BooleanContentButton x:Name="btnJFitScan" Content="Test Axel Show" HorizontalAlignment="Center" Margin="0,0,0,8" VerticalAlignment="Bottom" Width="116" Background="White" Height="33" Click="btnJFitScan_Click" FalseBrush="#FFCAFA8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Fit Scan" TrueContent="Stop Scan" IsEnabled="False" FontWeight="Bold"/>
-            </Grid>
+            <local:QMfitUC x:Name="QMfit" Grid.Column="1"  Margin="5,0,0,7" />
         </Grid>
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
@@ -57,12 +64,12 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,2,0,0" >
-                <CheckBox x:Name="chkMEMS" Content="MEMS" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" FontWeight="Bold" Foreground="#FF0A14C1" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" />
-                <CheckBox x:Name="chkCorr" Content="Corr." VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FF07B484" FontWeight="Bold"/>
-                <CheckBox x:Name="chkMOT" Content="Quant" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
-                <CheckBox x:Name="chkAccel" Content="Accel." VerticalAlignment="Center" Margin="5,0,0,0" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FFE05100" FontWeight="Bold" Visibility="Collapsed"/>
+                <CheckBox x:Name="chkPeriod" Content="Period" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" FontWeight="Bold" Foreground="#FF0A14C1" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" />
+                <CheckBox x:Name="chkPhase" Content="Phase" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FF07B484" FontWeight="Bold"/>
+                <CheckBox x:Name="chkAmpl" Content="Ampl." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
+                <CheckBox x:Name="chkRMSE" Content="RMSE" VerticalAlignment="Center" Margin="5,0,0,0" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FFE05100" FontWeight="Bold" IsChecked="True" />
             </StackPanel>
-            <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ni:Graph x:Name="graphTrends" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <ni:Graph.Axes>
                     <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="FitLoosely"/>
                     <ni:AxisDouble x:Name="accelAxis" Orientation="Vertical" Adjuster="FitLoosely" />
@@ -78,24 +85,21 @@
                         </ni:AxisDouble.MajorGridLines>
                     </ni:AxisDouble>
                 </ni:Graph.Axes>
-                <ni:Graph.Children>
-                    <ni:MultiPlotCursor x:Name="plotcursorAccel" Label="multiPlotCursor2" LabelVisibility="Hidden" ToolTip=""/>
-                </ni:Graph.Children>
                 <ni:Graph.Plots>
-                    <ni:Plot x:Name="plotMems" Label="MEMS Accel.">
+                    <ni:Plot x:Name="plotPeriod" Label="Period">
                         <ni:PlotRendererGroup>
                             <ni:LinePlotRenderer Stroke="#FF0A14C1" StrokeThickness="1.5"/>
                         </ni:PlotRendererGroup>
                     </ni:Plot>
-                    <ni:Plot x:Name="plotCorr" Label="Corrections" VerticalScale="{Binding ElementName=corrAxis}" >
+                    <ni:Plot x:Name="plotPhase" Label="Phase" VerticalScale="{Binding ElementName=corrAxis}" >
                         <ni:BarPlotRenderer BarWidth="0.35" Fill="#FF07B484" Stroke="#FF07B484"/>
                     </ni:Plot>
-                    <ni:Plot x:Name="plotMotAccel" Label="Quantum Accel." >
+                    <ni:Plot x:Name="plotAmpl" Label="Amplitude" >
                         <ni:PlotRendererGroup>
                             <ni:LinePlotRenderer StrokeThickness="1.5" Stroke="#FF9F16F4"/>
                         </ni:PlotRendererGroup>
                     </ni:Plot>
-                    <ni:Plot x:Name="plotAccel" Label="Acceleration" Visibility="Collapsed">
+                    <ni:Plot x:Name="plotRMSE" Label="RMSE" Visibility="Collapsed">
                         <ni:PlotRendererGroup>
                             <ni:LinePlotRenderer Stroke="#FFE05100" StrokeThickness="1.5"/>
                         </ni:PlotRendererGroup>

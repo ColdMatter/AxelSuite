@@ -135,7 +135,7 @@ namespace Axel_digit
         protected void OnCheckChange(object sender, int ID, bool check)
         {
             if (nLock || aLock) return;
-            Utils.log(tbLog, "change #"+ID.ToString() + " to " + check.ToString(),Brushes.Maroon.Color);
+            Utils.log(tbLog, "change #"+ID.ToString() + " to " + check.ToString(),Brushes.Maroon);
             if (chkAutoUpdate.IsChecked.Value)
             {
                 if (Utils.isNull(dTimer))
@@ -155,7 +155,7 @@ namespace Axel_digit
 
         public void dLog(string msg)
         {
-            if (debugMode) Utils.log(tbLog, msg, Brushes.Teal.Color);
+            if (debugMode) Utils.log(tbLog, msg, Brushes.Teal);
         }
         #endregion COMMON
 
@@ -466,7 +466,7 @@ namespace Axel_digit
             hsTaskOut.AssignStaticChannels(ChannelList);
             hsTaskOut.ConfigureDataVoltageLogicFamily(ChannelList, niHSDIOConstants._33vLogic);
             hardwareSet = true;
-            Utils.log(tbLog, "! Hardware ("+dvc+") initialized" , Brushes.Coral.Color);
+            Utils.log(tbLog, "! Hardware ("+dvc+") initialized" , Brushes.Coral);
             return true;
         }
         public bool ReadIn(out bool[] dt)
@@ -480,7 +480,7 @@ namespace Axel_digit
                 var bitArray = new BitArray(BitConverter.GetBytes(dataRead));
                 bitArray.CopyTo(dt, 0);
             }    
-            if (chkLog.IsChecked.Value) Utils.log(tbLog, "< " + boolArr2string(dt), Brushes.DarkGreen.Color);
+            if (chkLog.IsChecked.Value) Utils.log(tbLog, "< " + boolArr2string(dt), Brushes.DarkGreen);
             return true;
         }
         public bool WriteOut(bool[] dt, bool[] mask)
@@ -491,8 +491,8 @@ namespace Axel_digit
             if (!Utils.isNull(hsTaskOut)) hsTaskOut.WriteStaticU32(dataOut, uMask);
             if (chkLog.IsChecked.Value)
             {
-                Utils.log(tbLog, "> " + boolArr2string(mask), Brushes.BlueViolet.Color);
-                Utils.log(tbLog, "> " + boolArr2string(dt), Brushes.Blue.Color);
+                Utils.log(tbLog, "> " + boolArr2string(mask), Brushes.BlueViolet);
+                Utils.log(tbLog, "> " + boolArr2string(dt), Brushes.Blue);
             }               
             return true;
         }
@@ -555,7 +555,7 @@ namespace Axel_digit
         }
         public void ErrorMsg(string msg)
         {
-            if (chkLog.IsChecked.Value) Utils.log(tbLog, msg, Brushes.Red.Color);
+            if (chkLog.IsChecked.Value) Utils.log(tbLog, msg, Brushes.Red);
             else Utils.TimedMessageBox(msg, "Warning", 2500);
         }
         private void chkLog_Checked(object sender, RoutedEventArgs e)

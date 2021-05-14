@@ -80,7 +80,7 @@ namespace Axel_hub
             Dictionary<string,object> tempDict = new Dictionary<string, object>(); 
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key == "iTime" || key == "tTime" || key == "samplingRate") tempDict[key] = data.prms[key];
+                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key.Contains("Time") || key == "samplingRate") tempDict[key] = data.prms[key];
                 else
                 {
                     var rawData = (JArray) data.prms[key];
@@ -235,7 +235,7 @@ namespace Axel_hub
         }
 
         /// <summary>
-        /// Get part of mems within a reange
+        /// Get part of mems within a range
         /// </summary>
         /// <param name="rng"></param>
         /// <returns></returns>
@@ -250,6 +250,14 @@ namespace Axel_hub
         {           
             return memsPortion(new Range<double>(first, last));
         }
+
+        public void cutMems(double first, double last) 
+        {
+            List<Point> tm = new List<Point>(_mems); _mems.Clear();
+            foreach (Point pnt in tm)
+                if (Utils.InRange(pnt.X, first, last))
+                    _mems.Add(pnt);
+        } 
 
         /// <summary>
         /// Calculating mems acceleration time-related to quant point
@@ -292,7 +300,6 @@ namespace Axel_hub
             }
             return sum / len;
         }
-
         /// <summary>
         /// Accelerations components in a dictinary with order, resid, etc.
         /// </summary>
@@ -369,7 +376,7 @@ namespace Axel_hub
     /// </summary>
     public class ShotList : List<SingleShot>
     {
-        protected int maxSize = 10000000; // max size to be loaded as whole thing, otherwise read with archyScan
+        protected int maxSize = 100000000; // max size to be loaded as whole thing, otherwise read with archyScan
         public string filename { get; private set; }
         public bool rawData { get; private set; }
         public string prefix { get; private set; }
@@ -498,7 +505,9 @@ namespace Axel_hub
                 bool next;
                 do
                 {
-                    Add(archiScan(out next));
+                    SingleShot s = archiScan(out next);
+                    if (s.mems.Count == 0) continue;
+                    Add(s);
                 } while (next);
                 archiveMode = false;
             }
@@ -569,6 +578,11 @@ namespace Axel_hub
             next = nextSS; // end of file
             return ls;
         }
+
+        /*public SingleShot getSingleShot(int idx) // slow
+        {
+            if (Utils.isNull(archiveMode)) throw new Exception("No file opened");
+        }*/
 
         /// <summary>
         /// Save a file with JSON of single shots per line

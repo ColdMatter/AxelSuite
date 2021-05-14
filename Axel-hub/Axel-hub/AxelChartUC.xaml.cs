@@ -100,9 +100,13 @@ namespace Axel_hub
 
         public void OnOptionsChange(GeneralOptions opts) 
         {
-            string fl = "HW: "+ genOptions.MemsHw;
+            string fl = "HW: ";
+            if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.USB9251))
+                fl += genOptions.MemsHw;
+            if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462))
+                fl += "PXI-4461";
             if (genOptions.Diagnostics) fl += "; diagnostics";
-            lbHWfile.Content = fl; 
+            lbHWfile.Content = fl;
         }
         private int IncomingBufferSize = 1000;
         public void SetIncomingBufferSize(int bf)
@@ -176,6 +180,37 @@ namespace Axel_hub
         public double SamplingPeriod { get; set;  }
 
         public DataStack Waveform { get; set;  }
+
+        private bool _Active;
+        /// <summary>
+        /// intermediate level to Running; if Running it always Active; but if not Running it could be Active or not
+        /// </summary>
+        public bool Active
+        {
+            get 
+            {
+                if (Running) return true;
+                else return _Active;
+            }
+
+            set
+            {
+                _Active = value;
+                if (value)
+                {
+                    Waveform.TimeSeriesMode = !rbPoints.IsChecked.Value;
+                    Waveform.visualCountLimit = (int)seStackDepth.Value;
+                    Waveform.Depth = (int)seStackDepth.Value;
+                    totalCount = 0;
+                }
+                else
+                {
+                    btnPause.Visibility = Visibility.Hidden;
+                    Waveform.logger.Enabled = false;
+                    Refresh(null, null);
+                }
+            }
+        }
 
         private bool _Running;
         /// <summary>
@@ -323,7 +358,11 @@ namespace Axel_hub
                         numTimeSlice.Background = Brushes.White;
                     }));
             }
-            lbErrorStatus.Content = axelMems.tracer.message() + ((Waveform.lastError == "") ? "" : " Err: ") + Waveform.lastError;
+            if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.USB9251))
+                lbErrorStatus.Content = axelMems.tracer.message() + ((Waveform.lastError == "") ? "" : " Err: ") + Waveform.lastError;
+            if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462))
+                lbErrorStatus.Content = "";
+
 
             if (!chkChartUpdate.IsChecked.Value) return;
             //Console.WriteLine("refresh at " + (Waveform.stopWatch.ElapsedMillseconds/1000.0).ToString());
@@ -613,9 +652,9 @@ namespace Axel_hub
         {
             if(Utils.isNull(modes)) return;
 
-            modes.RollMean = (int)seRollMean.Value;
+            modes.RollMean = seRollMean.Value;
             modes.ShowFreq = (int)seShowFreq.Value;
-            modes.StackDepth = (int)seStackDepth.Value;
+            modes.StackDepth = seStackDepth.Value;
             modes.ChartUpdate = (bool)chkChartUpdate.IsChecked.Value;
             modes.TblUpdate = (bool)chkTblUpdate.IsChecked.Value;
             modes.PowerCoeff = nbPowerCoeff.Value;
@@ -856,6 +895,32 @@ namespace Axel_hub
             }
             scrollPlot.AdjustVerticalScale = chkAutoScale.IsChecked.Value;
         }
+        /// <summary>
+        /// prepare for active/inactive
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="samplingPeriod"></param>
+        /// <param name="InnerBufferSize"></param>
+        public void set2active(bool start, double samplingPeriod, int InnerBufferSize = 0)
+        {
+            if (!start) // user cancel
+            {
+                Active = false;
+                Waveform.logger.Enabled = false;
+                return;
+            }            
+            Clear();
+            Active = true;
+            Waveform.StackMode = true;
+            SamplingPeriod = samplingPeriod;
+            if (InnerBufferSize > 0)
+            {
+                SetWaveformDepth(InnerBufferSize);
+                Waveform.visualCountLimit = InnerBufferSize;
+            }
+            SetInfo("freq: " + (1 / SamplingPeriod).ToString("G6") + ", aqcPnt: " + Waveform.visualCountLimit.ToString());
+            Waveform.logger.Enabled = false;
+        }
 
         /// <summary>
         /// Start/Stop ADC24 acquisition
@@ -871,7 +936,7 @@ namespace Axel_hub
                 Waveform.logger.Enabled = false;
                 return;
             }
-            if (Running) Running = false; //
+            if (Running) Running = false; // ???
             Clear();
             Waveform.StackMode = true; 
             SetWaveformDepth(InnerBufferSize);
