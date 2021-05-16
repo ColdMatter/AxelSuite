@@ -44,7 +44,7 @@ namespace Axel_hub
 {
     public delegate void StartDelegate();
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml -> test 1
     /// command line arguments (space separated): -remote:<c>partner</c>  -hw:<c>config.file</c>
     /// where <c>partner</c> is remote partner name <c>title</c>; hw<c>hardware</c>, <c>config.file.hw</c> is in Config folder
     /// </summary>
