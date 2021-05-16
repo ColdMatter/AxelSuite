@@ -21,7 +21,7 @@ using UtilsNS;
 namespace Axel_data
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml  -> test 1
+    /// Interaction logic for MainWindow.xaml  -> test 2
     /// </summary>
     public partial class MainWindow : Window
     {     
