@@ -62,6 +62,7 @@ namespace Axel_hub
                 }                   
             } 
         }
+        public MMexec mm2status = null;
 
         private const int dataLength = 10000; // default length of data kept in
         private DataStack phiMg = new DataStack(dataLength);
@@ -963,7 +964,7 @@ namespace Axel_hub
             if (Utils.isNull(phiMg)) phiMg = new DataStack(1000);
             if (Utils.isNull(accelMg)) accelMg = new DataStack(1000);
 
-            ucSignal.Init(mme); 
+            ucSignal.Init(mme, mm2status); 
         }
 
         /// <summary>

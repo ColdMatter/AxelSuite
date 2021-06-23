@@ -76,7 +76,7 @@ namespace Axel_hub
         /// </summary>
         public signalClass()
         {
-            InitializeComponent();
+            InitializeComponent();           
         }
 
         GeneralOptions genOptions = null;
@@ -98,9 +98,14 @@ namespace Axel_hub
         /// Call when new series starts
         /// </summary>
         /// <param name="GrpMme"></param>
-        public void Init(MMexec GrpMme) // 
+        public void Init(MMexec GrpMme, MMexec mm2status) // 
         {
             grpMme = GrpMme.Clone();
+            if (!Utils.isNull(mm2status))
+            {
+                grpMme.prms["params"] = mm2status.prms["params"]; grpMme.prms["steps"] = mm2status.prms["steps"];
+            }
+                
             scanMode = grpMme.cmd.Equals("scan");
             repeatMode = grpMme.cmd.Equals("repeat");
             
@@ -122,6 +127,7 @@ namespace Axel_hub
             rawDataLog.Enabled = false;
             rawDataLog.defaultExt = ".rws";
             rawDataLog.Enabled = chkRawSave.IsChecked.Value;
+
         }
 
         /// <summary>
