@@ -213,6 +213,7 @@ namespace Axel_hub
         {
             if (jumbo)               
             {
+                if (down) axes.ask4status();
                 if (Options.genOptions.JumboScan) axes.DoJumboScan(down);
                 else               
                     if (Options.genOptions.JumboRepeat) axes.DoJumboRepeat(down, axes[0].numCycles.Value);               

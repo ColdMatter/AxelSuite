@@ -367,10 +367,10 @@ namespace Axel_hub
             accelSet.Clear(); lastMMEin = null;
             if (!Utils.isNull(mme))
             {
-                double mems = 0;
-                if (mme.prms.ContainsKey("InterferometerS")) mems = Convert.ToDouble(mme.prms["Interferometer"]);
                 if (mme.getWhichSender().Equals(MMexec.SenderType.AxelProbe)) // take MEMS if probeMode
                 {
+                    double mems = 0;
+                    if (mme.prms.ContainsKey("InterferometerS")) mems = Convert.ToDouble(mme.prms["InterferometerS"]);
                     lastMMEin = mme.Clone();
                     double accel = mems;
                     if (mme.prms.ContainsKey("accel")) accel = Convert.ToDouble(mme.prms["accel"]); // the noiseless accel, only to compare
