@@ -22,7 +22,7 @@ namespace Axel_hub
     /// </summary>
     public static class MMDataConverter
     {
-        public static Dictionary<string, double> AverageShotSegments(MMexec data, bool initN2, bool stdDev)
+        public static Dictionary<string, double> AverageShotSegments(MMexec data, bool stdDev)
         {
             var avgs = new Dictionary<string, double>();
             foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg"})
@@ -30,13 +30,6 @@ namespace Axel_hub
                 var rawData = (double[])data.prms[key];
                 avgs[key] = rawData.Average();
                 if (stdDev) avgs[key + "_std"] = Statistics.StandardDeviation(rawData);
-                if (key.Equals("N2") && initN2)
-                {
-                    double[] seq = new double[rawData.Length];
-                    for (int i = 0; i < rawData.Length; i++) { seq[i] = i; }
-                    double[] fit = CurveFit.LinearFit(seq, rawData);
-                    avgs["initN2"] = fit[0];
-                }               
             }
             avgs["N1"] = avgs["NTot"]- avgs["N2"];
             avgs["RN1"] = (avgs["NTot"] - avgs["N2"]) / avgs["NTot"];
@@ -91,7 +84,7 @@ namespace Axel_hub
         }
         public static double Asymmetry(MMexec data, bool subtractBackground = true, bool subtractDark = true)
         {
-            return Asymmetry(AverageShotSegments(data, false,false), subtractBackground, subtractDark);
+            return Asymmetry(AverageShotSegments(data, false), subtractBackground, subtractDark);
         }
         /// <summary>
         /// Calculating the result signal from {"N2", "NTot", "B2", "BTot", "Bg"} means

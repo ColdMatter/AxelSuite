@@ -93,7 +93,7 @@
     <Compile Include="..\Axel-hub\Axel-hub\Options\OptionsType.cs">
       <Link>OptionsType.cs</Link>
     </Compile>
-    <Compile Include="..\Axel-hub\Axel-hub\strobesUC.xaml.cs">
+    <Compile Include="..\Axel-hub\Axel-hub\PanelsUC\strobesUC.xaml.cs">
       <Link>strobesUC.xaml.cs</Link>
       <DependentUpon>strobesUC.xaml</DependentUpon>
     </Compile>
@@ -109,7 +109,7 @@
     <Compile Include="TmprCompUC.xaml.cs">
       <DependentUpon>TmprCompUC.xaml</DependentUpon>
     </Compile>
-    <Page Include="..\Axel-hub\Axel-hub\strobesUC.xaml">
+    <Page Include="..\Axel-hub\Axel-hub\PanelsUC\strobesUC.xaml">
       <Link>strobesUC.xaml</Link>
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

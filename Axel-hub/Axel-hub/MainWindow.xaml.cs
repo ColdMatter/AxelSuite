@@ -321,6 +321,7 @@ namespace Axel_hub
         private void OnActiveRemote(bool activeComm)
         {
             axes.OnOptionsChange(Options.genOptions);
+
         }
 
         /// <summary>

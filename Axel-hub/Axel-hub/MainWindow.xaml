@@ -27,7 +27,7 @@
                 <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="10,5,0,0" Grid.Row="1" VerticalAlignment="Center" IsChecked="True"/>
                 <CheckBox x:Name="chkVerbatim" Content="Verbatim" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Center"/>
                 <Button x:Name="btnLogClear" Content="Clear" HorizontalAlignment="Left" Margin="10,6,0,3.714" Grid.Row="1" VerticalAlignment="Center" Width="57" Click="btnLogClear_Click" Background="#FFE5EDFF"/>
-                <Image x:Name="imgMenu" Margin="22,2,0,2" Source="Properties/TripleBar.bmp" Stretch="Fill" Width="29" HorizontalAlignment="Right" MouseUp="imgMenu_MouseUp"/>
+                <Image x:Name="imgMenu" Margin="22,2,0,2" Source="Properties/TripleBarRusty.bmp" Stretch="Fill" Width="29" HorizontalAlignment="Right" MouseUp="imgMenu_MouseUp"/>
             </StackPanel>
         </Grid>
         <Grid x:Name="gridRight" Grid.Column="1" Margin="0">

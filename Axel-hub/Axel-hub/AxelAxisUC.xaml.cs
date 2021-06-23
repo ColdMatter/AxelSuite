@@ -97,6 +97,9 @@ namespace Axel_hub
             strobes.Init(prefix, ref genOptions);
 
             tabSecPlots.SelectedIndex = 1;
+            if (Utils.TheosComputer()) tiOptimization.Visibility = Visibility.Visible;
+            else tiOptimization.Visibility = Visibility.Collapsed;
+
         }
 
         /// <summary>
@@ -113,7 +116,7 @@ namespace Axel_hub
         }
 
         /// <summary>
-        /// Visual optimization hiding/showing AxelChart under some condiotions
+        /// Visual optimization hiding/showing AxelChart under some conditions
         /// </summary>
         public bool AxelChartVisible
         {
@@ -123,7 +126,10 @@ namespace Axel_hub
                 if (value)
                 {
                     if (!Utils.isNull(Application.Current.MainWindow))
-                        rowUpperChart.Height = new GridLength((Application.Current.MainWindow.Height - 60)/3);
+                    {
+                        double h = (Application.Current.MainWindow.Height - 60) / 3;
+                        if (rowUpperChart.Height.Value > h) rowUpperChart.Height = new GridLength(h);
+                    }                       
                     axelChart.Visibility = System.Windows.Visibility.Visible;
                     topSplitter.Visibility = System.Windows.Visibility.Visible;
                 }
@@ -762,7 +768,7 @@ namespace Axel_hub
         public void SaveDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
         {
             double h = Application.Current.MainWindow.Height - 60;
-            modes.TopFrame = Utils.EnsureRange(rowUpperChart.Height.Value, 50,600);
+            modes.TopFrame = Utils.EnsureRange(rowUpperChart.Height.Value, 10,600);
             modes.MiddleFrame = Utils.EnsureRange(rowMiddleChart.Height.Value, 50,600);
 
             if (Top) axelChart.modesFromVisual();
@@ -844,7 +850,6 @@ namespace Axel_hub
             UpdateStrobesParams();
         }
         
-        private int timeStackLimit = 3; // process back 30 time steps
         /// <summary>
         /// Prepare for the next measureme with specific phase
         /// </summary>
@@ -1025,6 +1030,12 @@ namespace Axel_hub
         private void chkSignalLog_Checked(object sender, RoutedEventArgs e)
         {
             if (!Utils.isNull(modes)) SaveDefaultModes(false,true,false);
+        }
+
+        private void tabLowPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (tabLowPlots.SelectedIndex == 3) columnPID.Width = new GridLength(0);
+            else columnPID.Width = new GridLength(145);
         }
 
         /// <summary>

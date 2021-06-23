@@ -1,0 +1,106 @@
+﻿<UserControl x:Name="OptimUC1" x:Class="Axel_hub.PanelsUC.optimUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
+             xmlns:local="clr-namespace:Axel_hub.PanelsUC"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" >
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="429*"/>
+            <ColumnDefinition Width="371*"/>
+        </Grid.ColumnDefinitions>
+        <GridSplitter x:Name="gridSplitter" Grid.Column="1" HorizontalAlignment="Left" Margin="0" Width="5" Background="#FFDDFAF0"/>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition x:Name="topRow" Height="111*"/>
+                <RowDefinition Height="150*"/>
+            </Grid.RowDefinitions>
+            <Grid x:Name="topGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="35"/>
+                    <RowDefinition x:Name="rowParams" Height="1*"/>
+                    <RowDefinition Height="50"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="137.924"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,1.038,0.241" Orientation="Horizontal" >
+                        <Button x:Name="btnAdd" Content="Add Param" Margin="5,5,0,5" FontSize="12.5" Background="#FFFBFBF1" Click="btnAdd_Click" Width="80"/>
+                        <Button x:Name="btnDel" Content="Del. Param" Margin="5,5,0,5" FontSize="12.5" Background="#FFFBFBF1" Click="btnAdd_Click" Width="80"/>
+                        <Button x:Name="btnUp" Content=" Up " Margin="10,5,0,5" FontSize="12.5" Background="#FFF3FDFF" Click="btnUp_Click" Width="50"/>
+                        <Button x:Name="btnDown" Content="Down" Margin="5,5,0,5" FontSize="12.5" Click="btnUp_Click" Background="#FFF3FDFF" Width="50"/>
+                    </StackPanel>
+                    <ni:BooleanContentButton x:Name="bcbOptimize" Grid.Column="1" Margin="0,2,7.962,2.241" FalseContent="Optimize" FontSize="13" FontWeight="Bold" TrueContent="Abort" FalseBrush="#FFB7FDC3" TrueBrush="#FFFAAF73" Padding="1" BorderThickness="6,5" Background="White" Click="bcbOptimize_Click" Width="120" HorizontalAlignment="Right"/>
+                </Grid>
+                <Grid Margin="0" Grid.Row="2" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="307*"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+
+                    <GroupBox x:Name="groupBox" Header="Cost function" Margin="0" >
+                        <TextBox x:Name="tbCostFunc" Margin="0,2,0,0" TextWrapping="Wrap" Text="" FontSize="13"/>
+                    </GroupBox>
+                    <GroupBox x:Name="groupBox2" Grid.Column="1" Header="Conv. Prec." Margin="0,0,-0.038,-0.177" >
+                        <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0"/>
+                    </GroupBox>
+
+                </Grid>
+                <DataGrid x:Name="dgParams" Margin="0" Grid.Row="1" FontSize="12" AutoGenerateColumns="False" ItemsSource="{Binding dt}" RowHeight="23" CanUserAddRows="False" CanUserResizeRows="False">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Width="55" Binding="{Binding Enabled}" Header="Enabled"/>
+                        <DataGridTemplateColumn Width="150" Header="Parameter">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox ItemsSource="{Binding Path=DataContext.paramList, RelativeSource={RelativeSource AncestorType=local:optimUC}}" 
+                                                SelectedItem="{Binding Parameter}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Width="55" Binding="{Binding From}"   Header="From" />
+                        <DataGridTextColumn Width="55" Binding="{Binding To}"     Header="To" />
+                        <DataGridTextColumn Width="55" Binding="{Binding By}"     Header="By" />
+                        <DataGridTextColumn Width="60" Binding="{Binding Value}"  Header="Value" />
+                        <DataGridTextColumn Width="1*" Binding="{Binding Status}" Header="Status" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+            <GridSplitter x:Name="gridSplitter1" HorizontalAlignment="Stretch" Height="3" Margin="0" Grid.Row="1" VerticalAlignment="Top"/>
+            <RichTextBox x:Name="richLog" Margin="2" Grid.Row="1" FontSize="11.6" VerticalScrollBarVisibility="Visible">
+                <FlowDocument>
+                    <Paragraph>
+                        <Run Text=""/>
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
+        </Grid>
+        <TabControl x:Name="tcOptimProcs" Grid.Column="1" Margin="5,0,0,0">
+            <TabItem Header="Sequential Scans" FontSize="13" Height="27" >
+                <Grid>
+                    <local:OptimSeqScan x:Name="SeqScanUC" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Grid Scan" FontSize="13" Height="27">
+                <Grid>
+                    <local:OptimGridScanUC x:Name="GridScanUC"/>
+                </Grid>
+            </TabItem>
+            <TabItem  Header="Simplex" FontSize="13" Height="27">
+                <Grid>
+                    <local:OptimSimplexUC x:Name="OptSimplexUC"/>
+                </Grid>
+            </TabItem>
+
+
+
+
+        </TabControl>
+
+    </Grid>
+</UserControl>

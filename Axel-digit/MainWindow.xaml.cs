@@ -203,8 +203,7 @@ namespace Axel_digit
                 namedDIO[i].ReadIn = dt[idx];
                 nLock = true;
                 if (inclOut) namedDIO[i].WriteOut = dt[idx];
-                nLock = false;
-                
+                nLock = false;                
             }
             dgNamedDIO.CommitEdit(); dgNamedDIO.CommitEdit();
             dgNamedDIO.Items.Refresh(); 
