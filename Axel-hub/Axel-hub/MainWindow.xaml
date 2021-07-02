@@ -24,11 +24,11 @@
             </Grid>
             <RichTextBox x:Name="tbLog" Grid.Row="3" Margin="0,0.286,0,0" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" AcceptsReturn="True" MouseDoubleClick="splitDown_MouseDoubleClick"/>
             <StackPanel HorizontalAlignment="Left" Height="30" Grid.Row="2" VerticalAlignment="Top" Width="265" Grid.RowSpan="2" Orientation="Horizontal" Background="#FFF9FEFF">
-                <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="10,5,0,0" Grid.Row="1" VerticalAlignment="Center" IsChecked="True"/>
-                <CheckBox x:Name="chkVerbatim" Content="Verbatim" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Center"/>
-                <Button x:Name="btnLogClear" Content="Clear" HorizontalAlignment="Left" Margin="10,6,0,3.714" Grid.Row="1" VerticalAlignment="Center" Width="57" Click="btnLogClear_Click" Background="#FFE5EDFF"/>
-                <Image x:Name="imgMenu" Margin="22,2,0,2" Source="Properties/TripleBarRusty.bmp" Stretch="Fill" Width="29" HorizontalAlignment="Right" MouseUp="imgMenu_MouseUp"/>
+                <Button x:Name="btnLogClear" Content="X" HorizontalAlignment="Left" Margin="10,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="30" Click="btnLogClear_Click" Background="#FFF7FAFF" Foreground="#FF9C2828" FontWeight="Bold"/>
+                <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="15,0,0,0" Grid.Row="1" VerticalAlignment="Center" IsChecked="True"/>
+                <CheckBox x:Name="chkVerbatim" Content="Details" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
+            <Image x:Name="imgMenu" Grid.Row="2" Margin="22,2,10,2" Source="Properties/TripleBarRusty.bmp" Stretch="Fill" Width="29" HorizontalAlignment="Right" MouseUp="imgMenu_MouseUp"/>
         </Grid>
         <Grid x:Name="gridRight" Grid.Column="1" Margin="0">
             <TabControl x:Name="tcMain" Margin="0" SelectedIndex="0">

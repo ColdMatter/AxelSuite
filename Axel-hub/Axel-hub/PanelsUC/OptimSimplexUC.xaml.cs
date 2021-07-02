@@ -25,7 +25,20 @@ namespace Axel_hub.PanelsUC
         {
             InitializeComponent();
         }
-        #region Common
+        #region Common        
+        public Dictionary<string, double> opts { get; set; }
+        public void Init(Dictionary<string, double> _opts)
+        {
+            if (Utils.isNull(_opts)) return;
+            opts = new Dictionary<string, double>(_opts);
+            if (opts.Count.Equals(0)) return;
+        }
+        public void Final()
+        {
+            if (Utils.isNull(opts)) opts = new Dictionary<string, double>();
+            opts["moduleIdx"] = 2;
+        }
+        #region Events
         public event EventHandler ParamSetEvent;
         protected virtual void OnParamSet(OptimEventArgs e)
         {
@@ -42,11 +55,26 @@ namespace Axel_hub.PanelsUC
         {
             LogEvent?.Invoke(this, e);
         }
-        public List<baseMMscan> prms { get; set; }
-        public string Optimize(bool start, ref List<baseMMscan> _prms, Dictionary<string, double> opts)
+        public void log(string txt, bool detail)
         {
-            prms = _prms;
+            OnLog(new OptimEventArgs("", detail ? -1 : 1, txt));
+        }
+        public event EventHandler EndOptimEvent;
+        protected virtual void OnEndOptim(OptimEventArgs e)
+        {
+            EndOptimEvent?.Invoke(this, e);
+        }
+        #endregion Events
+        public optimState state { get; set; }
+        public List<baseMMscan> scans { get; set; }
+        public string report(bool lastIter)
+        {
             return "";
+        }
+
+        public void Optimize(bool? start, List<baseMMscan> _scans, Dictionary<string, double> opts)
+        {
+            scans = new List<baseMMscan>(_scans);           
         }
         #endregion Common
 

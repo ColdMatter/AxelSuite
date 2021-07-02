@@ -22,6 +22,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows;
@@ -1033,10 +1034,38 @@ namespace Axel_hub
             if (!Utils.isNull(modes)) SaveDefaultModes(false,true,false);
         }
 
+        public delegate void SendMMexecHandler(MMexec mme);
+        public event SendMMexecHandler SendMMexecEvent;
+        protected virtual void OnSendMMexec(MMexec mme)
+        {
+            SendMMexecEvent?.Invoke(mme);
+        }
         private void tabLowPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (tabLowPlots.SelectedIndex == 3) columnPID.Width = new GridLength(0);
-            else columnPID.Width = new GridLength(145);
+            else { columnPID.Width = new GridLength(145); return; }
+            // Optim init
+            if (!Utils.TheosComputer())
+            /*{
+                Dictionary<string, object> dct = new Dictionary<string, object>();
+                dct.Add("Param1", 1.11);
+                dct.Add("Param2", 2.22);
+                dct.Add("Param3", 3.33);
+                OptimUC1.Init(dct);
+            }
+            else*/
+            {
+                mm2status = null;
+                OnSendMMexec(new MMexec("", "Axel-hub", "status"));
+                int i = 0;
+                while (Utils.isNull(mm2status) && (i < 100))
+                {
+                    //Utils.DoEvents();
+                    Thread.Sleep(40);
+                    i++;
+                }
+                OptimUC1.Init(mm2status?.prms);               
+            }
         }
 
         /// <summary>
@@ -1335,7 +1364,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e) // not destroying anything, just preparing
         {
-
+            OptimUC1.Final();
         }
 
         private void btnExtractHeader_Click(object sender, RoutedEventArgs e)

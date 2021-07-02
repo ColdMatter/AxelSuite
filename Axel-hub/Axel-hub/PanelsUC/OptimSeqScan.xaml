@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
              xmlns:local="clr-namespace:Axel_hub.PanelsUC"
-             mc:Ignorable="d">
+             mc:Ignorable="d" Height="385.134" Width="585.722">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="35"/>
@@ -13,9 +13,57 @@
             <RowDefinition Height="386*"/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal">
-            <Label x:Name="label" Content="S-G filter" Margin="0,3,0,0.241" HorizontalAlignment="Left" Width="61"/>
-            <ni:RadixNumericTextBoxInt32 x:Name="numSGfilter" Height="24" Width="43" Margin="0" HorizontalAlignment="Left" RadixVisibility="Collapsed"/>
+            <Label x:Name="label1" Content="S-G filter: polinomial degree" Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
+            <ni:RadixNumericTextBoxInt32 x:Name="numSGdegree" Height="24" Width="43" Margin="0,6,0,5.241" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="2" Range="1, 10, System.Int32" ValueChanged="numSGdegree_ValueChanged"/>
+            <Label x:Name="label2" Content="Sidepoints" Margin="7,5,0,5.241" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <ni:RadixNumericTextBoxInt32 x:Name="numSGframe" Height="24" Width="43" Margin="0" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="4" Range="1, 20, System.Int32" ValueChanged="numSGdegree_ValueChanged"/>
+            <ni:BooleanContentButton x:Name="bcbPause" Margin="10,3,0,3.241" FalseContent="Pause" FontSize="13" TrueContent="Paused" FalseBrush="#FFB7DAFD" TrueBrush="#FFF8F8C3" Padding="1" BorderThickness="6,5" Background="White" Click="bcbPause_Click" Width="71" HorizontalAlignment="Right"/>
         </StackPanel>
-        <Button x:Name="button" Content="Button" HorizontalAlignment="Left" Margin="97,25.759,0,0" Grid.Row="1" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+        <Label x:Name="label3" Content="Iterations" Margin="0,0,50,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <ni:RadixNumericTextBoxInt32 x:Name="numIters" Height="24" Width="43" Margin="0,0,3,0" HorizontalAlignment="Right" RadixVisibility="Collapsed" Value="2" Range="1, 20, System.Int32" ValueChanged="numSGdegree_ValueChanged"/>
+        <ni:Graph x:Name="graphScan" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="1">
+            <ni:Graph.Axes>
+                <ni:AxisDouble x:Name="scanXaxis" Orientation="Horizontal" Adjuster="None" Range="0, 20, System.Double"/>
+            </ni:Graph.Axes>
+            <ni:Graph.Children>
+                <ni:MultiPlotCursor x:Name="crsMaxScan" Label="Max" Foreground="#FF046C05" ToolTip="Max" LabelVisibility="Visible" Visibility="Collapsed"/>
+            </ni:Graph.Children>
+            <ni:Graph.Plots>
+                <ni:Plot Label="Scan">
+                    <ni:PlotRendererGroup>
+                        <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.8"/>
+                        <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF037D70" Size="3,3"/>
+                    </ni:PlotRendererGroup>
+                </ni:Plot>
+                <ni:Plot Label="fitData" Visibility="Collapsed">
+                    <ni:LinePlotRenderer Stroke="#FFBC0909" StrokeThickness="1.5"/>
+                </ni:Plot>
+            </ni:Graph.Plots>
+            <ni:Graph.SelectionFill>
+                <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+            </ni:Graph.SelectionFill>
+        </ni:Graph>
+        <ni:Graph x:Name="graphProc" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="2">
+            <ni:Graph.Axes>
+                <ni:AxisDouble x:Name="procXaxis" Orientation="Horizontal" Adjuster="None" Range="0, 20, System.Double"/>
+            </ni:Graph.Axes>
+            <ni:Graph.Children>
+                <ni:MultiPlotCursor x:Name="crsMaxProc" Label="Max" Foreground="#FF046C05" ToolTip="Max" LabelVisibility="Visible" />
+            </ni:Graph.Children>
+            <ni:Graph.Plots>
+                <ni:Plot Label="Scan" Visibility="Collapsed">
+                    <ni:PlotRendererGroup>
+                        <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.8"/>
+                        <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF037D70" Size="3,3"/>
+                    </ni:PlotRendererGroup>
+                </ni:Plot>
+                <ni:Plot Label="procData">
+                    <ni:LinePlotRenderer Stroke="#FFBC0909" StrokeThickness="1.5"/>
+                </ni:Plot>
+            </ni:Graph.Plots>
+            <ni:Graph.SelectionFill>
+                <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+            </ni:Graph.SelectionFill>
+        </ni:Graph>
     </Grid>
 </UserControl>

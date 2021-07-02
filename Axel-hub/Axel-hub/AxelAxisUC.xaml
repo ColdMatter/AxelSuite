@@ -265,7 +265,7 @@
                     </Grid>
                 </TabItem>
                 <TabItem x:Name="tiOptimization" Header=" Optimization " Height="28" VerticalAlignment="Top" Margin="0">
-                    <PanelsUC:optimUC />
+                    <PanelsUC:OptimUC_Class x:Name="OptimUC1" />
                 </TabItem>
                 
             </TabControl>
