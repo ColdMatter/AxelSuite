@@ -22,6 +22,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows;
@@ -98,6 +99,9 @@ namespace Axel_hub
             strobes.Init(prefix, ref genOptions);
 
             tabSecPlots.SelectedIndex = 1;
+            if (Utils.TheosComputer()) tiOptimization.Visibility = Visibility.Visible;
+            else tiOptimization.Visibility = Visibility.Collapsed;
+
         }
 
         /// <summary>
@@ -114,7 +118,7 @@ namespace Axel_hub
         }
 
         /// <summary>
-        /// Visual optimization hiding/showing AxelChart under some condiotions
+        /// Visual optimization hiding/showing AxelChart under some conditions
         /// </summary>
         public bool AxelChartVisible
         {
@@ -124,7 +128,10 @@ namespace Axel_hub
                 if (value)
                 {
                     if (!Utils.isNull(Application.Current.MainWindow))
-                        rowUpperChart.Height = new GridLength((Application.Current.MainWindow.Height - 60)/3);
+                    {
+                        double h = (Application.Current.MainWindow.Height - 60) / 3;
+                        if (rowUpperChart.Height.Value > h) rowUpperChart.Height = new GridLength(h);
+                    }                       
                     axelChart.Visibility = System.Windows.Visibility.Visible;
                     topSplitter.Visibility = System.Windows.Visibility.Visible;
                 }
@@ -763,7 +770,7 @@ namespace Axel_hub
         public void SaveDefaultModes(bool Top = true, bool Middle = true, bool Bottom = true)
         {
             double h = Application.Current.MainWindow.Height - 60;
-            modes.TopFrame = Utils.EnsureRange(rowUpperChart.Height.Value, 50,600);
+            modes.TopFrame = Utils.EnsureRange(rowUpperChart.Height.Value, 10,600);
             modes.MiddleFrame = Utils.EnsureRange(rowMiddleChart.Height.Value, 50,600);
 
             if (Top) axelChart.modesFromVisual();
@@ -845,7 +852,6 @@ namespace Axel_hub
             UpdateStrobesParams();
         }
         
-        private int timeStackLimit = 3; // process back 30 time steps
         /// <summary>
         /// Prepare for the next measureme with specific phase
         /// </summary>
@@ -1026,6 +1032,40 @@ namespace Axel_hub
         private void chkSignalLog_Checked(object sender, RoutedEventArgs e)
         {
             if (!Utils.isNull(modes)) SaveDefaultModes(false,true,false);
+        }
+
+        public delegate void SendMMexecHandler(MMexec mme);
+        public event SendMMexecHandler SendMMexecEvent;
+        protected virtual void OnSendMMexec(MMexec mme)
+        {
+            SendMMexecEvent?.Invoke(mme);
+        }
+        private void tabLowPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (tabLowPlots.SelectedIndex == 3) columnPID.Width = new GridLength(0);
+            else { columnPID.Width = new GridLength(145); return; }
+            // Optim init
+            if (!Utils.TheosComputer())
+            /*{
+                Dictionary<string, object> dct = new Dictionary<string, object>();
+                dct.Add("Param1", 1.11);
+                dct.Add("Param2", 2.22);
+                dct.Add("Param3", 3.33);
+                OptimUC1.Init(dct);
+            }
+            else*/
+            {
+                mm2status = null;
+                OnSendMMexec(new MMexec("", "Axel-hub", "status"));
+                int i = 0;
+                while (Utils.isNull(mm2status) && (i < 100))
+                {
+                    //Utils.DoEvents();
+                    Thread.Sleep(40);
+                    i++;
+                }
+                OptimUC1.Init(mm2status?.prms);               
+            }
         }
 
         /// <summary>
@@ -1324,7 +1364,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e) // not destroying anything, just preparing
         {
-
+            OptimUC1.Final();
         }
 
         private void btnExtractHeader_Click(object sender, RoutedEventArgs e)

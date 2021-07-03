@@ -176,7 +176,7 @@ namespace Axel_hub
         {
             if (!Utils.isNull(rawDataLog)) rawDataLog.log(JsonConvert.SerializeObject(mme));
             runID = Convert.ToInt32(mme.prms["runID"]);
-            Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, genOptions.intN2, chkStdDev.IsChecked.Value);
+            Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, chkStdDev.IsChecked.Value);
             if (Showing)
             {
                 lboxNB.Items.Clear();

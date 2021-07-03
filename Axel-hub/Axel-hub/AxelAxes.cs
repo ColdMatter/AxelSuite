@@ -119,6 +119,8 @@ namespace Axel_hub
             this[Count - 1].OnLog += new AxelAxisClass.LogHandler(LogEvent);
             this[Count - 1].strobes.OnLog += new strobesUC.LogHandler(LogEvent);
             this[Count - 1].OnSend += new AxelAxisClass.SendHandler(ucScan.SendJson);
+            this[Count - 1].SendMMexecEvent += new AxelAxisClass.SendMMexecHandler(SendMMexec);
+            this[Count - 1].OptimUC1.SendMMexecEvent += new PanelsUC.OptimUC_Class.SendMMexecHandler(SendMMexec);
         }
         /// <summary>
         /// Get an axis by prefix
@@ -208,7 +210,7 @@ namespace Axel_hub
             set2startADC24(down, SamplingPeriod, InnerBufferSize); 
             if (!down) // user cancel
             {
-               axelMems.StopAcquisition();
+                axelMems.StopAcquisition();
                 if (!Utils.isNull(axelMemsTemperature))
                     if (genOptions.TemperatureEnabled && axelMemsTemperature.isDevicePlugged())
                         axelMemsTemperature.StopAcquisition();
@@ -455,12 +457,12 @@ namespace Axel_hub
                     break;
             }
         }
-        public void ask4status()
-        {
-            MMexec mme = new MMexec("", "Axel-hub", "status");
+        public void SendMMexec(MMexec mme)
+        {            
             string json = JsonConvert.SerializeObject(mme);
             ucScan.SendJson(json);
         }
+
         /// <summary>
         /// When in Jumbo mode Start/Stop the first part of it
         /// </summary>

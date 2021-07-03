@@ -213,7 +213,7 @@ namespace Axel_hub
         {
             if (jumbo)               
             {
-                if (down) axes.ask4status();
+                if (down) axes.SendMMexec(new MMexec("", "Axel-hub", "status"));
                 if (Options.genOptions.JumboScan) axes.DoJumboScan(down);
                 else               
                     if (Options.genOptions.JumboRepeat) axes.DoJumboRepeat(down, axes[0].numCycles.Value);               
@@ -322,6 +322,7 @@ namespace Axel_hub
         private void OnActiveRemote(bool activeComm)
         {
             axes.OnOptionsChange(Options.genOptions);
+
         }
 
         /// <summary>

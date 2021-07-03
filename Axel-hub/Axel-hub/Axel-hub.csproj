@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Axel_hub</RootNamespace>
     <AssemblyName>Axel-hub</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -60,6 +60,9 @@
   <ItemGroup>
     <Reference Include="DataStructures">
       <HintPath>..\..\..\EDMSuite\MotMaster2\bin\Nav\DataStructures.dll</HintPath>
+    </Reference>
+    <Reference Include="dotMath, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\dotMath.1.5.2\lib\netstandard2.0\dotMath.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Analysis.Enterprise, Version=19.0.45.49152, Culture=neutral, PublicKeyToken=4febd62461bf11a4, processorArchitecture=MSIL">
       <Private>False</Private>
@@ -125,26 +128,41 @@
     <Compile Include="AxelAxisUC.xaml.cs">
       <DependentUpon>AxelAxisUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AxelChartUC.xaml.cs">
+    <Compile Include="PanelsUC\AxelChartUC.xaml.cs">
       <DependentUpon>AxelChartUC.xaml</DependentUpon>
     </Compile>
     <Compile Include="AxelHMems.cs" />
     <Compile Include="DataStackLib.cs" />
     <Compile Include="Options\OptionsType.cs" />
+    <Compile Include="PanelsUC\OptimGridScanUC.xaml.cs">
+      <DependentUpon>OptimGridScanUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimSeqScan.xaml.cs">
+      <DependentUpon>OptimSeqScan.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimSimplexUC.xaml.cs">
+      <DependentUpon>OptimSimplexUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\scanParamUC.xaml.cs">
+      <DependentUpon>scanParamUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimUC.xaml.cs">
+      <DependentUpon>OptimUC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="scanUC.xaml.cs">
       <DependentUpon>scanUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="signalUC.xaml.cs">
+    <Compile Include="PanelsUC\signalUC.xaml.cs">
       <DependentUpon>signalUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="strobesUC.xaml.cs">
+    <Compile Include="PanelsUC\strobesUC.xaml.cs">
       <DependentUpon>strobesUC.xaml</DependentUpon>
     </Compile>
     <Page Include="AxelAxisUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="AxelChartUC.xaml">
+    <Page Include="PanelsUC\AxelChartUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -164,15 +182,35 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="PanelsUC\OptimGridScanUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimSeqScan.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimSimplexUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\scanParamUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="scanUC.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="signalUC.xaml">
+    <Page Include="PanelsUC\signalUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="strobesUC.xaml">
+    <Page Include="PanelsUC\strobesUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -200,6 +238,8 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -227,13 +267,13 @@
     <Resource Include="Properties\rocket1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Properties\TripleBar.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Properties\speed2.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="ToDoList.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Properties\TripleBarRusty.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
