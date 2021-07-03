@@ -42,7 +42,7 @@ namespace Axel_hub.PanelsUC
         public void Final()
         {
             if (Utils.isNull(opts)) opts = new Dictionary<string, double>();
-            opts["moduleIdx"] = 0;
+            opts["moduleIdx"] = 1;
             opts["numSGdegree"] = numSGdegree.Value;
             opts["numSGframe"] = numSGframe.Value;
             opts["numZRmin"] = numZRmin.Value;

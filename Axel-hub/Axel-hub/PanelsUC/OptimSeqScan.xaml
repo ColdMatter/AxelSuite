@@ -6,7 +6,7 @@
              xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
              xmlns:local="clr-namespace:Axel_hub.PanelsUC"
              mc:Ignorable="d" Height="385.134" Width="585.722">
-    <Grid>
+    <Grid x:Name="mainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="35"/>
             <RowDefinition Height="386*"/>

@@ -32,19 +32,19 @@ namespace Axel_hub.PanelsUC
         #region Common
         public Dictionary<string, double> opts { get; set; }
         public void Init(Dictionary<string, double> _opts)
-        {            
-            
+        {                       
             if (Utils.isNull(_opts)) return;
             opts = new Dictionary<string, double>(_opts);
             if (opts.Count.Equals(0)) return;
             if (opts.ContainsKey("numSGdegree")) numSGdegree.Value = Convert.ToInt32(opts["numSGdegree"]);
             if (opts.ContainsKey("numSGframe"))  numSGframe.Value =  Convert.ToInt32(opts["numSGframe"]);
-            if (opts.ContainsKey("numIters"))    numIters.Value =    Convert.ToInt32(opts["numIters"]);           
+            if (opts.ContainsKey("numIters"))    numIters.Value =    Convert.ToInt32(opts["numIters"]);
+            //IEnumerable<RadixNumericTextBoxInt32> collection = mainGrid.Children.OfType<RadixNumericTextBoxInt32>();
         }
         public void Final()
         {
             if (Utils.isNull(opts)) opts = new Dictionary<string, double>();
-            opts["moduleIdx"] = 1;
+            opts["moduleIdx"] = 0;
             opts["numSGdegree"] = numSGdegree.Value;
             opts["numSGframe"] = numSGframe.Value; 
             opts["numIters"] = numIters.Value;
@@ -153,7 +153,7 @@ namespace Axel_hub.PanelsUC
             raw = new List<Point>(); 
             OnParamSet(new OptimEventArgs(scan.sParam, scan.sFrom, "scanning..."));
             scanXaxis.Range = new Range<double>(scan.sFrom, scan.sTo);
-            procXaxis.Range = new Range<double>(scan.sFrom, scan.sTo);
+            
             double r, d = scan.sFrom;
             while ((d < scan.sTo * 1.0001) && !state.Equals(optimState.cancelRequest))
             {
@@ -164,7 +164,9 @@ namespace Axel_hub.PanelsUC
             }
             OnParamSet(new OptimEventArgs(scan.sParam, scan.sFrom, "scanning..."));
             var pr = SGfilter(raw);
-            graphProc.Data[1] = pr;
+            if (pr.Count.Equals(0)) { log("Err: Savitzky-Gloay filter problem", false); return raw; }
+            procXaxis.Range = new Range<double>(pr[0].X, pr[pr.Count-1].X);
+            graphProc.Data[1] = pr; Utils.DoEvents();
 
             return pr;
         }
@@ -196,7 +198,10 @@ namespace Axel_hub.PanelsUC
         {
             if (Utils.isNull(bcbPause)) return;
             if (!state.Equals(optimState.paused)) return;
-            proc = SGfilter(raw); graphProc.Data[1] = proc; Utils.DoEvents();
+            proc = SGfilter(raw);
+            if (proc.Count.Equals(0)) return;
+            procXaxis.Range = new Range<double>(proc[0].X, proc[proc.Count-1].X);
+            graphProc.Data[1] = proc; Utils.DoEvents();
             Point pt = maximum(proc); crsMaxProc.AxisValue = pt.X;
         }
 

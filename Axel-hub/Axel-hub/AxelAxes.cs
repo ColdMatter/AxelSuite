@@ -210,7 +210,7 @@ namespace Axel_hub
             set2startADC24(down, SamplingPeriod, InnerBufferSize); 
             if (!down) // user cancel
             {
-               axelMems.StopAcquisition();
+                axelMems.StopAcquisition();
                 if (!Utils.isNull(axelMemsTemperature))
                     if (genOptions.TemperatureEnabled && axelMemsTemperature.isDevicePlugged())
                         axelMemsTemperature.StopAcquisition();

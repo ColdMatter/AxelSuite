@@ -48,7 +48,7 @@
                         <TextBox x:Name="tbCostFunc" Margin="0,2,0,0" TextWrapping="Wrap" Text="" FontSize="13"/>
                     </GroupBox>
                     <GroupBox x:Name="groupBox2" Grid.Column="1" Header="Conv. Prec." Margin="0,0,-0.038,-0.177" >
-                        <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0" Range="0.001, Infinity, System.Double"/>
+                        <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0" Range="0.01, Infinity, System.Double" Interval="0.1" Value="0.1"/>
                     </GroupBox>
                 </Grid>
                 <DataGrid x:Name="dgParams" Margin="0" Grid.Row="1" FontSize="12" AutoGenerateColumns="False" ItemsSource="{Binding dt}" RowHeight="23" CanUserAddRows="False" CanUserResizeRows="False">

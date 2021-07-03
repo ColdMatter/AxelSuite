@@ -74,12 +74,13 @@ namespace Axel_hub.PanelsUC
     {
         public List<EnabledMMscan> sParams;
         public string cost;
-        public Dictionary<string, double> opts;
+        public Dictionary<string, double> convOpts;
         public List<Dictionary<string, double>> procOpts;
         public OptimSetting()
         {
             sParams = new List<EnabledMMscan>();
-            opts = new Dictionary<string, double>();
+            convOpts = new Dictionary<string, double>();
+            procOpts = new List<Dictionary<string, double>>();
         }
     }
     /// <summary>
@@ -127,20 +128,22 @@ namespace Axel_hub.PanelsUC
             paramList = new ObservableCollection<string>();
             foreach (var prm in mmParams)
                 paramList.Add(Convert.ToString(prm.Key));
-
             updateDataTable(os.sParams);
             this.DataContext = this;
-            if (Utils.isNull(os.procOpts)) return;
+            if (os.procOpts.Count.Equals(0)) return;
+            tbCostFunc.Text = os.cost;
+            if (os.convOpts.ContainsKey("ConvPrec")) numConvPrec.Value = os.convOpts["ConvPrec"];
+
+            if (optimProcs.Count != os.procOpts.Count)  { log("Err: some optimization options missing."); return; }
             for (int i = 0; i < optimProcs.Count; i++)
-            {
-                if (os.procOpts.Count < i) continue;
                 optimProcs[i].Init(os.procOpts[i]);
-            }
         }
         public void Final()
         {
             if (!IsEnabled) return;
             ClearStatus();
+            os.cost = tbCostFunc.Text;
+            os.convOpts["ConvPrec"] = numConvPrec.Value;
 
             foreach (IOptimization io in optimProcs)
                 io.Final();
@@ -161,9 +164,7 @@ namespace Axel_hub.PanelsUC
         public void SaveSetting(string fn = "")
         {
             if (fn.Equals("")) fn = Utils.configPath + "Optim.CFG";
-            UpdateParamsFromTable();
-            os.cost = tbCostFunc.Text;
-            os.opts["ConvPrec"] = numConvPrec.Value;
+            UpdateParamsFromTable();            
             string fileJson = JsonConvert.SerializeObject(os);
             File.WriteAllText(fn, fileJson);
         }
@@ -241,7 +242,7 @@ namespace Axel_hub.PanelsUC
         protected double TakeAShotEvent(object sender, EventArgs e)
         {
             double d, rslt = Double.NaN; OptimEventArgs ex = (OptimEventArgs)e;
-            ParamSetEvent(sender, e); Thread.Sleep(30); Utils.DoEvents(); // update prm (both ways)
+            ParamSetEvent(sender, e); Thread.Sleep(100); Utils.DoEvents(); // update prm (both ways)
             
             if (Utils.TheosComputer())
             {

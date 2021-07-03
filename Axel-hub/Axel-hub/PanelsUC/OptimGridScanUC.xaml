@@ -25,8 +25,8 @@
                 <ni:BooleanContentButton x:Name="bcbFilter" Margin="10,3,0,3.241" FalseContent="Filter" FontSize="13" TrueContent="Filter" FalseBrush="#FFB7DAFD" TrueBrush="#FFF8F8C3" Padding="1" BorderThickness="6,5" Background="White" Click="bcbFilter_Click" Width="71" HorizontalAlignment="Right" VerticalAlignment="Center" Height="30"/>
             </StackPanel>
 
-            <Label x:Name="label3" Content="Z-range:" Margin="0" HorizontalAlignment="Left" VerticalAlignment="Center" Height="26" Width="54" Grid.Column="1"/>
-            <ni:NumericTextBoxDouble x:Name="numZRmin" Grid.Column="1" HorizontalAlignment="Left" Height="24" Margin="55,0,0,0" VerticalAlignment="Center" Width="61" Value="-50" ValueChanged="numZRmin_ValueChanged"/>
+            <Label x:Name="label3" Content="Z-range:" Margin="0" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1"/>
+            <ni:NumericTextBoxDouble x:Name="numZRmin" Grid.Column="1" HorizontalAlignment="Left" Height="24" Margin="60,0,0,0" VerticalAlignment="Center" Width="61" Value="-50" ValueChanged="numZRmin_ValueChanged"/>
             <ni:NumericTextBoxDouble x:Name="numZRmax" Grid.Column="1" HorizontalAlignment="Left" Height="24" Margin="129.911,0,0,0" VerticalAlignment="Center" Width="61" Value="200" ValueChanged="numZRmin_ValueChanged"/>
 
         </Grid>
