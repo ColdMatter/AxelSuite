@@ -23,7 +23,8 @@ namespace Axel_hub
     {      
         public AxelMems axelMems = null;
         private AxelMemsTemperature axelMemsTemperature = null;
-        private scanClass ucScan; 
+        private scanClass ucScan;
+        public MMexec mm2status = null;
 
         Random rnd = new Random();
 
@@ -384,7 +385,7 @@ namespace Axel_hub
                         LogEvent(json, Brushes.Blue);
                         lastGrpExe = mme.Clone();
                         if (!mme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) ucScan.remoteMode = RemoteMode.Simple_Repeat;
-                        if (ucScan.remoteMode != RemoteMode.Simple_Repeat)
+                        if (ucScan.remoteMode != RemoteMode.Simple_Repeat) 
                         {
                             switch (genOptions.memsInJumbo)
                             {
@@ -425,6 +426,10 @@ namespace Axel_hub
                         for (int i = 0; i < rCount; i++) this[i].DoPrepare(mme);
                     }
                     break;
+                case "status":
+                    //mm2status = mme.Clone();
+                    for (int i = 0; i < rCount; i++) this[i].mm2status = mme.Clone();
+                    break;
                 case ("message"):
                     {
                         string txt = (string)mme.prms["text"];
@@ -450,7 +455,12 @@ namespace Axel_hub
                     break;
             }
         }
-
+        public void ask4status()
+        {
+            MMexec mme = new MMexec("", "Axel-hub", "status");
+            string json = JsonConvert.SerializeObject(mme);
+            ucScan.SendJson(json);
+        }
         /// <summary>
         /// When in Jumbo mode Start/Stop the first part of it
         /// </summary>
