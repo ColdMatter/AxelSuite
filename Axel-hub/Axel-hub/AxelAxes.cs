@@ -360,6 +360,16 @@ namespace Axel_hub
                         }
                         int idx = prfIdx(pref); if (idx == -1) return;
                         this[idx].DoShot(mme, lastGrpExe); // current, group frame
+                        if (genOptions.TemperatureEnabled && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462))
+                        {
+                            if (!axelMemsTemperature.isDevicePlugged())
+                                LogEvent("No temperature device connected !", Brushes.Red);
+                            else
+                            {
+                                double[] temper = axelMemsTemperature.TakeTheTemperature();
+                                this[0].axelChart.memsTemperature = temper[0]; this[1].axelChart.memsTemperature = temper[1];
+                            }
+                        }
                         int li = (rCount == 2) ? 1 : 0;
                         if (mme.prms.ContainsKey("last") && (li == idx)) // after the last axis
                         {
@@ -392,7 +402,7 @@ namespace Axel_hub
                             switch (genOptions.memsInJumbo)
                             {
                                 case GeneralOptions.MemsInJumbo.USB9251:
-                                    ucScan.SetActivity("MEMS data acquisition");
+                                    ucScan.SetActivity("MEMS data acquisition from AH");
                                     ucScan.Running = true;
                                     axelMems.Reset(); 
                                     startADC(true, 1/ucScan.GetSamplingFreq(true), ucScan.GetBufferSize());
@@ -401,7 +411,7 @@ namespace Axel_hub
                                     ucScan.SetActivity("MEMS data from MM2");
                                     int sr = (mme.prms.ContainsKey("samplingRate")) ? Convert.ToInt32(mme.prms["samplingRate"]) : 200000;
                                     set2chartActive(true, sr);
-                                    break;
+                                     break;
                             }                               
                         }
                         else
@@ -601,25 +611,38 @@ namespace Axel_hub
             ucScan.remoteMode = RemoteMode.Jumbo_Repeat;
 
             // set ADC24 and corr. visuals
-            if (genOptions.JumboRepeat && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.USB9251))
-            {
-                if (genOptions.followPID) ucScan.SetActivity("Data acquis. with PID feedback");
-                else ucScan.SetActivity("Data acquis.(no PID feedback)");
-                if (genOptions.Diagnostics) ucScan.SetActivity("Data acquis.(diagnostics)");
-                ucScan.Running = true;
-                axelMems.Reset();
-                //if (!probeMode) 
-                startADC(true, 1/ucScan.GetSamplingFreq(true), ucScan.GetBufferSize());
-                for (int i = 0; i < rCount; i++)
+            if (genOptions.JumboRepeat)
+                switch (genOptions.memsInJumbo)
                 {
-                    this[i].axelChart.Waveform.TimeSeriesMode = true;
-                    //plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
-                    this[i].timeStack.Clear();
-                    if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462)) this[i].axelChart.SetInfo("Remote data source for MEMS");
-                    Thread.Sleep(500); Utils.DoEvents();
+                    case GeneralOptions.MemsInJumbo.USB9251:
+                        if (genOptions.followPID) ucScan.SetActivity("Data acquis. with PID feedback");
+                        else ucScan.SetActivity("Data acquis.(no PID feedback)");
+                        if (genOptions.Diagnostics) ucScan.SetActivity("Data acquis.(diagnostics)");
+                        ucScan.Running = true;
+                        axelMems.Reset();
+                        //if (!probeMode) 
+                        startADC(true, 1 / ucScan.GetSamplingFreq(true), ucScan.GetBufferSize());
+                        for (int i = 0; i < rCount; i++)
+                        {
+                            this[i].axelChart.Waveform.TimeSeriesMode = true;
+                            //plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
+                            this[i].timeStack.Clear();
+                            if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462)) this[i].axelChart.SetInfo("Remote data source for MEMS");
+                            Thread.Sleep(500); Utils.DoEvents();
+                        }
+                        break;
+                    case GeneralOptions.MemsInJumbo.PXI4462:
+                        if (genOptions.TemperatureEnabled)
+                        {
+                            axelMems.Reset();
+                            if (!Utils.isNull(axelMemsTemperature))
+                                if (axelMemsTemperature.isDevicePlugged())
+                                    axelMemsTemperature.StartAcquisition();
+                        }
+                        break;
                 }
-             }
-             ucScan.SendJson(jsonR);
+
+            ucScan.SendJson(jsonR);
                          
              for (int i = 0; i < rCount; i++)
              {

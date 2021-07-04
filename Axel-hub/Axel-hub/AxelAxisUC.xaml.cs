@@ -653,7 +653,8 @@ namespace Axel_hub
             axelChart.Refresh();
             if (shotListRaw.enabled)
             {
-                SingleShot ss = new SingleShot(new Point3D(iTime, A, tTime), adm3, Double.NaN, "r"+ genOptions.MemsAverOver.ToString());                
+                double temper = genOptions.TemperatureEnabled ? axelChart.memsTemperature : Double.NaN;
+                SingleShot ss = new SingleShot(new Point3D(iTime, A, tTime), adm3, temper, "r"+ genOptions.MemsAverOver.ToString());                
                 shotListRaw.Add(ss);
             }
             return rslt;
@@ -681,7 +682,7 @@ namespace Axel_hub
             try
             {   
                 int pCount = shotList.Count; 
-                double temper = (genOptions.TemperatureEnabled) ? axelChart.memsTemperature : Double.NaN;
+                double temper = genOptions.TemperatureEnabled ? axelChart.memsTemperature : Double.NaN;
 
                 DataStack ds;
                 for (int i = 0; i < quantList.Count; i++)
