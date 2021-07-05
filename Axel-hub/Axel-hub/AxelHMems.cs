@@ -656,6 +656,7 @@ namespace Axel_hub
         public double[] TakeTheTemperature()
         {
             double[] rslt = null;
+            if (Utils.isNull(tmpTask)) { StartAcquisition(); }
             try
             {
                  AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);

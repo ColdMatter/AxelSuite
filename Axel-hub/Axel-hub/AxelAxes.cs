@@ -367,7 +367,10 @@ namespace Axel_hub
                             else
                             {
                                 double[] temper = axelMemsTemperature.TakeTheTemperature();
-                                this[0].axelChart.memsTemperature = temper[0]; this[1].axelChart.memsTemperature = temper[1];
+                                if (!Utils.isNull(temper))
+                                {
+                                    this[0].axelChart.memsTemperature = temper[0]; this[1].axelChart.memsTemperature = temper[1];
+                                }
                             }
                         }
                         int li = (rCount == 2) ? 1 : 0;
