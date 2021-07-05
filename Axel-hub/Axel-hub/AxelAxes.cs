@@ -360,7 +360,7 @@ namespace Axel_hub
                         }
                         int idx = prfIdx(pref); if (idx == -1) return;
                         this[idx].DoShot(mme, lastGrpExe); // current, group frame
-                        if (genOptions.TemperatureEnabled && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462))
+                        if (genOptions.TemperatureEnabled && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462) && !Utils.isNull(axelMemsTemperature))
                         {
                             if (!axelMemsTemperature.isDevicePlugged())
                                 LogEvent("No temperature device connected !", Brushes.Red);
@@ -411,7 +411,7 @@ namespace Axel_hub
                                     ucScan.SetActivity("MEMS data from MM2");
                                     int sr = (mme.prms.ContainsKey("samplingRate")) ? Convert.ToInt32(mme.prms["samplingRate"]) : 200000;
                                     set2chartActive(true, sr);
-                                     break;
+                                    break;
                             }                               
                         }
                         else
@@ -632,12 +632,10 @@ namespace Axel_hub
                         }
                         break;
                     case GeneralOptions.MemsInJumbo.PXI4462:
-                        if (genOptions.TemperatureEnabled)
-                        {
-                            axelMems.Reset();
-                            if (!Utils.isNull(axelMemsTemperature))
-                                if (axelMemsTemperature.isDevicePlugged())
-                                    axelMemsTemperature.StartAcquisition();
+                        if (genOptions.TemperatureEnabled && !Utils.isNull(axelMemsTemperature))
+                        {                           
+                            if (axelMemsTemperature.isDevicePlugged())
+                               axelMemsTemperature.StartAcquisition();
                         }
                         break;
                 }
