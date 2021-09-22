@@ -521,8 +521,8 @@ namespace Axel_hub
                  {
                      case "NAVIGATOR-ANAL":
                      case "DESKTOP-IHEEQUU": partner = "MOTMaster2"; break;
-                     case "DESKTOP-U334RMA": partner = "Axel Probe"; break; //"MOTMaster2"
-                     default: partner = "Axel Probe"; break;
+                     case "DESKTOP-U334RMA": partner = "Axel Probe"; break; //"Axel Probe"
+                     default: partner = "MOTMaster2"; break;
                  }
              remote.Connect(partner);
 

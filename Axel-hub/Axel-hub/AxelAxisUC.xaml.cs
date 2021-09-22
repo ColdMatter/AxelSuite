@@ -319,8 +319,8 @@ namespace Axel_hub
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".sdt"; // Default file extension
-            dlg.Filter = "Scan Data file (.sdt)|*.sdt"; // Filter files by extension
+            dlg.DefaultExt = ".ahf"; // Default file extension
+            dlg.Filter = "Axel-hub File (.ahf)|*.ahf|Scan Data file (.sdt)|*.sdt"; // Filter files by extension
 
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
@@ -330,9 +330,34 @@ namespace Axel_hub
             if (result != true) return;
             if (Utils.isNull(srsFringes)) srsFringes = new DataStack(); GroupBox gb = null;
             srsFringes.OpenPair(dlg.FileName, ref gb);
-            graphFringes.Data[0] = srsFringes;
+            graphFringes.Data[0] = srsFringes; chkAutoScaleBottom_Checked(sender, e);
+
             lbInfoFringes.Content = srsFringes.rem;
             tbRemFringes.Text = srsFringes.rem;
+        }
+
+        public bool SetJumboFringes(bool probeMode)
+        {
+            if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
+            else srsFringes.Clear();
+            if (probeMode)
+            {
+                GroupBox gb = null; tabLowPlots.SelectedItem = tiFringes;
+                srsFringes.OpenPair(Utils.configPath + "fringes.ahf", ref gb);
+                graphFringes.Data[0] = srsFringes; Utils.DoEvents();
+                chkAutoScaleBottom_Checked(null, null);
+                lbInfoFringes.Content = srsFringes.rem;
+                tbRemFringes.Text = srsFringes.rem;
+                crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
+                Thread.Sleep(1000);
+            }
+            else if (!genOptions.Diagnostics) btnOpenFringes_Click(null, null); //MOVE to ucScan
+            if (srsFringes.Count.Equals(0) && !genOptions.Diagnostics)
+            {
+                Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);               
+                return false;
+            }
+            else return true;
         }
 
         /// <summary>
@@ -435,45 +460,12 @@ namespace Axel_hub
             crsDownStrobe.AxisValue = 1.5; crsUpStrobe.AxisValue = 4.6;
         }
 
-        DispatcherTimer ddTimer;
-        /// <summary>
-        /// internal simulation test of join data 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void btnJoinLogTest_Click(object sender, RoutedEventArgs e) // 
         {
-            btnJoinLogTest.Value = !btnJoinLogTest.Value;
-            if (!theTime.isTimeRunning && btnJoinLogTest.Value)
-            {
-                Utils.TimedMessageBox("Waveform Stopwatch is NOT running.");
-                btnJoinLogTest.Value = false;
-                return;
-            }
-            if (btnJoinLogTest.Value)
-            {
-                resetQuantList("");
-                if (Utils.isNull(ddTimer))
-                {
-                    ddTimer = new DispatcherTimer();
-                    ddTimer.Tick += new EventHandler(ddTimer_Tick);
-                    ddTimer.Interval = new TimeSpan(500 * 10000);
-                }
-                ddTimer.Start();
-            }
-            else
-            {
-                ddTimer.Stop();
-            }
-            shotList.enabled = btnJoinLogTest.Value;
+            
         }
  
-        private void ddTimer_Tick(object sender, EventArgs e)
-        {
-            if (theTime.isTimeRunning)
-                quantList.Add(new Point3D(theTime.elapsedTime, 3.0, 5.0)); 
-        }
-
+       
         /// <summary>
         /// Save trend as time & srsMems, srsMotAccel, srsAccel, srsCorr series table
         /// </summary>
@@ -815,7 +807,7 @@ namespace Axel_hub
             else plotMems.Visibility = System.Windows.Visibility.Hidden;
             if (chkCorr.IsChecked.Value) plotCorr.Visibility = System.Windows.Visibility.Visible;
             else plotCorr.Visibility = System.Windows.Visibility.Hidden;
-            if (chkMOT.IsChecked.Value) plotMotAccel.Visibility = System.Windows.Visibility.Visible;
+            if (chkQuant.IsChecked.Value) plotMotAccel.Visibility = System.Windows.Visibility.Visible;
             else plotMotAccel.Visibility = System.Windows.Visibility.Hidden;
             if (chkAccel.IsChecked.Value) plotAccel.Visibility = System.Windows.Visibility.Visible;
             else plotAccel.Visibility = System.Windows.Visibility.Hidden;
@@ -912,50 +904,51 @@ namespace Axel_hub
         /// </summary>
         /// <param name="mme"></param>
         public void DoPrepare(MMexec mme)
-        {
+        {            
             switch (mme.cmd)
             {
-               case ("repeat"):
+               case ("repeat"):                    
+                    tabLowPlots.SelectedItem = tiAccelTrend;
+                    ucSignal.chkN1_Checked(null, null); // update state
+                    // chkMEMS_Checked(null, null); !!!
+                    Clear();
+                    lastGrpExe = mme.Clone();
+                    if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None))
                     {
-                        tabLowPlots.SelectedIndex = 1;
-                        ucSignal.chkN1_Checked(null, null); // update state
-                        // chkMEMS_Checked(null, null); !!!
-                        Clear();
-                        lastGrpExe = mme.Clone();
-                        if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None))
-                        {
-                            plotcursorAccel.Visibility = System.Windows.Visibility.Visible;
-                        }
-                        else
-                        {
-                            axelChart.Waveform.TimeSeriesMode = true;
-                            plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;                 
-                        }
-                        string ss = ";  Data Src: Quant-> MM2";
-                        ss += "; MEMS-> ";
-                        switch (genOptions.memsInJumbo)
-                        {
-                            case GeneralOptions.MemsInJumbo.USB9251:
-                                ss += "USB-9251";
-                                break;
-                            case GeneralOptions.MemsInJumbo.PXI4462:
-                                ss += "PXI-4462";
-                                break;
-                        }
-                        lbInfoAccelTrend.Content = "grpID: " + mme.prms["groupID"] + ss; //lastGrpExe
+                        plotcursorAccel.Visibility = System.Windows.Visibility.Visible;
                     }
+                    else
+                    {
+                        axelChart.Waveform.TimeSeriesMode = true;
+                        plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;                 
+                    }
+                    string ss = ";  Data Src: Quant-> MM2";
+                    ss += "; MEMS-> ";
+                    switch (genOptions.memsInJumbo)
+                    {
+                        case GeneralOptions.MemsInJumbo.USB9251:
+                            ss += "USB-9251";
+                            break;
+                        case GeneralOptions.MemsInJumbo.PXI4462:
+                            ss += "PXI";
+                            break;
+                    }
+                    lbInfoAccelTrend.Content = "grpID: " + mme.prms["groupID"] + ss; //lastGrpExe                    
                     break;
-                case ("scan"):
-                    {
-                        lastGrpExe = mme.Clone();
-                        lastScan = new MMscan();
-                        if (lastScan.FromDictionary(mme.prms)) ucSignal.lastScan = lastScan.Clone();
-                        tabLowPlots.SelectedIndex = 0;
-                        ucSignal.chkN1_Checked(null, null);
-                        Clear();
-                        lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
-                            ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");
-                    }
+                case ("scan"):                   
+                    lastGrpExe = mme.Clone();
+                    lastScan = new MMscan();
+                    if (lastScan.FromDictionary(mme.prms)) ucSignal.lastScan = lastScan.Clone();
+                    tabLowPlots.SelectedItem = tiFringes;
+                    ucSignal.chkN1_Checked(null, null);
+                    Clear();
+                    lbInfoFringes.Content = "groupID:" + lastScan.groupID + ";  Scanning: " + lastScan.sParam +
+                        ";  From: " + lastScan.sFrom.ToString("G4") + ";  To: " + lastScan.sTo.ToString("G4") + ";  By: " + lastScan.sBy.ToString("G4");                    
+                    break;
+                case ("multiscan"):
+                    MultiScanUC1.Init(mme); 
+                    tabLowPlots.SelectedItem = tiMultiScan;
+                    return;
                     break;
             }
             if (Utils.isNull(srsFringes)) srsFringes = new DataStack(dataLength);
@@ -966,7 +959,8 @@ namespace Axel_hub
             if (Utils.isNull(phiMg)) phiMg = new DataStack(1000);
             if (Utils.isNull(accelMg)) accelMg = new DataStack(1000);
 
-            ucSignal.Init(mme, mm2status); 
+            ucSignal.Init(mme, mm2status);
+            chkAutoScaleBottom_Checked(null, null);
         }
 
         /// <summary>
@@ -1011,7 +1005,7 @@ namespace Axel_hub
                         }));
                 }
             }
-            if ((tabSecPlots.SelectedIndex == 4) && chkBigCalcTblUpdate.IsChecked.Value)
+            if (tabSecPlots.SelectedItem.Equals(tabDistance) && chkBigCalcTblUpdate.IsChecked.Value)
             {
                 if (dr.ContainsKey("MEMS"))
                     lbiMEMS.Content = "MEMS[mg] = " + dr["MEMS"].ToString(genOptions.SignalTablePrec);
@@ -1043,10 +1037,10 @@ namespace Axel_hub
         }
         private void tabLowPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (tabLowPlots.SelectedIndex == 3) columnPID.Width = new GridLength(0);
+            if (tabLowPlots.SelectedItem.Equals(tiMultiScan) || tabLowPlots.SelectedItem.Equals(tiOptimization)) columnPID.Width = new GridLength(0);
             else { columnPID.Width = new GridLength(145); return; }
             // Optim init
-            if (!Utils.TheosComputer())
+            if (tabLowPlots.SelectedItem.Equals(tiOptimization) && !Utils.TheosComputer())
             /*{
                 Dictionary<string, object> dct = new Dictionary<string, object>();
                 dct.Add("Param1", 1.11);
@@ -1067,6 +1061,31 @@ namespace Axel_hub
                 }
                 OptimUC1.Init(mm2status?.prms);               
             }
+        }
+
+        private void chkAutoScaleBottom_Checked(object sender, RoutedEventArgs e)
+        {
+            if (chkAutoScaleBottom.IsChecked.Value)
+            {
+                fringesYaxis.Adjuster = RangeAdjuster.FitLoosely;
+                accelYAxis.Adjuster = RangeAdjuster.FitLoosely;
+                corrYAxis.Adjuster = RangeAdjuster.FitLoosely;
+            }
+            else
+            {
+                fringesYaxis.Adjuster = RangeAdjuster.None;
+                accelYAxis.Adjuster = RangeAdjuster.None;
+                corrYAxis.Adjuster = RangeAdjuster.None;
+            }
+            graphFringes.ResetZoomPan(); graphFringes.Refresh();
+            graphAccelTrend.ResetZoomPan(); graphAccelTrend.Refresh();
+        }
+
+        ShowcaseClass Showcase;
+        private void btnShowcaseDemo_Click(object sender, RoutedEventArgs e)
+        {
+            Showcase = new ShowcaseClass();
+            Showcase.Show();
         }
 
         /// <summary>
@@ -1096,7 +1115,7 @@ namespace Axel_hub
             ucSignal.lbInfoSignal.Content = "cmd: " + lastGrpExe.cmd + ";  grpID: " + lastGrpExe.prms["groupID"] + ";  runID: " + runID.ToString() + endBit;
 
             double A; double currX = Double.NaN;
-            ucSignal.Update(mme, out currX, out A); // phase (currX) and Asymmetry (quantum Y)
+            ucSignal.NextShot(mme, out currX, out A); // phase (currX) and Asymmetry (quantum Y)
             // currX - scanning param in scan mode and runID in repeat
             //
             // LOWER section
@@ -1295,7 +1314,7 @@ namespace Axel_hub
                         // !!!
                     }
                     double d = (accelYmax - accelYmin) * 0.02;
-                    accelAxis.Range = new Range<double>(accelYmin - d, accelYmax + d);
+                    accelYAxis.Range = new Range<double>(accelYmin - d, accelYmax + d);
                 }
             }
             if (scanMode && scanModes.remoteMode == RemoteMode.Jumbo_Scan || scanModes.remoteMode == RemoteMode.Simple_Scan)

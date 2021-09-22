@@ -64,6 +64,9 @@
     <Reference Include="dotMath, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\dotMath.1.5.2\lib\netstandard2.0\dotMath.dll</HintPath>
     </Reference>
+    <Reference Include="MathNet.Numerics, Version=4.15.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MathNet.Numerics.4.15.0\lib\net461\MathNet.Numerics.dll</HintPath>
+    </Reference>
     <Reference Include="NationalInstruments.Analysis.Enterprise, Version=19.0.45.49152, Culture=neutral, PublicKeyToken=4febd62461bf11a4, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
@@ -96,6 +99,8 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="system.threading.tasks.dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files (x86)\Microsoft Visual Studio 12.0\Data\system.threading.tasks.dataflow.dll</HintPath>
@@ -134,17 +139,17 @@
     <Compile Include="AxelHMems.cs" />
     <Compile Include="DataStackLib.cs" />
     <Compile Include="Options\OptionsType.cs" />
+    <Compile Include="PanelsUC\MultiScanUC.xaml.cs">
+      <DependentUpon>MultiScanUC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PanelsUC\OptimGridScanUC.xaml.cs">
       <DependentUpon>OptimGridScanUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="PanelsUC\OptimSeqScan.xaml.cs">
-      <DependentUpon>OptimSeqScan.xaml</DependentUpon>
+    <Compile Include="PanelsUC\OptimSeqScanUC.xaml.cs">
+      <DependentUpon>OptimSeqScanUC.xaml</DependentUpon>
     </Compile>
     <Compile Include="PanelsUC\OptimSimplexUC.xaml.cs">
       <DependentUpon>OptimSimplexUC.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="PanelsUC\scanParamUC.xaml.cs">
-      <DependentUpon>scanParamUC.xaml</DependentUpon>
     </Compile>
     <Compile Include="PanelsUC\OptimUC.xaml.cs">
       <DependentUpon>OptimUC.xaml</DependentUpon>
@@ -157,6 +162,9 @@
     </Compile>
     <Compile Include="PanelsUC\strobesUC.xaml.cs">
       <DependentUpon>strobesUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WindowShowcase.xaml.cs">
+      <DependentUpon>WindowShowcase.xaml</DependentUpon>
     </Compile>
     <Page Include="AxelAxisUC.xaml">
       <SubType>Designer</SubType>
@@ -182,19 +190,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="PanelsUC\MultiScanUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="PanelsUC\OptimGridScanUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="PanelsUC\OptimSeqScan.xaml">
+    <Page Include="PanelsUC\OptimSeqScanUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="PanelsUC\OptimSimplexUC.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="PanelsUC\scanParamUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -211,6 +219,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="PanelsUC\strobesUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WindowShowcase.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

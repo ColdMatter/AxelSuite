@@ -70,13 +70,15 @@ namespace Axel_hub
 
         public static void ConvertToDoubleArray(ref MMexec data)
         {
-            Dictionary<string,object> tempDict = new Dictionary<string, object>(); 
+            string[] sa = { "runID", "groupID", "last", "MEMS", "samplingRate" };
+            List<string> ls = new List<string>(sa);
+            Dictionary<string, object> tempDict = new Dictionary<string, object>();
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key.Contains("Time") || key == "samplingRate") tempDict[key] = data.prms[key];
+                if ((ls.IndexOf(key) > -1) || key.Contains("Time")) tempDict[key] = data.prms[key];
                 else
                 {
-                    var rawData = (JArray) data.prms[key];
+                    var rawData = (JArray)data.prms[key];
                     tempDict[key] = rawData.ToObject<double[]>();
                 }
             }
@@ -141,7 +143,7 @@ namespace Axel_hub
     /// </summary>
     public class SingleShot
     {
-        protected string precision = "G6";
+        public string precision = "G6";
         public string dmode { get; private set; }
         public Point3D quant; // .X - time of acquisition[s]; .Y - accel.[mg/mV]; .Z - range (duration) of acquisition[s]
         public double temperature { get; private set; } 
@@ -151,10 +153,11 @@ namespace Axel_hub
         /// <summary>
         /// Number of constructors
         /// </summary>
-        public SingleShot()
+        public SingleShot(string _precision = "G6")
         {
             quant = new Point3D(-1, 0, -1);
             _mems = new List<Point>();
+            precision = _precision;
         }
         public SingleShot(double qTime, double qSignal, double qRange)
         {
@@ -166,12 +169,13 @@ namespace Axel_hub
             quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>();
         }
-        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "")
+        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "", string _precision = "G6")
         {
             quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>(m);
             temperature = _temperature;
             dmode = dMode;
+            precision = _precision;
         }
         public SingleShot(SingleShot ss)
         {
@@ -179,6 +183,7 @@ namespace Axel_hub
             _mems = new List<Point>(ss.mems);
             temperature = ss.temperature;
             dmode = ss.dmode;
+            precision = ss.precision;
         }
 
         /// <summary>
@@ -329,14 +334,14 @@ namespace Axel_hub
             {
                 Dictionary<string, object> dt = new Dictionary<string, object>();
                 double[] q = new double[3]; string timePrec = "G8";
-                q[0] = Utils.formatDouble(quant.X, timePrec); q[1] = Utils.formatDouble(quant.Y, precision); q[2] = Utils.formatDouble(quant.Z, precision);
+                q[0] = Utils.formatDouble(quant.X, precision); q[1] = Utils.formatDouble(quant.Y, precision); q[2] = Utils.formatDouble(quant.Z, precision);
                 dt["quant"] = q;
                 if (!Double.IsNaN(temperature)) dt["temper"] = Utils.formatDouble(temperature, precision);
                 if (dmode != "") dt["dmode"] = dmode;
                 double[,] m = new double[mems.Count, 2];
                 for (int i = 0; i < mems.Count; i++)
                 {
-                    m[i, 0] = Utils.formatDouble(mems[i].X, timePrec); m[i, 1] = Utils.formatDouble(mems[i].Y, precision);
+                    m[i, 0] = Utils.formatDouble(mems[i].X, precision); m[i, 1] = Utils.formatDouble(mems[i].Y, precision);
                 }
                 dt["mems"] = m;
                 return JsonConvert.SerializeObject(dt);

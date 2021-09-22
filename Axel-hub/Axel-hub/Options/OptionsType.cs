@@ -27,6 +27,7 @@ namespace OptionsNS
         Jumbo_Scan,    // scan as part of Jumbo Run
         Jumbo_Repeat,  // repeat as part of Jumbo Run
         Simple_Scan,   // scan initiated by MM
+        Multi_Scan,   // multi-scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
         Ready_To_Remote //neutral connected state       
     }

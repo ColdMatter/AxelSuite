@@ -88,6 +88,8 @@ namespace Axel_hub.PanelsUC
     /// </summary>
     public partial class OptimUC_Class : UserControl
     {
+        bool simulation = Utils.TheosComputer();
+
         Dictionary<string, double> mmParams;
         public OptimSetting os;
         List<IOptimization> optimProcs;
@@ -108,13 +110,14 @@ namespace Axel_hub.PanelsUC
                 io.TakeAShotEvent += new CostEventHandler(TakeAShotEvent);
                 io.EndOptimEvent += new EventHandler(EndOptimEvent);
             }
-            if (Utils.TheosComputer())
+            if (simulation)
             {
                 Dictionary<string, object> dct = new Dictionary<string, object>();
                 dct.Add("Param1", 1.11);
                 dct.Add("Param2", 2.22);
                 dct.Add("Param3", 3.33);
                 Init(dct);
+                rowSimul.Height = new GridLength(30);
             }
         }
         #region Settings
@@ -131,7 +134,7 @@ namespace Axel_hub.PanelsUC
             updateDataTable(os.sParams);
             this.DataContext = this;
             if (os.procOpts.Count.Equals(0)) return;
-            tbCostFunc.Text = os.cost;
+            cbObjectiveFunc.Text = os.cost;
             if (os.convOpts.ContainsKey("ConvPrec")) numConvPrec.Value = os.convOpts["ConvPrec"];
 
             if (optimProcs.Count != os.procOpts.Count)  { log("Err: some optimization options missing."); return; }
@@ -142,7 +145,7 @@ namespace Axel_hub.PanelsUC
         {
             if (!IsEnabled) return;
             ClearStatus();
-            os.cost = tbCostFunc.Text;
+            os.cost = cbObjectiveFunc.Text;
             os.convOpts["ConvPrec"] = numConvPrec.Value;
 
             foreach (IOptimization io in optimProcs)
@@ -242,26 +245,31 @@ namespace Axel_hub.PanelsUC
         protected double TakeAShotEvent(object sender, EventArgs e)
         {
             double d, rslt = Double.NaN; OptimEventArgs ex = (OptimEventArgs)e;
-            ParamSetEvent(sender, e); Thread.Sleep(100); Utils.DoEvents(); // update prm (both ways)
+            ParamSetEvent(sender, e); Thread.Sleep(100); Utils.DoEvents(); // update prm (here & in MM)
             
-            if (Utils.TheosComputer())
+            if (simulation)
             {
-                rslt = 0; int j = 0; 
-                foreach (EnabledMMscan prm in os.sParams)
+                switch (cbSimulFunction.SelectedIndex)
                 {
-                    if (prm.Enabled)
-                    {
-                        d = prm.Value + 2 * j + Utils.Gauss01();
-                        rslt +=  d * d; j++;
-                    }                       
+                    case 0: // quadratic
+                        rslt = 0; int j = -1; 
+                        foreach (EnabledMMscan prm in os.sParams)
+                        {
+                            if (prm.Enabled)
+                            {
+                                d = prm.Value + 2 * j;
+                                rslt +=  d * d; j++;
+                            }                       
+                        }
+                        rslt = 150 - rslt + numGaussNoise.Value*Utils.Gauss01(); 
+                        break;
                 }
-                rslt = 150 - rslt; 
             }
             else
             {               
                 Dictionary<string, double> dct = MMDataConverter.AverageShotSegments(TakeAShotMM(ex.Prm, ex.Value),true);
                 // script it
-                var compiler = new EquationCompiler(tbCostFunc.Text);
+                var compiler = new EquationCompiler(Utils.skimRem(cbObjectiveFunc.Text));                
                 var vns = compiler.GetVariableNames();
                 foreach (string vn in vns)
                 {

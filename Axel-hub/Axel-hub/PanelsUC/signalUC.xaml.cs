@@ -172,7 +172,7 @@ namespace Axel_hub
         /// <param name="mme">shot with unpacked arrays</param>
         /// <param name="currX">Last horiz coordinate</param>
         /// <param name="A">Asymetry calculated</param>
-        public void Update(MMexec mme, out double currX, out double A) // 
+        public void NextShot(MMexec mme, out double currX, out double A) // 
         {
             if (!Utils.isNull(rawDataLog)) rawDataLog.log(JsonConvert.SerializeObject(mme));
             runID = Convert.ToInt32(mme.prms["runID"]);

@@ -44,8 +44,10 @@
                         <ColumnDefinition Width="100"/>
                     </Grid.ColumnDefinitions>
 
-                    <GroupBox x:Name="groupBox" Header="Cost function" Margin="0" >
-                        <TextBox x:Name="tbCostFunc" Margin="0,2,0,0" TextWrapping="Wrap" Text="" FontSize="13"/>
+                    <GroupBox x:Name="groupBox" Header=" Objective function" Margin="0" >
+                        <ComboBox x:Name="cbObjectiveFunc" Margin="0,2,0,0" Text="" FontSize="13" Background="{x:Null}" IsEditable="True">
+                            <ComboBoxItem Content="1-2*(N2-B2)/(NTot-BTot) #default asymmetry"/>
+                        </ComboBox>
                     </GroupBox>
                     <GroupBox x:Name="groupBox2" Grid.Column="1" Header="Conv. Prec." Margin="0,0,-0.038,-0.177" >
                         <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0" Range="0.01, Infinity, System.Double" Interval="0.1" Value="0.1"/>
@@ -77,25 +79,40 @@
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <Button x:Name="btnClear" Content="X" Margin="5,5,5,0" Background="#FFFAF8F8" Foreground="#FFB82A2A" FontWeight="Bold" Click="btnClear_Click"></Button>
-                    <CheckBox x:Name="chkLog" HorizontalAlignment="Center" Margin="0,20,0,0" IsChecked="True"></CheckBox>
+                    <CheckBox x:Name="chkLog" HorizontalAlignment="Center" Margin="0,15,0,0" IsChecked="True"></CheckBox>
                     <Label Content="log" HorizontalAlignment="Center" Margin="2,0,1.772,0" FontSize="12"/>
-                    <CheckBox x:Name="chkDetails" HorizontalAlignment="Center" Margin="0,20,0,0"></CheckBox>
+                    <CheckBox x:Name="chkDetails" HorizontalAlignment="Center" Margin="0,15,0,0"></CheckBox>
                     <Label Content=". . ." HorizontalAlignment="Center" FontWeight="Bold"></Label>
+                    <Button x:Name="btnClear" Content="X" Margin="5,10,5.241,0" Background="#FFFAF8F8" Foreground="#FFB82A2A" FontWeight="Bold" Click="btnClear_Click"/>
                 </StackPanel>
-                <RichTextBox x:Name="richLog" Margin="2" Grid.Column="1" FontSize="11.6" VerticalScrollBarVisibility="Visible">
-                    <FlowDocument>
-                        <Paragraph>
-                            <Run Text=""/>
-                        </Paragraph>
-                    </FlowDocument>
-                </RichTextBox>
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition x:Name="rowSimul" Height="30"/>
+                    </Grid.RowDefinitions>
+                    <RichTextBox x:Name="richLog" Margin="2" Grid.Column="1" FontSize="11.6" VerticalScrollBarVisibility="Visible">
+                        <FlowDocument>
+                            <Paragraph>
+                                <Run Text=""/>
+                            </Paragraph>
+                        </FlowDocument>
+                    </RichTextBox>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <Label Content="Simul.function:" HorizontalAlignment="Left" VerticalAlignment="Center"></Label>
+                        <ComboBox x:Name="cbSimulFunction" SelectedIndex="0" Background="#FFF4F3F3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <ComboBoxItem Content="Quadratic sphere"/>
+                        </ComboBox>
+                        <Label Content="Gauss noise:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="7,0,0,0"></Label>
+                        <ni:NumericTextBoxDouble x:Name="numGaussNoise" Margin="0,3" Range="0, Infinity, System.Double" Interval="1" Value="5" Width="63" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Grid>
         <TabControl x:Name="tcOptimProcs" Grid.Column="1" Margin="5,0,0,0" SelectedIndex="1">
             <TabItem Header="Sequential Scans" FontSize="13" >
                 <Grid>
-                    <local:OptimSeqScan x:Name="SeqScanUC" Width="Auto" Height="Auto" />
+                    <local:OptimSeqScanUC x:Name="SeqScanUC" Width="Auto" Height="Auto" />
                 </Grid>
             </TabItem>
             <TabItem Header="Grid Scan" FontSize="13" Height="27">

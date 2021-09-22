@@ -18,7 +18,6 @@
         <GridSplitter x:Name="topSplitter" HorizontalAlignment="Stretch" Height="6" Grid.Row="1" VerticalAlignment="Top" Margin="0,1.143,0,0" Background="#FFFFFEBD" MouseDoubleClick="splitterTop_MouseDoubleClick"/>
         <GridSplitter x:Name="bottomSplitter" HorizontalAlignment="Stretch" Height="6" Grid.Row="2" VerticalAlignment="Top" Margin="0,1.143,0,0" Background="#FFDDFCD4"/>
 
-
         <Grid x:Name="gridMiddle" Grid.Row="1" MinHeight="20">
             <TabControl x:Name="tabSecPlots" Margin="0,7,0.714,2.286" SelectedIndex="0" FontSize="14" SelectionChanged="tabSecPlots_SelectionChanged">
                 <TabItem Header=" Hide "/>
@@ -96,9 +95,9 @@
                                 <GridSplitter x:Name="splitStats" HorizontalAlignment="Left" Grid.Column="1" Margin="0" Background="#FFF1F1F1" Width="5"/>
                             </Grid>
                         </GroupBox>
-                        <GroupBox Header="Internal Tests" HorizontalAlignment="Right" Margin="0" BorderBrush="#FF02588B" Width="150" Grid.Column="2" FontSize="13">
+                        <GroupBox Header="Showcase" HorizontalAlignment="Right" Margin="0" BorderBrush="#FF02588B" Width="150" Grid.Column="2" FontSize="13">
                             <Grid>
-                                <ni:BooleanContentButton x:Name="btnJoinLogTest" Grid.Column="1" Margin="5,5,5,0" VerticalAlignment="Top" Background="#FFFAF9E7" Height="33" Click="btnJoinLogTest_Click" FalseBrush="#FF8DFACF" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Join Log Test" TrueContent="Stop Test"/>
+                                <ni:BooleanContentButton x:Name="btnShowcaseDemo" Grid.Column="1" Margin="5,5,5,0" VerticalAlignment="Top" Background="#FFFAF9E7" Height="33" Click="btnShowcaseDemo_Click" FalseBrush="#FF8DFACF" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Showcase Window" TrueContent="Stop Test"/>
                             </Grid>
                         </GroupBox>
                     </Grid>
@@ -111,7 +110,7 @@
                 <ColumnDefinition x:Name="columnPID" Width="145"/>
             </Grid.ColumnDefinitions>
             <TabControl x:Name="tabLowPlots" Margin="0,2,0.714,0.857" SelectedIndex="0" FontSize="14" Grid.ColumnSpan="1" SelectionChanged="tabLowPlots_SelectionChanged">
-                <TabItem x:Name="tabFringes" Header="Fringes" Width="100" Height="28">
+                <TabItem x:Name="tiFringes" Header="Fringes" Width="100" Height="28">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="28"/>
@@ -145,7 +144,10 @@
                         </ni:Graph>
                     </Grid>
                 </TabItem>
-                <TabItem x:Name="tabAccelTrend" Header="Accel.Trend" Width="100" Height="28">
+                <TabItem x:Name="tiMultiScan" Header="Mutli-scan" Width="100" Height="28">
+                    <PanelsUC:MultiScanUC x:Name="MultiScanUC1"/>
+                </TabItem>
+                <TabItem x:Name="tiAccelTrend" Header="Accel.Trend" Width="100" Height="28">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="28"/>
@@ -154,15 +156,15 @@
                         <StackPanel Grid.Row="0" Orientation="Horizontal" >
                             <CheckBox x:Name="chkMEMS" Content="MEMS" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" FontWeight="Bold" Foreground="#FF0A14C1" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" />
                             <CheckBox x:Name="chkCorr" Content="Corr." VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FF07B484" FontWeight="Bold"/>
-                            <CheckBox x:Name="chkMOT" Content="Quant" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
+                            <CheckBox x:Name="chkQuant" Content="Quant" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" IsChecked="True" Checked="chkMEMS_Checked" Unchecked="chkMEMS_Checked" Foreground="#FF9F16F4" FontWeight="Bold"/>
                             <CheckBox x:Name="chkAccel" Content="Accel." VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FFE05100" FontWeight="Bold"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Height="31" Width="640" FontSize="13" Grid.RowSpan="2"/>
                         </StackPanel>
                         <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <ni:Graph.Axes>
                                 <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="FitLoosely"/>
-                                <ni:AxisDouble x:Name="accelAxis" Orientation="Vertical" Adjuster="FitLoosely" />
-                                <ni:AxisDouble x:Name="corrAxis" Orientation="Vertical" Adjuster="FitLoosely" BaselineStroke="#FF009064">
+                                <ni:AxisDouble x:Name="accelYAxis" Orientation="Vertical" Adjuster="FitLoosely" />
+                                <ni:AxisDouble x:Name="corrYAxis" Orientation="Vertical" Adjuster="FitLoosely" BaselineStroke="#FF009064">
                                     <ni:AxisDouble.MinorDivisions>
                                         <ni:RangeDivisions TickBrush="#FF0F801E"/>
                                     </ni:AxisDouble.MinorDivisions>
@@ -204,7 +206,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem Header=" Opts/Stats " Height="28" VerticalAlignment="Top" Margin="0">
+                <TabItem x:Name="tiOptStats" Header=" Opts/Stats " Height="28" VerticalAlignment="Top" Margin="0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="145"/>
@@ -268,8 +270,9 @@
                     <PanelsUC:OptimUC_Class x:Name="OptimUC1" />
                 </TabItem>
                 
+
             </TabControl>
-            <CheckBox x:Name="chkAutoScaleBottom" Content="Auto-scale Y" Grid.Column="1" HorizontalAlignment="Left" Margin="8,5,0,0" VerticalAlignment="Top" Foreground="#FF0E7501" FontSize="13"/>
+            <CheckBox x:Name="chkAutoScaleBottom" Content="Auto-scale Y" Grid.Column="1" HorizontalAlignment="Left" Margin="8,5,0,0" VerticalAlignment="Top" Foreground="#FF0E7501" FontSize="13" Checked="chkAutoScaleBottom_Checked" Unchecked="chkAutoScaleBottom_Checked"/>
             <local:strobesUC x:Name="strobes" Margin="0,25,0,0" Grid.Column="1"/>
         </Grid>
 

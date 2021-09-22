@@ -263,7 +263,7 @@ namespace Axel_hub
                 for (int i = 0; i < rCount; i++) this[i].axelChart.Refresh();
                 return;
             }
-            if (genOptions.TemperatureEnabled)
+            if (genOptions.TemperatureEnabled && (ucScan.remoteMode == RemoteMode.Jumbo_Repeat))
             {
                 if (!axelMemsTemperature.isDevicePlugged()) 
                     LogEvent("No temperature device connected !", Brushes.Red);
@@ -310,7 +310,7 @@ namespace Axel_hub
         /// <summary>
         /// It should be in very limited (ideally none) use
         /// </summary>
-        private bool probeMode // simulation of MM2 with AxelProbe
+        public bool probeMode // simulation of MM2 with AxelProbe
         {
             get
             {
@@ -441,6 +441,17 @@ namespace Axel_hub
                         for (int i = 0; i < rCount; i++) this[i].DoPrepare(mme);
                     }
                     break;
+                case ("multiscan"):
+                    {
+                        LogEvent(json, Brushes.DarkGreen);
+                        lastGrpExe = mme.Clone();                       
+                        if (!mme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) ucScan.remoteMode = RemoteMode.Multi_Scan;
+                        
+                        Clear();
+                        for (int i = 0; i < rCount; i++) this[i].DoPrepare(mme);
+                    }
+                    break;
+
                 case "status":
                     //mm2status = mme.Clone();
                     for (int i = 0; i < rCount; i++) this[i].mm2status = mme.Clone();
@@ -497,7 +508,7 @@ namespace Axel_hub
             if (genOptions.JumboScan)
             {
                 Clear();
-                for (int i = 0; i < rCount; i++) this[i].tabLowPlots.SelectedIndex = 0; // fringes page
+                for (int i = 0; i < rCount; i++) this[i].tabLowPlots.SelectedItem = this[i].tiFringes; // fringes page
                 lastGrpExe.cmd = "scan";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
                 // take params from X for both
@@ -517,25 +528,31 @@ namespace Axel_hub
             }
             else
             {
-              /*  if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
-                else srsFringes.Clear();
-                if (probeMode)
+                if (!genOptions.AxesChannels.Equals(0))
                 {
-                    GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
-                    srsFringes.OpenPair(Utils.configPath+"fringes.ahf", ref gb);
-                    graphFringes.DataSource = srsFringes;
-                    lbInfoFringes.Content = srsFringes.rem;
-                    tbRemFringes.Text = srsFringes.rem;
-                    crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
+                    Utils.TimedMessageBox("No implementation for douible channel, YET."); return;
                 }
-                // else btnOpenFringes_Click(null, null); MOVE to ucScan
-                if (srsFringes.Count == 0)
-                {
-                    Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
-                    ucScan.Running = false;
-                    return;
-                }
-            */
+                if (genOptions.JumboRepeat) ucScan.Running = this[0].SetJumboFringes(probeMode);
+                else ucScan.Running = false;
+                /*  if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
+                  else srsFringes.Clear();
+                  if (probeMode)
+                  {
+                      GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
+                      srsFringes.OpenPair(Utils.configPath+"fringes.ahf", ref gb);
+                      graphFringes.DataSource = srsFringes;
+                      lbInfoFringes.Content = srsFringes.rem;
+                      tbRemFringes.Text = srsFringes.rem;
+                      crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
+                  }
+                  // else btnOpenFringes_Click(null, null); MOVE to ucScan
+                  if (srsFringes.Count == 0)
+                  {
+                      Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
+                      ucScan.Running = false;
+                      return;
+                  }
+              */
             }
         }
 
@@ -642,12 +659,10 @@ namespace Axel_hub
                         }
                         break;
                 }
-
-            ucScan.SendJson(jsonR);
-                         
+             ucScan.SendJson(jsonR);                         
              for (int i = 0; i < rCount; i++)
              {
-                 this[i].tabLowPlots.SelectedIndex = 1;
+                 this[i].tabLowPlots.SelectedItem = this[i].tiAccelTrend;
                  this[i].resetQuantList(Utils.dataPath+Utils.timeName());
              }
         }

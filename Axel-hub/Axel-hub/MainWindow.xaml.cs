@@ -40,6 +40,8 @@ using System.Windows.Markup;
 using UtilsNS;
 using OptionsNS;
 
+// for simulation with Axel Probe put in command line  -remote:"Axel Probe"
+
 namespace Axel_hub
 {
     public delegate void StartDelegate();
@@ -190,7 +192,7 @@ namespace Axel_hub
             if (oldMode.Equals(RemoteMode.Jumbo_Scan) && newMode.Equals(RemoteMode.Ready_To_Remote))
             {
                 if (!Options.genOptions.JumboRepeat) return; 
-                if (Utils.TheosComputer()) axes.SetChartStrobes(true);
+                //if (axes.probeMode) axes.SetChartStrobes(true); //Utils.TheosComputer()
 
                 // wait for user confirmation
                 if (!Options.genOptions.Diagnostics)
@@ -214,9 +216,16 @@ namespace Axel_hub
             if (jumbo)               
             {
                 if (down) axes.SendMMexec(new MMexec("", "Axel-hub", "status"));
-                if (Options.genOptions.JumboScan) axes.DoJumboScan(down);
-                else               
-                    if (Options.genOptions.JumboRepeat) axes.DoJumboRepeat(down, axes[0].numCycles.Value);               
+                axes.DoJumboScan(down); // get back fringes no matter scan or not
+                if (Options.genOptions.JumboRepeat && !Options.genOptions.JumboScan)
+                {
+                    if (!Options.genOptions.Diagnostics && down)
+                    {
+                        if (!continueJumboRepeat(true)) return; // main call, out - if timeout
+                        axes.SetChartStrobes(false);
+                    }
+                    axes.DoJumboRepeat(down, axes[0].numCycles.Value);
+                }                                  
             }
             else
             {

@@ -12,15 +12,38 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using MathNet.Numerics.Optimization;
+using MathNet.Numerics.LinearAlgebra;
 using UtilsNS;
 
 namespace Axel_hub.PanelsUC
 {
+    /*public class ObjFunction : IObjectiveFunction
+    {
+        void EvaluateAt(Vector<double> point)
+        {
+
+        }
+        //
+        // Summary:
+        //     Create a new independent copy of this objective function, evaluated at the same
+        //     point.
+        IObjectiveFunction Fork();
+    }*/
+    public class SimplexWr 
+    {
+        NelderMeadSimplex  nmSimplex;
+        public SimplexWr(double convergenceTolerance, int maximumIterations)
+        {
+            nmSimplex = new NelderMeadSimplex(convergenceTolerance, maximumIterations);
+        }
+    }
     /// <summary>
     /// Interaction logic for OptimSimplexUC.xaml
     /// </summary>
     public partial class OptimSimplexUC : UserControl, IOptimization
     {
+        SimplexWr simplexWr;
         public OptimSimplexUC()
         {
             InitializeComponent();
@@ -69,12 +92,13 @@ namespace Axel_hub.PanelsUC
         public List<baseMMscan> scans { get; set; }
         public string report(bool lastIter)
         {
-            return "";
+            return "rpt";
         }
-
         public void Optimize(bool? start, List<baseMMscan> _scans, Dictionary<string, double> opts)
         {
-            scans = new List<baseMMscan>(_scans);           
+            scans = new List<baseMMscan>(_scans);
+            double cp = opts.ContainsKey("ConvPrec") ? opts["ConvPrec"] : 0.1;
+            simplexWr = new SimplexWr(cp, numMaIters.Value);
         }
         #endregion Common
 

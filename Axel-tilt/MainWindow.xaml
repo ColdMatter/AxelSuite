@@ -76,7 +76,7 @@
                     </ni:ArrowButton>
                     <ni:NumericTextBoxDouble x:Name="ndStepMg" HorizontalAlignment="Left" Height="23" Margin="77,50,0,0" VerticalAlignment="Top" Width="57" Interval="0.01" Range="0.001, 10, System.Double" Value="0.1"/>
                     <Button x:Name="btnHomeAndHoriz" Content="Go Home &amp; Horiz" HorizontalAlignment="Left" Margin="8,8,0,0" VerticalAlignment="Top" Width="141" Background="#FFF9E6C7" FontSize="13" Foreground="#FF750500" Click="btnHomeAndHoriz_Click" Height="28"/>
-                    <Image x:Name="imgAbout" HorizontalAlignment="Right" Height="35" Margin="0,3,8,0" VerticalAlignment="Top" Width="35" Source="Tilt2.png" MouseDown="imgAbout_MouseDown"/>
+                    <Image x:Name="imgAbout" HorizontalAlignment="Right" Height="35" Margin="0,3,8,0" VerticalAlignment="Top" Width="35" Source="Properties/Tilt2.png" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
             </GroupBox>
         </Grid>

@@ -108,7 +108,7 @@
                             <ComboBox x:Name="cbRunMemsInJumbo" Margin="124,7,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="96" SelectedIndex="0" SelectionChanged="cbRunMemsInJumbo_SelectionChanged">
                                 <ComboBoxItem Content="None"/>
                                 <ComboBoxItem Content="USB-9251"/>
-                                <ComboBoxItem Content="PXI-4461"/>
+                                <ComboBoxItem Content="PXI-AI"/>
                             </ComboBox>
                             <CheckBox x:Name="chkShowMemsIfRunning" Content="Show MEMS panel only when running" Margin="5,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         </Grid>

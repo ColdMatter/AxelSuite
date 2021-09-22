@@ -22,9 +22,9 @@ namespace Axel_hub.PanelsUC
     /// <summary>
     /// Interaction logic for OptimSeqScan.xaml
     /// </summary>
-    public partial class OptimSeqScan : UserControl, IOptimization
+    public partial class OptimSeqScanUC : UserControl, IOptimization
     {
-        public OptimSeqScan()
+        public OptimSeqScanUC()
         {
             InitializeComponent();
             state = optimState.idle;
