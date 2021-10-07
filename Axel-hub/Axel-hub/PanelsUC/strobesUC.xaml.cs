@@ -251,7 +251,7 @@ namespace Axel_hub
         }
 
         /// <summary>
-        /// Calculating zeroFringe - similar to centreFring but woth phase shift compensation
+        /// Calculating zeroFringe - similar to centreFring but with phase shift locked in [-pi..pi]
         /// </summary>
         /// <returns>Calculated zeroFringe [rad] [-pi..pi]</returns>
         public double zeroFringe()  
@@ -269,9 +269,11 @@ namespace Axel_hub
         {
             // zeroFringe[rad] - from PID follow; factor [mg/rad]
             Dictionary<string, double> da = new Dictionary<string, double>(); double resid;
+            
+            // R for reference 
             if (!Double.IsNaN(accel))
             {
-                da["accel.R"] = accel; // R for reference                
+                da["accel.R"] = accel;                
                 double orderR = calcAccel.accelOrder(accel, fringeScale, out resid);
                 da["order.R"] = orderR;
                 da["resid.R"] = resid; // [rad] residual for atomic interferometer
@@ -367,15 +369,18 @@ namespace Axel_hub
             accelSet.Clear(); lastMMEin = null;
             if (!Utils.isNull(mme))
             {
-                if (mme.getWhichSender().Equals(MMexec.SenderType.AxelProbe)) // take MEMS if probeMode
-                {
-                    double mems = 0;
-                    if (mme.prms.ContainsKey("InterferometerS")) mems = Convert.ToDouble(mme.prms["InterferometerS"]);
-                    lastMMEin = mme.Clone();
-                    double accel = mems;
-                    if (mme.prms.ContainsKey("accel")) accel = Convert.ToDouble(mme.prms["accel"]); // the noiseless accel, only to compare
-                    if (!genOptions.Diagnostics) accelSet = deconstructAccel(accel, mems);
-                }                 
+                double accel_R = mme.prms.ContainsKey("accel") ? accel_R = Convert.ToDouble(mme.prms["accel"]) : Double.NaN; // modeled (reference) quantum acceleration from Axel-Probe       
+                double mems_R = mme.prms.ContainsKey("MEMS") ? mems_R = Convert.ToDouble(mme.prms["MEMS"]) : Double.NaN;   // modeled (reference) MEMS acceleration from Axel-Probe 
+                double mems = Double.NaN;
+                if (mme.prms.ContainsKey("Interferometer") && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462))
+                    mems = ((double[])mme.prms["Interferometer"]).Average();
+                else mems = mems_R;
+                      
+                if (!genOptions.Diagnostics) accelSet = deconstructAccel(accel_R, mems);
+                if (!Double.IsNaN(accel_R)) accelSet["accel.R"] = accel_R;
+                if (!Double.IsNaN(mems_R)) accelSet["mems.R"] = mems_R;  
+
+                lastMMEin = mme.Clone();
             }            
             MMexec mmeOut = null;
             // mmeOut.mmexec is "downhill" : "uphill" : "contrastCheck" only for probe 
@@ -417,8 +422,7 @@ namespace Axel_hub
                 }              
             }        
             lastMMEout = mmeOut.Clone(); return mmeOut;
-            //if (newPhase > -10) 
-            //else return null;
+            
         }
 
         string[] Titles = { "runI", "tP", "tI", "tD", "Down.X", "Up.X", "disbal", "corr", "iSD-R", "contrast" };

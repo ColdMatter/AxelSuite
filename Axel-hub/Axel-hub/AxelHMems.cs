@@ -76,7 +76,7 @@ namespace Axel_hub
         /// <param name="temperV"></param>
         /// <param name="tempComp"></param>
         /// <returns></returns>
-        public double accel(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
+        public double accelMg(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
         {
             double K0 = 0; double K1 = 0;
             if (tempComp)
@@ -97,8 +97,13 @@ namespace Axel_hub
                    ((accelV / rAccel) * 1000.0) * // mA
                    K1 * 1000.0;                   // mg
         }
-
+        public double accelV(double accelMg)
+        {
+            return ((accelMg - cK0 / 1000) * rAccel) / (1e6 * cK1);
+        }
     }
+
+    
     public enum tracerStage { neutral, readAcq, startComb, endComb }
     public struct AcqTracer
     {

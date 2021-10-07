@@ -125,8 +125,8 @@ namespace Axel_hub
         public double convertV2mg(double accelV, double temperV = double.NaN)
         {
             double rslt = double.NaN; bool tempComp = genOptions.TemperatureEnabled && genOptions.TemperatureCompensation && !temperV.Equals(double.NaN);
-            if (prefix.Equals("X")) rslt = axelMems.memsX.accel(accelV, temperV, tempComp);
-            if (prefix.Equals("Y")) rslt = axelMems.memsY.accel(accelV, temperV, tempComp);
+            if (prefix.Equals("X")) rslt = axelMems.memsX.accelMg(accelV, temperV, tempComp);
+            if (prefix.Equals("Y")) rslt = axelMems.memsY.accelMg(accelV, temperV, tempComp);
             return rslt;
         }
 
@@ -135,7 +135,7 @@ namespace Axel_hub
             DataStack rslt = new DataStack(accelV.Depth, accelV.prefix);
             for (int i = 0; i < accelV.Count; i++ )
             {
-                rslt.AddPoint(convertV2mg(accelV[i].Y, accelV[i].X), temperV);
+                rslt.AddPoint(convertV2mg(accelV[i].Y, temperV), accelV[i].X);
             }
             return rslt;
         }

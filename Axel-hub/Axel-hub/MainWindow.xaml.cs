@@ -154,8 +154,9 @@ namespace Axel_hub
         /// <returns>ok -> true; timeout -> false</returns>
         public bool continueJumboRepeat(bool toggle)
         {
-            if (toggle)
+            if (toggle) //axes[0].ShowcaseUC1.IsShowcaseShowing
             {
+                axes.SetChartStrobes(true);
                 int k = 0;
                 rowContinueJumbo.Height = new GridLength(30);
                 while (!DoContinue && (k < 3000) && (rowContinueJumbo.Height.Value == 30)) // 5min
@@ -169,6 +170,7 @@ namespace Axel_hub
             }
             else
             {
+                axes.SetChartStrobes(false);
                 rowContinueJumbo.Height = new GridLength(0);
                 return true;
             }
@@ -196,11 +198,18 @@ namespace Axel_hub
 
                 // wait for user confirmation
                 if (!Options.genOptions.Diagnostics)
-                {
+                {                    
                     if (!continueJumboRepeat(true)) return; // main call, out - if timeout
                     axes.SetChartStrobes(false);
                 }
                 axes.DoJumboRepeat(ucScan.bbtnStart.Value, axes[0].numCycles.Value);
+                if (axes[0].ShowcaseUC1.IsShowcaseShowing)
+                    axes[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
+            }
+            if (oldMode.Equals(RemoteMode.Jumbo_Repeat) && newMode.Equals(RemoteMode.Ready_To_Remote))
+            {
+                if (axes[0].ShowcaseUC1.IsShowcaseShowing)
+                    axes[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
             }
         }
 
@@ -221,6 +230,7 @@ namespace Axel_hub
                 {
                     if (!Options.genOptions.Diagnostics && down)
                     {
+
                         if (!continueJumboRepeat(true)) return; // main call, out - if timeout
                         axes.SetChartStrobes(false);
                     }

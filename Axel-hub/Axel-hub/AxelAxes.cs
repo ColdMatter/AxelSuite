@@ -121,6 +121,7 @@ namespace Axel_hub
             this[Count - 1].OnSend += new AxelAxisClass.SendHandler(ucScan.SendJson);
             this[Count - 1].SendMMexecEvent += new AxelAxisClass.SendMMexecHandler(SendMMexec);
             this[Count - 1].OptimUC1.SendMMexecEvent += new PanelsUC.OptimUC_Class.SendMMexecHandler(SendMMexec);
+            this[Count - 1].ShowcaseUC1.OnShowcaseUCEvent += new ShowcaseClassWindow.ShowcaseEventHandler(ShowcaseReaction);
         }
         /// <summary>
         /// Get an axis by prefix
@@ -487,6 +488,40 @@ namespace Axel_hub
             ucScan.SendJson(json);
         }
 
+        public bool ShowcaseReaction(string msg) // coming from ShowcaseClassWindow
+        {
+            switch (msg)
+            {
+                case "Scan":
+                    if (!genOptions.JumboScan)
+                    {
+                        Utils.TimedMessageBox("Jumbo-scan mode is OFF. Go to Options and switch it On."); return false;
+                    }
+                    if (this[0].ShowcaseUC1.IsShowcaseShowing)
+                        this[0].ShowcaseUC1.Showcase.InitScan(this[0].jumboScan());
+                    DoJumboScan(true);
+                    break;
+                case "Run":
+                    if (!genOptions.JumboRepeat)
+                    {
+                        Utils.TimedMessageBox("Jumbo-repeat mode is OFF. Go to Options and switch it On."); return false;
+                    }
+                    const int depth = 100;
+                    int k0 = (int)this[0].numCycles.Value; int k1 = k0;
+                    if ((k1 < 1) || (k1 > depth)) k1 = depth;
+                    this[0].ShowcaseUC1.InitRun(k1);                   
+                    DoJumboRepeat(true, k0);
+                    break;
+                case "Stop":
+                    DoJumboRepeat(false, 0);
+                    ucScan.Abort(true);
+                    if (this[0].ShowcaseUC1.IsShowcaseShowing)
+                        this[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
+                    break;
+            }
+            return true;
+        }
+
         /// <summary>
         /// When in Jumbo mode Start/Stop the first part of it
         /// </summary>
@@ -559,7 +594,7 @@ namespace Axel_hub
         public void SetChartStrobes(bool enabled)
         {
             for (int i = 0; i < rCount; i++) this[i].visStrobes(enabled);
-            if (enabled) Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information");
+            if (enabled && !probeMode) Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information");
         }
 
         /// <summary>
@@ -594,36 +629,38 @@ namespace Axel_hub
                     this[i].DoPrepare(lastGrpExe);
                 }
                 else
-                {           
-                    double dv = Convert.ToDouble(this[i].crsDownStrobe.AxisValue);
-                    this[i].strobes.Down.X = Utils.formatDouble(dv,"G4");
-                    lastGrpExe.prms["downStrobe." + this[i].prefix] = this[i].strobes.Down.X;
-                    int di = -1; int j = 0;
-                    while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * dv, 1.01 * dv) && j < this[i].srsFringes.Count) j++;
-                    if (j < this[i].srsFringes.Count)
+                {                     
+                    if (this[i].srsFringes.Count > 0) // update strobes from fringes
                     {
-                        di = j;
-                        this[i].strobes.Down.Y = this[i].srsFringes[di].Y;
-                    }
-                    double uv = Convert.ToDouble(this[i].crsUpStrobe.AxisValue);
-                    this[i].strobes.Up.X = Utils.formatDouble(uv,"G4");                
-                    lastGrpExe.prms["upStrobe." + this[i].prefix] = uv;
-                    int ui = -1; j = 0;
-                    while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * uv, 1.01 * uv) && j < this[i].srsFringes.Count) j++;
-                    if (j < this[i].srsFringes.Count)
-                    {
-                        ui = j;
-                        this[i].strobes.Down.Y = this[i].srsFringes[ui].Y;
-                    }
-                    double mv = Double.NaN;
-                    if (di > -1 && ui > -1)
-                    {
-                        int mi = (int)((di + ui) / 2 + 0.5);                 
-                        mv = this[i].srsFringes[mi].Y;
-                    }
-                    
-                    this[i].DoPrepare(lastGrpExe);             
-                    this[i].strobes.OnJumboRepeat(this[i].numKcoeff.Value, this[i].numPhi0.Value, lastGrpExe, mv);                
+                        double dv = Convert.ToDouble(this[i].crsDownStrobe.AxisValue);
+                        this[i].strobes.Down.X = Utils.formatDouble(dv,"G4");
+                        lastGrpExe.prms["downStrobe." + this[i].prefix] = this[i].strobes.Down.X;
+                        int di = -1; int j = 0;
+                        while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * dv, 1.01 * dv) && j < this[i].srsFringes.Count) j++;
+                        if (j < this[i].srsFringes.Count)
+                        {
+                            di = j;
+                            this[i].strobes.Down.Y = this[i].srsFringes[di].Y;
+                        }
+                        double uv = Convert.ToDouble(this[i].crsUpStrobe.AxisValue);
+                        this[i].strobes.Up.X = Utils.formatDouble(uv,"G4");                
+                        lastGrpExe.prms["upStrobe." + this[i].prefix] = uv;
+                        int ui = -1; j = 0;
+                        while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * uv, 1.01 * uv) && j < this[i].srsFringes.Count) j++;
+                        if (j < this[i].srsFringes.Count)
+                        {
+                            ui = j;
+                            this[i].strobes.Down.Y = this[i].srsFringes[ui].Y;
+                        }
+                        double mv = Double.NaN;
+                        if (di > -1 && ui > -1)
+                        {
+                            int mi = (int)((di + ui) / 2 + 0.5);                 
+                            mv = this[i].srsFringes[mi].Y;
+                        }                                        
+                        this[i].DoPrepare(lastGrpExe);             
+                        this[i].strobes.OnJumboRepeat(this[i].numKcoeff.Value, this[i].numPhi0.Value, lastGrpExe, mv);       
+                    }         
                 }
             }
             string jsonR = JsonConvert.SerializeObject(lastGrpExe);

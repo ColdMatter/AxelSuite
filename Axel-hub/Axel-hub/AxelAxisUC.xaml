@@ -5,7 +5,7 @@
              xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
              xmlns:local="clr-namespace:Axel_hub" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:PanelsUC="clr-namespace:Axel_hub.PanelsUC" x:Name="AxelAxis" x:Class="Axel_hub.AxelAxisClass" 
+             xmlns:PanelsUC="clr-namespace:Axel_hub.PanelsUC" xmlns:Showcase="clr-namespace:Axel_hub.Showcase" x:Name="AxelAxis" x:Class="Axel_hub.AxelAxisClass" 
              mc:Ignorable="d" Background="White" Foreground="#FF010101" FontSize="13" FontWeight="Normal" Height="1059.964" Width="995">
     <Grid x:Name="gridAA" Margin="0">
         <Grid.RowDefinitions>
@@ -42,7 +42,7 @@
                         </ni:Graph>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Opts/Stats" Height="28" VerticalAlignment="Top" Margin="0">
+                <TabItem x:Name="tabMiddleOptStat" Header="Opts/Stats" Height="28" VerticalAlignment="Top" Margin="0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="145"/>
@@ -95,12 +95,8 @@
                                 <GridSplitter x:Name="splitStats" HorizontalAlignment="Left" Grid.Column="1" Margin="0" Background="#FFF1F1F1" Width="5"/>
                             </Grid>
                         </GroupBox>
-                        <GroupBox Header="Showcase" HorizontalAlignment="Right" Margin="0" BorderBrush="#FF02588B" Width="150" Grid.Column="2" FontSize="13">
-                            <Grid>
-                                <ni:BooleanContentButton x:Name="btnShowcaseDemo" Grid.Column="1" Margin="5,5,5,0" VerticalAlignment="Top" Background="#FFFAF9E7" Height="33" Click="btnShowcaseDemo_Click" FalseBrush="#FF8DFACF" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Showcase Window" TrueContent="Stop Test"/>
-                            </Grid>
-                        </GroupBox>
-                    </Grid>
+                        <Showcase:ShowcaseClass x:Name="ShowcaseUC1" Grid.Column="2"/>
+                   </Grid>
                 </TabItem>
             </TabControl>
         </Grid>
@@ -121,6 +117,7 @@
                         <Button x:Name="btnSinFit" Content="F I T" HorizontalAlignment="Right" Margin="0,0,10,0" Width="57" Background="#FFECFFDF" Foreground="#FF0D7100" FontWeight="Bold" BorderBrush="#FF255200" Click="btnSinFit_Click" Visibility="Hidden"/>
                         <ni:Graph x:Name="graphFringes" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1">
                             <ni:Graph.Axes>
+                                <ni:AxisDouble x:Name="fringesXaxis" Orientation="Horizontal" Adjuster="ContinuousChart"/>
                                 <ni:AxisDouble x:Name="fringesYaxis" Orientation="Vertical" Adjuster="None" Range="0, 2, System.Double"/>
                             </ni:Graph.Axes>
                             <ni:Graph.Children>
@@ -162,7 +159,7 @@
                         </StackPanel>
                         <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <ni:Graph.Axes>
-                                <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="FitLoosely"/>
+                                <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="ContinuousChart" Range="0, 60, System.Double"/>
                                 <ni:AxisDouble x:Name="accelYAxis" Orientation="Vertical" Adjuster="FitLoosely" />
                                 <ni:AxisDouble x:Name="corrYAxis" Orientation="Vertical" Adjuster="FitLoosely" BaselineStroke="#FF009064">
                                     <ni:AxisDouble.MinorDivisions>
@@ -171,9 +168,6 @@
                                     <ni:AxisDouble.MajorDivisions>
                                         <ni:RangeLabeledDivisions LabelBrush="#FF097F12"/>
                                     </ni:AxisDouble.MajorDivisions>
-                                    <ni:AxisDouble.MajorGridLines>
-                                        <ni:GridLines/>
-                                    </ni:AxisDouble.MajorGridLines>
                                 </ni:AxisDouble>
                             </ni:Graph.Axes>
                             <ni:Graph.Children>
@@ -186,7 +180,7 @@
                                     </ni:PlotRendererGroup>
                                 </ni:Plot>
                                 <ni:Plot x:Name="plotCorr" Label="Corrections" VerticalScale="{Binding ElementName=corrAxis}" >
-                                    <ni:BarPlotRenderer BarWidth="0.35" Fill="#FF07B484" Stroke="#FF07B484"/>
+                                    <ni:BarPlotRenderer BarWidth="0.35" Fill="{x:Null}" Stroke="#FF07B484" StrokeThickness="0.5"/>
                                 </ni:Plot>
                                 <ni:Plot x:Name="plotMotAccel" Label="Quantum Accel." >
                                     <ni:PlotRendererGroup>
@@ -269,7 +263,7 @@
                 <TabItem x:Name="tiOptimization" Header=" Optimization " Height="28" VerticalAlignment="Top" Margin="0">
                     <PanelsUC:OptimUC_Class x:Name="OptimUC1" />
                 </TabItem>
-                
+
 
             </TabControl>
             <CheckBox x:Name="chkAutoScaleBottom" Content="Auto-scale Y" Grid.Column="1" HorizontalAlignment="Left" Margin="8,5,0,0" VerticalAlignment="Top" Foreground="#FF0E7501" FontSize="13" Checked="chkAutoScaleBottom_Checked" Unchecked="chkAutoScaleBottom_Checked"/>

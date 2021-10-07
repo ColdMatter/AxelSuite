@@ -899,7 +899,8 @@ namespace Axel_probe
                 {
                     double memsAccel = lastDecomposedAccel["mems"];
                     md.prms["MEMS"] = (string)(memsAccel.ToString("G5")); // in [mg]
-                    md.prms["Interferometer"] = Utils.GaussSeries(500, memsAccel, memsAccel / 5+0.1).ToArray();
+                    double accelV = pe.accelV(memsAccel); double aSigma = pe.accelV(ndGaussNoiseX.Value);
+                    md.prms["Interferometer"] = Utils.GaussSeries(500, accelV, aSigma).ToArray();
                 }
                 
                 if (pe.contrPhase > -10) md.prms["runID"] = -1;

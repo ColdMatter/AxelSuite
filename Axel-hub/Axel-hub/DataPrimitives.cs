@@ -25,8 +25,10 @@ namespace Axel_hub
         public static Dictionary<string, double> AverageShotSegments(MMexec data, bool stdDev)
         {
             var avgs = new Dictionary<string, double>();
-            foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg"})
+            foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg", "Interferometer"})
             {
+                if (key.Equals("Interferometer"))
+                    if (!data.prms.ContainsKey("Interferometer")) continue;
                 var rawData = (double[])data.prms[key];
                 avgs[key] = rawData.Average();
                 if (stdDev) avgs[key + "_std"] = Statistics.StandardDeviation(rawData);
@@ -70,8 +72,7 @@ namespace Axel_hub
 
         public static void ConvertToDoubleArray(ref MMexec data)
         {
-            string[] sa = { "runID", "groupID", "last", "MEMS", "samplingRate" };
-            List<string> ls = new List<string>(sa);
+            List<string> ls = new List<string>(){ "runID", "groupID", "last", "samplingRate", "MEMS", "temperature" };
             Dictionary<string, object> tempDict = new Dictionary<string, object>();
             foreach (var key in data.prms.Keys)
             {
@@ -116,7 +117,7 @@ namespace Axel_hub
             }
         }
 
-        public static double IntegrateAcceleration(MMexec data)
+        public static double IntegrateAcceleration(Dictionary<string, double> avgs)
         {
             throw new NotImplementedException();
         }
@@ -143,7 +144,7 @@ namespace Axel_hub
     /// </summary>
     public class SingleShot
     {
-        public string precision = "G6";
+        public string precision = "G8";
         public string dmode { get; private set; }
         public Point3D quant; // .X - time of acquisition[s]; .Y - accel.[mg/mV]; .Z - range (duration) of acquisition[s]
         public double temperature { get; private set; } 
@@ -153,7 +154,7 @@ namespace Axel_hub
         /// <summary>
         /// Number of constructors
         /// </summary>
-        public SingleShot(string _precision = "G6")
+        public SingleShot(string _precision = "G8")
         {
             quant = new Point3D(-1, 0, -1);
             _mems = new List<Point>();
@@ -169,7 +170,7 @@ namespace Axel_hub
             quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>();
         }
-        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "", string _precision = "G6")
+        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "", string _precision = "G8")
         {
             quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>(m);

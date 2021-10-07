@@ -107,7 +107,7 @@
                             <Label HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="117" Margin="2,5,0,0" Content="MEMS data source:"></Label>
                             <ComboBox x:Name="cbRunMemsInJumbo" Margin="124,7,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="96" SelectedIndex="0" SelectionChanged="cbRunMemsInJumbo_SelectionChanged">
                                 <ComboBoxItem Content="None"/>
-                                <ComboBoxItem Content="USB-9251"/>
+                                <ComboBoxItem Content="USB-9251" IsEnabled="False"/>
                                 <ComboBoxItem Content="PXI-AI"/>
                             </ComboBox>
                             <CheckBox x:Name="chkShowMemsIfRunning" Content="Show MEMS panel only when running" Margin="5,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
@@ -144,7 +144,7 @@
                         <Grid>
                             <Label x:Name="lbTemperatureHw" Content="Temperature" HorizontalAlignment="Left" Margin="11,37,0,0" VerticalAlignment="Top" FontSize="13"/>
                             <Label x:Name="lbMemsHw" Content="MEMS" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" FontSize="13"/>
-                            <ComboBox x:Name="cbMemsHw" HorizontalAlignment="Left" Margin="98,10,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="0">
+                            <ComboBox x:Name="cbMemsHw" HorizontalAlignment="Left" Margin="98,10,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="0" IsEnabled="False">
                                 <ComboBox.Background>
                                     <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
                                         <GradientStop Color="#FFF0F0F0" Offset="0"/>

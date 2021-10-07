@@ -39,6 +39,10 @@ using UtilsNS;
 
 namespace Axel_hub
 {
+    public enum inArrays
+    {
+        N1, N2, RN1, RN2, NTot, B2, BTot, Bg, Interferometer
+    }
     /// <summary>
     /// Interaction logic for signalUC.xaml
     /// visualize the raw signal and signal trends {"N1", "N2", "RN1", "RN2", "NTot", "B2", "Btot"}
@@ -127,7 +131,6 @@ namespace Axel_hub
             rawDataLog.Enabled = false;
             rawDataLog.defaultExt = ".rws";
             rawDataLog.Enabled = chkRawSave.IsChecked.Value;
-
         }
 
         /// <summary>
@@ -166,78 +169,39 @@ namespace Axel_hub
             lboxNB.Items.Clear();
         }
 
-        /// <summary>
-        /// Import a shot with unpacked arrays and update signal/trends
-        /// </summary>
-        /// <param name="mme">shot with unpacked arrays</param>
-        /// <param name="currX">Last horiz coordinate</param>
-        /// <param name="A">Asymetry calculated</param>
-        public void NextShot(MMexec mme, out double currX, out double A) // 
-        {
-            if (!Utils.isNull(rawDataLog)) rawDataLog.log(JsonConvert.SerializeObject(mme));
-            runID = Convert.ToInt32(mme.prms["runID"]);
-            Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, chkStdDev.IsChecked.Value);
-            if (Showing)
-            {
-                lboxNB.Items.Clear();
-                foreach (var item in avgs)
-                {
-                    ListBoxItem lbi = new ListBoxItem();
-                    lbi.Content = string.Format("{0}: {1:" + genOptions.SignalTablePrec + "}", item.Key, item.Value);
-                    if (item.Key.IndexOf("_std") > 0) lbi.Foreground = Brushes.Green;
-                    else lbi.Foreground = Brushes.Blue;
-                    lboxNB.Items.Add(lbi);
-                }
-            }
-            
-            double asymmetry = MMDataConverter.Asymmetry(avgs, false, chkDarkcurrent.IsChecked.Value);
-            //
-            // oscilo-signal chart (rigth)
+        private void ShowOscilo(MMexec mme) // oscilo-signal chart (rigth)
+        {           
             if (Utils.isNull(signalDataStack)) signalDataStack = new DataStack();
             else signalDataStack.Clear();
             if (Utils.isNull(backgroundDataStack)) backgroundDataStack = new DataStack();
             else backgroundDataStack.Clear();
 
-            int xVal = 0; double N2 = avgs["N2"];
-            if (Showing)
-                foreach (double yVal in (double[])mme.prms["N2"])
-                {
-                    signalDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-            double NTot = avgs["NTot"];
-            if (Showing)
-                foreach (double yVal in (double[])mme.prms["NTot"])
-                {
-                    signalDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-
-            xVal = 0; double B2 = avgs["B2"];
-            if (Showing)
-                foreach (double yVal in (double[])mme.prms["B2"])
-                {
-                    backgroundDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-            double BTot = avgs["BTot"];
-            if (Showing)
-                foreach (double yVal in (double[])mme.prms["BTot"])
-                {
-                    backgroundDataStack.Add(new Point(xVal, yVal));
-                    xVal++;
-                }
-            if (Showing) // skip the show
+            int xVal = 0;
+            foreach (double yVal in (double[])mme.prms["N2"])
             {
-                /* Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
-                 new Action(() =>
-                 {*/
-                graphSignal.Data[0] = signalDataStack.Compress(genOptions.RawSignalAvg);
-                graphSignal.Data[1] = backgroundDataStack.Compress(genOptions.RawSignalAvg);
-                // }));
+                signalDataStack.Add(new Point(xVal, yVal));
+                xVal++;
             }
-            // readjust Y axis
-            if (chkAutoScaleMiddle.IsChecked.Value && Showing) // signal auto-Y-limits
+            foreach (double yVal in (double[])mme.prms["NTot"])
+            {
+                signalDataStack.Add(new Point(xVal, yVal));
+                xVal++;
+            }
+            xVal = 0;
+            foreach (double yVal in (double[])mme.prms["B2"])
+            {
+                backgroundDataStack.Add(new Point(xVal, yVal));
+                xVal++;
+            }
+            foreach (double yVal in (double[])mme.prms["BTot"])
+            {
+                backgroundDataStack.Add(new Point(xVal, yVal));
+                xVal++;
+            }
+            graphSignal.Data[0] = signalDataStack.Compress(genOptions.RawSignalAvg);
+            graphSignal.Data[1] = backgroundDataStack.Compress(genOptions.RawSignalAvg);    
+            
+            if (chkAutoScaleMiddle.IsChecked.Value) // signal auto-Y-limits
             {
                 double d = Math.Min(signalDataStack.pointYs().Min(), backgroundDataStack.pointYs().Min());
                 d = Math.Floor(10 * d) / 10;
@@ -248,46 +212,12 @@ namespace Axel_hub
                 d = signalYmax == signalYmin ? 0.5 : (signalYmax - signalYmin) * 0.02;
                 signalYaxis.Range = new Range<double>(signalYmin - d, signalYmax + d);
             }
-            //
-            // Ns chart (left)
+        }
 
-            // corrected with background
-            //double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2; double N1 = NTot - N2;
-            //double A = cN2 / cNtot;//(N2 - B2) / (NTot - BTot); //
-            A = 1 - 2 * (N2 - B2) / (NTot - BTot);
-            currX = 1; //double cN2_std = 1, cNtot_std = 1;
+        private void ShowNs(double currX, Dictionary<string, double> avgs)
+        {
+            Dictionary<string, double> cavgs = MMDataConverter.SignalCorrected(avgs, chkDarkcurrent.IsChecked.Value);
 
-            /*if (chkStdDev.IsChecked.Value)
-            {
-                cN2_std = Math.Sqrt(Math.Pow(avgs["N2_std"], 2) + Math.Pow(avgs["B2_std"], 2));
-                cNtot_std = Math.Sqrt(Math.Pow(avgs["NTot_std"], 2) + Math.Pow(avgs["BTot_std"], 2));
-            }*/
-            double cinitN2 = 0;
-            if (avgs.ContainsKey("initN2")) cinitN2 = avgs["initN2"] - B2;
-            Dictionary<string, double> cavgs = MMDataConverter.SignalCorrected(avgs, chkDarkcurrent.IsChecked.Value);           
-
-            if (scanMode) currX = lastScan.sFrom + runID * lastScan.sBy;
-            if (repeatMode)
-            {   // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
-                if (mme.prms.ContainsKey("iTime")) // remote time
-                {  
-                    if (grpMme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) // jumbo
-                    {
-                        if (theTime.isTimeRunning)
-                        {
-                            double sh = 0; if (mme.prms.ContainsKey("bTime") && mme.prms.ContainsKey("samplingRate")) sh = Convert.ToDouble(mme.prms["bTime"]) / Convert.ToDouble(mme.prms["samplingRate"]);
-                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))) + sh; // in sec
-                        }
-                    }
-                    else
-                    {
-                        if (theTime.isTimeRunning)
-                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec
-                        else theTime.startTime();
-                    }
-                }
-                else currX = runID;
-            }
             avgs["Index"] = runID; avgs["XAxis"] = currX; if (!Utils.isNull(SDlog)) SDlog.dictLog(avgs, genOptions.SaveFilePrec);
             //stackN1.Add(new Point(currX, cN1)); stackN2.Add(new Point(currX, cN2)); stackNtot.Add(new Point(currX, cNtot));
             //stackRN1.Add(new Point(currX, cN1 / cNtot)); stackRN2.Add(new Point(currX, cN2 / cNtot));
@@ -345,6 +275,77 @@ namespace Axel_hub
             {
                 logger.dictLog(avgs, genOptions.SaveFilePrec);
             }
+        }
+
+        /// <summary>
+        /// Import a shot with unpacked arrays and update signal/trends
+        /// </summary>
+        /// <param name="mme">shot with unpacked arrays</param>
+        /// <param name="currX">Last horiz coordinate</param>
+        /// <param name="A">Asymetry calculated</param>
+        public void NextShot(MMexec mme, out double currX, out double A, out double mems_V) // 
+        {
+            if (!Utils.isNull(rawDataLog)) rawDataLog.log(JsonConvert.SerializeObject(mme));
+            runID = Convert.ToInt32(mme.prms["runID"]);
+            Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, chkStdDev.IsChecked.Value);
+            if (avgs.ContainsKey(inArrays.Interferometer.ToString())) mems_V = avgs[inArrays.Interferometer.ToString()];
+            else mems_V = Double.NaN;
+            if (Showing)
+            {
+                lboxNB.Items.Clear();
+                foreach (var item in avgs)
+                {
+                    ListBoxItem lbi = new ListBoxItem();
+                    lbi.Content = string.Format("{0}: {1:" + genOptions.SignalTablePrec + "}", item.Key, item.Value);
+                    if (item.Key.IndexOf("_std") > 0) lbi.Foreground = Brushes.Green;
+                    else lbi.Foreground = Brushes.Blue;
+                    lboxNB.Items.Add(lbi);
+                }
+            }
+            
+            double asymmetry = MMDataConverter.Asymmetry(avgs, false, chkDarkcurrent.IsChecked.Value);
+
+            double N2 = avgs[inArrays.N2.ToString()]; double NTot = avgs[inArrays.NTot.ToString()];
+            double B2 = avgs[inArrays.B2.ToString()]; double BTot = avgs[inArrays.BTot.ToString()];
+            if (Showing) ShowOscilo(mme); // right side
+
+            // corrected with background
+            //double cNtot = NTot - BTot; double cN2 = N2 - B2; double cN1 = cNtot - cN2; double N1 = NTot - N2;
+            //double A = cN2 / cNtot;//(N2 - B2) / (NTot - BTot); //
+            A = 1 - 2 * (N2 - B2) / (NTot - BTot);
+            currX = 1; //double cN2_std = 1, cNtot_std = 1;
+
+            /*if (chkStdDev.IsChecked.Value)
+            {
+                cN2_std = Math.Sqrt(Math.Pow(avgs["N2_std"], 2) + Math.Pow(avgs["B2_std"], 2));
+                cNtot_std = Math.Sqrt(Math.Pow(avgs["NTot_std"], 2) + Math.Pow(avgs["BTot_std"], 2));
+            }*/
+            double cinitN2 = 0;
+            if (avgs.ContainsKey("initN2")) cinitN2 = avgs["initN2"] - B2;
+                    
+            if (scanMode) currX = lastScan.sFrom + runID * lastScan.sBy;
+            if (repeatMode)
+            {   // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
+                if (mme.prms.ContainsKey("iTime")) // remote time
+                {  
+                    if (grpMme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) // jumbo
+                    {
+                        if (theTime.isTimeRunning)
+                        {
+                            double sh = 0; if (mme.prms.ContainsKey("bTime") && mme.prms.ContainsKey("samplingRate")) sh = Convert.ToDouble(mme.prms["bTime"]) / Convert.ToDouble(mme.prms["samplingRate"]);
+                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))) + sh; // in sec
+                        }
+                    }
+                    else
+                    {
+                        if (theTime.isTimeRunning)
+                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec
+                        else theTime.startTime();
+                    }
+                }
+                else currX = runID;
+            }
+            ShowNs(currX, avgs); // left side
         }
 
         /// <summary>

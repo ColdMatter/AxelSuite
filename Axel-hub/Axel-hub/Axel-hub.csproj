@@ -163,7 +163,10 @@
     <Compile Include="PanelsUC\strobesUC.xaml.cs">
       <DependentUpon>strobesUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WindowShowcase.xaml.cs">
+    <Compile Include="Showcase\ShowcaseUC.xaml.cs">
+      <DependentUpon>ShowcaseUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Showcase\WindowShowcase.xaml.cs">
       <DependentUpon>WindowShowcase.xaml</DependentUpon>
     </Compile>
     <Page Include="AxelAxisUC.xaml">
@@ -222,7 +225,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WindowShowcase.xaml">
+    <Page Include="Showcase\ShowcaseUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Showcase\WindowShowcase.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

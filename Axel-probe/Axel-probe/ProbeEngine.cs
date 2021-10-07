@@ -256,6 +256,11 @@ namespace Axel_probe
             if (percent) return 100 * (r / period);
             return r;
         }
+        public double accelV(double accelMg) // in mg; out Volts
+        {
+            double cK0 = 486.0; double cK1 = 1.295046; double rAccel = 6000; // example values
+            return ((accelMg - cK0 / 1000) * rAccel) / (1e6 * cK1);
+        }
 
         /// <summary>
         /// Generates specific pattern with set params
