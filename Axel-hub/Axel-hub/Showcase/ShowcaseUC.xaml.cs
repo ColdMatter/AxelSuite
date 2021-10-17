@@ -27,6 +27,7 @@ namespace Axel_hub.Showcase
         public ShowcaseClass()
         {
             InitializeComponent();
+            showcaseState = ShowcaseStates.closed;
         }
         const double gMems = 9.81792; // m/s^2
         const bool simulation = false;
@@ -43,7 +44,7 @@ namespace Axel_hub.Showcase
         public event ShowcaseClassWindow.ShowcaseEventHandler OnShowcaseUCEvent;
         private void btnShowcaseDemo_Click(object sender, RoutedEventArgs e)
         {
-            if (!Utils.isNull(Showcase))
+            if (!Utils.isNull(Showcase) && showcaseState != ShowcaseStates.closed)
             {
                 if (!Showcase.IsVisible)
                 {
@@ -71,7 +72,7 @@ namespace Axel_hub.Showcase
 
             showcaseState = ShowcaseStates.idle;
         }
-        public enum ShowcaseStates { idle, scan, run };
+        public enum ShowcaseStates { closed, idle, scan, run };
         private ShowcaseStates _showcaseState;
         public ShowcaseStates showcaseState
         {
@@ -81,17 +82,24 @@ namespace Axel_hub.Showcase
                 switch (value)
                 {
                     case (ShowcaseStates.idle):
-                        Showcase.btnScan.IsEnabled = true;
-                        if (Utils.isNull(Showcase.scanSrs)) Showcase.btnRun.IsEnabled = false;
-                        else Showcase.btnRun.IsEnabled = (Showcase.scanSrs.Count > 0);
+                        //if (_showcaseState.Equals(ShowcaseStates.scan)) ShowcaseAction("Scan:end");
+                        Showcase.btnScan.IsEnabled = true; Showcase.btnAcceptStrobes.IsEnabled = true;
+                        if (Utils.isNull(Showcase.scanSrs))
+                        {
+                            Showcase.btnRun.IsEnabled = false; Showcase.btnAcceptStrobes.IsEnabled = false;
+                        }
+                        else Showcase.btnRun.IsEnabled = Showcase.scanSrs.Count > 0;
                         Showcase.btnStop.IsEnabled = Showcase.btnRun.IsEnabled;
                         break;
                     case (ShowcaseStates.scan):
-                        Showcase.btnRun.IsEnabled = false;
+                        Showcase.btnRun.IsEnabled = false; Showcase.btnAcceptStrobes.IsEnabled = true;
                         break;
                     case (ShowcaseStates.run):
-                        Showcase.btnScan.IsEnabled = false;
+                        Showcase.btnScan.IsEnabled = false; Showcase.btnAcceptStrobes.IsEnabled = false;
                         Showcase.btnRun.IsEnabled = false;
+                        break;
+                    case (ShowcaseStates.closed):
+                        
                         break;
                 }
                 _showcaseState = value;
@@ -125,8 +133,12 @@ namespace Axel_hub.Showcase
                     showcaseState = ShowcaseStates.idle;
                     if (simulation) dTimer.Stop();
                     break;
+                case "Closed":
+                    showcaseState = ShowcaseStates.closed;
+                    if (simulation) dTimer.Stop();
+                    break;
             }
-            if ((OnShowcaseUCEvent != null) && !simulation) return OnShowcaseUCEvent(msg);
+            if ((OnShowcaseUCEvent != null)) return OnShowcaseUCEvent(msg); // && !simulation
             else return false;
         }
         public void InitRun(int depth)
@@ -138,14 +150,14 @@ namespace Axel_hub.Showcase
                 if (rbMS2.IsChecked.Value) Showcase.axisDrun.Label = "acceleration [m/s^2]";
                 if (rbMg.IsChecked.Value) Showcase.axisDrun.Label = "acceleration [mg]";
                 Showcase.axisDrun.Visibility = Visibility.Visible;
-                Showcase.plotDiff.Visibility = Visibility.Visible;
+                //Showcase.plotDiff.Visibility = Visibility.Visible;
             }
             else
             {
                 if (rbMS2.IsChecked.Value) Showcase.axisYrun.Label = "acceleration [m/s^2]";
                 if (rbMg.IsChecked.Value) Showcase.axisYrun.Label = "acceleration [mg]";
                 Showcase.axisDrun.Visibility = Visibility.Collapsed;
-                Showcase.plotDiff.Visibility = Visibility.Collapsed;
+                //Showcase.plotDiff.Visibility = Visibility.Collapsed;
             }
             Showcase.InitRun(depth);
         }

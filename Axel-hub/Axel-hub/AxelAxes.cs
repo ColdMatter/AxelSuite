@@ -123,6 +123,7 @@ namespace Axel_hub
             this[Count - 1].OptimUC1.SendMMexecEvent += new PanelsUC.OptimUC_Class.SendMMexecHandler(SendMMexec);
             this[Count - 1].ShowcaseUC1.OnShowcaseUCEvent += new ShowcaseClassWindow.ShowcaseEventHandler(ShowcaseReaction);
         }
+        public bool DoContinue = false;
         /// <summary>
         /// Get an axis by prefix
         /// </summary>
@@ -499,7 +500,10 @@ namespace Axel_hub
                     }
                     if (this[0].ShowcaseUC1.IsShowcaseShowing)
                         this[0].ShowcaseUC1.Showcase.InitScan(this[0].jumboScan());
-                    DoJumboScan(true);
+                    DoJumboScan(true); // start the scan                   
+                    break;
+                case "Scan:end":
+                    this[0].btnCosFit_Click(null, null);
                     break;
                 case "Run":
                     if (!genOptions.JumboRepeat)
@@ -519,6 +523,14 @@ namespace Axel_hub
                         this[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
                     break;
             }
+            if (msg.Length > 15)
+                if (msg.Substring(0,15).Equals("Accept Strobes:"))
+                {
+                    string[] strobes = msg.Substring(15).Split(',');
+                    if (!strobes.Length.Equals(2)) return false;
+                    this[0].crsUpStrobe.AxisValue = Convert.ToDouble(strobes[0]); this[0].crsDownStrobe.AxisValue = Convert.ToDouble(strobes[1]);
+                    DoContinue = true;
+                }
             return true;
         }
 
@@ -703,6 +715,7 @@ namespace Axel_hub
                  this[i].resetQuantList(Utils.dataPath+Utils.timeName());
              }
         }
+        public bool closeRequest = false;
         /// <summary>
         /// Not destroying anything, just preparing for closing
         /// </summary>
@@ -710,6 +723,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e)  
         {
+            closeRequest = true;
             axelMems.StopAcquisition(); Thread.Sleep(200);
             for (int i = 0; i < rCount; i++) this[i].Closing(sender, e);
         }

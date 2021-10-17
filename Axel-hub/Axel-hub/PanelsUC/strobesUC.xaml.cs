@@ -189,7 +189,25 @@ namespace Axel_hub
             configFile = Utils.configPath + "PID_" + prefix + ".cfg";
             OpenConfigFile();
         }
-
+        /// <summary>
+        /// calculate Up/Down from fit coefficients 
+        /// signal(x) = scale[0] * cos(K[1]*x + phi0[2]) + offset[3] -> idx in cf (coeffs)
+        /// </summary>
+        /// <param name="cf">fit coeff. </param>
+        public void calcStrobesFromFit(double[] cf)           
+        {
+            double signal(double phi)
+            { 
+                return cf[0] * Math.Cos(cf[1] * phi + cf[2]) + cf[3]; 
+            }
+            if (!cf.Length.Equals(4)) return;
+            double u, d, phi0 = cf[2];
+            if (phi0 > Math.PI) phi0 -= 2*Math.PI;
+            d = 0.5 * Math.PI / cf[1] - phi0; // 0.5 and 1.5 PI are zeros of cos function
+            u = 1.5 * Math.PI / cf[1] - phi0;
+            Down.X = d; Down.Y = signal(d);
+            Up.X = u; Up.Y = signal(u);
+        }
         /// <summary>
         /// Call this before each Jumbo Repeat for group MMexec and modes synchronization
         /// </summary>
@@ -197,7 +215,7 @@ namespace Axel_hub
         /// <param name="_fringeShift"></param>
         /// <param name="_grpMME"></param>
         /// <param name="contrastV"></param>
-        public void OnJumboRepeat(double _fringeScale, double _fringeShift, MMexec _grpMME, double contrastV) // 
+        public void OnJumboRepeat(double _fringeScale, double _fringeShift, MMexec _grpMME, double contrastV) 
         {
             if (!Double.IsNaN(_fringeScale)) fringeScale = _fringeScale;
             if (!Double.IsNaN(_fringeShift)) fringeShift = _fringeShift;
@@ -421,8 +439,7 @@ namespace Axel_hub
                     }
                 }              
             }        
-            lastMMEout = mmeOut.Clone(); return mmeOut;
-            
+            lastMMEout = mmeOut.Clone(); return mmeOut;         
         }
 
         string[] Titles = { "runI", "tP", "tI", "tD", "Down.X", "Up.X", "disbal", "corr", "iSD-R", "contrast" };

@@ -477,7 +477,12 @@ namespace Axel_probe
             {
                 if (bpps.ContainsKey("TimeGap")) Thread.Sleep((int)bpps["TimeGap"]);
                 Utils.DoEvents();
-                n2 = -Math.Cos(ph) + 2;  // n2 = 1 .. 3
+                double noise = 0;
+                if (Convert.ToBoolean(dps["YnoiseIO"]))
+                {
+                    noise = Utils.Gauss01() * Convert.ToDouble(dps["Ynoise"]) / 100;
+                }
+                n2 = - Math.Cos(ph) + 2 + noise;  // n2 = 1 .. 3
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 srsFringes.Add(new Point(ph, A));
 

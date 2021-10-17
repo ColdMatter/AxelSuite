@@ -114,21 +114,21 @@
                         </Grid.RowDefinitions>
                         <ni:GraphInteractionPalette x:Name="interatctionFringes" HorizontalAlignment="Stretch" Height="23" Margin="28,5,0,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphSignal}"/>
                         <Label x:Name="lbInfoFringes" Content="Info:" Margin="246,0,0,0" Height="31" FontSize="13" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Button x:Name="btnSinFit" Content="F I T" HorizontalAlignment="Right" Margin="0,0,10,0" Width="57" Background="#FFECFFDF" Foreground="#FF0D7100" FontWeight="Bold" BorderBrush="#FF255200" Click="btnSinFit_Click" Visibility="Hidden"/>
-                        <ni:Graph x:Name="graphFringes" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1">
+                        <Button x:Name="btnCosFit" Content="Calc.strobes" HorizontalAlignment="Right" Margin="0,0,10,0" Width="100" Background="#FFECFFDF" Foreground="#FF0D7100" FontWeight="Bold" BorderBrush="#FF255200" Click="btnCosFit_Click" Visibility="Hidden"/>
+                        <ni:Graph x:Name="graphFringes" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" RenderMode="Raster" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1">
                             <ni:Graph.Axes>
                                 <ni:AxisDouble x:Name="fringesXaxis" Orientation="Horizontal" Adjuster="ContinuousChart"/>
                                 <ni:AxisDouble x:Name="fringesYaxis" Orientation="Vertical" Adjuster="None" Range="0, 2, System.Double"/>
                             </ni:Graph.Axes>
                             <ni:Graph.Children>
-                                <ni:MultiPlotCursor x:Name="crsUpStrobe" Label="Uphill" Foreground="#FF046C05" ToolTip="Uphill" LabelVisibility="Visible"/>
-                                <ni:MultiPlotCursor x:Name="crsDownStrobe" Label="Downhill" Foreground="#FF031D9A" ToolTip="Downhill" LabelVisibility="Visible"/>
+                                <ni:MultiPlotCursor x:Name="crsUpStrobe" Label="Uphill" Foreground="#FF046C05" ToolTip="Uphill" LabelVisibility="Visible" PositionChanged="crsUpStrobe_PositionChanged"/>
+                                <ni:MultiPlotCursor x:Name="crsDownStrobe" Label="Downhill" Foreground="#FF031D9A" ToolTip="Downhill" LabelVisibility="Visible" PositionChanged="crsDownStrobe_PositionChanged"/>
                             </ni:Graph.Children>
                             <ni:Graph.Plots>
                                 <ni:Plot Label="Fringes">
                                     <ni:PlotRendererGroup>
                                         <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.8"/>
-                                        <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF037D70" Size="3,3"/>
+                                        <ni:PointPlotRenderer Fill="#FFA1FDF3" Stroke="#FF037D70" Size="5,5"/>
                                     </ni:PlotRendererGroup>
                                 </ni:Plot>
                                 <ni:Plot Label="fitData">
@@ -157,7 +157,7 @@
                             <CheckBox x:Name="chkAccel" Content="Accel." VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkMEMS_Checked" Checked="chkMEMS_Checked" Foreground="#FFE05100" FontWeight="Bold"/>
                             <Label x:Name="lbInfoAccelTrend" Content="Info:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Height="31" Width="640" FontSize="13" Grid.RowSpan="2"/>
                         </StackPanel>
-                        <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ni:Graph x:Name="graphAccelTrend" Margin="3,1.714,0.286,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" RenderMode="Raster" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <ni:Graph.Axes>
                                 <ni:AxisDouble x:Name="accelXaxis" Orientation="Horizontal" Adjuster="ContinuousChart" Range="0, 60, System.Double"/>
                                 <ni:AxisDouble x:Name="accelYAxis" Orientation="Vertical" Adjuster="FitLoosely" />

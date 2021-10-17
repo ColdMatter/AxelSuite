@@ -34,17 +34,16 @@ namespace Axel_hub
             scanSrs = new DataStack(2*k+10);
             axisXscan.Range = new Range<double>(scan.sFrom, scan.sTo);
             graphScan.Data[0] = null;
+            btnAcceptStrobes.Value = false;
         }
-
         public int nextScanPoint(double xVl, double A)
         {
             scanSrs.AddPoint(A, xVl);
             graphScan.Data[0] = scanSrs;
             return scanSrs.Count;
         }
-
         protected DataStack quantSrs, memsSrs, accelSrs, diffSrs;
-        public void InitRun(int depth = 100)
+        public void InitRun(int depth = 60)
         {
             axisXrun.Range = new Range<double>(0, depth);
             quantSrs = new DataStack(3*depth); graphRun.Data[0] = null;
@@ -54,22 +53,27 @@ namespace Axel_hub
         }
         public int nextRunPoint(double xVl, Dictionary <string, double> dp)
         {  
-            if (btnPause.Value) return quantSrs.Count; 
-            if (dp.ContainsKey("PhiMg"))
-            {               
-                quantSrs.AddPoint(dp["PhiMg"], xVl);
-                graphRun.Data[0] = quantSrs;
-            }
-            if (dp.ContainsKey("MEMS"))
-            {
-                memsSrs.AddPoint(dp["MEMS"], xVl);
-                graphRun.Data[1] = memsSrs;
-            }
-            if (dp.ContainsKey("Accel"))
-            {
-                accelSrs.AddPoint(dp["Accel"], xVl);
-                graphRun.Data[2] = accelSrs;
-            }
+            if (btnPause.Value) return quantSrs.Count;
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send,
+                new Action(() =>
+                {
+                    if (dp.ContainsKey("PhiMg"))
+                    {               
+                        quantSrs.AddPoint(dp["PhiMg"], xVl);
+                        graphRun.Data[0] = quantSrs;
+                    }
+                    if (dp.ContainsKey("MEMS"))
+                    {
+                        memsSrs.AddPoint(dp["MEMS"], xVl);
+                        graphRun.Data[1] = memsSrs;
+                    }
+                    if (dp.ContainsKey("Accel"))
+                    {
+                        accelSrs.AddPoint(dp["Accel"], xVl);
+                        graphRun.Data[2] = accelSrs;
+                    }
+
+                }));
             if (dp.ContainsKey("Diff"))
             {
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
@@ -80,13 +84,20 @@ namespace Axel_hub
             }
             return quantSrs.Count;
         }
-
         public delegate bool ShowcaseEventHandler(string msg);
         public event ShowcaseEventHandler OnShowcaseEvent;
         protected bool ShowcaseEvent(string msg)
         {
             if (OnShowcaseEvent != null) return OnShowcaseEvent(msg);
             else return false;
+        }
+        private void btnAcceptStrobes_Click(object sender, RoutedEventArgs e)
+        {
+            btnAcceptStrobes.Value = !btnAcceptStrobes.Value;
+            if (btnAcceptStrobes.Value)
+            {
+                ShowcaseEvent("Accept Strobes:"+crsUpStrobe.AxisValue.ToString()+","+ crsDownStrobe.AxisValue.ToString());
+            }
         }
         private void btnPause_Click(object sender, RoutedEventArgs e)
         {
@@ -103,8 +114,7 @@ namespace Axel_hub
         }
         private void ShowcaseWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ShowcaseEvent("Stop");
+            ShowcaseEvent("Stop"); ShowcaseEvent("Closed");
         }
-
     }
 }

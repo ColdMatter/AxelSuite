@@ -28,7 +28,7 @@
                 <Label x:Name="lbProgBar" Content="0 %" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center" FontSize="13"/>
             </Grid>
         </Grid>
-        <TabControl x:Name="tabControl" Grid.Column="1" SelectedIndex="0">
+        <TabControl x:Name="tabControl" Grid.Column="1" SelectedIndex="3">
             <TabItem x:Name="tiJoinOptim" Header="Join Optimizer" HorizontalAlignment="Left" Height="26.7341772151899" VerticalAlignment="Top" Width="130" FontSize="13" Foreground="#FF761E01">
                 <Grid Background="White">
                     <local:JoinOptimClass x:Name="JoinOptim1" Width="Auto" Height="Auto"/>
@@ -51,6 +51,12 @@
                     <local:TmprCompClass x:Name="tmprCompY" Margin="0,8,0,0" Grid.Row="1"/>
                 </Grid>
             </TabItem>
+            <TabItem x:Name="tiGraphTest" Header="Graph Test" Width="125" FontSize="13" >
+                <Grid Background="#FFFFFDFD">
+                    <local:graphTestUC x:Name="graphTest"/>
+                </Grid>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </Window>

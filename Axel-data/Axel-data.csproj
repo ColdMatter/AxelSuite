@@ -97,6 +97,9 @@
       <Link>strobesUC.xaml.cs</Link>
       <DependentUpon>strobesUC.xaml</DependentUpon>
     </Compile>
+    <Compile Include="graphTestUC.xaml.cs">
+      <DependentUpon>graphTestUC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="JoinOptimUC.xaml.cs">
       <DependentUpon>JoinOptimUC.xaml</DependentUpon>
     </Compile>
@@ -113,6 +116,10 @@
       <Link>strobesUC.xaml</Link>
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="graphTestUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="JoinOptimUC.xaml">
       <Generator>MSBuild:Compile</Generator>

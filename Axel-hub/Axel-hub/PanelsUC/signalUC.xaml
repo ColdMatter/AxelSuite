@@ -26,7 +26,7 @@
                 <CheckBox x:Name="chkBtot" Content="Btot" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True" Unchecked="chkN1_Checked" Checked="chkN1_Checked" Foreground="#FF586601" FontWeight="Bold"/>
                 <Label x:Name="lbInfoSignal" Content="Info:" Margin="8,-2,0,-2.714" VerticalAlignment="Center" Height="31" FontSize="13"/>
             </StackPanel>
-            <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
+            <ni:Graph x:Name="graphNs" Grid.Row="1" Margin="0,0,0,0" FontSize="12" RenderMode="Raster" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" KeyDown="graphNs_KeyDown" MouseDoubleClick="graphNs_MouseDoubleClick" >
                 <ni:Graph.Axes>
                     <ni:AxisDouble x:Name="NsYaxis" Orientation="Vertical" Adjuster="None" />
                     <ni:AxisDouble x:Name="NsXaxis" Orientation="Horizontal" Adjuster="ContinuousChart" Range="0, 60, System.Double" />
@@ -97,7 +97,7 @@
         <GridSplitter x:Name="split2Signal" HorizontalAlignment="Left" Grid.Column="2" Margin="0,0,0,0" Background="#FFE5FFFA" ResizeDirection="Columns" Width="4"/>
 
         <Grid Grid.Column="1" Margin="3,0,0,0">
-            <ni:Graph x:Name="graphSignal"  Margin="0,0,0,0" FontSize="12" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" >
+            <ni:Graph x:Name="graphSignal"  Margin="0,0,0,0" FontSize="12" RenderMode="Raster" PlotAreaMargin="Auto,Auto,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" MouseDoubleClick="graphNs_MouseDoubleClick" >
                 <ni:Graph.Axes>
                     <ni:AxisDouble x:Name="signalYaxis" Orientation="Vertical" Adjuster="None"/>
                 </ni:Graph.Axes>

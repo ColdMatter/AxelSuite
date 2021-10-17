@@ -146,7 +146,7 @@ namespace Axel_hub
             Utils.log(tbLog, txt, clr);
         }
 
-        bool DoContinue = false;       
+             
         /// <summary>
         /// Shows/Hide continue arrow button and wait 5 min for a click
         /// </summary>
@@ -155,17 +155,18 @@ namespace Axel_hub
         public bool continueJumboRepeat(bool toggle)
         {
             if (toggle) //axes[0].ShowcaseUC1.IsShowcaseShowing
-            {
+            {               
                 axes.SetChartStrobes(true);
+                if (axes[0].ShowcaseUC1.IsShowcaseShowing) axes.ShowcaseReaction("Scan:end");
                 int k = 0;
                 rowContinueJumbo.Height = new GridLength(30);
-                while (!DoContinue && (k < 3000) && (rowContinueJumbo.Height.Value == 30)) // 5min
+                while (!axes.DoContinue && (k < 3000) && (rowContinueJumbo.Height.Value == 30) && !axes.closeRequest) // 5min
                 {
                     Thread.Sleep(100); Utils.DoEvents(); k++;
                 }
                 if (k > 2990) log("Time out (5 min) !!!", Brushes.Red);
                 rowContinueJumbo.Height = new GridLength(0);
-                DoContinue = false;
+                axes.DoContinue = false;
                 return (k < 2990);
             }
             else
@@ -182,7 +183,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         private void abtnContinueJumbo_Click(object sender, RoutedEventArgs e)
         {
-            DoContinue = true;
+            axes.DoContinue = true;
         }
         /// <summary>
         /// Some action when remode mode of ucScan has been changed
@@ -245,8 +246,7 @@ namespace Axel_hub
                 axes.startADC(down, period, buffSize);
             } 
             if (!down) log("End of series!", Brushes.Red);
-        }
- 
+        } 
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e) // !!! to AA
         {
             frmAxelHub.Top = 0;
@@ -254,7 +254,6 @@ namespace Axel_hub
             frmAxelHub.Left = SystemParameters.WorkArea.Width * 0.3;
             frmAxelHub.Width = SystemParameters.WorkArea.Width * 0.7;
         }
-
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
             tbLog.Document.Blocks.Clear();           
@@ -341,7 +340,6 @@ namespace Axel_hub
         private void OnActiveRemote(bool activeComm)
         {
             axes.OnOptionsChange(Options.genOptions);
-
         }
 
         /// <summary>

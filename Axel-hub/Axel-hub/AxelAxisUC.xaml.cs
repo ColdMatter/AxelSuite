@@ -99,8 +99,16 @@ namespace Axel_hub
             strobes.Init(prefix, ref genOptions);
 
             tabSecPlots.SelectedIndex = 1;
-            if (Utils.TheosComputer()) tiOptimization.Visibility = Visibility.Visible;
-            else tiOptimization.Visibility = Visibility.Collapsed;           
+            if (Utils.TheosComputer())
+            {
+                tiMultiScan.Visibility = Visibility.Visible;
+                tiOptimization.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                tiMultiScan.Visibility = Visibility.Collapsed;
+                tiOptimization.Visibility = Visibility.Collapsed;
+            }          
         }
 
         /// <summary>
@@ -299,8 +307,6 @@ namespace Axel_hub
             dlg.FileName = ""; // Default file name
             dlg.DefaultExt = ".ahs"; // Default file extension
             dlg.Filter = "Axel Hub Signal (.ahs)|*.ahs"; // Filter files by extension
-
-            // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
             if (result.Equals(true))
             {
@@ -316,21 +322,23 @@ namespace Axel_hub
         /// <param name="e"></param>
         private void btnOpenFringes_Click(object sender, RoutedEventArgs e)
         {
+            bool ctrl = Utils.keyStatus("Ctrl");
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".ahf"; // Default file extension
-            dlg.Filter = "Axel-hub File (.ahf)|*.ahf|Scan Data file (.sdt)|*.sdt"; // Filter files by extension
-
-            // Show save file dialog box
+            dlg.DefaultExt = ".sdt"; // Default file extension
+            dlg.Filter = "Scan Data file (.sdt)|*.sdt|Axel Hub Signal (.ahs)|*.ahs"; // Filter files by extension
             Nullable<bool> result = dlg.ShowDialog();
-
-            // Process save file dialog box results
-
             if (result != true) return;
             if (Utils.isNull(srsFringes)) srsFringes = new DataStack(); GroupBox gb = null;
-            srsFringes.OpenPair(dlg.FileName, ref gb);
+            if (System.IO.Path.GetExtension(dlg.FileName).Equals(".sdt"))
+                srsFringes.OpenPair(dlg.FileName, ref gb);
+            else
+                srsFringes.OpenPairFromAhs(dlg.FileName);
             graphFringes.Data[0] = srsFringes; chkAutoScaleBottom_Checked(sender, e);
-
+            if (ctrl) // test of fit
+            {
+                tabLowPlots.SelectedItem = tiFringes; btnCosFit.Visibility = Visibility.Visible;
+            }
             lbInfoFringes.Content = srsFringes.rem;
             tbRemFringes.Text = srsFringes.rem;
         }
@@ -550,7 +558,7 @@ namespace Axel_hub
             {
                 crsDownStrobe.Visibility = System.Windows.Visibility.Visible;
                 crsUpStrobe.Visibility = System.Windows.Visibility.Visible;
-                btnSinFit.Visibility = System.Windows.Visibility.Visible;
+                btnCosFit.Visibility = System.Windows.Visibility.Visible;
                 if (probeMode) strobes.Reset();
                     
                 crsDownStrobe.AxisValue = strobes.Down.X;
@@ -560,7 +568,7 @@ namespace Axel_hub
             {
                 crsDownStrobe.Visibility = System.Windows.Visibility.Collapsed;
                 crsUpStrobe.Visibility = System.Windows.Visibility.Collapsed;
-                btnSinFit.Visibility = System.Windows.Visibility.Collapsed;
+                btnCosFit.Visibility = System.Windows.Visibility.Collapsed;
 
                 graphFringes.Data[1] = null;
             }            
@@ -571,7 +579,7 @@ namespace Axel_hub
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnSinFit_Click(object sender, RoutedEventArgs e)
+        public void btnCosFit_Click(object sender, RoutedEventArgs e)
         {
             if (srsFringes.Count == 0)
             {
@@ -579,7 +587,7 @@ namespace Axel_hub
             }
             double[] xs = srsFringes.pointXs(); double[] ys = srsFringes.pointYs();
             double[] coeffs = new double[4];
-            // signal(x) = scale[0] * sin(K[1]*x + phi0[2]) + offset[3] -> idx in coeffs
+            // signal(x) = scale[0] * cos(K[1]*x + phi0[2]) + offset[3] -> idx in coeffs
             coeffs[0] = numScale.Value; // scale
             coeffs[1] = numKcoeff.Value; // K
             coeffs[2] = numPhi0.Value; // phi0 
@@ -598,6 +606,7 @@ namespace Axel_hub
             LogEvent("Scale = " + coeffs[0].ToString("G5"), Brushes.DarkCyan);
             LogEvent("Offset = " + coeffs[3].ToString("G5"), Brushes.DarkCyan);
 
+            strobes.calcStrobesFromFit(coeffs); // results in strobes
             visStrobes(true);
             //numScale.Value = coeffs[0]; numKcoeff.Value = coeffs[1]; numPhi0.Value = coeffs[2];  numOffset.Value = coeffs[3]; 
         }
@@ -610,7 +619,7 @@ namespace Axel_hub
         /// <returns></returns>
         private double ModelFunction(double x, double[] coefficients)
         {
-            return (coefficients[0] * Math.Sin(x / coefficients[1] + coefficients[2])) + coefficients[3];
+            return (coefficients[0] * Math.Cos(x / coefficients[1] + coefficients[2])) + coefficients[3];
         }
 
         public bool RecordQuantMems(double[] md, ref Dictionary<string,double> tm, double A)
@@ -1319,7 +1328,7 @@ namespace Axel_hub
                     showResults(xVl, rslt);
                 }
             }           
-            if (chkAutoScaleBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis 
+            if (chkAutoScaleBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis adjust
             {
                 if (scanModes.remoteMode == RemoteMode.Simple_Repeat || scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                 {
@@ -1339,10 +1348,26 @@ namespace Axel_hub
                     // !!!
                 }
                 double d = (accelYmax - accelYmin) * 0.02;
-                accelYAxis.Range = new Range<double>(accelYmin - d, accelYmax + d);
+                // accelYAxis.Range = new Range<double>(accelYmin - d, accelYmax + d); // replacing Adjuster="FitLoosely" if the code here is better 
             }
         }
 
+        private void crsUpStrobe_PositionChanged(object sender, EventArgs e)
+        {
+            if (Utils.isNull(srsFringes)) return;
+            if (ShowcaseUC1.IsShowcaseShowing && crsUpStrobe.Visibility.Equals(Visibility.Visible) && (srsFringes.Count > 0 ))
+            {
+                ShowcaseUC1.Showcase.crsUpStrobe.AxisValue = crsUpStrobe.AxisValue;
+            }
+        }
+        private void crsDownStrobe_PositionChanged(object sender, EventArgs e)
+        {
+            if (Utils.isNull(srsFringes)) return;
+            if (ShowcaseUC1.IsShowcaseShowing && crsDownStrobe.Visibility.Equals(Visibility.Visible) && (srsFringes.Count > 0))
+            {
+                ShowcaseUC1.Showcase.crsDownStrobe.AxisValue = crsDownStrobe.AxisValue;
+            }
+        }
         /// <summary>
         /// Extract acceleration params/statistics from result dict
         /// </summary>
@@ -1387,7 +1412,7 @@ namespace Axel_hub
             if (Utils.isNull(_prefix)) return;
             if (!prefix.Equals("")) UpdateFromOptions(false);
         }
-
+        protected bool closeRequest = false;
         /// <summary>
         /// If any additional actions needed (empty so far)
         /// </summary>
@@ -1395,6 +1420,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e) // not destroying anything, just preparing
         {
+            closeRequest = true;
             ShowcaseUC1.Final();
             OptimUC1.Final();
         }

@@ -621,7 +621,28 @@ namespace Axel_hub
             TimeSeriesMode = !((int)Math.Round((Last.X - First.X) / Count) == 1);
             return rslt;
         }
-
+        public bool OpenPairFromAhs(string fn)
+        {
+            bool rslt = true;
+            rem = ""; Clear();
+            if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
+            DictFileReader dlog = new DictFileReader(fn, new string[] { "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg" });
+            //if (dlog.header.StartsWith("{")) grpMme = JsonConvert.DeserializeObject<MMexec>(dlog.header);
+            if (dlog.subheaders.Count > 0)
+            {
+                string sh = dlog.subheaders[0];
+                if (sh.StartsWith("Rem=")) rem = sh.Substring(4);
+            }
+            double x;
+            Dictionary<string, double> row = new Dictionary<string, double>();
+            while (dlog.doubleIterator(ref row))
+            {
+                if (row.ContainsKey("XAxis")) x = row["XAxis"];
+                else continue;
+                if (row.ContainsKey("RN2")) AddPoint(row["RN2"], x);
+            }
+            return rslt;
+        }
         /// <summary>
         /// Save tab separated x,y text file 
         /// </summary>
