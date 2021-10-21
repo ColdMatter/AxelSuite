@@ -90,7 +90,7 @@ namespace Axel_hub.PanelsUC
         {
             if (Utils.isNull(theMax)) return "";
             return scans[0].sParam+" : "+theMax.Y.ToString("G5") + " ;  " + scans[1].sParam + " : " + theMax.X.ToString("G5")
-                + " ;  cost : " + theMax.Z.ToString("G5");
+                + " ;  obj.function : " + theMax.Z.ToString("G5");
         }
         public void Optimize(bool? start, List<baseMMscan> _scans, Dictionary<string, double> opts)
         {

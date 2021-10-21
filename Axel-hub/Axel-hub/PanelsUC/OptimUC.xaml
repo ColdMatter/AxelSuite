@@ -44,8 +44,8 @@
                         <ColumnDefinition Width="100"/>
                     </Grid.ColumnDefinitions>
 
-                    <GroupBox x:Name="groupBox" Header=" Objective function" Margin="0" >
-                        <ComboBox x:Name="cbObjectiveFunc" Margin="0,2,0,0" Text="" FontSize="13" Background="{x:Null}" IsEditable="True">
+                    <GroupBox x:Name="groupBox" Header=" Objective function" Margin="0" BorderBrush="#FF89CC7E" >
+                        <ComboBox x:Name="cbObjectiveFunc" Margin="0,2,0,0" Text="" FontSize="13" Background="#FFF6FDF3" IsEditable="True" BorderBrush="{x:Null}">
                             <ComboBoxItem Content="1-2*(N2-B2)/(NTot-BTot) #default asymmetry"/>
                         </ComboBox>
                     </GroupBox>
@@ -53,7 +53,7 @@
                         <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0" Range="0.01, Infinity, System.Double" Interval="0.1" Value="0.1"/>
                     </GroupBox>
                 </Grid>
-                <DataGrid x:Name="dgParams" Margin="0" Grid.Row="1" FontSize="12" AutoGenerateColumns="False" ItemsSource="{Binding dt}" RowHeight="23" CanUserAddRows="False" CanUserResizeRows="False">
+                <DataGrid x:Name="dgParams" Margin="0" Grid.Row="1" FontSize="12" AutoGenerateColumns="False" ItemsSource="{Binding dt}" RowHeight="23" CanUserAddRows="False" CanUserResizeRows="False" SelectionChanged="dgParams_SelectionChanged">
                     <DataGrid.Columns>
                         <DataGridCheckBoxColumn Width="55" Binding="{Binding Enabled}" Header="Enabled"/>
                         <DataGridTemplateColumn Width="150" Header="Parameter">
@@ -120,7 +120,7 @@
                     <local:OptimGridScanUC x:Name="GridScanUC"/>
                 </Grid>
             </TabItem>
-            <TabItem  Header="Simplex" FontSize="13" Height="27">
+            <TabItem x:Name="tiSimplex"  Header="Simplex" FontSize="13" Height="27">
                 <Grid>
                     <local:OptimSimplexUC x:Name="OptSimplexUC"/>
                 </Grid>

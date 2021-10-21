@@ -18,6 +18,7 @@ using System.Data;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using dotMath;
 using UtilsNS;
 
@@ -73,7 +74,7 @@ namespace Axel_hub.PanelsUC
     public class OptimSetting
     {
         public List<EnabledMMscan> sParams;
-        public string cost;
+        public string objFunc;
         public Dictionary<string, double> convOpts;
         public List<Dictionary<string, double>> procOpts;
         public OptimSetting()
@@ -88,7 +89,7 @@ namespace Axel_hub.PanelsUC
     /// </summary>
     public partial class OptimUC_Class : UserControl
     {
-        bool simulation = Utils.TheosComputer();
+        public bool simulation = false; // Utils.TheosComputer();
 
         Dictionary<string, double> mmParams;
         public OptimSetting os;
@@ -110,31 +111,40 @@ namespace Axel_hub.PanelsUC
                 io.TakeAShotEvent += new CostEventHandler(TakeAShotEvent);
                 io.EndOptimEvent += new EventHandler(EndOptimEvent);
             }
-            if (simulation)
-            {
-                Dictionary<string, object> dct = new Dictionary<string, object>();
-                dct.Add("Param1", 1.11);
-                dct.Add("Param2", 2.22);
-                dct.Add("Param3", 3.33);
-                Init(dct);
-                rowSimul.Height = new GridLength(30);
-            }
+            if (simulation) Init(new Dictionary<string, object>());
+            if (Utils.TheosComputer()) tiSimplex.Visibility = Visibility.Visible;
+            else tiSimplex.Visibility = Visibility.Collapsed;
         }
         #region Settings
         public void Init(Dictionary<string, object> _mmParams)
         {
             if (Utils.isNull(_mmParams)) { log("Err: Cannot load parameters (check connection to MM2)."); IsEnabled = false; return; }
-            IsEnabled = true;
+            if (!simulation && !_mmParams.ContainsKey("params")) { log("Err: Cannot load parameters (params are missing)."); IsEnabled = false; return; }
+            IsEnabled = true; paramList = new ObservableCollection<string>();
             OpenSetting();
+            if (simulation)
+            {
+                mmParams = new Dictionary<string, double>();
+                mmParams.Add("DetAttn", 1.11);
+                mmParams.Add("DetFreq", 2.22);
+                mmParams.Add("3DCoil", 3.33);
 
-            Update(_mmParams);
-            paramList = new ObservableCollection<string>();
-            foreach (var prm in mmParams)
-                paramList.Add(Convert.ToString(prm.Key));
+                rowSimul.Height = new GridLength(30);
+                string[] pl = { "DetAttn", "DetFreq", "3DCoil" };
+                paramList = new ObservableCollection<string>(pl);
+            }
+            else mmParams = ((JObject)_mmParams["params"]).ToObject<Dictionary<string, double>>();
+            
+            if (_mmParams.ContainsKey("scanPrms"))
+            {
+                string[] _paramList = ((JArray)_mmParams["scanPrms"]).ToObject<string[]>();
+                paramList = new ObservableCollection<string>(_paramList);
+            }
+                          
             updateDataTable(os.sParams);
             this.DataContext = this;
             if (os.procOpts.Count.Equals(0)) return;
-            cbObjectiveFunc.Text = os.cost;
+            cbObjectiveFunc.Text = os.objFunc;
             if (os.convOpts.ContainsKey("ConvPrec")) numConvPrec.Value = os.convOpts["ConvPrec"];
 
             if (optimProcs.Count != os.procOpts.Count)  { log("Err: some optimization options missing."); return; }
@@ -145,7 +155,7 @@ namespace Axel_hub.PanelsUC
         {
             if (!IsEnabled) return;
             ClearStatus();
-            os.cost = cbObjectiveFunc.Text;
+            os.objFunc = cbObjectiveFunc.Text;
             os.convOpts["ConvPrec"] = numConvPrec.Value;
 
             foreach (IOptimization io in optimProcs)
@@ -173,12 +183,6 @@ namespace Axel_hub.PanelsUC
         }
         #endregion Setting
 
-        public void Update(Dictionary<string, object> _mmParams) // parameters from MM2
-        {
-            mmParams = new Dictionary<string, double>();
-            foreach (var prm in _mmParams)
-                mmParams.Add(prm.Key, Convert.ToDouble(prm.Value));
-        }
         public int sParamIdx(string prmName) // idx from dt
         {
             var rslt = -1;
@@ -206,7 +210,6 @@ namespace Axel_hub.PanelsUC
             if (txt.Substring(0, 3).Equals("Err")) { Utils.log(richLog, txt, Brushes.Red); return; } // errors always
             if (chkLog.IsChecked.Value) Utils.log(richLog, txt, clr);
         }
-
         protected void ParamSetEvent(object sender, EventArgs e) // update visual (dt) and internal (os.sParams)
         {
             OptimEventArgs ex = (OptimEventArgs)e;
@@ -219,6 +222,7 @@ namespace Axel_hub.PanelsUC
             if (!Double.IsNaN(ex.Value))
             {
                 os.sParams[j].Value = ex.Value; tr[5] = ex.Value; //log("set value of " + ex.Prm + " at " + ex.Value.ToString("G4")); 
+                mmParams[ex.Prm] = ex.Value;
             }
             if (!ex.Text.Equals(""))
             {
@@ -236,11 +240,11 @@ namespace Axel_hub.PanelsUC
                 ParamSetEvent(this, new OptimEventArgs(prm.sParam, Double.NaN, "---"));
             }
         }
-        public delegate void SendMMexecHandler(MMexec mme);
+        public delegate MMexec SendMMexecHandler(MMexec mme);
         public event SendMMexecHandler SendMMexecEvent;
-        protected virtual void OnSendMMexec(MMexec mme)
+        protected virtual MMexec OnSendMMexec(MMexec mme)
         {
-            SendMMexecEvent?.Invoke(mme);
+            return SendMMexecEvent?.Invoke(mme);
         }
         protected double TakeAShotEvent(object sender, EventArgs e)
         {
@@ -266,8 +270,10 @@ namespace Axel_hub.PanelsUC
                 }
             }
             else
-            {               
-                Dictionary<string, double> dct = MMDataConverter.AverageShotSegments(TakeAShotMM(ex.Prm, ex.Value),true);
+            {
+                MMexec mme = TakeAShotMM(ex.Prm, ex.Value);
+                if (Utils.isNull(mme)) { log("Error: no replay from MM2."); return Double.NaN; }
+                Dictionary<string, double> dct = MMDataConverter.AverageShotSegments(mme,true);
                 // script it
                 var compiler = new EquationCompiler(Utils.skimRem(cbObjectiveFunc.Text));                
                 var vns = compiler.GetVariableNames();
@@ -278,18 +284,19 @@ namespace Axel_hub.PanelsUC
                 }
                 rslt = compiler.Calculate();
             }           
-            if (chkDetails.IsChecked.Value) log("cost = " + rslt.ToString("G5")+" at "+ex.Prm+" = "+ex.Value.ToString("G5"), Brushes.Navy);
+            if (chkDetails.IsChecked.Value) log("obj.function = " + rslt.ToString("G5")+" at "+ex.Prm+" = "+ex.Value.ToString("G5"), Brushes.Navy);
             return rslt;
         }
 
-        protected MMexec TakeAShotMM(string Param, double Value)
+        protected MMexec TakeAShotMM(string Param, double Value) // arg not used
         {
-            MMexec mme = new MMexec("", "Axel-hub", "shoot");
-            mme.prms[Param] = Value;
-            
-            OnSendMMexec(mme);
-            // take incomming data...
-            return new MMexec();
+            MMexec mme = new MMexec("", "Axel-hub", "shoot"); //mme.prms[Param] = Value;
+            foreach(var os1 in os.sParams)
+            {
+                if (os1.Enabled)
+                    mme.prms[os1.sParam] = os1.Value; // take pair from os
+            }           
+            return OnSendMMexec(mme);
         }
         protected void EndOptimEvent(object sender, EventArgs e)
         {
@@ -406,6 +413,8 @@ namespace Axel_hub.PanelsUC
         #endregion table stuff
         private void bcbOptimize_Click(object sender, RoutedEventArgs e)
         {
+            if (Utils.isNull(cbObjectiveFunc.Text)) { log("Err: No objective function"); return; }
+            if (cbObjectiveFunc.Text.Equals("")) { log("Err: No objective function"); return; }
             bcbOptimize.Value = !bcbOptimize.Value;  
             List<baseMMscan> sPrms = new List<baseMMscan>(); var opts = new Dictionary<string, double>();
             if (bcbOptimize.Value)
@@ -428,6 +437,12 @@ namespace Axel_hub.PanelsUC
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
             richLog.Document.Blocks.Clear();
+        }
+
+        private void dgParams_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            btnDel.IsEnabled = (dgParams.SelectedIndex > -1);
+            btnDown.IsEnabled = btnDel.IsEnabled; btnUp.IsEnabled = btnDel.IsEnabled;
         }
     }
 }

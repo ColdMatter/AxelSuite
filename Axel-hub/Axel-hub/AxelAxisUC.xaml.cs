@@ -80,7 +80,7 @@ namespace Axel_hub
             InitializeComponent();
         }
 
-        GeneralOptions genOptions = null; ScanModes scanModes = null; Modes modes = null; string modesFile = "";
+        GeneralOptions genOptions = null; scanClass ucScan = null; Modes modes = null; string modesFile = "";
         /// <summary>
         /// Late initialiazation after the dust from loading of main form and ucScan has settle
         /// </summary>
@@ -88,12 +88,12 @@ namespace Axel_hub
         /// <param name="_genOptions">general options</param>
         /// <param name="_scanModes">ucScan options</param>
         /// <param name="_axelMems">ADC24 abstraction</param>
-        public void Init(string _prefix, ref GeneralOptions _genOptions, ref ScanModes _scanModes, ref AxelMems _axelMems) // obligatory 
+        public void Init(string _prefix, ref GeneralOptions _genOptions, ref scanClass _ucScan, ref AxelMems _axelMems) // obligatory 
         {
             prefix = _prefix;
             if (Utils.isNull(_genOptions)) Utils.TimedMessageBox("Non-existant options");
             else genOptions = _genOptions;
-            scanModes = _scanModes;
+            ucScan = _ucScan;
             OpenDefaultModes();
             axelChart.InitOptions(ref genOptions, ref modes, ref _axelMems, prefix);
             strobes.Init(prefix, ref genOptions);
@@ -1046,18 +1046,19 @@ namespace Axel_hub
             if (!Utils.isNull(modes)) SaveDefaultModes(false,true,false);
         }
 
-        public delegate void SendMMexecHandler(MMexec mme);
+        public delegate MMexec SendMMexecHandler(MMexec mme);
         public event SendMMexecHandler SendMMexecEvent;
-        protected virtual void OnSendMMexec(MMexec mme)
+        protected virtual MMexec OnSendMMexec(MMexec mme)
         {
-            SendMMexecEvent?.Invoke(mme);
+            return SendMMexecEvent?.Invoke(mme);
         }
         private void tabLowPlots_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!(e.Source is TabControl)) return;
             if (tabLowPlots.SelectedItem.Equals(tiMultiScan) || tabLowPlots.SelectedItem.Equals(tiOptimization)) columnPID.Width = new GridLength(0);
             else { columnPID.Width = new GridLength(145); return; }
             // Optim init
-            if (tabLowPlots.SelectedItem.Equals(tiOptimization) && !Utils.TheosComputer())
+            if (tabLowPlots.SelectedItem.Equals(tiOptimization)) //&& !Utils.TheosComputer()
             /*{
                 Dictionary<string, object> dct = new Dictionary<string, object>();
                 dct.Add("Param1", 1.11);
@@ -1067,15 +1068,11 @@ namespace Axel_hub
             }
             else*/
             {
-                mm2status = null;
-                OnSendMMexec(new MMexec("", "Axel-hub", "status"));
-                int i = 0;
-                while (Utils.isNull(mm2status) && (i < 100))
-                {
-                    //Utils.DoEvents();
-                    Thread.Sleep(40);
-                    i++;
-                }
+                if (OptimUC1.simulation) return;
+                if (!ucScan.remote.Connected) { LogEvent("Warning: no connection to MM2"); OptimUC1.IsEnabled = false; return; }
+                mm2status = ucScan.remote.sendAndReply(new MMexec("", "Axel-hub", "get.status"), true); 
+                if (!Utils.isNull(mm2status))
+                    if (!mm2status.cmd.Equals("status")) { LogEvent("Warning: wrong reply from MM2"); OptimUC1.IsEnabled = false; return; }
                 OptimUC1.Init(mm2status?.prms);               
             }
         }
@@ -1155,7 +1152,7 @@ namespace Axel_hub
                 /*if (theTime.isTimeRunning) xVl = theTime.elapsedTime;
                 else
                     if (runID == 0) theTime.startTime();*/
-                if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat) // react back to MM2
+                if (ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Repeat) // react back to MM2
                 {
                     if (genOptions.Diagnostics)
                     {
@@ -1198,8 +1195,8 @@ namespace Axel_hub
                 {
                     if (axelChart.Active)
                     {
-                        if (scanModes.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(A); //???
-                        if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
+                        if (ucScan.scanModes.remoteMode == RemoteMode.Simple_Repeat) rslt = nextMeasure(A); //???
+                        if (ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
                             // Timing section
                             measr["bTime"] = mme.prms.ContainsKey("bTime") ? Convert.ToInt32(mme.prms["bTime"]) : 0; // before
@@ -1270,7 +1267,7 @@ namespace Axel_hub
                         }
                     }
                     else
-                        if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat) LogEvent("problem with MEMS !", Brushes.Red); // if axelChart is not active - means trouble
+                        if (ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Repeat) LogEvent("problem with MEMS !", Brushes.Red); // if axelChart is not active - means trouble
                 }
                 else
                 {
@@ -1280,13 +1277,13 @@ namespace Axel_hub
             }    
             LogEvent(log_out + "   A = "+ A.ToString(genOptions.SignalTablePrec), clr);
             
-            if (scanMode && scanModes.remoteMode == RemoteMode.Jumbo_Scan || scanModes.remoteMode == RemoteMode.Simple_Scan)
+            if (scanMode && ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Scan || ucScan.scanModes.remoteMode == RemoteMode.Simple_Scan)
             {
                 if (mme.prms.ContainsKey("last"))
                 {
                     if (Convert.ToInt32(mme.prms["last"]) == 1)
                     {
-                        if (scanModes.remoteMode == RemoteMode.Jumbo_Scan && genOptions.JumboRepeat) // transition from jumboScan to jumboRepeat
+                        if (ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Scan && genOptions.JumboRepeat) // transition from jumboScan to jumboRepeat
                         {
                             visStrobes(true);
                         }
@@ -1298,7 +1295,7 @@ namespace Axel_hub
         
         private void chartAccelTrend(MMexec mme, double xVl, double A, Dictionary<string, double> rslt)
         {
-            if (scanModes.remoteMode == RemoteMode.Simple_Repeat)
+            if (ucScan.scanModes.remoteMode == RemoteMode.Simple_Repeat)
             {
                 if (!Double.IsNaN(A))
                     Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
@@ -1307,7 +1304,7 @@ namespace Axel_hub
                             srsMotAccel.AddPoint(A, xVl); graphAccelTrend.Data[2] = srsMotAccel.Portion(genOptions.TrendSignalLen);
                         }));
             }
-            if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
+            if (ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
             {
                 if (mme.prms.ContainsKey(inArrays.Interferometer.ToString()) && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462))
                 {
@@ -1330,7 +1327,7 @@ namespace Axel_hub
             }           
             if (chkAutoScaleBottom.IsChecked.Value && srsMotAccel.Count > 0) // Accel.Trend axis adjust
             {
-                if (scanModes.remoteMode == RemoteMode.Simple_Repeat || scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
+                if (ucScan.scanModes.remoteMode == RemoteMode.Simple_Repeat || ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                 {
                     if (srsMotAccel.Count > 0)
                     {
@@ -1343,7 +1340,7 @@ namespace Axel_hub
                         accelYmax = Math.Max(Math.Ceiling(10 * srsMems.pointYs().Max()) / 10, accelYmax);
                     }
                 }
-                if (scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
+                if (ucScan.scanModes.remoteMode == RemoteMode.Jumbo_Repeat)
                 {
                     // !!!
                 }
@@ -1368,6 +1365,8 @@ namespace Axel_hub
                 ShowcaseUC1.Showcase.crsDownStrobe.AxisValue = crsDownStrobe.AxisValue;
             }
         }
+
+        
         /// <summary>
         /// Extract acceleration params/statistics from result dict
         /// </summary>

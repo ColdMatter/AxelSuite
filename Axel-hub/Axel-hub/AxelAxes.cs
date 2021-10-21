@@ -114,7 +114,7 @@ namespace Axel_hub
         /// <param name="prefix">X or Y</param>
         public void AddAxis(ref AxelAxisClass AxelAxis, string prefix)
         {
-            AxelAxis.Init(prefix, ref genOptions, ref ucScan.scanModes, ref axelMems);
+            AxelAxis.Init(prefix, ref genOptions, ref ucScan, ref axelMems);
             Add(AxelAxis);
             this[Count - 1].OnLog += new AxelAxisClass.LogHandler(LogEvent);
             this[Count - 1].strobes.OnLog += new strobesUC.LogHandler(LogEvent);
@@ -483,10 +483,9 @@ namespace Axel_hub
                     break;
             }
         }
-        public void SendMMexec(MMexec mme)
-        {            
-            string json = JsonConvert.SerializeObject(mme);
-            ucScan.SendJson(json);
+        public MMexec SendMMexec(MMexec mme)
+        {
+            return ucScan.remote.sendAndReply(mme, true);
         }
 
         public bool ShowcaseReaction(string msg) // coming from ShowcaseClassWindow

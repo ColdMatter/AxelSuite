@@ -29,7 +29,7 @@ namespace Axel_hub
             {
                 if (key.Equals("Interferometer"))
                     if (!data.prms.ContainsKey("Interferometer")) continue;
-                var rawData = (double[])data.prms[key];
+                var rawData = ((JArray)data.prms[key]).ToObject<double[]>();
                 avgs[key] = rawData.Average();
                 if (stdDev) avgs[key + "_std"] = Statistics.StandardDeviation(rawData);
             }

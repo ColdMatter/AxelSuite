@@ -93,7 +93,7 @@ namespace Axel_hub.PanelsUC
             }
             int iw = idx / np; // iteration winner
             int iws = iw * np; 
-            if (lastIter) ss = "> iteration #"+(ni/np).ToString() + " with max cost = "+d.ToString("G5");
+            if (lastIter) ss = "> iteration #"+(ni/np).ToString() + " with max obj.function = "+d.ToString("G5");
             else
             {
                 for (int i = iws; i < (iws + np); i++)
@@ -112,7 +112,9 @@ namespace Axel_hub.PanelsUC
             {
                 if (state.Equals(optimState.cancelRequest)) return;
                 if (state.Equals(optimState.paused)) { log("Err: Wrong state order.", false); return; }
-                int ni = optims.Count(); int np = scans.Count(); int ip = ni % np; Point pt;  
+                int ni = optims.Count(); // if (ni.Equals(0)) { log("Err: no optims.", false); return; }
+                int np = scans.Count(); if (np.Equals(0)) { log("Err: no scans.", false); return; }
+                int ip = ni % np; Point pt;  
                 if (ip.Equals(0) && (optims.Count() != 0)) log(report(true), false);
                 if (ni.Equals(np*numIters.Value)) 
                 { 
@@ -125,7 +127,7 @@ namespace Axel_hub.PanelsUC
                 pt = maximum(proc); if (!Double.IsNaN(pt.X)) crsMaxProc.AxisValue = pt.X;
                 if (bcbPause.Value) { state = optimState.paused; return; }
                 OnParamSet(new OptimEventArgs(actScan.sParam, pt.X, "optimized"));
-                log("param/max cost = " + pt.X.ToString("G5") + " / " + pt.Y.ToString("G5"), false);
+                log("param/max obj.function = " + pt.X.ToString("G5") + " / " + pt.Y.ToString("G5"), false);
                 optims.Add(new Tuple<string, double, double>(actScan.sParam, pt.X, pt.Y));
                 
                 Optimize(null, null, null);
@@ -213,7 +215,7 @@ namespace Axel_hub.PanelsUC
                 state = optimState.running;
                 Point pt = maximum(proc); if (!Double.IsNaN(pt.X)) crsMaxProc.AxisValue = pt.X;
                 OnParamSet(new OptimEventArgs(actScan.sParam, pt.X, "optimized"));
-                log("param/max cost = " + pt.X.ToString("G5") + " / " + pt.Y.ToString("G5"), false);
+                log("param/max obj.function = " + pt.X.ToString("G5") + " / " + pt.Y.ToString("G5"), false);
                 optims.Add(new Tuple<string, double, double>(actScan.sParam, pt.X, pt.Y));
 
                 Optimize(null, null, null);
