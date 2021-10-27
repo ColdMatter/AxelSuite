@@ -11,7 +11,6 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Data;
@@ -111,9 +110,7 @@ namespace Axel_hub.PanelsUC
                 io.TakeAShotEvent += new CostEventHandler(TakeAShotEvent);
                 io.EndOptimEvent += new EventHandler(EndOptimEvent);
             }
-            if (simulation) Init(new Dictionary<string, object>());
-            if (Utils.TheosComputer()) tiSimplex.Visibility = Visibility.Visible;
-            else tiSimplex.Visibility = Visibility.Collapsed;
+            if (simulation) Init(new Dictionary<string, object>());            
         }
         #region Settings
         public void Init(Dictionary<string, object> _mmParams)
