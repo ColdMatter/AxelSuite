@@ -17,17 +17,17 @@
             <Label x:Name="label1" Content="Info: " Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
             <ni:RadixNumericTextBoxInt32 x:Name="numSGdegree" Height="24" Width="43" Margin="0,6,0,5.241" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="2" Range="1, 10, System.Int32" Visibility="Collapsed"/>
         </StackPanel>
-        <Label x:Name="label3" Content="Iterations" Margin="0,0,50,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-        <ni:RadixNumericTextBoxInt32 x:Name="numMaIters" Height="24" Width="43" Margin="0,0,3,0" HorizontalAlignment="Right" RadixVisibility="Collapsed" Value="2" Range="1, 20, System.Int32"/>
+        <Label x:Name="label3" Content="Iterations:" Margin="0,0,60,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <ni:RadixNumericTextBoxInt32 x:Name="numIters" Height="24" Width="56" Margin="0,6,3.203,5" HorizontalAlignment="Right" RadixVisibility="Collapsed" Value="2" Range="1, 1000, System.Int32" ValueChanged="numIters_ValueChanged"/>
         <ni:Graph x:Name="graphScan" Margin="3,2,0.714,0.286" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Row="1">
             <ni:Graph.Axes>
-                <ni:AxisDouble x:Name="scanXaxis" Orientation="Horizontal" Adjuster="None" Range="0, 20, System.Double"/>
+                <ni:AxisDouble x:Name="scanXaxis" Orientation="Horizontal" Adjuster="ContinuousChart" Range="0, 50, System.Double"/>
             </ni:Graph.Axes>
             <ni:Graph.Children>
                 <ni:MultiPlotCursor x:Name="crsMaxScan" Label="Max" Foreground="#FF046C05" ToolTip="Max" LabelVisibility="Visible" Visibility="Collapsed"/>
             </ni:Graph.Children>
             <ni:Graph.Plots>
-                <ni:Plot Label="Scan">
+                <ni:Plot Label="Target">
                     <ni:PlotRendererGroup>
                         <ni:LinePlotRenderer Stroke="#FF01A493" StrokeThickness="1.8"/>
                         <ni:PointPlotRenderer Fill="#FF05EAD3" Stroke="#FF037D70" Size="3,3"/>
@@ -43,8 +43,8 @@
         </ni:Graph>
         <Grid Grid.Row="2" Margin="0,6,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="50*"/>
-                <ColumnDefinition Width="50*"/>
+                <ColumnDefinition Width="0"/>
+                <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <RichTextBox x:Name="richLog" Margin="0,0,0.342,-0.203">
                 <FlowDocument>
@@ -53,25 +53,25 @@
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
-            <ni:Graph x:Name="graphProc" Margin="0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" Grid.Column="1">
+            <ni:Graph x:Name="graphProc" Margin="0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" DataSource="{Binding Data}" Grid.Column="1">
                 <ni:Graph.Axes>
-                    <ni:AxisDouble x:Name="procXaxis" Orientation="Horizontal" Adjuster="None" Range="0, 20, System.Double"/>
+                    <ni:AxisDouble x:Name="procXaxis" Orientation="Horizontal" Adjuster="ContinuousChart" Range="0, 50, System.Double"/>
                 </ni:Graph.Axes>
-                <ni:Graph.Children>
-                    <ni:Cursor Label="cursor1"/>
-                </ni:Graph.Children>
-                <ni:Graph.Plots>
+                <!--<ni:Graph.Plots>
                     <ni:Plot Label="Simplex" >
                         <ni:PlotRendererGroup>
                             <ni:LinePlotRenderer Stroke="#FFBC0909" StrokeThickness="1.8"/>
                             <ni:PointPlotRenderer Fill="#FFFDF466" Stroke="#FF7D0A03" Size="3,3"/>
                         </ni:PlotRendererGroup>
                     </ni:Plot>
-                </ni:Graph.Plots>
+                </ni:Graph.Plots>-->
                 <ni:Graph.SelectionFill>
                     <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                 </ni:Graph.SelectionFill>
             </ni:Graph>
+            <ni:Legend x:Name="legend" HorizontalAlignment="Right" Margin="0,5,10.203,0" Width="118" Grid.Column="1"                          
+                       ItemsSource="{Binding ElementName=graphProc}" GlyphSize="16,16" VerticalAlignment="Top" Height="89" FontSize="13"/>
+
         </Grid>
         <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Height="5" Margin="0" Grid.Row="2"  VerticalAlignment="Top" Background="#FFEEEEEE"/>
     </Grid>

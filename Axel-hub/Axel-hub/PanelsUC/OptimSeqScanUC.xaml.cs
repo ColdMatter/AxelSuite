@@ -85,7 +85,7 @@ namespace Axel_hub.PanelsUC
             string ss = "";
             int ni = optims.Count(); int np = scans.Count(); int ip = ni % np;
             if (ni.Equals(0)) return "";
-            int idx = 0; int stIdx = 0; Point pt; double d = -1e6;
+            int idx = 0; int stIdx = 0; double d = -1e6;
             if (lastIter) stIdx = ni - np;
             for (int i = stIdx; i < ni; i++)
             {
@@ -108,7 +108,7 @@ namespace Axel_hub.PanelsUC
 
         public void Optimize(bool? start, List<baseMMscan> _scans, Dictionary<string, double> opts)      
         {
-            if (Utils.isNull(start))
+            if (Utils.isNull(start)) // SingleScan
             {
                 if (state.Equals(optimState.cancelRequest)) return;
                 if (state.Equals(optimState.paused)) { log("Err: Wrong state order.", false); return; }
@@ -130,7 +130,7 @@ namespace Axel_hub.PanelsUC
                 log("param/max obj.function = " + pt.X.ToString("G5") + " / " + pt.Y.ToString("G5"), false);
                 optims.Add(new Tuple<string, double, double>(actScan.sParam, pt.X, pt.Y));
                 
-                Optimize(null, null, null);
+                Optimize(null, null, null); // recursive till state == optimState.cancelRequest
             }
             else
             {
@@ -142,7 +142,7 @@ namespace Axel_hub.PanelsUC
                     foreach (baseMMscan mms in _scans)
                         scans.Add(new baseMMscan(mms.getAsString()));
                     optims.Clear(); graphProc.Data[1] = null;
-                    Optimize(null, null, null);
+                    Optimize(null, null, null); 
                 }
                 else state = optimState.cancelRequest;
             }                                  

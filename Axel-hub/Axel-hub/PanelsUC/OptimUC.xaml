@@ -50,7 +50,7 @@
                         </ComboBox>
                     </GroupBox>
                     <GroupBox x:Name="groupBox2" Grid.Column="1" Header="Conv. Prec." Margin="0,0,-0.038,-0.177" >
-                        <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0" Range="0.01, Infinity, System.Double" Interval="0.1" Value="0.1"/>
+                        <ni:NumericTextBoxDouble x:Name="numConvPrec" Margin="0" Range="0, 10, System.Double" Interval="0.1" Value="0.1"/>
                     </GroupBox>
                 </Grid>
                 <DataGrid x:Name="dgParams" Margin="0" Grid.Row="1" FontSize="12" AutoGenerateColumns="False" ItemsSource="{Binding dt}" RowHeight="23" CanUserAddRows="False" CanUserResizeRows="False" SelectionChanged="dgParams_SelectionChanged">
@@ -102,8 +102,8 @@
                         <ComboBox x:Name="cbSimulFunction" SelectedIndex="0" Background="#FFF4F3F3" HorizontalAlignment="Left" VerticalAlignment="Center">
                             <ComboBoxItem Content="Quadratic sphere"/>
                         </ComboBox>
-                        <Label Content="Gauss noise:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="7,0,0,0"></Label>
-                        <ni:NumericTextBoxDouble x:Name="numGaussNoise" Margin="0,3" Range="0, Infinity, System.Double" Interval="1" Value="5" Width="63" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        <Label Content="Gauss noise %:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="7,0,0,0"></Label>
+                        <ni:NumericTextBoxDouble x:Name="numGaussNoise" Margin="0,3" Range="0, 100, System.Double" Interval="1" Value="0" Width="63" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
                     </StackPanel>
                 </Grid>

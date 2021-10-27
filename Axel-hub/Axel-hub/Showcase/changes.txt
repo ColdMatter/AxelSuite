@@ -1,0 +1,10 @@
+- Imperial/M2 Logo on top left and double the height
+- We will add title at a later date
+- More white space around the edges of the screen. At the moment the edges of the graphs are too close to the borders of the screen. Also the legend on the right hand graph clips outside the edge of the graph border
+- All text and axes scales etc 1.5x bigger
+- Darker colours on the right hand graph
+- Remove the “Difference” in the legend on the right hand graph
+- Need the same number of significant figures on the whole of the y axes. At the moment we have 0.05 on the same axis as 0.1. Instead it should be 0.05 and 0.10
+- All letters on the axes should be lower case. So laser phase not Laser phase
+- Make the gridlines on the right hand graph equally spaced. At the moment there are some lines closer together than others
+ 

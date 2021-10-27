@@ -34,7 +34,7 @@ namespace Axel_hub
             scanSrs = new DataStack(2*k+10);
             axisXscan.Range = new Range<double>(scan.sFrom, scan.sTo);
             graphScan.Data[0] = null;
-            btnAcceptStrobes.Value = false;
+            btnAcceptStrobes.Value = false; btnAcceptStrobes_Click(null, null);
         }
         public int nextScanPoint(double xVl, double A)
         {
@@ -74,14 +74,14 @@ namespace Axel_hub
                     }
 
                 }));
-            if (dp.ContainsKey("Diff"))
+            /*if (dp.ContainsKey("Diff"))
             {
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
                     new Action(() =>
                     {
                         diffSrs.AddPoint(dp["Diff"], xVl); graphRun.Data[3] = diffSrs;
                     }));
-            }
+            }*/
             return quantSrs.Count;
         }
         public delegate bool ShowcaseEventHandler(string msg);
@@ -93,10 +93,15 @@ namespace Axel_hub
         }
         private void btnAcceptStrobes_Click(object sender, RoutedEventArgs e)
         {
-            btnAcceptStrobes.Value = !btnAcceptStrobes.Value;
+            if (!Utils.isNull(sender)) btnAcceptStrobes.Value = !btnAcceptStrobes.Value; // comming from vis.control
             if (btnAcceptStrobes.Value)
             {
                 ShowcaseEvent("Accept Strobes:"+crsUpStrobe.AxisValue.ToString()+","+ crsDownStrobe.AxisValue.ToString());
+                crsUpStrobe.Visibility = Visibility.Hidden; crsDownStrobe.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                crsUpStrobe.Visibility = Visibility.Visible; crsDownStrobe.Visibility = Visibility.Visible;
             }
         }
         private void btnPause_Click(object sender, RoutedEventArgs e)

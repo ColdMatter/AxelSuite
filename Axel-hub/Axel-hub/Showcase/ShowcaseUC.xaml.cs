@@ -144,21 +144,9 @@ namespace Axel_hub.Showcase
         public void InitRun(int depth)
         {
             if (!IsShowcaseShowing) return;
-            Showcase.axisYrun.Label = ""; Showcase.axisDrun.Label = "";
-            if (rbMQdiff.IsChecked.Value)
-            {
-                if (rbMS2.IsChecked.Value) Showcase.axisDrun.Label = "acceleration [m/s^2]";
-                if (rbMg.IsChecked.Value) Showcase.axisDrun.Label = "acceleration [mg]";
-                Showcase.axisDrun.Visibility = Visibility.Visible;
-                //Showcase.plotDiff.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                if (rbMS2.IsChecked.Value) Showcase.axisYrun.Label = "acceleration [m/s^2]";
-                if (rbMg.IsChecked.Value) Showcase.axisYrun.Label = "acceleration [mg]";
-                Showcase.axisDrun.Visibility = Visibility.Collapsed;
-                //Showcase.plotDiff.Visibility = Visibility.Collapsed;
-            }
+            if (rbMS2.IsChecked.Value) Showcase.axisYrun.Label = "acceleration [m/s^2]";
+            if (rbMg.IsChecked.Value) Showcase.axisYrun.Label = "acceleration [mg]";
+            
             Showcase.InitRun(depth);
         }
         public void ShowcaseNextScanPoint(double xVl, double A)
@@ -186,8 +174,6 @@ namespace Axel_hub.Showcase
                     if (dp.ContainsKey("Accel"))                    
                         dp["Accel"] = mg2ms2(dp["Accel"]);                     
                 }
-                if (rbMQdiff.IsChecked.Value && dp.ContainsKey("MEMS") && dp.ContainsKey("PhiMg")) 
-                    dp["Diff"] = dp["MEMS"] - dp["PhiMg"];
                 Showcase.nextRunPoint(xVl, dp);
             }
         }

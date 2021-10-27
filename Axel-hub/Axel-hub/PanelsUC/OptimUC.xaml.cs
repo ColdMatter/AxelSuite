@@ -89,12 +89,12 @@ namespace Axel_hub.PanelsUC
     /// </summary>
     public partial class OptimUC_Class : UserControl
     {
-        public bool simulation = false; // Utils.TheosComputer();
+        public bool simulation = Utils.TheosComputer();
 
         Dictionary<string, double> mmParams;
         public OptimSetting os;
         List<IOptimization> optimProcs;
-
+        string SettingFile = "";
         public OptimUC_Class()
         {
             InitializeComponent();
@@ -153,7 +153,7 @@ namespace Axel_hub.PanelsUC
         }
         public void Final()
         {
-            if (!IsEnabled) return;
+            if (!IsEnabled || SettingFile.Equals("")) return;
             ClearStatus();
             os.objFunc = cbObjectiveFunc.Text;
             os.convOpts["ConvPrec"] = numConvPrec.Value;
@@ -168,15 +168,17 @@ namespace Axel_hub.PanelsUC
         }
         public void OpenSetting(string fn = "")
         {
-            if (fn.Equals("")) fn = Utils.configPath + "Optim.CFG";
-            if (!File.Exists(fn)) { log("Err: No file <" + fn + ">"); return; }
-            string json = File.ReadAllText(fn);            
+            if (fn.Equals("")) SettingFile = Utils.configPath + "Optim.CFG";
+            else SettingFile = fn;
+            if (!File.Exists(SettingFile)) { log("Err: No file <" + SettingFile + ">"); return; }
+            string json = File.ReadAllText(SettingFile);            
             os = JsonConvert.DeserializeObject<OptimSetting>(json);
         }
 
         public void SaveSetting(string fn = "")
         {
-            if (fn.Equals("")) fn = Utils.configPath + "Optim.CFG";
+            if (fn.Equals("")) 
+                fn = SettingFile.Equals("") ? Utils.configPath + "Optim.CFG" : SettingFile;
             UpdateParamsFromTable();            
             string fileJson = JsonConvert.SerializeObject(os);
             File.WriteAllText(fn, fileJson);
@@ -246,7 +248,7 @@ namespace Axel_hub.PanelsUC
         {
             return SendMMexecEvent?.Invoke(mme);
         }
-        protected double TakeAShotEvent(object sender, EventArgs e)
+        protected double TakeAShotEvent(object sender, EventArgs e) // e is OptimEventArgs
         {
             double d, rslt = Double.NaN; OptimEventArgs ex = (OptimEventArgs)e;
             ParamSetEvent(sender, e); Thread.Sleep(100); Utils.DoEvents(); // update prm (here & in MM)
@@ -265,13 +267,13 @@ namespace Axel_hub.PanelsUC
                                 rslt +=  d * d; j++;
                             }                       
                         }
-                        rslt = 150 - rslt + numGaussNoise.Value*Utils.Gauss01(); 
+                        rslt = Utils.NextGaussian(150 - rslt, numGaussNoise.Value); 
                         break;
                 }
             }
             else
             {
-                MMexec mme = TakeAShotMM(ex.Prm, ex.Value);
+                MMexec mme = TakeAShotMM();
                 if (Utils.isNull(mme)) { log("Error: no replay from MM2."); return Double.NaN; }
                 Dictionary<string, double> dct = MMDataConverter.AverageShotSegments(mme,true);
                 // script it
@@ -288,7 +290,7 @@ namespace Axel_hub.PanelsUC
             return rslt;
         }
 
-        protected MMexec TakeAShotMM(string Param, double Value) // arg not used
+        protected MMexec TakeAShotMM() // arg not used; params taken from os.sParams
         {
             MMexec mme = new MMexec("", "Axel-hub", "shoot"); //mme.prms[Param] = Value;
             foreach(var os1 in os.sParams)

@@ -89,12 +89,14 @@ namespace Axel_hub.PanelsUC
         public string report(bool lastIter)
         {
             if (Utils.isNull(theMax)) return "";
+            OnParamSet(new OptimEventArgs(scans[0].sParam, theMax.Y, "optimized (slow index) - X"));
+            OnTakeAShot(new OptimEventArgs(scans[1].sParam, theMax.X, "optimized (fast index) - Y"));
             return scans[0].sParam+" : "+theMax.Y.ToString("G5") + " ;  " + scans[1].sParam + " : " + theMax.X.ToString("G5")
                 + " ;  obj.function : " + theMax.Z.ToString("G5");
         }
         public void Optimize(bool? start, List<baseMMscan> _scans, Dictionary<string, double> opts)
         {
-            if (!_scans.Count.Equals(2)) { log("Err: at present the only implementaion of grid scan is with 2 parameters.", false); OnEndOptim(null); return; }
+            if (!_scans.Count.Equals(2)) { log("Err: the present implementaion of grid optimization accepts only 2 parameters.", false); OnEndOptim(null); return; }
             scans = new List<baseMMscan>(_scans);
             if (Utils.isNull(start)) { log("Err: wrong branch.", false); OnEndOptim(null); return; }
             if ((bool)start)
@@ -168,7 +170,6 @@ namespace Axel_hub.PanelsUC
                 if (!Utils.InRange(idx, 0, mat.GetLength(0))) { log("Err: wrong index. " + idx.ToString(), false); return null; }
                 for (int i = 0; i < np; i++) vec[i] = mat[idx, i];
             }
-
             return vec;
         }
         protected double[,] replaceVector(int dm, double[,] mat, int idx, double[] vec)
@@ -264,7 +265,6 @@ namespace Axel_hub.PanelsUC
             crsMax.Visibility = Visibility.Visible; 
             return r;
         }
-
         private void numZRmin_ValueChanged(object sender, ValueChangedEventArgs<double> e)
         {
             if (Utils.isNull(numZRmin) || Utils.isNull(numZRmax) || Utils.isNull(intGraphColorScale)) return;
@@ -276,7 +276,6 @@ namespace Axel_hub.PanelsUC
                 intGraphColorScale.Markers[i]  = new ColorScaleMarker(m, intGraphColorScale.Markers[i].Color);
             }           
         }
-
         private void numSGdegree_ValueChanged(object sender, NationalInstruments.Controls.ValueChangedEventArgs<int> e)
         {
             if (Utils.isNull(graphIntensity)) return;

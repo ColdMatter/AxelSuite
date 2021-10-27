@@ -101,13 +101,11 @@ namespace Axel_hub
             tabSecPlots.SelectedIndex = 1;
             if (Utils.TheosComputer())
             {
-                tiMultiScan.Visibility = Visibility.Visible;
-                tiOptimization.Visibility = Visibility.Visible;
+                tiMultiScan.Visibility = Visibility.Visible;  // under dev.              
             }
             else
             {
-                tiMultiScan.Visibility = Visibility.Collapsed;
-                tiOptimization.Visibility = Visibility.Collapsed;
+                tiMultiScan.Visibility = Visibility.Collapsed;               
             }          
         }
 

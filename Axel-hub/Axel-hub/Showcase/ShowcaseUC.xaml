@@ -22,12 +22,6 @@
                         <RadioButton x:Name="rbMg" Content="mg" HorizontalAlignment="Left" Margin="88,8,0,0" VerticalAlignment="Top"/>
                     </Grid>
                 </GroupBox>
-                <GroupBox x:Name="gbExtraSeries" Header="Extra Series" Height="76" Margin="0,0.063,0.266,0" Grid.Row="2" VerticalAlignment="Top" BorderBrush="#FFAB7802">
-                    <Grid>
-                        <RadioButton x:Name="rbNone" Content="None" HorizontalAlignment="Left" Margin="21,10,0,0" VerticalAlignment="Top" IsChecked="True"/>
-                        <RadioButton x:Name="rbMQdiff" Content="MEMS - quant" HorizontalAlignment="Left" Margin="21,32,0,0" VerticalAlignment="Top" IsChecked="False"/>
-                    </Grid>
-                </GroupBox>
 
             </Grid>
         </GroupBox>

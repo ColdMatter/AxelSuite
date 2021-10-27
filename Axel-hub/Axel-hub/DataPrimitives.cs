@@ -29,7 +29,9 @@ namespace Axel_hub
             {
                 if (key.Equals("Interferometer"))
                     if (!data.prms.ContainsKey("Interferometer")) continue;
-                var rawData = ((JArray)data.prms[key]).ToObject<double[]>();
+                var dt = data.prms[key]; System.Double[] rawData;
+                if (dt is System.Double[]) rawData = (System.Double[])dt;
+                else rawData = ((JArray)dt).ToObject<double[]>();
                 avgs[key] = rawData.Average();
                 if (stdDev) avgs[key + "_std"] = Statistics.StandardDeviation(rawData);
             }
