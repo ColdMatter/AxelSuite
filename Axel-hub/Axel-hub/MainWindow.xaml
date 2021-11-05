@@ -39,13 +39,13 @@
                             <ColumnDefinition x:Name="colRight" Width="300*"/>
                         </Grid.ColumnDefinitions>
                         <TabControl x:Name="tcAxes" Margin="0" SelectedIndex="0">
-                            <TabItem x:Name="tiXAxis" Header="X  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1B8E0D" FontWeight="Bold" >
+                            <TabItem x:Name="tiXAxis" Header="X  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1B8E0D" FontWeight="Bold" Background="#FFE9E9E9" >
                                 <Grid>
                                     <local:AxelAxisClass x:Name="X_AxelAxis" Width="Auto" Height="Auto"/>
 
                                 </Grid>
                             </TabItem>
-                            <TabItem x:Name="tiYAxis" Header="Y  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold" Margin="0">
+                            <TabItem x:Name="tiYAxis" Header="Y  axis" FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold" Margin="0" Background="#FFE9E9E9">
                                 <Grid x:Name="gridPrimary">
                                     <local:AxelAxisClass x:Name="Y_AxelAxis" Width="Auto" Height="Auto"/>
                                 </Grid>
@@ -53,7 +53,7 @@
                         </TabControl>
                         <GridSplitter x:Name="splitPanels" Grid.Column="1" Width="5" Background="#FFD9E4EB" HorizontalAlignment="Left" Margin="1,0,0,0"/>
                         <TabControl x:Name="tcSecondary" Grid.Column="1" Margin="7,0,0,0">
-                            <TabItem x:Name="tiYaxisSecondary" Header="Y  axis"  FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold">
+                            <TabItem x:Name="tiYaxisSecondary" Header="Y  axis"  FontSize="14" Width="150" Height="25" Foreground="#FF1136BC" FontWeight="Bold" Background="#FFE9E9E9">
                                 <Grid x:Name="gridSecondary">
 
                                 </Grid>

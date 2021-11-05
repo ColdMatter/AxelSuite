@@ -32,6 +32,28 @@ namespace Axel_hub.PanelsUC
 
         List<Point> iters, meta;
         List<List<Point>> srsPrms;
+        /// <summary>
+        /// set parameters from scns limited to scns sFrom and sTo
+        /// and takes a shot; return signal
+        /// </summary>
+        /// <param name="scns"></param>
+        /// <returns></returns>
+        private double setPrmsAndShot(List<baseMMscan> scns) 
+        {
+            double[] vals = new double[scns.Count];
+            for (int i = 0; i < scns.Count; i++)
+                vals[i] = Utils.EnsureRange(scns[i].Value, scans[i].sFrom, scans[i].sTo);
+
+            OptimEventArgs ex;
+            for (int i = 1; i < scans.Count; i++)
+            {                
+                ex = new OptimEventArgs(scns[i].sParam, vals[i], "scanning");
+                OnParamSet(ex);
+            }
+            ex = new OptimEventArgs(scans[0].sParam, vals[0], "scanning");
+            return OnTakeAShot(ex);
+        }
+
         private double _objFunction1(double[] prms)
         {
             if (prms.Length.Equals(0)) throw new Exception("No parameters to optimize");
@@ -44,12 +66,12 @@ namespace Axel_hub.PanelsUC
             OptimEventArgs ex; string ss = "iters: " + iters.Count.ToString() + "; " + scans[0].sParam+"= " + ps[0].ToString("G6") + "; ";
             for (int i = 1; i < scans.Count; i++)
             {
-                ex = new OptimEventArgs(scans[i].sParam, ps[i], "scanning");
+                ex = new OptimEventArgs(scans[i].sParam, ps[i], "scanning"); scans[i].Value = ps[i];
                 ss += scans[i].sParam + "= " + ps[i].ToString("G6") + "; ";
                 OnParamSet(ex);
             }
-            ex = new OptimEventArgs(scans[0].sParam, ps[0], "scanning");
-            double rslt = OnTakeAShot(ex);
+            ex = new OptimEventArgs(scans[0].sParam, ps[0], "scanning"); scans[0].Value = ps[0];
+            double rslt = OnTakeAShot(ex); // setPrmsAndShot(scans);
             log(ss + "  Obj.Value = "+rslt.ToString("G6"), true); 
             iters.Add(new Point(iters.Count, rslt)); graphScan.Data[0] = iters;
             if (prms.Length.Equals(scans.Count))
@@ -137,7 +159,7 @@ namespace Axel_hub.PanelsUC
                     srsPrms.Add(new List<Point>()); graphProc.Plots.Add(new Plot(scans[i].sParam));
                 }
                     
-                scans[0].Value = 1; scans[1].Value = -1; scans[2].Value = 1; // for simulation
+                //scans[0].Value = 1; scans[1].Value = -1; scans[2].Value = 1; // for simulation
 
                 for (int i = 0; i < scans.Count; i++)
                     initVals[i] = new SimplexConstant(scans[i].Value, 0.1 + scale*scans[i].Value);           

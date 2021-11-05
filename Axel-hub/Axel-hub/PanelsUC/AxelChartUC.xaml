@@ -18,7 +18,7 @@
                 <Button x:Name="btnZoomIn" Content="Zoom In" HorizontalAlignment="Left" FontSize="13" FontFamily="Consolas" Margin="26,3,0,0.857" Width="72" Click="btnZoomIn_Click" Height="23" BorderThickness="1" Background="{x:Null}"/>
                 <Button x:Name="btnZoomOut" Content="Zoom Out" HorizontalAlignment="Left" FontFamily="Consolas" Width="80" Margin="10,2,0,0" Click="btnZoomOut_Click" Height="23" VerticalAlignment="Top" BorderThickness="1" Background="{x:Null}" FontSize="13"/>
                 <Label x:Name="lblRange" Content="Range = " HorizontalAlignment="Left" Margin="10,0,0,-0.143" Width="141"/>
-                <ni:BooleanButton x:Name="btnPause" Content="Pause" Width="75" Margin="0,0,0,-0.286" HorizontalAlignment="Left" FontSize="13" Click="btnPause_Click" Height="24"/>
+                <ni:BooleanButton x:Name="btnPause" Content="Pause" Width="75" Margin="0,0,0,-0.286" HorizontalAlignment="Left" FontSize="13" Click="btnPause_Click" Height="24" Background="#FFFDFCF2"/>
                 <Label x:Name="lbInfo" Content="Info: " Margin="10,0,0,-0.143"/>
             </StackPanel>
             <CheckBox x:Name="chkAutoScale" Grid.Row="0" Margin="3,5,10,2" FontSize="13" Content="Auto-scale Y" Foreground="#FF0E7501" IsChecked="True" HorizontalAlignment="Right" Checked="chkAutoScale_Checked" Unchecked="chkAutoScale_Checked"/>
@@ -44,7 +44,7 @@
         <Grid Grid.Row="1">
             <TabControl x:Name="tabSecPlots" Margin="0,0,-0.429,2.571" SelectionChanged="tabSecPlots_SelectionChanged" SelectedIndex="1" FontSize="14">
                 <!-- TabItem Header=" Hide " Height="24"/ -->
-                <TabItem x:Name="tabOverview" Header="Overview" Width="100" Height="24">
+                <TabItem x:Name="tabOverview" Header="Overview" Width="100" Height="24" Background="#FFE9E9E9">
                     <Grid>
                         <ni:GraphInteractionPalette x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="25" Margin="28,5,0.571,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphOverview}" TabIndex="217" ScrollViewer.CanContentScroll="True">
                             <ni:GraphInteractionPalette.BindingGroup>
@@ -69,7 +69,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="tabPower" Header="Power Spec." Margin="96.429,0,-96.286,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
+                <TabItem x:Name="tabPower" Header="Power Spec." Margin="96.429,0,-96.286,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24" Background="#FFE9E9E9">
                     <Grid x:Name="gridPower">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="4*"/>
@@ -97,7 +97,7 @@
 
                     </Grid>
                 </TabItem>
-                <TabItem Header="Histogram" Margin="-97.714,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24">
+                <TabItem Header="Histogram" Margin="-97.714,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24" Background="#FFE9E9E9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="73*"/>
@@ -145,7 +145,7 @@
                         </GroupBox>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Opts/Stats" Height="24" VerticalAlignment="Top" Margin="0">
+                <TabItem Header="Opts/Stats" Height="24" VerticalAlignment="Top" Margin="0" Background="#FFE9E9E9">
                     <Grid Margin="0,0,-0.429,-4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -157,8 +157,8 @@
                             <StackPanel Margin="0,3,0,0">
                                 <GroupBox Header="Files" Height="163" Margin="0,0,0.143,0" VerticalAlignment="Top">
                                     <StackPanel Margin="0" Width="124">
-                                        <Button x:Name="btnOpen" Content="Open..." Margin="5,5,10,0" Click="btnOpen_Click" Background="#FFF6F6F6" VerticalAlignment="Top"/>
-                                        <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click" Background="#FFF6F6F6"/>
+                                        <Button x:Name="btnOpen" Content="Open..." Margin="5,5,10,0" Click="btnOpen_Click" Background="White" VerticalAlignment="Top"/>
+                                        <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click" Background="White"/>
                                         <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
                                         <TextBox x:Name="tbRemFile" Margin="1,1,7,4" TextWrapping="Wrap" VerticalAlignment="Top" Height="57"/>
                                     </StackPanel>

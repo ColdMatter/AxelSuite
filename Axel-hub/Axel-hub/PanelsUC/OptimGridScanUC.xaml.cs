@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using NationalInstruments.Controls;
+using NationalInstruments.Analysis.Dsp.Filters;
 using UtilsNS;
 
 namespace Axel_hub.PanelsUC
@@ -197,7 +198,7 @@ namespace Axel_hub.PanelsUC
             if (numSGdegree.Value > (2 * numSGframe.Value + 1)) { log("Err: increase Sidepoints", false); return r; }
             if (ds.Length == 0) { log("Err: No data points to S-G filter", false); return r; }
             if (ds.Length < (2 * numSGframe.Value + 1)) { log("Err: Too few data points to S-G filter", false); return r; }
-            double[] ra = NationalInstruments.Analysis.Dsp.Filters.SavitzkyGolay.Filter(ds, numSGdegree.Value, numSGframe.Value);
+            double[] ra = SavitzkyGolay.Filter(ds, numSGdegree.Value, numSGframe.Value);
             if (ra.Length != ds.Length) { log("Err: vector sizes mismatch", false); return r; }
             return ra;
         }

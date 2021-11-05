@@ -72,7 +72,7 @@ namespace Axel_hub
         {
             InitializeComponent();
 
-            Utils.extendedDataPath = true;
+            Utils.extendedDataPath = true; // AH monthly data
             if (!Directory.Exists(Utils.dataPath)) Directory.CreateDirectory(Utils.dataPath);
             ucScan = new scanClass();
             gridLeft.Children.Add(ucScan);

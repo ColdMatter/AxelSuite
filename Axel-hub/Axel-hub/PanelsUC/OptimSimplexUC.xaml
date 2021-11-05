@@ -14,7 +14,7 @@
             <RowDefinition Height="386*"/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal">
-            <Label x:Name="label1" Content="Info: " Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
+            <Label x:Name="label1" Content="Info: optimized signal (top) / individual scanning parameters (bottom)" Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
             <ni:RadixNumericTextBoxInt32 x:Name="numSGdegree" Height="24" Width="43" Margin="0,6,0,5.241" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="2" Range="1, 10, System.Int32" Visibility="Collapsed"/>
         </StackPanel>
         <Label x:Name="label3" Content="Iterations:" Margin="0,0,60,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>

@@ -17,7 +17,7 @@
         <ni:BooleanContentButton x:Name="bbtnStart" Grid.Row="1"  Content="Start MEMS" HorizontalAlignment="Right" Height="38" Margin="0,3,15,0" VerticalAlignment="Top" Width="139" FontSize="15" Click="bbtnStart_Click" Background="#FFFFFDFD" FalseBrush="#FFE0EFFD" BorderThickness="10,8"/>
         <GroupBox x:Name="groupDigit" Grid.Row="2" Header=" Sampling MEMS rate =-=-=-=-=-=-=-= " Height="59" Margin="0,0.429,6,0" VerticalAlignment="Top">
             <StackPanel HorizontalAlignment="Center" Height="28" Width="220" Margin="2,7,6,0" VerticalAlignment="Top" Orientation="Horizontal">
-                <ComboBox x:Name="cbSamplingMode" HorizontalAlignment="Left" Height="24" VerticalAlignment="Top" Width="116" SelectedIndex="0" SelectionChanged="cbSamplingMode_SelectionChanged">
+                <ComboBox x:Name="cbSamplingMode" HorizontalAlignment="Left" Height="24" VerticalAlignment="Top" Width="116" SelectedIndex="0" SelectionChanged="cbSamplingMode_SelectionChanged" Background="White">
                     <ComboBoxItem Content="frequency [Hz]" Foreground="#FF051095"/>
                     <ComboBoxItem Content="frequency [kHz]" FontWeight="Bold" Foreground="#FF051095"/>
                     <ComboBoxItem Content="period [s]"/>
@@ -28,20 +28,20 @@
             </StackPanel>
         </GroupBox>
         <TabControl x:Name="tabControl" Grid.Row="3" Height="97" Margin="4,3.286,6,0" VerticalAlignment="Top" SelectedIndex="0" SelectionChanged="tabControl_SelectionChanged">
-            <TabItem x:Name="tabTimeLimit" Header="MEMS only" Height="26">
+            <TabItem x:Name="tabTimeLimit" Header="MEMS only" Height="26" Background="#FFE9E9E9">
                 <Grid Margin="0,1,0.429,-0.857">
-                    <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="5,5,0,0" VerticalAlignment="Top" Width="87" SelectedIndex="1">
+                    <ComboBox x:Name="cbTimeEndless" HorizontalAlignment="Left" Margin="5,5,0,0" VerticalAlignment="Top" Width="87" SelectedIndex="1" Background="#FFE9E9E9">
                         <ComboBoxItem Content="Finite"/>
                         <ComboBoxItem Content="Continuous"/>
                     </ComboBox>
                     <TabControl x:Name="tcTimeBuffer" HorizontalAlignment="Right" Margin="0,0,-0.429,-0.143" Width="146">
-                        <TabItem Header="Time">
+                        <TabItem Header="Time" BorderBrush="#FFE9E9E9">
                             <Grid>
                                 <ni:NumericTextBoxDouble x:Name="numTimeLimit" Margin="5,0,32.772,-0.266" Height="23" FontSize="14" ValueChanged="numTimeLimit_ValueChanged"></ni:NumericTextBoxDouble>
                                 <Label Content="sec" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Center" Height="26" Width="28"/>
                             </Grid>
                         </TabItem>
-                        <TabItem Header="N.Points" Margin="0">
+                        <TabItem Header="N.Points" Margin="0" BorderBrush="#FFE9E9E9">
                             <Grid>
                                 <ni:RadixNumericTextBoxInt32 RadixVisibility="Collapsed" x:Name="numBifferSize" Margin="5,0,32.772,-0.266" Height="23" FontSize="14" ValueChanged="numBifferSize_ValueChanged"></ni:RadixNumericTextBoxInt32>
                                 <Label Content="pnts" HorizontalAlignment="Right" Margin="0" VerticalAlignment="Center" />
@@ -51,7 +51,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem x:Name="tabRemote" Header=" Remote " Height="26">
+            <TabItem x:Name="tabRemote" Header=" Remote " Height="26" Background="#FFE9E9E9">
                 <Grid>
                     <Label x:Name="lbMode" Content="Mode:" HorizontalAlignment="Left" Margin="40,4,0,0" VerticalAlignment="Top" Foreground="#FF0429C5" FontWeight="Bold"/>
                     <Label x:Name="lbActivity" Content="Activity:" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Foreground="#FF05750D" FontWeight="Bold"/>

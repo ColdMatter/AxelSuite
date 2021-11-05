@@ -13,7 +13,7 @@
             <RowDefinition Height="386*"/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal">
-            <Label x:Name="label1" Content="S-G filter: polinomial degree" Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
+            <Label x:Name="label1" Content="S-G filter: polynomial degree" Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
             <ni:RadixNumericTextBoxInt32 x:Name="numSGdegree" Height="24" Width="43" Margin="0,6,0,5.241" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="2" Range="1, 10, System.Int32" ValueChanged="numSGdegree_ValueChanged"/>
             <Label x:Name="label2" Content="Sidepoints" Margin="7,5,0,5.241" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             <ni:RadixNumericTextBoxInt32 x:Name="numSGframe" Height="24" Width="43" Margin="0" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="4" Range="1, 20, System.Int32" ValueChanged="numSGdegree_ValueChanged"/>

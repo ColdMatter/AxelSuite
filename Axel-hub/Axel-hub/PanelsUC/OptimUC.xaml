@@ -44,7 +44,7 @@
                         <ColumnDefinition Width="100"/>
                     </Grid.ColumnDefinitions>
 
-                    <GroupBox x:Name="groupBox" Header=" Objective function" Margin="0" BorderBrush="#FF89CC7E" >
+                    <GroupBox x:Name="groupBox" Header=" Objective function (seek max)" Margin="0" BorderBrush="#FF89CC7E" >
                         <ComboBox x:Name="cbObjectiveFunc" Margin="0,2,0,0" Text="" FontSize="13" Background="#FFF6FDF3" IsEditable="True" BorderBrush="{x:Null}">
                             <ComboBoxItem Content="1-2*(N2-B2)/(NTot-BTot) #default asymmetry"/>
                         </ComboBox>
@@ -110,17 +110,17 @@
             </Grid>
         </Grid>
         <TabControl x:Name="tcOptimProcs" Grid.Column="1" Margin="5,0,0,0" SelectedIndex="1">
-            <TabItem Header="Sequential Scans" FontSize="13" >
+            <TabItem Header="Sequential Scans" FontSize="13" Background="#FFE9E9E9" >
                 <Grid>
                     <local:OptimSeqScanUC x:Name="SeqScanUC" Width="Auto" Height="Auto" />
                 </Grid>
             </TabItem>
-            <TabItem Header="Grid Scan" FontSize="13" Height="27">
+            <TabItem Header="Grid Scan" FontSize="13" Height="27" Background="#FFE9E9E9">
                 <Grid>
                     <local:OptimGridScanUC x:Name="GridScanUC"/>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="tiSimplex"  Header="Simplex" FontSize="13" Height="27">
+            <TabItem x:Name="tiSimplex"  Header="Simplex" FontSize="13" Height="27" Background="#FFE9E9E9">
                 <Grid>
                     <local:OptimSimplexUC x:Name="OptSimplexUC"/>
                 </Grid>

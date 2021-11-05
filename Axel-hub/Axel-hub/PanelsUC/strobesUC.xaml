@@ -32,12 +32,12 @@
             </ni:NumericTextBoxDouble.ValueFormatter>
         </ni:NumericTextBoxDouble>
         <TabControl Margin="0,0.286" Grid.Row="1">
-            <TabItem Header=" Report ">
+            <TabItem Header=" Report " Background="#FFE9E9E9">
                 <Grid Background="White">
                     <ListBox x:Name="lbReport" Margin="0"/>
                 </Grid>
             </TabItem>
-            <TabItem Header="Options">
+            <TabItem Header="Options" Background="#FFE9E9E9">
                 <Grid Background="White">
                     <Label Content="kI Depth" HorizontalAlignment="Left" Margin="2,7,0,0" VerticalAlignment="Top" Width="60" Height="26"/>
                     <Label Content="kD Depth" HorizontalAlignment="Left" Margin="2,35,0,0" VerticalAlignment="Top" Width="60" Height="26"/>
@@ -54,10 +54,10 @@
                 </Grid>
             </TabItem>
         </TabControl>
-        <CheckBox x:Name="chkPIDlog" Content="->Log" HorizontalAlignment="Left" Margin="3,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="67" Height="15">
+        <CheckBox x:Name="chkPIDlog" Content="->Log" HorizontalAlignment="Left" Margin="6,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="67" Height="18">
 
         </CheckBox>
-        <CheckBox x:Name="chkRpr2file" Content="Rpr>File" HorizontalAlignment="Left" Margin="70,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="67" Height="15">
+        <CheckBox x:Name="chkRpr2file" Content="Rpr>File" HorizontalAlignment="Left" Margin="73,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="67" Height="18">
 
         </CheckBox>
         <Label x:Name="lbTitle" Content="PID" HorizontalAlignment="Center" Margin="0,-5,0,0" VerticalAlignment="Top" FontWeight="Bold" Height="25" Background="{x:Null}" Foreground="#FF740202"/>

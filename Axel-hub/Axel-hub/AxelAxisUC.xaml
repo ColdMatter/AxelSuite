@@ -20,8 +20,8 @@
 
         <Grid x:Name="gridMiddle" Grid.Row="1" MinHeight="20">
             <TabControl x:Name="tabSecPlots" Margin="0,7,0.714,2.286" SelectedIndex="0" FontSize="14" SelectionChanged="tabSecPlots_SelectionChanged">
-                <TabItem Header=" Hide "/>
-                <TabItem x:Name="tabSignal" Header="Signal" Width="100" Height="28">
+                <TabItem Header=" Hide " Background="#FFE9E9E9"/>
+                <TabItem x:Name="tabSignal" Header="Signal" Width="100" Height="28" Background="#FFE9E9E9">
                     <Grid Margin="0">
                         <local:signalClass x:Name="ucSignal" Margin="0,2,0,0" Height="Auto"/>
                     </Grid>
@@ -42,7 +42,7 @@
                         </ni:Graph>
                     </Grid>
                 </TabItem>
-                <TabItem x:Name="tabMiddleOptStat" Header="Opts/Stats" Height="28" VerticalAlignment="Top" Margin="0">
+                <TabItem x:Name="tabMiddleOptStat" Header="Opts/Stats" Height="28" VerticalAlignment="Top" Margin="0" Background="#FFE9E9E9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="145"/>
@@ -53,8 +53,8 @@
                             <StackPanel Margin="0,3,0,0">
                                 <GroupBox Header="Files" Height="145" Margin="0">
                                     <StackPanel Margin="0,0,0,0">
-                                        <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click" Background="#FFF6F6F6"/>
-                                        <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveSignalAs_Click" Background="#FFF6F6F6"/>
+                                        <Button x:Name="btnOpenSignal" Content="Open..." Margin="3,5,5,0" Click="btnOpenSignal_Click" Background="White"/>
+                                        <Button x:Name="btnSaveSignalAs" Content="Save As..." Margin="3,5,5,0" Click="btnSaveSignalAs_Click" Background="White"/>
                                         <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
                                         <TextBox x:Name="tbRemSignal" Margin="0,0,-0.143,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="40"/>
                                     </StackPanel>
@@ -106,7 +106,7 @@
                 <ColumnDefinition x:Name="columnPID" Width="145"/>
             </Grid.ColumnDefinitions>
             <TabControl x:Name="tabLowPlots" Margin="0,2,0.714,0.857" SelectedIndex="0" FontSize="14" Grid.ColumnSpan="1" SelectionChanged="tabLowPlots_SelectionChanged">
-                <TabItem x:Name="tiFringes" Header="Fringes" Width="100" Height="28">
+                <TabItem x:Name="tiFringes" Header="Fringes" Width="100" Height="28" Background="#FFE9E9E9">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="28"/>
@@ -141,10 +141,10 @@
                         </ni:Graph>
                     </Grid>
                 </TabItem>
-                <TabItem x:Name="tiMultiScan" Header="Mutli-scan" Width="100" Height="28">
+                <TabItem x:Name="tiMultiScan" Header="Mutli-scan" Width="100" Height="28" Background="#FFE9E9E9">
                     <PanelsUC:MultiScanUC x:Name="MultiScanUC1"/>
                 </TabItem>
-                <TabItem x:Name="tiAccelTrend" Header="Accel.Trend" Width="100" Height="28">
+                <TabItem x:Name="tiAccelTrend" Header="Accel.Trend" Width="100" Height="28" Background="#FFE9E9E9">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="28"/>
@@ -200,7 +200,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="tiOptStats" Header=" Opts/Stats " Height="28" VerticalAlignment="Top" Margin="0">
+                <TabItem x:Name="tiOptStats" Header=" Opts/Stats " Height="28" VerticalAlignment="Top" Margin="0" Background="#FFE9E9E9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="145"/>
@@ -212,13 +212,13 @@
                             <StackPanel Margin="0,0,0,0">
                                 <GroupBox Header="Files" Height="147" Margin="0,0,-0.286,0">
                                     <StackPanel Margin="0">
-                                        <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" Background="#FFF6F6F6" />
-                                        <Button x:Name="btnSaveFringesAs" Content="Save Fringes As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" Background="#FFF6F6F6" />
+                                        <Button x:Name="btnOpenFringes" Content="Open..." Margin="3,2,5,0" Click="btnOpenFringes_Click" Background="White" />
+                                        <Button x:Name="btnSaveFringesAs" Content="Save Fringes As..." Margin="3,5,5,0" Click="btnSaveFringesAs_Click" Background="White" />
                                         <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
                                         <TextBox x:Name="tbRemFringes" Margin="0,1,-0.143,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="47"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button x:Name="btnClearFringes" Content="Clear Fringes/Trend" Margin="12,8,8,0" Click="btnClearAll_Click" Height="23" Background="#FFFCFCE3" />
+                                <Button x:Name="btnClearFringes" Content="Clear Fringes/Trend" Margin="6,8,4,0" Click="btnClearAll_Click" Height="23" Background="#FFFCFCE3" />
                             </StackPanel>
 
                         </GroupBox>
@@ -240,7 +240,7 @@
                                 <Label Content="(max-min)/2" HorizontalAlignment="Left" Margin="120,111,0,0" VerticalAlignment="Top"/>
                                 <Label Content="Aml.Offset" HorizontalAlignment="Left" Margin="2,140,0,0" VerticalAlignment="Top"/>
                                 <ni:NumericTextBoxDouble x:Name="numOffset" HorizontalAlignment="Left" Height="23" Margin="67,142,0,0" VerticalAlignment="Top" Width="56" RenderTransformOrigin="0.501,-0.217" Interval="0.1" Range="0, 100, System.Double" Value="1" ValueChanged="numScale_ValueChanged"/>
-                                <Button x:Name="btnSaveTrendAs" Content="Save Acc.Trend As..." Margin="3,172,9.857,0" Background="#FFF6F6F6" VerticalAlignment="Top" Click="btnSaveTrendAs_Click" />
+                                <Button x:Name="btnSaveTrendAs" Content="Save Acc.Trend As..." Margin="3,172,9.857,0" Background="White" VerticalAlignment="Top" Click="btnSaveTrendAs_Click" />
                             </Grid>
                         </GroupBox>
                         <GroupBox x:Name="gbJumboParams" Header="Jumbo parameters" Margin="5,0,0,0" BorderBrush="#FF840802">
@@ -260,7 +260,7 @@
 
                     </Grid>
                 </TabItem>
-                <TabItem x:Name="tiOptimization" Header=" Optimization " Height="28" VerticalAlignment="Top" Margin="0">
+                <TabItem x:Name="tiOptimization" Header=" Optimization " Height="28" VerticalAlignment="Top" Margin="0" Background="#FFE9E9E9">
                     <PanelsUC:OptimUC_Class x:Name="OptimUC1" />
                 </TabItem>
 
