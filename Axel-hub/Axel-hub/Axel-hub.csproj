@@ -58,6 +58,9 @@
     <ApplicationIcon>Properties\rocket1.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CSNumerics, Version=1.0.1.0, Culture=neutral, PublicKeyToken=b745125f2c40bf32, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\csnumerics.1.0.1.50806\lib\portable-net4+sl5+netcore45+wpa81+wp8\CSNumerics.dll</HintPath>
+    </Reference>
     <Reference Include="DataStructures">
       <HintPath>..\..\..\EDMSuite\MotMaster2\bin\Nav\DataStructures.dll</HintPath>
     </Reference>

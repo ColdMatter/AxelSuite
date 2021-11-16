@@ -144,6 +144,7 @@ namespace Axel_hub.PanelsUC
             cbObjectiveFunc.Text = os.objFunc;
             if (os.convOpts.ContainsKey("ConvPrec")) numConvPrec.Value = os.convOpts["ConvPrec"];
 
+            if (os.convOpts.ContainsKey("OptimMode")) tcOptimProcs.SelectedIndex = Convert.ToInt32(os.convOpts["OptimMode"]);
             if (optimProcs.Count != os.procOpts.Count)  { log("Err: some optimization options missing."); return; }
             for (int i = 0; i < optimProcs.Count; i++)
                 optimProcs[i].Init(os.procOpts[i]);
@@ -155,6 +156,7 @@ namespace Axel_hub.PanelsUC
             os.objFunc = cbObjectiveFunc.Text;
             os.convOpts["ConvPrec"] = numConvPrec.Value;
 
+            os.convOpts["OptimMode"] = tcOptimProcs.SelectedIndex;
             foreach (IOptimization io in optimProcs)
                 io.Final();
             if (Utils.isNull(os.procOpts)) os.procOpts = new List<Dictionary<string, double>>();
@@ -199,9 +201,9 @@ namespace Axel_hub.PanelsUC
         protected void LogEvent(object sender, EventArgs e)
         {
             OptimEventArgs ex = (OptimEventArgs)e;
-            if (ex.Value > 0) log(ex.Text, Brushes.Maroon);
+            if (ex.Value > 0) log(ex.Text, Brushes.DarkBlue);
             else 
-                if (chkDetails.IsChecked.Value) log(ex.Text, Brushes.Navy);
+                if (chkDetails.IsChecked.Value) log(ex.Text, Brushes.DarkGreen);
         }
 
         protected void log(string txt, SolidColorBrush clr = null)
@@ -303,7 +305,7 @@ namespace Axel_hub.PanelsUC
             if (!Utils.isNull(e)) 
             {
                 OptimEventArgs ex = (OptimEventArgs)e;
-                log("...and the optimization result is (" + ex.Text+" )", Brushes.Teal);
+                log("...and the optimization result is -> " + ex.Text, Brushes.Maroon);
             }
         }
         #endregion Events
@@ -414,6 +416,7 @@ namespace Axel_hub.PanelsUC
         {
             if (Utils.isNull(cbObjectiveFunc.Text)) { log("Err: No objective function"); return; }
             if (cbObjectiveFunc.Text.Equals("")) { log("Err: No objective function"); return; }
+            bool oldOptimizeValue = bcbOptimize.Value;
             bcbOptimize.Value = !bcbOptimize.Value;  
             List<baseMMscan> sPrms = new List<baseMMscan>(); var opts = new Dictionary<string, double>();
             if (bcbOptimize.Value)
@@ -428,7 +431,7 @@ namespace Axel_hub.PanelsUC
             }
             int idx = tcOptimProcs.SelectedIndex;
             optimProcs[idx].Optimize(bcbOptimize.Value, sPrms, opts);
-            if (!bcbOptimize.Value && optimProcs[idx].state.Equals(optimState.cancelRequest))
+            if (oldOptimizeValue && !bcbOptimize.Value && optimProcs[idx].state.Equals(optimState.cancelRequest))
             {
                 log("User interruption !!!", Brushes.Tomato); 
             }

@@ -654,12 +654,12 @@ namespace Axel_hub
             }
             if (shotListRaw.enabled)
             {               
-                SingleShot ss = new SingleShot(new Point3D(iTime, A, tTime), adm3, temper, "r"+ genOptions.MemsAverOver.ToString());                
+                SingleShot ss = new SingleShot(new Point3D(iTime, A, tTime), adm3, temper, "r"+ genOptions.MemsAverOver.ToString(), genOptions.LogFilePrec);                
                 shotListRaw.Add(ss);
             }
             if (shotList.enabled && tm.ContainsKey("PhiMg"))
             {
-                SingleShot ss = new SingleShot(new Point3D(iTime, tm["PhiMg"], tTime), axelChart.convertV2mg(adm3), temper, "p" + genOptions.MemsAverOver.ToString());
+                SingleShot ss = new SingleShot(new Point3D(iTime, tm["PhiMg"], tTime), axelChart.convertV2mg(adm3), temper, "p" + genOptions.MemsAverOver.ToString(), genOptions.LogFilePrec);
                 shotList.Add(ss);
             }
             return rslt;
@@ -702,14 +702,14 @@ namespace Axel_hub
                         if ((axelChart.Waveform.First.X > w0) || (w1 > axelChart.Waveform.Last.X)) continue;
                         if (shotListRaw.enabled)
                         {
-                            SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), axelChart.Waveform, temper, "m1");
+                            SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), axelChart.Waveform, temper, "m1", genOptions.LogFilePrec);
                             ss.cutMems(w0, w1); // cut mems to size
                             shotListRaw.Add(ss);
                             if (ss.mems.Count.Equals(0)) errLog.log("raw> quant.t <limits> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
                         }
                         if (shotList.enabled)
                         {
-                            SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), axelChart.TimePortionMg(w0, w1), temper, "m1"); // ds in mg
+                            SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), axelChart.TimePortionMg(w0, w1), temper, "m1", genOptions.LogFilePrec); // ds in mg
                             shotList.Add(ss);
                             if (ss.mems.Count.Equals(0)) errLog.log("quant.t <range> 1: " + quantList[i].X.ToString("G5") + " <" + w0.ToString("G5") + ", " + w1.ToString("G5") + ">");
                         }
@@ -718,7 +718,7 @@ namespace Axel_hub
                     }
                     if ((mds[0].X < w0) && (w1 < mds[mds.Count - 1].X)) // the window of interest is well inside the MEMS buffer
                     {
-                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper, "m2");
+                        SingleShot ss = new SingleShot(new Point3D(quantList[i].X, quantList[i].Y, dur), mds, temper, "m2", genOptions.LogFilePrec);
                         ss.cutMems(w0, w1); // cut mems to size
                         if (ss.mems.Count > 0) // there is something there
                         {
@@ -728,6 +728,7 @@ namespace Axel_hub
                             {
                                 ds = new DataStack(axelChart.Waveform.Depth, prefix);  ds.AddRange(ss.mems);
                                 SingleShot ss2 = new SingleShot(new Point3D(quantList[i].X, quantList[i].Z, dur), axelChart.convertV2mg(ds));
+                                ss2.precision = genOptions.LogFilePrec;
                                 shotList.Add(ss2);
                             }
                                

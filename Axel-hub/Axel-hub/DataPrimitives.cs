@@ -528,7 +528,7 @@ namespace Axel_hub
 
         private string buffer = String.Empty;
         /// <summary>
-        /// Get the next scan from a file
+        /// Get the next shot from a file
         /// </summary>
         /// <param name="next">next is false on the last item</param>
         /// <returns></returns>

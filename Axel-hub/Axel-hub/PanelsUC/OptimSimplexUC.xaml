@@ -14,7 +14,12 @@
             <RowDefinition Height="386*"/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal">
-            <Label x:Name="label1" Content="Info: optimized signal (top) / individual scanning parameters (bottom)" Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
+            <Label x:Name="label1" Content="Optim.method:" Margin="3,3,0,0.241" HorizontalAlignment="Left"/>
+            <ComboBox x:Name="cbOptimMethod" Width="110" Margin="0,5,0,5.241" Background="#FFFBFBFB" SelectedIndex="0" FontSize="13">
+                <ComboBoxItem x:Name="cbiNedlerMead" Content="Nedler-Mead"/>
+                <ComboBoxItem x:Name="cbiPowell" Content="Powell"/>
+            </ComboBox>
+            <Label x:Name="label2" Content="Charts: signal(up) / scanned params(down)" Margin="7,3,0,0.241" HorizontalAlignment="Left"/>
             <ni:RadixNumericTextBoxInt32 x:Name="numSGdegree" Height="24" Width="43" Margin="0,6,0,5.241" HorizontalAlignment="Left" RadixVisibility="Collapsed" Value="2" Range="1, 10, System.Int32" Visibility="Collapsed"/>
         </StackPanel>
         <Label x:Name="label3" Content="Iterations:" Margin="0,0,60,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -46,25 +51,17 @@
                 <ColumnDefinition Width="0"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <RichTextBox x:Name="richLog" Margin="0,0,0.342,-0.203">
+            <RichTextBox x:Name="richLog" Margin="0">
                 <FlowDocument>
                     <Paragraph>
                         <Run Text=""/>
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
-            <ni:Graph x:Name="graphProc" Margin="0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" DataSource="{Binding Data}" Grid.Column="1">
+            <ni:Graph x:Name="graphProc" Margin="3,0,0,0" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" DefaultInteraction="Pan" Interactions="Pan, Zoom" DataSource="{Binding Data}" Grid.Column="1">
                 <ni:Graph.Axes>
                     <ni:AxisDouble x:Name="procXaxis" Orientation="Horizontal" Adjuster="ContinuousChart" Range="0, 50, System.Double"/>
                 </ni:Graph.Axes>
-                <!--<ni:Graph.Plots>
-                    <ni:Plot Label="Simplex" >
-                        <ni:PlotRendererGroup>
-                            <ni:LinePlotRenderer Stroke="#FFBC0909" StrokeThickness="1.8"/>
-                            <ni:PointPlotRenderer Fill="#FFFDF466" Stroke="#FF7D0A03" Size="3,3"/>
-                        </ni:PlotRendererGroup>
-                    </ni:Plot>
-                </ni:Graph.Plots>-->
                 <ni:Graph.SelectionFill>
                     <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
                 </ni:Graph.SelectionFill>

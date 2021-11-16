@@ -43,6 +43,8 @@ namespace Axel_hub
     {
         N1, N2, RN1, RN2, NTot, B2, BTot, Bg, Interferometer
     }
+    enum Animals { Dog, Cat }
+    enum AnimalsExt { Dog = Animals.Dog, Cat = Animals.Cat, MyOther } // consider for raw and proc inArrays
     /// <summary>
     /// Interaction logic for signalUC.xaml
     /// visualize the raw signal and signal trends {"N1", "N2", "RN1", "RN2", "NTot", "B2", "Btot"}
@@ -114,7 +116,7 @@ namespace Axel_hub
             repeatMode = grpMme.cmd.Equals("repeat");
             
             string timeName = Utils.dataPath + Utils.timeName();
-            logger = new DictFileLogger(new string[] {"Index", "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg" }, prefix, timeName);
+            logger = new DictFileLogger(new string[] {"Index", "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg", "Interferometer" }, prefix, timeName);
             logger.Enabled = false;
             logger.setMMexecAsHeader(grpMme.Clone());
             logger.defaultExt = ".ahs";

@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using NumUtils.NelderMeadSimplex;
+using Cureos.Numerics.Optimizers;
 using NationalInstruments.Controls;
 using UtilsNS;
 
@@ -23,12 +24,27 @@ namespace Axel_hub.PanelsUC
     /// </summary>
     public partial class OptimSimplexUC : UserControl, IOptimization
     {
+        private bool simulation = Utils.TheosComputer(); // local
+        enum OptimMethod { NedlerMead, Powell} 
+        OptimMethod optimMethod
+        {
+            get
+            {
+                switch (cbOptimMethod.SelectedIndex)
+                {
+                    case 1:  return OptimMethod.Powell;
+                    default: return OptimMethod.NedlerMead;
+                }
+            }
+        } 
         public optimState state { get; set; }
         public List<baseMMscan> scans { get; set; }
         
         SimplexConstant[] initVals;
-        ObjectiveFunctionDelegate objFunction;
-        RegressionResult regResult;
+        ObjectiveFunctionDelegate NMobjFunction;
+        BobyqaObjectiveFunctionDelegate PowellObjFunction;
+        RegressionResult NMresult;
+        OptimizationSummary powellResult;
 
         List<Point> iters, meta;
         List<List<Point>> srsPrms;
@@ -54,7 +70,7 @@ namespace Axel_hub.PanelsUC
             return OnTakeAShot(ex);
         }
 
-        private double _objFunction1(double[] prms)
+        private double _NMobjFunction1(double[] prms)
         {
             if (prms.Length.Equals(0)) throw new Exception("No parameters to optimize");
             if (!prms.Length.Equals(scans.Count)) { log("Error: parameters mismatch", false); return 0; }
@@ -63,7 +79,7 @@ namespace Axel_hub.PanelsUC
             for (int i = 0; i < prms.Length; i++)
                 ps[i] = Utils.EnsureRange(prms[i], scans[i].sFrom, scans[i].sTo);
 
-            OptimEventArgs ex; string ss = "iters: " + iters.Count.ToString() + "; " + scans[0].sParam+"= " + ps[0].ToString("G6") + "; ";
+            OptimEventArgs ex; string ss = "iters: " + (iters.Count+1).ToString() + "; " + scans[0].sParam+"= " + ps[0].ToString("G6") + "; ";
             for (int i = 1; i < scans.Count; i++)
             {
                 ex = new OptimEventArgs(scans[i].sParam, ps[i], "scanning"); scans[i].Value = ps[i];
@@ -82,6 +98,11 @@ namespace Axel_hub.PanelsUC
                 }
             return -rslt; // reverse for minimum value
         }
+
+        private double _PowellObjectiveFunction(int n, double[] x) // n is ignored
+        {
+            return _NMobjFunction1(x);
+        }
         public OptimSimplexUC()
         {
             InitializeComponent();
@@ -95,14 +116,18 @@ namespace Axel_hub.PanelsUC
             if (Utils.isNull(_opts)) return;
             opts = new Dictionary<string, double>(_opts);
             if (opts.Count.Equals(0)) return;
-            objFunction = new ObjectiveFunctionDelegate(_objFunction1);
+            NMobjFunction = new ObjectiveFunctionDelegate(_NMobjFunction1);
+            PowellObjFunction = new BobyqaObjectiveFunctionDelegate(_PowellObjectiveFunction);
+            if (opts.ContainsKey("optimMethod")) cbOptimMethod.SelectedIndex = Convert.ToInt32(opts["optimMethod"]);
             if (opts.ContainsKey("numIters")) numIters.Value = Convert.ToInt32(opts["numIters"]);
             iters = new List<Point>(); meta = new List<Point>();
-            regResult = null;
+            NMresult = null; powellResult = null;
         }
         public void Final()
         {
             if (Utils.isNull(opts)) opts = new Dictionary<string, double>();
+            opts["optimMethod"] = cbOptimMethod.SelectedIndex;
+            opts["numIters"] = numIters.Value;
             opts["moduleIdx"] = 2;
         }
         #region Events
@@ -134,9 +159,24 @@ namespace Axel_hub.PanelsUC
         #endregion Events
         public string report(bool lastIter)
         {
-            if (Utils.isNull(regResult)) return "No result yet";
-            string ss = "termination: " + regResult.TerminationReason.ToString() + "; iters: " + iters.Count.ToString() +
-                "; obj.value: " + (-regResult.ErrorValue).ToString("G6");
+            string ss = "No results";
+            switch (optimMethod)
+            {
+                case OptimMethod.NedlerMead:
+                    if (Utils.isNull(NMresult)) return ss;
+                    if (state == optimState.cancelRequest)
+                        ss = "termination: UserCancelation; iters: " + iters.Count.ToString() + "; obj.value: " + (-NMresult.ErrorValue).ToString("G6");
+                    else
+                        ss = "termination: " + NMresult.TerminationReason.ToString() + "; iters: " + NMresult.EvaluationCount.ToString() + "; obj.value: " + (-NMresult.ErrorValue).ToString("G6");
+                    break;
+                case OptimMethod.Powell:
+                    if (Utils.isNull(powellResult)) return ss;
+                    if (state == optimState.cancelRequest)
+                        ss = "termination: UserCancelation; iters: " + iters.Count.ToString() + "; obj.value: " + (-powellResult.F).ToString("G6");
+                    else 
+                        ss = "termination: " + powellResult.Status.ToString() + "; iters: " + powellResult.Evals.ToString() + "; obj.value: " + (-powellResult.F).ToString("G6");
+                    break;
+            }
             return ss;
         }
 
@@ -146,32 +186,51 @@ namespace Axel_hub.PanelsUC
         }
         double scale = 5;
         public void Optimize(bool? start, List<baseMMscan> _scans, Dictionary<string, double> _opts) 
-        {
+        {           
             scans = new List<baseMMscan>();
             foreach (baseMMscan mms in _scans)
                 scans.Add(new baseMMscan(mms.getAsString()));
             if ((bool)start)
             {
-                state = optimState.running; Clear();
-                initVals = new SimplexConstant[scans.Count];
+                state = optimState.running; Clear();                
                 for (int i = 0; i < scans.Count; i++)
                 {
                     srsPrms.Add(new List<Point>()); graphProc.Plots.Add(new Plot(scans[i].sParam));
                 }
-                    
-                //scans[0].Value = 1; scans[1].Value = -1; scans[2].Value = 1; // for simulation
-
-                for (int i = 0; i < scans.Count; i++)
-                    initVals[i] = new SimplexConstant(scans[i].Value, 0.1 + scale*scans[i].Value);           
+                if (simulation) // for simulation -> equal int conditions
+                {
+                    scans[0].Value = 1; scans[1].Value = -1; scans[2].Value = 1; 
+                }
+                
+                int sCount = scans.Count;
                 double cp = _opts.ContainsKey("ConvPrec") ? _opts["ConvPrec"] : 0.1; opts["ConvPrec"] = cp;
                 opts["numIters"] = numIters.Value;           
-                regResult = NelderMeadSimplex.Regress(initVals, cp, numIters.Value, objFunction);
+                switch (optimMethod)
+                {
+                    case OptimMethod.NedlerMead:
+                        initVals = new SimplexConstant[sCount];
+                        for (int i = 0; i < sCount; i++)
+                            initVals[i] = new SimplexConstant(scans[i].Value, 0.1 + scale*scans[i].Value);           
+                        NMresult = NelderMeadSimplex.Regress(initVals, cp, numIters.Value, NMobjFunction);
+                        break;
+                    case OptimMethod.Powell:
+                        double[] xl = new double[sCount]; double[] xu = new double[sCount]; double[] x0 = new double[sCount];
+                        for (int i = 0; i < sCount; i++)
+                        {
+                            xl[i] = scans[i].sFrom; xu[i] = scans[i].sTo; x0[i] = scans[i].Value;
+                        }
+                        var optimizer = new Bobyqa(sCount, PowellObjFunction, xl, xu);
+                        optimizer.MaximumFunctionCalls = numIters.Value;
+                        optimizer.TrustRegionRadiusStart = cp*1000; //optimizer.Logger = Console.Out;
+                        optimizer.TrustRegionRadiusEnd = cp; //*1e-5                       
+                        powellResult = optimizer.FindMinimum(x0);
+                        break;
+                }
                 for (int i = 0; i<scans.Count; i++)
                     OnParamSet(new OptimEventArgs(scans[i].sParam, Double.NaN, "optimized"));
+                OnEndOptim(new OptimEventArgs("", Double.NaN, report(false)));
             }
-            else state = optimState.cancelRequest;
-
-            OnEndOptim(new OptimEventArgs("", Double.NaN, report(false)));
+            else state = optimState.cancelRequest;           
         }
         #endregion Common
 
