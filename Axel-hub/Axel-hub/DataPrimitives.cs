@@ -118,7 +118,6 @@ namespace Axel_hub
                 return (ntot - 2 * n2) / ntot;
             }
         }
-
         public static double IntegrateAcceleration(Dictionary<string, double> avgs)
         {
             throw new NotImplementedException();
@@ -136,6 +135,16 @@ namespace Axel_hub
             if (ph <= 0) ph += 2 * Math.PI;
             if (Utils.InRange(ph, 0, 2 * Math.PI)) return ph;
             return ph % (2 * Math.PI);
+        }
+        
+        public static string aux2json(int idx, double time, double step, double[] dt, string precision)
+        {
+            Dictionary<string, object> dct = new Dictionary<string, object>();
+            dct["index"] = idx;
+            dct["time"] = Utils.formatDouble(time,precision);
+            dct["step"] = Utils.formatDouble(step, precision);
+            dct["data"] = Utils.formatDouble(dt, precision);
+            return JsonConvert.SerializeObject(dct);
         }
     }
 #endregion DataConvertion

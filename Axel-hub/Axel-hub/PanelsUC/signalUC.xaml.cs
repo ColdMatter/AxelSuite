@@ -74,7 +74,7 @@ namespace Axel_hub
         private int runID;
         public MMscan lastScan;
 
-        public DictFileLogger logger, SDlog; public FileLogger rawDataLog;
+        public DictFileLogger logger, SDlog; public FileLogger rawDataLog, Aux1DataLog, Aux2DataLog;
         private double NsYmin = 10, NsYmax = -10, signalYmin = 10, signalYmax = -10;
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace Axel_hub
         {
             genOptions = _genOptions; genModes = _genModes; axelMems = _axelMems; prefix = _prefix;
         }
-
+        string timeName;
         /// <summary>
         /// Call when new series starts
         /// </summary>
@@ -115,7 +115,7 @@ namespace Axel_hub
             scanMode = grpMme.cmd.Equals("scan");
             repeatMode = grpMme.cmd.Equals("repeat");
             
-            string timeName = Utils.dataPath + Utils.timeName();
+            timeName = Utils.dataPath + Utils.timeName();
             logger = new DictFileLogger(new string[] {"Index", "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg", "Interferometer" }, prefix, timeName);
             logger.Enabled = false;
             logger.setMMexecAsHeader(grpMme.Clone());
@@ -288,7 +288,7 @@ namespace Axel_hub
         public void NextShot(MMexec mme, out double currX, out double A, out double mems_V) // 
         {
             if (!Utils.isNull(rawDataLog)) rawDataLog.log(JsonConvert.SerializeObject(mme));
-            runID = Convert.ToInt32(mme.prms["runID"]);
+            runID = Convert.ToInt32(mme.prms["runID"]);           
             Dictionary<string, double> avgs = MMDataConverter.AverageShotSegments(mme, chkStdDev.IsChecked.Value);
             if (avgs.ContainsKey(inArrays.Interferometer.ToString())) mems_V = avgs[inArrays.Interferometer.ToString()];
             else mems_V = Double.NaN;
@@ -303,8 +303,7 @@ namespace Axel_hub
                     else lbi.Foreground = Brushes.Blue;
                     lboxNB.Items.Add(lbi);
                 }
-            }
-            
+            }            
             double asymmetry = MMDataConverter.Asymmetry(avgs, false, chkDarkcurrent.IsChecked.Value);
 
             double N2 = avgs[inArrays.N2.ToString()]; double NTot = avgs[inArrays.NTot.ToString()];
@@ -330,20 +329,42 @@ namespace Axel_hub
             {   // remote time; if not - the default is axelChart.axelMems.TimeElapsed() from nextMeasure method
                 if (mme.prms.ContainsKey("iTime")) // remote time
                 {  
+                    if (!theTime.isTimeRunning) theTime.startTime();
                     if (grpMme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) // jumbo
                     {
-                        if (theTime.isTimeRunning)
-                        {
-                            double sh = 0; if (mme.prms.ContainsKey("bTime") && mme.prms.ContainsKey("samplingRate")) sh = Convert.ToDouble(mme.prms["bTime"]) / Convert.ToDouble(mme.prms["samplingRate"]);
-                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))) + sh; // in sec
-                        }
+                        double sh = 0; if (mme.prms.ContainsKey("bTime") && mme.prms.ContainsKey("samplingRate")) sh = Convert.ToDouble(mme.prms["bTime"]) / Convert.ToDouble(mme.prms["samplingRate"]);
+                        currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))) + sh; // in sec
                     }
-                    else
+                    else // simple repeat
+                    {                        
+                        currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec                        
+                    }
+                    double samplingRate = mme.prms.ContainsKey("samplingRate") ? Convert.ToDouble(mme.prms["samplingRate"]) : 200000;
+                    if (mme.prms.ContainsKey("Aux1"))
                     {
-                        if (theTime.isTimeRunning)
-                            currX = theTime.relativeTime(((long)Convert.ToInt64(mme.prms["iTime"]))); // in sec
-                        else theTime.startTime();
+                        if (runID.Equals(0))
+                        {
+                            Aux1DataLog = new FileLogger("1", timeName);
+                            Aux1DataLog.Enabled = false;
+                            Aux1DataLog.defaultExt = ".aux";
+                            Aux1DataLog.Enabled = true;
+                        }
+                        Aux1DataLog.log(MMDataConverter.aux2json(runID, currX, 1/ samplingRate, (double[])mme.prms["Aux1"], genOptions.LogFilePrec));
+                        mme.prms.Remove("Aux1");
                     }
+                    if (mme.prms.ContainsKey("Aux2"))
+                    {
+                        if (runID.Equals(0))
+                        {
+                            Aux2DataLog = new FileLogger("2", timeName);
+                            Aux2DataLog.Enabled = false;
+                            Aux2DataLog.defaultExt = ".aux";
+                            Aux2DataLog.Enabled = true;
+                        }
+                        Aux2DataLog.log(MMDataConverter.aux2json(runID, currX, 1/ samplingRate, (double[])mme.prms["Aux2"], genOptions.LogFilePrec));
+                        mme.prms.Remove("Aux2");
+                    }
+
                 }
                 else currX = runID;
             }
