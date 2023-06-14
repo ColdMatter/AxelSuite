@@ -1,0 +1,22 @@
+                if (bcbFilter.Value) Utils.VisualCompToPng(graphIntensity, jgr.folder + "SG_grid.png");
+                else Utils.VisualCompToPng(graphIntensity, jgr.folder + "raw_grid.png");
+                bcbFilter_Click(null, null); Thread.Sleep(300); 
+                if (bcbFilter.Value) Utils.VisualCompToPng(graphIntensity, jgr.folder + "SG_grid.png");
+                else Utils.VisualCompToPng(graphIntensity, jgr.folder + "raw_grid.png");
+                bcbFilter_Click(null, null); Thread.Sleep(300); 
+
+
+                if (bcbFilter.Value)
+                {
+                    Utils.VisualCompToPng(graphIntensity, jgr.folder + "SG_grid.png");
+                    bcbFilter_Click(null, null); Thread.Sleep(1000); 
+                    Utils.VisualCompToPng(graphIntensity, jgr.folder + "raw_grid.png");                    
+                    bcbFilter_Click(null, null);                      
+                }
+                else
+                {
+                    Utils.VisualCompToPng(graphIntensity, jgr.folder + "raw_grid.png");
+                    bcbFilter_Click(null, null); Thread.Sleep(1000);
+                    Utils.VisualCompToPng(graphIntensity, jgr.folder + "SG_grid.png");
+                    bcbFilter_Click(null, null);
+                }

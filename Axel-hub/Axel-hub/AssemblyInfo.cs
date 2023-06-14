@@ -8,7 +8,7 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Axel Hub")]
-[assembly: AssemblyDescription("Data acquisition and visuals for MEMS and data from MotMaster2")]
+[assembly: AssemblyDescription("Data visualization and processing with data from MotMaster2")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Teodor Krastev for Imperial College, London, UK")]
 [assembly: AssemblyProduct("Axel Hub")]
@@ -51,5 +51,5 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.9.1.42")]
-[assembly: AssemblyFileVersion("2.9.1.42")]
+[assembly: AssemblyVersion("3.11.0.70")]
+[assembly: AssemblyFileVersion("3.11.0.70")]

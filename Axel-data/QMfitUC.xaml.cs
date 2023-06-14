@@ -35,9 +35,9 @@ namespace Axel_data
         {
             data = null; curShotList = null; sectSize = -1;
         }
-        public delegate void LogHandler(string txt, bool detail = false, Color? clr = null);
+        public delegate void LogHandler(string txt, bool detail = false, SolidColorBrush clr = null);
         public event LogHandler OnLog;
-        protected void LogEvent(string txt, bool detail = false, Color? clr = null)
+        protected void LogEvent(string txt, bool detail = false, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, detail, clr);
         }
@@ -72,15 +72,15 @@ namespace Axel_data
             btnJFitSingle.IsEnabled = (dt.Count > 5);
             if (btnJFitSingle.IsEnabled) data = new List<Point>(dt); 
             else data = null;
-            if (!btnJFitSingle.IsEnabled) LogEvent("no data in section " + curSectIdx.ToString(), false, Brushes.Red.Color);
+            if (!btnJFitSingle.IsEnabled) LogEvent("no data in section " + curSectIdx.ToString(), false, Brushes.Red);
             if (!btnJFitSingle.IsEnabled || !andFit) return rslt;
             rslt = BigFIT();
-            if (rslt.Count == 0) LogEvent("error at section " + curSectIdx.ToString(), false, Brushes.Red.Color);
+            if (rslt.Count == 0) LogEvent("error at section " + curSectIdx.ToString(), false, Brushes.Red);
             else
             {
                 if (rslt.ContainsKey("rmse"))
                 {
-                    if (Double.IsNaN(rslt["rmse"])) LogEvent("error at section " + curSectIdx.ToString(), false, Brushes.Red.Color);
+                    if (Double.IsNaN(rslt["rmse"])) LogEvent("error at section " + curSectIdx.ToString(), false, Brushes.Red);
                 }
             }
             return rslt; 
@@ -211,8 +211,8 @@ namespace Axel_data
             }
             catch (NationalInstruments.Analysis.AnalysisException e)
             {
-                LogEvent("============= sect: " + curSectIdx.ToString(), true, Brushes.Blue.Color);
-                LogEvent("Error: " + e.Message, false, Brushes.Red.Color);
+                LogEvent("============= sect: " + curSectIdx.ToString(), true, Brushes.Blue);
+                LogEvent("Error: " + e.Message, false, Brushes.Red);
                 return rslt;
             }
             rslt["period"] = coefficients[0]; double phase = coefficients[1];

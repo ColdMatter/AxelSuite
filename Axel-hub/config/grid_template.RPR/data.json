@@ -1,0 +1,2 @@
+dt =
+{"dateTime":"22-07-15_19-25-07","prms":["DetAttn","DetFreq"],"objFunc":"1-2*(N2-B2)/(NTot-BTot) #default asymmetry","SG_degree":2,"SG_sidepoints":3,"optim_final":"DetAttn = 2 ;  DetFreq = 0 ;  obj.function = 150"}

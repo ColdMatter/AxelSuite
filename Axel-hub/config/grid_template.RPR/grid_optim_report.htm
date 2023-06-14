@@ -1,0 +1,81 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="description" content="Axel-hub optimization report - part of Navigator project at Imperial College London">
+<meta name="keywords" content="freeware, science, cold atoms, spectroscopy, visualization">
+<meta name="author" content="Teodor Krastev">
+<meta name="copyright" content="This page and all its contents are copyright 2017-2022 of Teodor Krastev. All Rights Reserved.">
+<!--Copyright(c)2017-2022 Teodor Krastev-->
+<title>Axel-hub grid optimization report</title>
+<base target="_blank">
+<style>
+	body     { font-family: Calibri; font-size: 12pt; color: black; background-color: white; background-image:url('https://axelsuite.com/images/TealRays2.gif')}
+	
+	h1       { font-family: Calibri; font-size: 20pt; color: #006666; font-weight:bold}
+	h2       { font-family: Calibri; font-size: 17pt; color: #006666; font-weight:bold}
+	h3       { font-family: Calibri; font-size: 14pt; color: #006666; font-weight:bold}
+	h4       { font-family: Calibri; font-size: 14pt; color: #006666; font-weight:normal}
+	h5       { font-family: Calibri; font-size: 12pt; color: #006666; font-weight:bold}
+	
+	table    { font-family: Calibri; font-size: 12pt; color: black}
+	
+	a:link    { font-family: Calibri; font-size: 12pt}
+	
+	a:visited    { font-family: Calibri; font-size: 12pt}
+	
+	img      {  max-width: 100%;  height: auto; }
+</style>
+<script language="JavaScript" src="data.json"></script>
+
+</head>
+
+<body>
+
+<h2 align="left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Axel-hub Grid Optimization Report</h2>
+<p align="left">&nbsp;</p>
+<p align="left">Date &amp; time of optimization 
+<script>
+	document.write(dt.dateTime);
+</script></p>
+<p align="left">Parameters to be optimized upon<b>
+<script>
+	document.write(dt.prms);
+</script>
+</b></p>
+<p align="left">Objective function of 
+<script>
+	document.write(dt.objFunc);
+</script>
+</p>
+<p align="left">Savitzky-Golay filter with degree = 
+<script>
+	document.write(dt.SG_degree+' & sidepoints = '+dt.SG_sidepoints);
+</script>
+</p>
+
+
+<h3 align="left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Intensity Scan</h3>
+<p align="left">
+	<table border="1" width="1350" cellpadding="15">
+		<tr>
+			<td align="center"><img border="0" src="raw_grid.png" width="650" ><p>
+			Unprocessed intensities</td>
+			<td align="center"><img border="0" src="SG_grid.png" width="650" ><p>
+			Filtered intensities</td>
+		</tr>
+	</table>
+</p>
+
+<p align="left">
+
+</p>
+<p align="left"><h5>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Optimized parameters are <b>
+<script>
+	document.write(dt.optim_final);
+</script>
+</b></h5></p>
+
+</body>
+
+</html>

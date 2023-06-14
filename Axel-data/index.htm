@@ -1,0 +1,105 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-gb">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="description" content="Axel Suite - set of applications for Navigator project at Imperial College London">
+<meta name="keywords" content="freeware, science, cold atoms, spectroscopy, visualization">
+<meta name="author" content="Teodor Krastev">
+<meta name="copyright" content="This page and all its contents are copyright 2017-2020 of Teodor Krastev. All Rights Reserved.">
+<!--Copyright(c)2017-2020 Teodor Krastev-->
+<title>Axel Suite software</title>
+<link rel="stylesheet" type="text/css" href="../images/AxelSuite.css">
+</head>
+
+<body>
+
+</p>
+<table border="0" width="100%" style="border-collapse: collapse" cellpadding="15">
+	<tr>
+		<td width="48%" valign="top">
+		
+		
+		<p>Axel-data is collection of data processing utilities for different 
+		purposes within our cold atom accelerometer experiment. Axel-data is open source (free for any use without any warranty). It 
+		is written in C# with use of some NI libraries (Measurement Studio 2019). 
+		The source code is <a href="axel-data.zip">HERE</a>.<br>
+		Enjoy !</p></td>
+		<td valign="top">
+		<h3 align="right">Axel Data Processing Desk (Axel-data)&nbsp; <img border="0" src="dataProc2-3.png" width="57" height="54"></h3>
+		</td>
+	</tr>
+	<tr>
+		<td width="48%" valign="top">
+		
+		
+		<h5>&nbsp;</h5>
+		<h5><b>Quantum vs MEMS</b> utility </h5>
+		<p>This data-processing utility is design to accommodate simultaneous 
+		quantum interferometer signal with MEMS signal measuring vibrations in 
+		the same direction.</p>
+		<p>When these two signals are plotted against each other a fringe 
+		pattern should appear. After fitting a cosine function to it, the 
+		parameters of the fit should give us the average acceleration during the 
+		measurement period (minutes). The difference of that average estimated 
+		acceleration to the average MEMS acceleration&nbsp; (measurement for the 
+		same period of time) can be used as compensation of MEMS drift. </p>
+		<p>After loading the log file of the measurement, the data are processed 
+		by sections (segments). You can process the data section by section with 
+		Section Scroll buttons and Fit Single buttons OR you can Run Scan, which 
+		will take sections in series and show the fit and the the trend bellow.</p>
+		<p>The utility provides a simulation mode (with noise) for training and 
+		testing as well.</td>
+		<td valign="top">
+		<img border="0" src="QvsM.png" width="800" height="427"></td>
+	</tr>
+	<tr>
+		<td width="48%" valign="top">
+		
+		
+		<h5>&nbsp;</h5>
+		<h5>Temperature compensation utility</h5>
+		<p>It is well know the the major instability (drift) of MEMS 
+		accelerometer is due to its dependence from temperature. This utility 
+		provides a tool to estimate a correction (compensation) of that drift by 
+		fitting a polynomial of different degree in trying to minimize the 
+		fluctuations of measurements of immobile MEMS. </p>
+		<p>After long enough measurements (days) the coefficients of the 
+		polynomial can be a good estimation improving the MEMS accuracy with one 
+		or two order of magnitude (x10 - x100).</p>
+		<p>The residuals and histogram of the residuals are plotted for better 
+		illustration of the fit. </td>
+		<td valign="top">
+		<img border="0" src="temp_comp.png" width="800" height="500"></td>
+	</tr>
+	<tr>
+		<td width="48%" valign="top">
+		
+		
+		<h5>&nbsp;</h5>
+		<h5>Join Delay Optimization utility</h5>
+		<p>The measurements of the quantum interferometer signal should match 
+		(in time) the measurements of MEMS. In practice that requirement has 
+		some error and this utility is designed to estimate the optimum delay of 
+		what we think is the time difference of quantum vs MEMS signals to what 
+		the actual time delay is. </p>
+		<p>The two acceleration signals are compared with some variable delay 
+		and the minimum difference is estimated. </p>
+		<p>After loading the join file (*.jlg) and set the range and step for 
+		the scan, pressing Delay Scan button will start the data processing.</p>
+		<p>The bottom chart shows the differences point by point as the 
+		cumulative difference for each delay is plotted on the top chart. The 
+		minimum of top series is an estimation of the optimum delay we are 
+		looking for.</p>
+		<p>&nbsp;</p>
+		<p>&nbsp;</p>
+		<p>&nbsp;</td>
+		<td valign="top">
+		<p><img border="0" src="join_optim.png" width="800" height="427"></td>
+	</tr>
+</table>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

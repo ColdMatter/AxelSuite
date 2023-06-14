@@ -28,7 +28,12 @@
                 <Label x:Name="lbProgBar" Content="0 %" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center" FontSize="13"/>
             </Grid>
         </Grid>
-        <TabControl x:Name="tabControl" Grid.Column="1" SelectedIndex="0">
+        <TabControl x:Name="tabControl" Grid.Column="1" SelectedIndex="4">
+            <TabItem x:Name="tiJoinOptim" Header="Join Optimizer" HorizontalAlignment="Left" Height="26.7341772151899" VerticalAlignment="Top" Width="130" FontSize="13" Foreground="#FF761E01">
+                <Grid Background="White">
+                    <local:JoinOptimClass x:Name="JoinOptim1" Width="Auto" Height="Auto"/>
+                </Grid>
+            </TabItem>
             <TabItem x:Name="tiQuantVsMems" Header="Quant.Vs Mems" Width="125" FontSize="13" >
                 <Grid Background="#FFFFFDFD">
                     <local:QuantVsMems x:Name="QuantVsMems1"/>
@@ -46,19 +51,17 @@
                     <local:TmprCompClass x:Name="tmprCompY" Margin="0,8,0,0" Grid.Row="1"/>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="tiJoinOptim" Header="Join Dly Optim." HorizontalAlignment="Left" Height="26.7341772151899" VerticalAlignment="Top" Width="130" FontSize="13" Foreground="#FF761E01">
-                <TabItem.Background>
-                    <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
-                        <GradientStop Color="#FFF3F3F3" Offset="0"/>
-                        <GradientStop Color="#FFEBEBEB" Offset="0.5"/>
-                        <GradientStop Color="#FFDDDDDD" Offset="0.5"/>
-                        <GradientStop Color="#FFE4E3E3" Offset="1"/>
-                    </LinearGradientBrush>
-                </TabItem.Background>
-                <Grid Background="White">
-                    <local:JoinOptimClass x:Name="JoinOptim1" Width="Auto" Height="Auto"/>
+            <TabItem x:Name="tiGraphTest" Header="Graph Test" Width="125" FontSize="13" >
+                <Grid Background="#FFFFFDFD">
+                    <local:graphTestUC x:Name="graphTest"/>
                 </Grid>
             </TabItem>
+            <TabItem x:Name="tiCheckOrder" Header="CheckOrder" Width="125" FontSize="13" >
+                <Grid Background="#FFFFFDFD">
+                    <local:checkOrderUC x:Name="checkOrder"/>
+                </Grid>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </Window>

@@ -1,0 +1,24 @@
+# backup of Msquared factors
+status=0
+beat_freq=6834682000
+main_synth_freq=3400000000
+aux_synth_freq=3417341000
+aom_synth_freq=4200000000
+dds_freq=17341000
+main_synth_status=0
+aux_synth_status=0
+aom_synth_status=0
+freq_ref_source=internal
+main_lo_source=internal
+main_input_power=0
+main_input_prescaler=2
+aux_input_power=0
+aux_input_prescaler=2
+main_lock_error=0
+aux_lock_error=0
+eom_drive=0
+if_lock_error=0
+main_lock_status=off
+resonator_voltage=0
+aux_lock_status=off
+ecd_lock_status=off

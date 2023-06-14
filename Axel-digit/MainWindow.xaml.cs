@@ -117,7 +117,7 @@ namespace Axel_digit
         public string boolArr2string(bool[] bArray)
         {
             string rslt = "";
-            for (int i = bArray.Length - 1; i > -1; i--) // reverse the order for hsTaskOut.WriteStaticU32 - the least significant is last
+            for (int i = 0; i < bArray.Length; i++)
             {
                 if (bArray[i])
                     rslt += '1';
@@ -135,7 +135,7 @@ namespace Axel_digit
         protected void OnCheckChange(object sender, int ID, bool check)
         {
             if (nLock || aLock) return;
-            Utils.log(tbLog, "change #"+ID.ToString() + " to " + check.ToString(),Brushes.Maroon.Color);
+            Utils.log(tbLog, "change #"+ID.ToString() + " to " + check.ToString(),Brushes.Maroon);
             if (chkAutoUpdate.IsChecked.Value)
             {
                 if (Utils.isNull(dTimer))
@@ -155,7 +155,7 @@ namespace Axel_digit
 
         public void dLog(string msg)
         {
-            if (debugMode) Utils.log(tbLog, msg, Brushes.Teal.Color);
+            if (debugMode) Utils.log(tbLog, msg, Brushes.Teal);
         }
         #endregion COMMON
 
@@ -168,7 +168,7 @@ namespace Axel_digit
                 if (OnCheckChange != null) OnCheckChange(sender, ID, check);
             }
 
-            public string DIO { get; set; }  public string Name { get; set; }  public bool UseAsInput { get; set; }  public bool ReadIn { get; set; }
+            public string DIO { get; set; }  public string Name { get; set; }  public bool Enabled { get; set; }  public bool ReadIn { get; set; }
             private bool bb;
             public bool WriteOut
             {
@@ -179,7 +179,7 @@ namespace Axel_digit
                     if (!Int32.TryParse(DIO, out idx))
                         Utils.TimedMessageBox("Wrong DIO format for named channel " + Name, "Warning", 2500);                        
                     else        
-                        if (UseAsInput) CheckChange((object)this, idx, bb);
+                        if (Enabled) CheckChange((object)this, idx, bb);
                 }
             }
 
@@ -203,8 +203,7 @@ namespace Axel_digit
                 namedDIO[i].ReadIn = dt[idx];
                 nLock = true;
                 if (inclOut) namedDIO[i].WriteOut = dt[idx];
-                nLock = false;
-                
+                nLock = false;                
             }
             dgNamedDIO.CommitEdit(); dgNamedDIO.CommitEdit();
             dgNamedDIO.Items.Refresh(); 
@@ -218,7 +217,7 @@ namespace Axel_digit
 
             addTextCol(dgNamedDIO, "DIO");
             addTextCol(dgNamedDIO, "Name");
-            addCheckCol(dgNamedDIO, "UseAsInput");
+            addCheckCol(dgNamedDIO, "Enabled");
             addCheckCol(dgNamedDIO, "ReadIn");
             addCheckCol(dgNamedDIO, "WriteOut");
 
@@ -241,7 +240,7 @@ namespace Axel_digit
         {
 
             public string DIO { get; set; }
-            public bool UseAsInput { get; set; }
+            public bool Enabled { get; set; }
             public bool ReadIn { get; set; }
             public bool WriteOut { get; set; }
         }
@@ -253,7 +252,7 @@ namespace Axel_digit
             for (int i=0; i<4; i++)
             {
                 addTextCol(dgAllDIO, "DIO" + i.ToString());
-                addCheckCol(dgAllDIO, "UaI" + i.ToString());
+                addCheckCol(dgAllDIO, "Enb" + i.ToString());
                 addCheckCol(dgAllDIO, "In" + i.ToString());
                 addCheckCol(dgAllDIO, "Out" + i.ToString());
             }           
@@ -288,7 +287,7 @@ namespace Axel_digit
                 if (OnCheckChange != null) OnCheckChange(sender, ID, check);
             }
             public string DIO0 { get; set; }
-            public bool UaI0 { get; set; }
+            public bool Enb0 { get; set; }
             public bool In0 { get; set; }
             private bool bb0;
             public bool Out0
@@ -297,11 +296,11 @@ namespace Axel_digit
                 set
                 {
                     bb0 = value;
-                    if (UaI0) CheckChange((object)this, Convert.ToInt32(DIO0), bb0);
+                    if (Enb0) CheckChange((object)this, Convert.ToInt32(DIO0), bb0);
                 }
             }
             public string DIO1 { get; set; }
-            public bool UaI1 { get; set; }
+            public bool Enb1 { get; set; }
             public bool In1 { get; set; }
             private bool bb1;
             public bool Out1
@@ -310,11 +309,11 @@ namespace Axel_digit
                 set
                 {
                     bb1 = value;
-                    if (UaI1) CheckChange((object)this, Convert.ToInt32(DIO1), bb1);
+                    if (Enb1) CheckChange((object)this, Convert.ToInt32(DIO1), bb1);
                 }
             }
             public string DIO2 { get; set; }
-            public bool UaI2 { get; set; }
+            public bool Enb2 { get; set; }
             public bool In2 { get; set; }
             private bool bb2;
             public bool Out2
@@ -323,11 +322,11 @@ namespace Axel_digit
                 set
                 {
                     bb2 = value;
-                    if (UaI2) CheckChange((object)this, Convert.ToInt32(DIO2), bb2);
+                    if (Enb2) CheckChange((object)this, Convert.ToInt32(DIO2), bb2);
                 }
             }
             public string DIO3 { get; set; }
-            public bool UaI3 { get; set; }
+            public bool Enb3 { get; set; }
             public bool In3 { get; set; }
             private bool bb3;
             public bool Out3
@@ -336,7 +335,7 @@ namespace Axel_digit
                 set
                 {
                     bb3 = value;
-                    if (UaI3) CheckChange((object)this, Convert.ToInt32(DIO3), bb3);
+                    if (Enb3) CheckChange((object)this, Convert.ToInt32(DIO3), bb3);
                 }
             }
         }
@@ -358,13 +357,13 @@ namespace Axel_digit
         {
             allDIO.Clear();
             for (int i = 0; i < 8; i++)           
-                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO0, UseAsInput = byteDIO[i].UaI0, ReadIn = byteDIO[i].In0, WriteOut = byteDIO[i].Out0 });
+                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO0, Enabled = byteDIO[i].Enb0, ReadIn = byteDIO[i].In0, WriteOut = byteDIO[i].Out0 });
             for (int i = 0; i < 8; i++)
-                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO1, UseAsInput = byteDIO[i].UaI1, ReadIn = byteDIO[i].In1, WriteOut = byteDIO[i].Out1 });
+                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO1, Enabled = byteDIO[i].Enb1, ReadIn = byteDIO[i].In1, WriteOut = byteDIO[i].Out1 });
             for (int i = 0; i < 8; i++)
-                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO2, UseAsInput = byteDIO[i].UaI2, ReadIn = byteDIO[i].In2, WriteOut = byteDIO[i].Out2 });
+                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO2, Enabled = byteDIO[i].Enb2, ReadIn = byteDIO[i].In2, WriteOut = byteDIO[i].Out2 });
             for (int i = 0; i < 8; i++)
-                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO3, UseAsInput = byteDIO[i].UaI3, ReadIn = byteDIO[i].In3, WriteOut = byteDIO[i].Out3 });
+                allDIO.Add(new SingleDIO() { DIO = byteDIO[i].DIO3, Enabled = byteDIO[i].Enb3, ReadIn = byteDIO[i].In3, WriteOut = byteDIO[i].Out3 });
         }
         private void all2byte()
         {
@@ -374,10 +373,10 @@ namespace Axel_digit
             {
                 byteDIO.Add(new ByteDIO()
                 {
-                    DIO0 = i.ToString(), UaI0 = allDIO[i].UseAsInput, In0 = allDIO[i].ReadIn, Out0 = allDIO[i].WriteOut,
-                    DIO1 = (i + 8).ToString(), UaI1 = allDIO[i + 8].UseAsInput, In1 = allDIO[i + 8].ReadIn, Out1 = allDIO[i + 8].WriteOut,
-                    DIO2 = (i + 16).ToString(), UaI2 = allDIO[i + 16].UseAsInput, In2 = allDIO[i + 16].ReadIn, Out2 = allDIO[i + 16].WriteOut,
-                    DIO3 = (i + 24).ToString(), UaI3 = allDIO[i + 24].UseAsInput, In3 = allDIO[i + 24].ReadIn, Out3 = allDIO[i + 24].WriteOut,
+                    DIO0 = i.ToString(), Enb0 = allDIO[i].Enabled, In0 = allDIO[i].ReadIn, Out0 = allDIO[i].WriteOut,
+                    DIO1 = (i + 8).ToString(), Enb1 = allDIO[i + 8].Enabled, In1 = allDIO[i + 8].ReadIn, Out1 = allDIO[i + 8].WriteOut,
+                    DIO2 = (i + 16).ToString(), Enb2 = allDIO[i + 16].Enabled, In2 = allDIO[i + 16].ReadIn, Out2 = allDIO[i + 16].WriteOut,
+                    DIO3 = (i + 24).ToString(), Enb3 = allDIO[i + 24].Enabled, In3 = allDIO[i + 24].ReadIn, Out3 = allDIO[i + 24].WriteOut,
                 });
                 byteDIO[i].OnCheckChange += new CheckChangeHandler(OnCheckChange);
             }
@@ -402,7 +401,7 @@ namespace Axel_digit
                     ErrorMsg("Index out of range for named channel " + namedDIO[i].Name);
                     continue;
                 }
-                namedDIO[i].UseAsInput = allDIO[idx].UseAsInput;
+                namedDIO[i].Enabled = allDIO[idx].Enabled;
                 namedDIO[i].ReadIn = allDIO[idx].ReadIn;
                 nLock = true;
                 namedDIO[i].WriteOut = allDIO[idx].WriteOut;
@@ -425,7 +424,7 @@ namespace Axel_digit
                     ErrorMsg("Index out of range for named channel " + namedDIO[i].Name);
                     continue;
                 }
-                allDIO[idx].UseAsInput = namedDIO[i].UseAsInput;
+                allDIO[idx].Enabled = namedDIO[i].Enabled;
                 allDIO[idx].ReadIn = namedDIO[i].ReadIn;
                 allDIO[idx].WriteOut = namedDIO[i].WriteOut;
             }
@@ -466,7 +465,7 @@ namespace Axel_digit
             hsTaskOut.AssignStaticChannels(ChannelList);
             hsTaskOut.ConfigureDataVoltageLogicFamily(ChannelList, niHSDIOConstants._33vLogic);
             hardwareSet = true;
-            Utils.log(tbLog, "! Hardware ("+dvc+") initialized" , Brushes.Coral.Color);
+            Utils.log(tbLog, "! Hardware ("+dvc+") initialized" , Brushes.Coral);
             return true;
         }
         public bool ReadIn(out bool[] dt)
@@ -480,7 +479,7 @@ namespace Axel_digit
                 var bitArray = new BitArray(BitConverter.GetBytes(dataRead));
                 bitArray.CopyTo(dt, 0);
             }    
-            if (chkLog.IsChecked.Value) Utils.log(tbLog, "< " + boolArr2string(dt), Brushes.DarkGreen.Color);
+            if (chkLog.IsChecked.Value) Utils.log(tbLog, "< " + boolArr2string(dt), Brushes.DarkGreen);
             return true;
         }
         public bool WriteOut(bool[] dt, bool[] mask)
@@ -491,8 +490,8 @@ namespace Axel_digit
             if (!Utils.isNull(hsTaskOut)) hsTaskOut.WriteStaticU32(dataOut, uMask);
             if (chkLog.IsChecked.Value)
             {
-                Utils.log(tbLog, "> " + boolArr2string(mask), Brushes.BlueViolet.Color);
-                Utils.log(tbLog, "> " + boolArr2string(dt), Brushes.Blue.Color);
+                Utils.log(tbLog, "> " + boolArr2string(mask), Brushes.BlueViolet);
+                Utils.log(tbLog, "> " + boolArr2string(dt), Brushes.Blue);
             }               
             return true;
         }
@@ -535,7 +534,7 @@ namespace Axel_digit
                     byte2all();
                     for (int i = 0; i < 32; i++)
                     {
-                        if (allDIO[i].UseAsInput) dt[i] = allDIO[i].WriteOut;
+                        if (allDIO[i].Enabled) dt[i] = allDIO[i].WriteOut;
                     }
                     mask = AllBoolCol(1);
                     break;
@@ -551,19 +550,11 @@ namespace Axel_digit
         }
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
-            //tbLog.Document.Blocks.Clear();
-            ErrorMsg("some texxxt");
-            Utils.DelayExec(3000, () => { tbLog.Document.Blocks.Clear(); });
-
-            Utils.DelayExec(5000, () => { ErrorMsg("some text"); });
-            Utils.DelayExec(8000, () => { tbLog.Document.Blocks.Clear(); ErrorMsg("back");  });
-
-            ErrorMsg("some texxxxxt");
+            tbLog.Document.Blocks.Clear();
         }
-
         public void ErrorMsg(string msg)
         {
-            if (chkLog.IsChecked.Value) Utils.log(tbLog, msg, Brushes.Red.Color);
+            if (chkLog.IsChecked.Value) Utils.log(tbLog, msg, Brushes.Red);
             else Utils.TimedMessageBox(msg, "Warning", 2500);
         }
         private void chkLog_Checked(object sender, RoutedEventArgs e)
@@ -607,7 +598,7 @@ namespace Axel_digit
                 switch (idx)
                 {
                     case 1:
-                        rslt[j] = namedDIO[i].UseAsInput;
+                        rslt[j] = namedDIO[i].Enabled;
                         break;
                     case 2:
                         rslt[j] = namedDIO[i].ReadIn;
@@ -627,7 +618,7 @@ namespace Axel_digit
                 switch (idx)
                 {
                     case 1: 
-                        rslt[i] = allDIO[i].UseAsInput;
+                        rslt[i] = allDIO[i].Enabled;
                         break;
                     case 2:
                         rslt[i] = allDIO[i].ReadIn;

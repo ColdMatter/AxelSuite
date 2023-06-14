@@ -1,0 +1,91 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Axel_hub"
+        xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Name="ShowcaseWindow" x:Class="Axel_hub.ShowcaseClassWindow"
+        mc:Ignorable="d"
+        Title="Quantum Accelerometer Demonstration" Height="468.716" Width="800" Closing="ShowcaseWindow_Closing">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Label x:Name="lblTitle" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" FontSize="22" Visibility="Hidden"></Label>
+            <Image x:Name="imageImperial" Width="514" HorizontalAlignment="Left" Source="M2_Imperial.png" Margin="50,10,0,0"/>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="35*"/>
+                <ColumnDefinition Width="65*"/>
+            </Grid.ColumnDefinitions>
+            <GridSplitter x:Name="gridSplitter" Grid.Column="1" HorizontalAlignment="Left" Margin="0" Width="3"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="60"/>
+                </Grid.RowDefinitions>
+                <ToolBarPanel HorizontalAlignment="Center" Height="45" Margin="53,7.937,103.367,7.215" VerticalAlignment="Center" Width="241" Grid.Row="1" Orientation="Horizontal">
+                    <ni:BooleanContentButton x:Name="btnAcceptStrobes" Content="Accept Strobes" HorizontalAlignment="Left" Height="40" Width="135" Margin="0,2,10,2.962" Background="{x:Null}" Click="btnAcceptStrobes_Click" FontSize="18" TrueBrush="#FFFFFECC" TrueContent="Accept Strobes" FalseContent="Accept Strobes"/>
+                    <ni:ArrowButton x:Name="btnScan" Content="Scan" HorizontalAlignment="Right" Height="40" Width="86" VerticalAlignment="Center" FontSize="18" Margin="10,0,21.873,0" Background="#FFDBF4FE" Click="btnScan_Click"/>
+                </ToolBarPanel>
+                <ni:Graph x:Name="graphScan" Margin="15,0,10,5" FontSize="27">
+                    <ni:Graph.Axes>
+                        <ni:AxisDouble x:Name="axisXscan" Adjuster="ContinuousChart" Orientation="Horizontal" Label="laser phase [rad]"/>
+                        <ni:AxisDouble x:Name="axisYscan" Adjuster="FitLoosely" Orientation="Vertical" Label="quantum signal"/>
+                    </ni:Graph.Axes>
+                    <ni:Graph.Plots>
+                        <ni:Plot x:Name="plotScan" Label="Scan Plot">
+                            <ni:PlotRendererGroup>
+                                <ni:LinePlotRenderer Stroke="#FFBF2703" StrokeThickness="3"/>
+                                <ni:PointPlotRenderer Fill="#FFFBD8B9" Stroke="#FFBF2703" Size="8,8" StrokeThickness="1.5"/>
+                            </ni:PlotRendererGroup>
+                        </ni:Plot>
+                    </ni:Graph.Plots>
+                    <ni:Graph.Children>
+                        <ni:MultiPlotCursor x:Name="crsUpStrobe" Label="Uphill" Foreground="#FF046C05" ToolTip="Uphill" LabelVisibility="Visible"/>
+                        <ni:MultiPlotCursor x:Name="crsDownStrobe" Label="Downhill" Foreground="#FF031D9A" ToolTip="Downhill" LabelVisibility="Visible"/>
+                    </ni:Graph.Children>
+                </ni:Graph>
+            </Grid>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="60"/>
+                </Grid.RowDefinitions>
+                <ToolBarPanel HorizontalAlignment="Center" Height="45" Margin="0" VerticalAlignment="Center" Width="237" Grid.Row="1" Orientation="Horizontal">
+                    <ni:BooleanButton x:Name="btnStop" Content="Stop" HorizontalAlignment="Left" Height="40" Width="62" Margin="3,0,10,0" Background="#FFFFDFCB" Click="btnScan_Click" FontSize="18"/>
+                    <ni:BooleanContentButton x:Name="btnPause" Content="Pause" HorizontalAlignment="Left" Height="40" Width="66" Margin="0,0,10,0" Background="{x:Null}" Click="btnPause_Click" FontSize="18" TrueBrush="#FFFFFECC" FalseContent="Pause" TrueContent="Paused"/>
+                    <ni:ArrowButton x:Name="btnRun" Content="Run" HorizontalAlignment="Center" Height="40" Width="79" VerticalAlignment="Center" FontSize="18" Margin="5,2,0,2.962" Background="#FFD3F4CB" Click="btnScan_Click"/>
+                </ToolBarPanel>
+                <ni:Graph x:Name="graphRun" Margin="20,0,10,5.253" FontSize="27" RenderMode="Raster">
+                    <ni:Graph.Axes>
+                        <ni:AxisDouble x:Name="axisXrun" Adjuster="ContinuousChart" Orientation="Horizontal" Label="time [s]" Range="0, 60, System.Double"/>
+                        <ni:AxisDouble x:Name="axisYrun" Adjuster="FitLoosely" Orientation="Vertical" Label="" BaselineStroke="Black" Range="-0.02, 0.02, System.Double">
+                            <ni:AxisDouble.MajorDivisions>
+                                <ni:RangeLabeledDivisions>
+                                    <ni:GeneralValueFormatter Format="0.00"/>
+                                </ni:RangeLabeledDivisions>
+                            </ni:AxisDouble.MajorDivisions>
+                        </ni:AxisDouble>
+                    </ni:Graph.Axes>
+                    <ni:Graph.Plots>
+                        <ni:Plot x:Name="plotQuant" Label="Quantum" VerticalScale="{Binding ElementName=axisYrun}">
+                            <ni:PointPlotRenderer Fill="#FFF9C58B" Stroke="#FF951D01" StrokeThickness="5" Size="8,8"/>
+                        </ni:Plot>
+                        <ni:Plot x:Name="plotMems" Label="Classical" VerticalScale="{Binding ElementName=axisYrun}">
+                            <ni:PointPlotRenderer Fill="#FF7DB77D" Stroke="#FF0D6E04" StrokeThickness="5" Size="8,8"/>
+                        </ni:Plot>
+                        <ni:Plot x:Name="plotAccel" Label="Hybrid" VerticalScale="{Binding ElementName=axisYrun}">
+                            <ni:PointPlotRenderer Fill="#FF60A5AC" Stroke="#FF011A67" StrokeThickness="5" Size="8,8"/>
+                        </ni:Plot>
+                    </ni:Graph.Plots>
+                </ni:Graph>
+            </Grid>
+        </Grid>
+                <ni:Legend x:Name="legend" HorizontalAlignment="Right" Margin="0,10,10,0" Width="115"                           
+                       ItemsSource="{Binding ElementName=graphRun}" GlyphSize="20,20" VerticalAlignment="Top" Height="89" FontSize="16"/>
+    </Grid>
+</Window>

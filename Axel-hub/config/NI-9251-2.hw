@@ -2,6 +2,6 @@
 device=cDAQ1Mod1
 channel1=/ai0
 channel2=/ai1 
-min=-3.5
-max=3.5
+min=-3.49
+max=3.49
 

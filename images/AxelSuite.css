@@ -1,0 +1,13 @@
+body     { font-family: Calibri; font-size: 12pt; color: black; background-color: white}
+
+h3       { font-family: Calibri; font-size: 14pt; color: #006666; font-weight:bold}
+h4       { font-family: Calibri; font-size: 14pt; color: #006666; font-weight:normal}
+h5       { font-family: Calibri; font-size: 12pt; color: #006666; font-weight:bold}
+
+table    { font-family: Calibri; font-size: 12pt; color: black}
+
+a:link    { font-family: Calibri; font-size: 12pt}
+
+a:visited    { font-family: Calibri; font-size: 12pt}
+
+img      {  max-width: 100%;  height: auto; }

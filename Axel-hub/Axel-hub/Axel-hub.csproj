@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Axel_hub</RootNamespace>
     <AssemblyName>Axel-hub</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -58,8 +58,17 @@
     <ApplicationIcon>Properties\rocket1.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CSNumerics, Version=1.0.1.0, Culture=neutral, PublicKeyToken=b745125f2c40bf32, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\csnumerics.1.0.1.50806\lib\portable-net4+sl5+netcore45+wpa81+wp8\CSNumerics.dll</HintPath>
+    </Reference>
     <Reference Include="DataStructures">
       <HintPath>..\..\..\EDMSuite\MotMaster2\bin\Nav\DataStructures.dll</HintPath>
+    </Reference>
+    <Reference Include="dotMath, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\dotMath.1.5.2\lib\netstandard2.0\dotMath.dll</HintPath>
+    </Reference>
+    <Reference Include="MathNet.Numerics, Version=4.15.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MathNet.Numerics.4.15.0\lib\net461\MathNet.Numerics.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Analysis.Enterprise, Version=19.0.45.49152, Culture=neutral, PublicKeyToken=4febd62461bf11a4, processorArchitecture=MSIL">
       <Private>False</Private>
@@ -86,13 +95,19 @@
     <Reference Include="NationalInstruments.Tdms, Version=19.0.45.49153, Culture=neutral, PublicKeyToken=4febd62461bf11a4, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="NelderMeadSimplex">
+      <HintPath>..\..\packages\NumUtils\bin\Debug\NelderMeadSimplex.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Utils\bin\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="system.threading.tasks.dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files (x86)\Microsoft Visual Studio 12.0\Data\system.threading.tasks.dataflow.dll</HintPath>
@@ -106,6 +121,9 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="UtilsLib">
+      <HintPath>..\..\..\Utils\bin\Release\UtilsLib.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -115,36 +133,51 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="..\..\..\Utils\RemoteMessaging.cs">
-      <Link>RemoteMessaging.cs</Link>
-    </Compile>
-    <Compile Include="..\..\..\Utils\UtilsLib.cs">
-      <Link>UtilsLib.cs</Link>
-    </Compile>
     <Compile Include="AxelAxes.cs" />
     <Compile Include="AxelAxisUC.xaml.cs">
       <DependentUpon>AxelAxisUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AxelChartUC.xaml.cs">
+    <Compile Include="PanelsUC\AxelChartUC.xaml.cs">
       <DependentUpon>AxelChartUC.xaml</DependentUpon>
     </Compile>
     <Compile Include="AxelHMems.cs" />
     <Compile Include="DataStackLib.cs" />
     <Compile Include="Options\OptionsType.cs" />
+    <Compile Include="PanelsUC\MultiScanUC.xaml.cs">
+      <DependentUpon>MultiScanUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimGridScanUC.xaml.cs">
+      <DependentUpon>OptimGridScanUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimSeqScanUC.xaml.cs">
+      <DependentUpon>OptimSeqScanUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimSimplexUC.xaml.cs">
+      <DependentUpon>OptimSimplexUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PanelsUC\OptimUC.xaml.cs">
+      <DependentUpon>OptimUC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="scanUC.xaml.cs">
       <DependentUpon>scanUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="signalUC.xaml.cs">
+    <Compile Include="PanelsUC\signalUC.xaml.cs">
       <DependentUpon>signalUC.xaml</DependentUpon>
     </Compile>
-    <Compile Include="strobesUC.xaml.cs">
+    <Compile Include="PanelsUC\strobesUC.xaml.cs">
       <DependentUpon>strobesUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Showcase\ShowcaseUC.xaml.cs">
+      <DependentUpon>ShowcaseUC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Showcase\WindowShowcase.xaml.cs">
+      <DependentUpon>WindowShowcase.xaml</DependentUpon>
     </Compile>
     <Page Include="AxelAxisUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="AxelChartUC.xaml">
+    <Page Include="PanelsUC\AxelChartUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -164,15 +197,43 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="PanelsUC\MultiScanUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimGridScanUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimSeqScanUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimSimplexUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PanelsUC\OptimUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="scanUC.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="signalUC.xaml">
+    <Page Include="PanelsUC\signalUC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="strobesUC.xaml">
+    <Page Include="PanelsUC\strobesUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Showcase\ShowcaseUC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Showcase\WindowShowcase.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -200,6 +261,8 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -227,13 +290,20 @@
     <Resource Include="Properties\rocket1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Properties\TripleBar.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Properties\speed2.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="ToDoList.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Properties\TripleBarRusty.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Showcase\ImperialCollege.png" />
+    <Resource Include="Showcase\Msquared.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Showcase\M2_Imperial.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

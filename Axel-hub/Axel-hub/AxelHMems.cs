@@ -16,6 +16,38 @@ using System.Windows.Navigation;
 
 namespace Axel_hub
 {
+    public static class MEMSmodel
+    {
+        /// <summary>
+        /// NI9251 support fixed sampling freq listed here
+        /// </summary>
+        public readonly static double[] FixConvRate = { 102400, 51200, 34133, 25600, 20480, 17067, 14629, 12800, 11378,
+            10240, 9309, 8533, 7314, 6400, 5689, 5120, 4655, 4267, 3657, 3200, 2844, 2560, 2327, 2133, 1829,
+            1600, 1422, 1280, 1164, 1067, 914, 800, 711, 640, 582, 533, 457, 400, 356, 320, 291, 267 }; // [Hz]
+
+        /// <summary>
+        /// Find nearest up sampling freq
+        /// </summary>
+        /// <param name="wantedCR">Desired freq</param>
+        /// <returns></returns>
+        public static double RealConvRate(double wantedCR)
+        {
+            int found = -1;
+            if (wantedCR > FixConvRate[0]) found = 0;
+            int len = FixConvRate.Length;
+            if (wantedCR <= FixConvRate[len - 1]) found = len - 1;
+            if (found == -1)
+                for (int i = 0; i < len - 1; i++)
+                {
+                    if ((FixConvRate[i] >= wantedCR) && (wantedCR > FixConvRate[i + 1]))
+                    {
+                        found = i; break;
+                    }
+                }
+            return FixConvRate[found];
+        }
+    }
+
     /// <summary>
     /// Acceleration calibration with optional temperature compensation 
     /// particular to each MEMS device
@@ -44,7 +76,7 @@ namespace Axel_hub
         /// <param name="temperV"></param>
         /// <param name="tempComp"></param>
         /// <returns></returns>
-        public double accel(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
+        public double accelMg(double accelV, double temperV, bool tempComp = false) // in [V] ; out [mg]
         {
             double K0 = 0; double K1 = 0;
             if (tempComp)
@@ -61,12 +93,17 @@ namespace Axel_hub
             {
                 K0 = cK0; K1 = cK1;
             }
-            return K0 / 1000.0 +                    // bias in mg
+            return K0 / 1000.0 +                  // bias in mg
                    ((accelV / rAccel) * 1000.0) * // mA
                    K1 * 1000.0;                   // mg
         }
-
+        public double accelV(double accelMg)
+        {
+            return ((accelMg - cK0 / 1000) * rAccel) / (1e6 * cK1);
+        }
     }
+
+    
     public enum tracerStage { neutral, readAcq, startComb, endComb }
     public struct AcqTracer
     {
@@ -143,22 +180,16 @@ namespace Axel_hub
         /// true - adjust the time interval to stopwatch markers
         /// </summary>
         public bool AdjustTimelineToStopwatch = false;
-        /// <summary>
-        /// NI9251 support fixed sampling freq listed here
-        /// </summary>
-        public readonly double[] FixConvRate = { 102400, 51200, 34133, 25600, 20480, 17067, 14629, 12800, 11378,
-            10240, 9309, 8533, 7314, 6400, 5689, 5120, 4655, 4267, 3657, 3200, 2844, 2560, 2327, 2133, 1829,
-            1600, 1422, 1280, 1164, 1067, 914, 800, 711, 640, 582, 533, 457, 400, 356, 320, 291, 267 }; // [Hz]
 
         public enum TimingModes { byNone, byADCtimer, byStopwatch, byBoth };
         public TimingModes TimingMode = TimingModes.byNone;
+        public bool intClock { get; private set; } 
 
         //        private const string NI9251 = "cDAQ1Mod1_1"; // ADC24 box
         //        private readonly string physicalChannel0 = NI9251+"/ai0"; 
         //        private readonly string physicalChannel1 = "/ai1";
         private const string PXIe = "Dev4";         // in PXIe
         private readonly string physicalChannel2 = PXIe + "/ai1";
-        private int forceChn;
         public accelCalibr memsX, memsY;
 
         public Dictionary<string, string> hw = new Dictionary<string, string>();
@@ -189,7 +220,7 @@ namespace Axel_hub
         /// </summary>
         /// <param name="hwFile">Hardware file (NI9251 settings)</param>
         /// <param name="memsFile">Mems calibration and temperature compensation</param>
-        public AxelMems(string hwFile = "", string memsFile = "") // memsFile - no ext
+        public AxelMems(string hwFile = "", string memsFile = "", bool _intClock = false) // memsFile - no ext
         {
             activeChannel = 0;
             sampleRate = 2133;
@@ -218,6 +249,7 @@ namespace Axel_hub
             memsY = JsonConvert.DeserializeObject<accelCalibr>(fileJson);
             Reset();
             tracer = new AcqTracer(true);
+            intClock = _intClock;
         }
 
         private bool _running = false;
@@ -227,29 +259,6 @@ namespace Axel_hub
         }
 
         public int activeChannel { get; set; } // 0,1 or 2 for both; 3 for chn.1 of PXIe
-
-        /// <summary>
-        /// Find nearest up sampling freq
-        /// </summary>
-        /// <param name="wantedCR">Desired freq</param>
-        /// <returns></returns>
-        public double RealConvRate(double wantedCR)
-        {
-            int found = -1;
-            if (wantedCR > FixConvRate[0]) found = 0;
-            int len = FixConvRate.Length;
-            if (wantedCR <= FixConvRate[len - 1]) found = len - 1;
-            if (found == -1)
-                for (int i = 0; i < len - 1; i++)
-                {
-                    if ((FixConvRate[i] >= wantedCR) && (wantedCR > FixConvRate[i + 1]))
-                    {
-                        found = i; break;
-                    }
-                }
-            RealSamplingEvent(FixConvRate[found]); // let the host know the last one
-            return FixConvRate[found];
-        }
 
         public delegate void RealSamplingHandler(double realSampling);
         public event RealSamplingHandler OnRealSampling;
@@ -279,10 +288,8 @@ namespace Axel_hub
         public void configureVITask(string physicalChn, int numbSamples, double samplingRate) // obsolete, but good to have as how to configure acquisition task
         {
             if (Utils.isNull(voltageInputTask)) voltageInputTask = new Task();
-
             if (Utils.isNull(axelAIChannel)) axelAIChannel = voltageInputTask.AIChannels.CreateVoltageChannel(physicalChn, "", AITerminalConfiguration.Differential,
                  (double)-3.5, (double)3.5, AIVoltageUnits.Volts);
-
             voltageInputTask.Timing.ConfigureSampleClock("", sampleRate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples);
             voltageInputTask.Timing.SamplesPerChannel = numbSamples;
             voltageInputTask.Stream.Timeout = Timeout;
@@ -349,7 +356,7 @@ namespace Axel_hub
             next = false;
             if (OnAcquire != null) OnAcquire(data, out next);
         }
-
+        FileLogger timeLog = new FileLogger();
         /// <summary>
         /// Set conditions for new data acquisition series
         /// </summary>
@@ -359,7 +366,7 @@ namespace Axel_hub
         {
             try
             {
-                Reset();
+                Reset(); timeLog.Enabled = true;
                 if (Utils.isNull(runningTask))
                 {
                     // Create a new task
@@ -380,8 +387,21 @@ namespace Axel_hub
                 }
                 // Configure the timing parameters
                 myTask.Stop();
-                myTask.Timing.ConfigureSampleClock("", samplingRate, SampleClockActiveEdge.Rising, SampleQuantityMode.ContinuousSamples, samplesPerChannel);
-                myTask.Timing.SamplesPerChannel = samplesPerChannel;
+                if (intClock)
+                {
+                    // Configure the timing parameters
+                    myTask.Timing.ConfigureSampleClock("", samplingRate,
+                        SampleClockActiveEdge.Rising, SampleQuantityMode.ContinuousSamples, samplesPerChannel * 10);
+
+                    // Configure the Every N Samples Event
+                    myTask.EveryNSamplesReadEventInterval = samplesPerChannel;
+                    myTask.EveryNSamplesRead += new EveryNSamplesReadEventHandler(myTask_EveryNSamplesRead);
+                }
+                else
+                {
+                    myTask.Timing.ConfigureSampleClock("", samplingRate, SampleClockActiveEdge.Rising, SampleQuantityMode.ContinuousSamples, samplesPerChannel);
+                    myTask.Timing.SamplesPerChannel = samplesPerChannel;                   
+                }
                 myTask.Stream.Timeout = Timeout;
                 myTask.Control(TaskAction.Commit);
                 // Verify the Task   
@@ -391,26 +411,68 @@ namespace Axel_hub
                 {
                     runningTask = myTask;
                     analogInReader = new AnalogMultiChannelReader(myTask.Stream);
-                    analogCallback = new AsyncCallback(AnalogInCallback);
-
-                    // Use SynchronizeCallbacks to specify that the object 
-                    // marshals callbacks across threads appropriately.
+                    if (!intClock)
+                        analogCallback = new AsyncCallback(AnalogInCallback);                   
                     analogInReader.SynchronizeCallbacks = true;
                 }
                 nSamples = samplesPerChannel;
-                sampleRate = RealConvRate(samplingRate);
+                sampleRate = MEMSmodel.RealConvRate(samplingRate);
                 tracer.period = samplesPerChannel / sampleRate;
                 lastTime = 0.0;
                 lastCount = 0;
 
                 _running = true;
-                analogInReader.BeginReadWaveform(samplesPerChannel, analogCallback, myTask);
+                if (intClock) runningTask.Start();
+                else analogInReader.BeginReadWaveform(samplesPerChannel, analogCallback, myTask);
             }
             catch (DaqException exception)
             {
                 // Display Errors
                 MessageBox.Show(exception.Message);
                 Reset();
+            }
+        }
+        // internal sample clock
+        void myTask_EveryNSamplesRead(object sender, EveryNSamplesReadEventArgs e)
+        {
+            try
+            {
+                tracer.stage = tracerStage.readAcq;
+                // Read the available data from the channels
+                waveform = analogInReader.ReadWaveform(nSamples);
+
+                const int actChn = 0; // for single channel (any)
+                List<Point> data = new List<Point>();
+                double ts, prd;
+                if (theTime.isTimeRunning && TimingMode == TimingModes.byStopwatch)
+                {
+                    ts = theTime.elapsedTime;
+                    prd = (ts - lastTime) / waveform[actChn].Samples.Count;
+                    for (int sample = 0; sample < waveform[actChn].Samples.Count; sample++)
+                    {
+                        data.Add(new Point(lastTime + sample * prd, waveform[actChn].Samples[sample].Value));
+                        if (activeChannel == 2)
+                            data.Add(new Point(lastTime + sample * prd, waveform[actChn + 1].Samples[sample].Value));
+                    }
+                    lastTime = ts;
+                }
+                else throw new Exception("Wrong timing");
+
+                dataBuffer = new List<Point>(data);
+                if (!dTimer.IsEnabled) dTimer.Start();
+                else Utils.TimedMessageBox("Timing problem: skip a buffer of data");
+                if (tracer.trouble)
+                {
+                    Utils.TimedMessageBox("Timing sequence problem");
+                    tracer.trouble = false;
+                }
+            }
+            catch (DaqException exception)
+            {
+                // Display Errors
+                Utils.TimedMessageBox(exception.Message);
+                runningTask = null;
+                myTask.Dispose();
             }
         }
 
@@ -438,6 +500,7 @@ namespace Axel_hub
             {
                 if (!Utils.isNull(runningTask) && runningTask.Equals(ar.AsyncState))
                 {
+                    if (theTime.isTimeRunning) timeLog.log(theTime.elapsedTime.ToString());
                     tracer.stage = tracerStage.readAcq;
                     // Read the available data from the channels
                     waveform = analogInReader.EndReadWaveform(ar);
@@ -480,6 +543,7 @@ namespace Axel_hub
                                 if (activeChannel == 2)
                                     data.Add(new Point(lastTime, waveform[actChn + 1].Samples[sample].Value));
                             }
+                            lastTime += 1 / sampleRate;
                             break;
                         case (TimingModes.byBoth): // time markers from Stopwatch, sampleRate from ADC setting
                             for (int sample = 0; sample < waveform[activeChannel].Samples.Count; sample++)
@@ -505,11 +569,10 @@ namespace Axel_hub
             catch (DaqException exception)
             {
                 // Display Errors
-                MessageBox.Show(exception.Message);
+                Utils.TimedMessageBox(exception.Message);
                 Reset();
             }
         }
-
         public void StopAcquisition()
         {
             Reset();
@@ -550,7 +613,6 @@ namespace Axel_hub
             }
             return rslt;
         }
-
         public void StartAcquisition(int samplesPerChannel = 100, double samplingRate = 267)
         {
             if (!Utils.isNull(tmpTask)) return; // fix later !!!
@@ -582,7 +644,6 @@ namespace Axel_hub
 
             }
         }
-
         public void StopAcquisition()
         {
             return; // fix later !!!
@@ -600,6 +661,7 @@ namespace Axel_hub
         public double[] TakeTheTemperature()
         {
             double[] rslt = null;
+            if (Utils.isNull(tmpTask)) { StartAcquisition(); }
             try
             {
                  AnalogMultiChannelReader reader = new AnalogMultiChannelReader(tmpTask.Stream);

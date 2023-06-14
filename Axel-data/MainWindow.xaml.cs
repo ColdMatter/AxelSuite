@@ -21,7 +21,7 @@ using UtilsNS;
 namespace Axel_data
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml  -> test 2
     /// </summary>
     public partial class MainWindow : Window
     {     
@@ -42,7 +42,7 @@ namespace Axel_data
             tbLog.Document.Blocks.Clear();
         }
 
-        private void log(string txt, bool detail = true, Color? clr = null)
+        private void log(string txt, bool detail = true, SolidColorBrush clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
@@ -59,7 +59,7 @@ namespace Axel_data
         // prog <> 0 the iteration counter (progIdx) is set to 0
         // -2: hide progress bar
         // -1: normal count including progress bar, when the final count is unknown
-        // 0: one iteration(moves the iteration count 1 up)
+        // 0: one iteration (moves the iteration count 1 up)
         // n: (n>0) the expected number of iterations, with progress bar
         private void progress(int prog = 0) // 
         {

@@ -39,10 +39,10 @@ namespace Axel_data
             numSectionSize_ValueChanged(null, null);
         }
 
-        public delegate void LogHandler(string txt, bool detail = false, Color? clr = null);
+        public delegate void LogHandler(string txt, bool detail = false, SolidColorBrush clr = null);
         public event LogHandler OnLog;
 
-        protected void LogEvent(string txt, bool detail = false, Color? clr = null)
+        protected void LogEvent(string txt, bool detail = false, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, detail, clr);
         }
@@ -69,20 +69,21 @@ namespace Axel_data
             dlg.InitialDirectory = Utils.dataPath;
             dlg.DefaultExt = ".jdt"; // Default file extension
             dlg.Filter = "Join Data File (.jdt)|*.jdt|CSV File (.csv)|*.csv"; // Filter files by extension
-
+            btnScan.IsEnabled = false;
             Nullable<bool> result = dlg.ShowDialog();
             if (result == false) return;
             //dlg.FileName = @"f:\Work\AxelSuite\Axel-data\Data\5120Hz.jdt";
             //lbJoinLogInfo.Content = "File: " + dlg.FileName;
-            if (System.IO.Path.GetExtension(dlg.FileName).Equals(".jdt"))
+            if (System.IO.Path.GetExtension(dlg.FileName).Equals(".jdt") && File.Exists(dlg.FileName))
             {
-                shotList = new ShotList(false, dlg.FileName);
+                shotList = new ShotList(false, dlg.FileName, "", true); shotList.resetScan(); 
                 btnScan.IsEnabled = File.Exists(shotList.filename) && !shotList.savingMode;
                 if (btnScan.IsEnabled)
                 {
-                    LogEvent("Opened: " + shotList.filename);
+                    LogEvent("Opened: " + shotList.filename); LogEvent(shotList.Count.ToString() + " shots loaded in memory");
                 }
-                gbSectScroll.Header = "Sect.Scroll";
+                gbSectScroll.Header = "Section Scroll";
+                actIdx = 0; btnScrollRight_Click(null, null);
             }
             else
             {
@@ -139,10 +140,10 @@ namespace Axel_data
             if (!rFit.ContainsKey("rmse")) return false;
             if (inLog)
             {   
-                LogEvent("============= sect: "+QMfit.curSectIdx.ToString(), true, Brushes.Blue.Color);
+                LogEvent("============= sect: "+QMfit.curSectIdx.ToString(), true, Brushes.Blue);
                 foreach (KeyValuePair<string, double> keyVal in rFit)
                 {
-                    LogEvent(keyVal.Key + " = " + keyVal.Value.ToString(prec), true, Brushes.Navy.Color);
+                    LogEvent(keyVal.Key + " = " + keyVal.Value.ToString(prec), true, Brushes.Navy);
                 }
                 //LogEvent("-------------------", true, Brushes.Blue.Color);
             }
@@ -160,15 +161,15 @@ namespace Axel_data
         private int ValidateMemsData(bool detail)
         {
            validShotList = new List<SingleShot>(); bool next; SingleShot ss;
-           shotList.resetScan(); if (shotList.Count == 0) LogEvent("Join -Data (.jdt) file seems to be empty.",false,Brushes.Red.Color);
-           LogEvent("Estim.aqc.range: " + shotList.defaultAqcTime.ToString(prec) + " [s]", detail, Brushes.DarkGreen.Color);
+           shotList.resetScan(); if (shotList.Count == 0) LogEvent("Join -Data (.jdt) file seems to be empty.",false,Brushes.Red);
+           LogEvent("Estim.aqc.range: " + shotList.defaultAqcTime.ToString(prec) + " [s]", detail, Brushes.DarkGreen);
            do
             {
                 ss = shotList.archiScan(out next);
                 if (next)
                     if (ss.timeValidation(shotList.defaultAqcTime)) validShotList.Add(new SingleShot(ss));
             } while (next);
-            LogEvent("Total shots: " + shotList.Count.ToString() + "; valid: " + validShotList.Count.ToString(), detail, Brushes.Navy.Color);
+            LogEvent("Total shots: " + shotList.Count.ToString() + "; valid: " + validShotList.Count.ToString(), detail, Brushes.Navy);
             
             return validShotList.Count;
         }
@@ -246,19 +247,19 @@ namespace Axel_data
         private int actIdx = 0; // active section index
         private void btnScrollRight_Click(object sender, RoutedEventArgs e)
         {
-            if (cbAction.SelectedIndex != 2)
+            if ((cbAction.SelectedIndex != 2) && Utils.isNull(shotList))
             {
-                  if (Utils.isNull(shotList)) LogEvent("No Join-Data (.jdt) file loaded.", false, Brushes.Red.Color); return;
+                  LogEvent("No Join-Data (.jdt) file loaded.", false, Brushes.Red); return;
                   //if (shotList.Count == 0) throw new Exception("Join-Data (.jdt) file is empty.");
             }
             switch (cbAction.SelectedIndex)
             {
                 case (0): // Scan Fit
                     int sz = numSectionSize.Value;
+                    if (sender == btnScrollLeft) actIdx--;
                     if (sender == btnScrollRight) actIdx++;
-                    else actIdx--;
                     actIdx = Utils.EnsureRange(actIdx, 0, shotList.Count/sz);
-                    gbSectScroll.Header = "Sect.Scroll #" + actIdx.ToString();
+                    gbSectScroll.Header = "Section Scroll #" + actIdx.ToString();
                     QMfit.LoadFromShotList(ref shotList, sz, actIdx * sz, false);
                     break;
                 case (1): // M-size

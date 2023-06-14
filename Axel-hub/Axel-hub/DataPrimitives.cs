@@ -22,46 +22,66 @@ namespace Axel_hub
     /// </summary>
     public static class MMDataConverter
     {
-        public static Dictionary<string, double> AverageShotSegments(MMexec data, bool initN2, bool stdDev)
+        public static Dictionary<string, double> AverageShotSegments(MMexec data, bool stdDev)
         {
             var avgs = new Dictionary<string, double>();
-            double std = 0.0;
-            double mean = 0.0;
-            foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg"})
+            foreach (var key in new List<string>() {"N2", "NTot", "B2", "BTot", "Bg", "Interferometer"})
             {
-                var rawData = (double[])data.prms[key];
-                mean = rawData.Average();
-                avgs[key] = mean;
-                if (stdDev)
-                {
-                    std = 0.0;
-                    for (int i = 0; i< rawData.Length; i++)
-                    {
-                        std += (rawData[i]-mean)*(rawData[i]-mean);
-                    }
-                    std = Math.Sqrt(std/(rawData.Length-1));
-                    avgs[key + "_std"] = std;
-                }
-                if (key.Equals("N2") && initN2)
-                {
-                    double[] seq = new double[rawData.Length];
-                    for (int i = 0; i < rawData.Length; i++) { seq[i] = i; }
-                    double[] fit = CurveFit.LinearFit(seq, rawData);
-                    avgs["initN2"] = fit[0];
-                }               
+                if (key.Equals("Interferometer"))
+                    if (!data.prms.ContainsKey("Interferometer")) continue;
+                var dt = data.prms[key]; System.Double[] rawData;
+                if (dt is System.Double[]) rawData = (System.Double[])dt;
+                else rawData = ((JArray)dt).ToObject<double[]>();
+                avgs[key] = rawData.Average();
+                if (stdDev) avgs[key + "_std"] = Statistics.StandardDeviation(rawData);
             }
+            avgs["N1"] = avgs["NTot"]- avgs["N2"];
+            avgs["RN1"] = (avgs["NTot"] - avgs["N2"]) / avgs["NTot"];
+            avgs["RN2"] = avgs["N2"] / avgs["NTot"];
+
             return avgs;
+        }
+        public static Dictionary<string, double> SignalCorrected(Dictionary<string, double> avgs, bool subtractDark = true)
+        {
+            var n2 = avgs["N2"];
+            var ntot = avgs["NTot"];
+            var b2 = avgs["B2"];
+            var btot = avgs["BTot"];
+            var back = avgs["Bg"];
+            Dictionary<string, double> sgn = new Dictionary<string, double>(avgs);
+            if (subtractDark)
+            {
+                sgn["N2"] = n2 - b2;
+                sgn["N1"] = (ntot - btot) - (n2 - b2);
+                sgn["NTot"] = ntot - btot;
+                sgn["B2"] = b2;
+                sgn["BTot"] = btot;
+                sgn["RN1"] = ((ntot - btot) - (n2 - b2)) / (ntot - btot);
+                sgn["RN2"] = (n2 - b2) / (ntot - btot);
+            }
+            else
+            {
+                sgn["N2"] = n2;
+                sgn["N1"] = ntot - n2;
+                sgn["NTot"] = ntot;
+                sgn["B2"] = b2;
+                sgn["BTot"] = btot;
+                sgn["RN1"] = (ntot - n2) / ntot;
+                sgn["RN2"] = n2 / ntot;
+            }
+            return sgn;
         }
 
         public static void ConvertToDoubleArray(ref MMexec data)
         {
-            Dictionary<string,object> tempDict = new Dictionary<string, object>(); 
+            List<string> ls = new List<string>(){ "runID", "groupID", "last", "samplingRate", "MEMS", "temperature", "multi.scan.prms" };
+            Dictionary<string, object> tempDict = new Dictionary<string, object>();
             foreach (var key in data.prms.Keys)
             {
-                if (key == "runID" || key == "groupID" || key == "last" || key == "MEMS" || key == "iTime" || key == "tTime") tempDict[key] = data.prms[key];
+                if ((ls.IndexOf(key) > -1) || key.Contains("Time")) tempDict[key] = data.prms[key];
                 else
                 {
-                    var rawData = (JArray) data.prms[key];
+                    var rawData = (JArray)data.prms[key];
                     tempDict[key] = rawData.ToObject<double[]>();
                 }
             }
@@ -69,7 +89,7 @@ namespace Axel_hub
         }
         public static double Asymmetry(MMexec data, bool subtractBackground = true, bool subtractDark = true)
         {
-            return Asymmetry(AverageShotSegments(data, false,false), subtractBackground, subtractDark);
+            return Asymmetry(AverageShotSegments(data, false), subtractBackground, subtractDark);
         }
         /// <summary>
         /// Calculating the result signal from {"N2", "NTot", "B2", "BTot", "Bg"} means
@@ -98,8 +118,7 @@ namespace Axel_hub
                 return (ntot - 2 * n2) / ntot;
             }
         }
-
-        public static double IntegrateAcceleration(MMexec data)
+        public static double IntegrateAcceleration(Dictionary<string, double> avgs)
         {
             throw new NotImplementedException();
         }
@@ -117,6 +136,16 @@ namespace Axel_hub
             if (Utils.InRange(ph, 0, 2 * Math.PI)) return ph;
             return ph % (2 * Math.PI);
         }
+        
+        public static string aux2json(int idx, double time, double step, double[] dt, string precision)
+        {
+            Dictionary<string, object> dct = new Dictionary<string, object>();
+            dct["index"] = idx;
+            dct["time"] = Utils.formatDouble(time,precision);
+            dct["step"] = Utils.formatDouble(step, precision);
+            dct["data"] = Utils.formatDouble(dt, precision);
+            return JsonConvert.SerializeObject(dct);
+        }
     }
 #endregion DataConvertion
 
@@ -126,7 +155,7 @@ namespace Axel_hub
     /// </summary>
     public class SingleShot
     {
-        protected string precision = "G6";
+        public string precision = "G8";
         public string dmode { get; private set; }
         public Point3D quant; // .X - time of acquisition[s]; .Y - accel.[mg/mV]; .Z - range (duration) of acquisition[s]
         public double temperature { get; private set; } 
@@ -136,10 +165,11 @@ namespace Axel_hub
         /// <summary>
         /// Number of constructors
         /// </summary>
-        public SingleShot()
+        public SingleShot(string _precision = "G8")
         {
             quant = new Point3D(-1, 0, -1);
             _mems = new List<Point>();
+            precision = _precision;
         }
         public SingleShot(double qTime, double qSignal, double qRange)
         {
@@ -151,12 +181,13 @@ namespace Axel_hub
             quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>();
         }
-        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "")
+        public SingleShot(Point3D q, List<Point> m, double _temperature = Double.NaN, string dMode = "", string _precision = "G8")
         {
             quant = new Point3D(q.X, q.Y, q.Z);
             _mems = new List<Point>(m);
             temperature = _temperature;
             dmode = dMode;
+            precision = _precision;
         }
         public SingleShot(SingleShot ss)
         {
@@ -164,6 +195,7 @@ namespace Axel_hub
             _mems = new List<Point>(ss.mems);
             temperature = ss.temperature;
             dmode = ss.dmode;
+            precision = ss.precision;
         }
 
         /// <summary>
@@ -213,7 +245,7 @@ namespace Axel_hub
         }
 
         /// <summary>
-        /// Get part of mems within a reange
+        /// Get part of mems within a range
         /// </summary>
         /// <param name="rng"></param>
         /// <returns></returns>
@@ -228,6 +260,14 @@ namespace Axel_hub
         {           
             return memsPortion(new Range<double>(first, last));
         }
+
+        public void cutMems(double first, double last) 
+        {
+            List<Point> tm = new List<Point>(_mems); _mems.Clear();
+            foreach (Point pnt in tm)
+                if (Utils.InRange(pnt.X, first, last))
+                    _mems.Add(pnt);
+        } 
 
         /// <summary>
         /// Calculating mems acceleration time-related to quant point
@@ -270,7 +310,6 @@ namespace Axel_hub
             }
             return sum / len;
         }
-
         /// <summary>
         /// Accelerations components in a dictinary with order, resid, etc.
         /// </summary>
@@ -307,14 +346,14 @@ namespace Axel_hub
             {
                 Dictionary<string, object> dt = new Dictionary<string, object>();
                 double[] q = new double[3]; string timePrec = "G8";
-                q[0] = Utils.formatDouble(quant.X, timePrec); q[1] = Utils.formatDouble(quant.Y, precision); q[2] = Utils.formatDouble(quant.Z, precision);
+                q[0] = Utils.formatDouble(quant.X, precision); q[1] = Utils.formatDouble(quant.Y, precision); q[2] = Utils.formatDouble(quant.Z, precision);
                 dt["quant"] = q;
                 if (!Double.IsNaN(temperature)) dt["temper"] = Utils.formatDouble(temperature, precision);
                 if (dmode != "") dt["dmode"] = dmode;
                 double[,] m = new double[mems.Count, 2];
                 for (int i = 0; i < mems.Count; i++)
                 {
-                    m[i, 0] = Utils.formatDouble(mems[i].X, timePrec); m[i, 1] = Utils.formatDouble(mems[i].Y, precision);
+                    m[i, 0] = Utils.formatDouble(mems[i].X, precision); m[i, 1] = Utils.formatDouble(mems[i].Y, precision);
                 }
                 dt["mems"] = m;
                 return JsonConvert.SerializeObject(dt);
@@ -347,7 +386,7 @@ namespace Axel_hub
     /// </summary>
     public class ShotList : List<SingleShot>
     {
-        protected int maxSize = 10000000; // max size to be loaded as whole thing, otherwise read with archyScan
+        protected int maxSize = 100000000; // max size to be loaded as whole thing, otherwise read with archyScan
         public string filename { get; private set; }
         public bool rawData { get; private set; }
         public string prefix { get; private set; }
@@ -476,7 +515,9 @@ namespace Axel_hub
                 bool next;
                 do
                 {
-                    Add(archiScan(out next));
+                    SingleShot s = archiScan(out next);
+                    if (s.mems.Count == 0) continue;
+                    Add(s);
                 } while (next);
                 archiveMode = false;
             }
@@ -496,7 +537,7 @@ namespace Axel_hub
 
         private string buffer = String.Empty;
         /// <summary>
-        /// Get the next scan from a file
+        /// Get the next shot from a file
         /// </summary>
         /// <param name="next">next is false on the last item</param>
         /// <returns></returns>
@@ -547,6 +588,11 @@ namespace Axel_hub
             next = nextSS; // end of file
             return ls;
         }
+
+        /*public SingleShot getSingleShot(int idx) // slow
+        {
+            if (Utils.isNull(archiveMode)) throw new Exception("No file opened");
+        }*/
 
         /// <summary>
         /// Save a file with JSON of single shots per line

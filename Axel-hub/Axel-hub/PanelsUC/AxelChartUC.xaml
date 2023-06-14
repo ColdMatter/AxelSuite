@@ -1,0 +1,255 @@
+﻿<UserControl x:Name="AxelChart" x:Class="Axel_hub.AxelChartClass"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation"
+        Height="535" Width="800" SizeChanged="splitter1_SizeChanged" KeyUp="UserControl_KeyUp">
+    <Grid x:Name="gridAC" Margin="0,0,-0.714,0.571" Grid.ColumnSpan="2">
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="rowScroll" MinHeight="5" Height="250"/>
+            <RowDefinition MinHeight="22" Height="17*"/>
+        </Grid.RowDefinitions>
+        <GridSplitter x:Name="splitter1" HorizontalAlignment="Stretch" Height="4" Grid.Row="1" VerticalAlignment="Top" LayoutUpdated="splitter1_LayoutUpdated" />
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="27"/>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <StackPanel x:Name="topPanel" Height="27" Margin="10,0,110,0" Orientation="Horizontal">
+                <Button x:Name="btnZoomIn" Content="Zoom In" HorizontalAlignment="Left" FontSize="13" FontFamily="Consolas" Margin="26,3,0,0.857" Width="72" Click="btnZoomIn_Click" Height="23" BorderThickness="1" Background="{x:Null}"/>
+                <Button x:Name="btnZoomOut" Content="Zoom Out" HorizontalAlignment="Left" FontFamily="Consolas" Width="80" Margin="10,2,0,0" Click="btnZoomOut_Click" Height="23" VerticalAlignment="Top" BorderThickness="1" Background="{x:Null}" FontSize="13"/>
+                <Label x:Name="lblRange" Content="Range = " HorizontalAlignment="Left" Margin="10,0,0,-0.143" Width="141"/>
+                <ni:BooleanButton x:Name="btnPause" Content="Pause" Width="75" Margin="0,0,0,-0.286" HorizontalAlignment="Left" FontSize="13" Click="btnPause_Click" Height="24" Background="#FFFDFCF2"/>
+                <Label x:Name="lbInfo" Content="Info: " Margin="10,0,0,-0.143"/>
+            </StackPanel>
+            <CheckBox x:Name="chkAutoScale" Grid.Row="0" Margin="3,5,10,2" FontSize="13" Content="Auto-scale Y" Foreground="#FF0E7501" IsChecked="True" HorizontalAlignment="Right" Checked="chkAutoScale_Checked" Unchecked="chkAutoScale_Checked"/>
+            <ni:Graph x:Name="graphScroll" Margin="0,26,-0.429,0.286" DefaultInteraction="Pan" PlotAreaMargin="Auto,Auto,Auto,Auto" ScrollViewer.CanContentScroll="True" MouseDoubleClick="Refresh" Interactions="Pan, Zoom" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" HorizontalScrollBarPosition="Far" Grid.RowSpan="2">
+                <ni:Graph.SelectionFill>
+                    <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                </ni:Graph.SelectionFill>
+                <ni:Graph.Plots>
+                    <ni:Plot x:Name="scrollPlot" Label="scrollPlot">
+                        <ni:PlotRendererGroup>
+                            <ni:LinePlotRenderer Stroke="#FFFAD74B" StrokeThickness="2"/>
+                            <ni:PointPlotRenderer Fill="#FFF5040C" Stroke="#FFFAD74B" Size="3,3"/>
+                        </ni:PlotRendererGroup>
+                    </ni:Plot>
+                </ni:Graph.Plots>
+                <ni:Graph.Axes>
+                    <ni:AxisDouble x:Name="horAxisScroll" Orientation="Horizontal" Adjuster="ContinuousChart" Range="-0.5, 19.5, System.Double" RangeChanged="horAxisScroll_RangeChanged" InteractionMode="None" />
+                    <ni:AxisDouble x:Name="verAxisScroll" Orientation="Vertical" Adjuster="FitVisibleLoosely"/>
+                </ni:Graph.Axes>
+            </ni:Graph>
+
+        </Grid>
+        <Grid Grid.Row="1">
+            <TabControl x:Name="tabSecPlots" Margin="0,0,-0.429,2.571" SelectionChanged="tabSecPlots_SelectionChanged" SelectedIndex="1" FontSize="14">
+                <!-- TabItem Header=" Hide " Height="24"/ -->
+                <TabItem x:Name="tabOverview" Header="Overview" Width="100" Height="24" Background="#FFE9E9E9">
+                    <Grid>
+                        <ni:GraphInteractionPalette x:Name="interatctionOverview" HorizontalAlignment="Stretch" Height="25" Margin="28,5,0.571,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphOverview}" TabIndex="217" ScrollViewer.CanContentScroll="True">
+                            <ni:GraphInteractionPalette.BindingGroup>
+                                <BindingGroup/>
+                            </ni:GraphInteractionPalette.BindingGroup>
+                        </ni:GraphInteractionPalette>
+                        <ni:Graph x:Name="graphOverview" Margin="3,28,0.571,-0.429" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick" KeyDown="graphOverview_KeyDown">
+                            <!--PlotAreaMouseLeftButtonDown="graphOverview_PlotAreaMouseLeftButtonDown"-->
+                            <ni:Graph.Plots>
+                                <ni:Plot x:Name="plotOverview" Label="plotOverview">
+                                    <ni:PlotRendererGroup>
+                                        <ni:LinePlotRenderer Stroke="#FF0342F5"/>
+                                        <ni:PointPlotRenderer Fill="#FF01FCE3" Stroke="#FF0342F5" Size="3,3"/>
+                                    </ni:PlotRendererGroup>
+                                </ni:Plot>
+                            </ni:Graph.Plots>
+                            <ni:Graph.SelectionFill>
+                                <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                            </ni:Graph.SelectionFill>
+                        </ni:Graph>
+                        <Button x:Name="btnCpyPic1" Content="Copy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="21"/>
+                    </Grid>
+                </TabItem>
+
+                <TabItem x:Name="tabPower" Header="Power Spec." Margin="96.429,0,-96.286,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24" Background="#FFE9E9E9">
+                    <Grid x:Name="gridPower">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="4*"/>
+                            <RowDefinition Height="27*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <ni:GraphInteractionPalette x:Name="interactionPower" HorizontalAlignment="Stretch" Height="30" Margin="28,5,-0.286,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphPower}" />
+                            <Button x:Name="btnCpyPic2" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" VerticalAlignment="Top" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="23" Background="#FFF2FAFA"/>
+                            <Button x:Name="btnCpyDta2" Content="Cpy Data" HorizontalAlignment="Left" Margin="322,5,0,0" Width="55" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA" Click="btnCpyDta2_Click"/>
+                            <Label Content="Coeff:" HorizontalAlignment="Right" Margin="567,1,85,0" VerticalAlignment="Top" FontSize="12"/>
+                            <ni:NumericTextBoxDouble x:Name="nbPowerCoeff" HorizontalAlignment="Right" Height="23" Margin="613,4,5,0" VerticalAlignment="Top" Width="79" FontSize="12" FontFamily="Lucida Console" Value="1" Range="0, 1000000, System.Double" FontWeight="Bold"/>
+                        </Grid>
+                        <ni:Graph x:Name="graphPower" Margin="3,28,-0.286,-0.428" FontSize="12" PlotAreaMargin="Auto,2,Auto,Auto" SelectionStroke="#FFFBFB42" DefaultInteraction="Pan" Interactions="Zoom" Focusable="False" MouseDoubleClick="graphOverview_MouseDoubleClick" Grid.RowSpan="2">
+                            <ni:Graph.SelectionFill>
+                                <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                            </ni:Graph.SelectionFill>
+                            <ni:Graph.Axes>
+                                <ni:AxisDouble Orientation="Vertical" Range="0.5, 10, System.Double" ScaleKind="LogarithmBase2"/>
+                                <ni:AxisDouble Orientation="Horizontal" ScaleKind="LogarithmBase10"/>
+                            </ni:Graph.Axes>
+                            <ni:Graph.DefaultPlotRenderers>
+                                <ni:BarPlotRenderer BarWidth="3" Fill="Green" StrokeThickness="1"/>
+                            </ni:Graph.DefaultPlotRenderers>
+                        </ni:Graph>
+
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Histogram" Margin="-97.714,0,0,0" HorizontalAlignment="Left" Width="97" FontSize="14" Height="24" Background="#FFE9E9E9">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="73*"/>
+                            <ColumnDefinition Width="180"/>
+                        </Grid.ColumnDefinitions>
+                        <ni:GraphInteractionPalette x:Name="interactionHisto" HorizontalAlignment="Stretch" Height="30" Margin="28,5,116.429,0" VerticalAlignment="Top" ButtonSize="22,22" Graph="{Binding ElementName=graphHisto}" Grid.ColumnSpan="2"/>
+                        <ni:Graph x:Name="graphHisto" Margin="3,30,0,0" FontSize="12" PlotAreaMargin="Auto,1,Auto,Auto" Interactions="Zoom" DefaultInteraction="Pan" MouseDoubleClick="graphOverview_MouseDoubleClick">
+                            <ni:Graph.Axes>
+                                <ni:AxisDouble Orientation="Horizontal"/>
+                            </ni:Graph.Axes>
+                            <ni:Graph.Children>
+                                <ni:RangeCursor x:Name="rangeCursorHisto" Label="rangeCursor">
+                                    <ni:RangeCursor.ValuePresenter>
+                                        <ni:ValueFormatterGroup>
+                                            <ni:ValueFormatterGroup.DefaultFormatter>
+                                                <ni:GeneralValueFormatter Format="{x:Null}" ShortFormat="F3"/>
+                                            </ni:ValueFormatterGroup.DefaultFormatter>
+                                        </ni:ValueFormatterGroup>
+                                    </ni:RangeCursor.ValuePresenter>
+                                </ni:RangeCursor>
+                            </ni:Graph.Children>
+                            <ni:Graph.Plots>
+                                <ni:Plot Label="Plot 2"/>
+                                <ni:Plot Label="Plot 3">
+                                    <ni:LinePlotRenderer Stroke="Green" StrokeThickness="2"/>
+                                </ni:Plot>
+                            </ni:Graph.Plots>
+                            <ni:Graph.SelectionFill>
+                                <SolidColorBrush Color="#FFF8EFC2" Opacity="0.3"/>
+                            </ni:Graph.SelectionFill>
+                            <ni:Graph.DefaultPlotRenderers>
+                                <ni:BarPlotRenderer Fill="#FF006F80"/>
+                            </ni:Graph.DefaultPlotRenderers>
+                        </ni:Graph>
+                        <Button x:Name="btnCpyPic3" Content="Cpy Pic" HorizontalAlignment="Left" Margin="262,5,0,0" Width="55" Click="btnCpyPic_Click" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA"/>
+                        <Button x:Name="btnCpyDta3" Content="Cpy Data" HorizontalAlignment="Left" Margin="322,5,0,0" Width="55" FontSize="12" BorderThickness="1,0" Height="23" VerticalAlignment="Top" Background="#FFF2FAFA" Click="btnCpyDta3_Click"/>
+                        <GroupBox Grid.Column="1" Header=" Fit Gauss " Margin="4.857,0,0.429,-0.143">
+                            <Grid Margin="0,-20,0.429,19.714">
+                                <ListBox x:Name="lboxGaussFit" Margin="0,0,0,0" VerticalAlignment="Top" Height="160">
+
+                                </ListBox>
+                                <Button x:Name="btnGaussFit" Content="F I T" Margin="38,168,40.714,0" VerticalAlignment="Top" Width="75" Background="#FFE3F8F2" Click="btnGaussFit_Click" Height="26"/>
+                                <CheckBox x:Name="chkWindowMode" Content="Window Mode" HorizontalAlignment="Center" Margin="0,207,0,0" VerticalAlignment="Top" Checked="chkVisWindow_Checked" Unchecked="chkVisWindow_Checked"/>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Opts/Stats" Height="24" VerticalAlignment="Top" Margin="0" Background="#FFE9E9E9">
+                    <Grid Margin="0,0,-0.429,-4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="162"/>
+                            <ColumnDefinition Width="375"/>
+                            <ColumnDefinition Width="97"/>
+                        </Grid.ColumnDefinitions>
+                        <GroupBox x:Name="grpData" Grid.Column="0" Header=" Data " Margin="0,1,5,1" FontSize="12" BorderBrush="#FF008806">
+                            <StackPanel Margin="0,3,0,0">
+                                <GroupBox Header="Files" Height="163" Margin="0,0,0.143,0" VerticalAlignment="Top">
+                                    <StackPanel Margin="0" Width="124">
+                                        <Button x:Name="btnOpen" Content="Open..." Margin="5,5,10,0" Click="btnOpen_Click" Background="White" VerticalAlignment="Top"/>
+                                        <Button x:Name="btnSaveAs" Content="Save As..." Margin="5,10,10,0" Click="btnSaveAs_Click" Background="White"/>
+                                        <Label Content="REM:" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" />
+                                        <TextBox x:Name="tbRemFile" Margin="1,1,7,4" TextWrapping="Wrap" VerticalAlignment="Top" Height="57"/>
+                                    </StackPanel>
+                                </GroupBox>
+                                <Button x:Name="btnClear" Content="Clear" Margin="10,5,10.143,0" Click="btnClear_Click" Background="#FFFCFCE3" BorderBrush="#FF61605F"/>
+
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Chart opts" Grid.Column="1" Margin="0,0,0,1" HorizontalAlignment="Left" Width="157" FontSize="13" BorderBrush="#FF880D03">
+                            <StackPanel Margin="0,0,-1.857,-33.857" Orientation="Vertical">
+                                <GroupBox x:Name="gbAxisX" Header=" X-axis units " HorizontalAlignment="Left" VerticalAlignment="Top" Height="62" Width="137">
+                                    <WrapPanel Margin="0,-1,-1.143,0" Height="76" VerticalAlignment="Top">
+                                        <RadioButton x:Name="rbPoints" Content="Point" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" Click="Refresh" IsChecked="True"/>
+                                        <RadioButton x:Name="rbSec" Content="[sec]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,3,8,0" IsChecked="True" Click="Refresh"/>
+                                        <RadioButton x:Name="rbMiliSec" Content="[ms]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Margin="0,5,8,0" Click="Refresh"/>
+                                        <RadioButton x:Name="rbMicroSec" Content="[us]" HorizontalAlignment="Left" Height="14" VerticalAlignment="Top" Width="42" Click="Refresh" Margin="0,5,0,0"/>
+                                    </WrapPanel>
+
+                                </GroupBox>
+                                <GroupBox Header="Roll.mean(R) Each pnt(V)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="53">
+                                    <Grid>
+                                        <ni:RadixNumericTextBoxInt32 x:Name="seRollMean" Height="23" Margin="6,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Int32" Value="1" HorizontalAlignment="Left" RadixVisibility="Collapsed" />
+                                        <ni:RadixNumericTextBoxInt32 x:Name="seShowFreq" Height="23" Margin="75,0,0,0" VerticalAlignment="Center" Width="45" Range="1, 100, System.Int32" Value="1" HorizontalAlignment="Left" RadixVisibility="Collapsed" />
+                                    </Grid>
+                                </GroupBox>
+                                <GroupBox Header="Keep last pnts (depth)" Margin="0,0,0,2" FontSize="12" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" Height="56">
+                                    <ni:RadixNumericTextBoxInt32 x:Name="seStackDepth" Height="23" Margin="0,5,7,0" VerticalAlignment="Center" Width="81" Range="1, 15000000, System.Int32" Value="600" HorizontalAlignment="Right" RenderTransformOrigin="1.571,-0.081" FontSize="13" Interval="100" RadixVisibility="Collapsed"/>
+                                </GroupBox>
+                                <CheckBox x:Name="chkChartUpdate" Content="Chart update" Height="18" Margin="10,9,0,0" Width="137" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" FontWeight="Bold"/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox x:Name="grpCurrValue" Grid.Column="2" Header=" Current value: mean  +/- st.dev." HorizontalAlignment="Left" Margin="3,0,0,1" Width="369" Foreground="Black" BorderBrush="#FF02598D">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="150"/>
+                                    <RowDefinition Height="20*"/>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row = "0" Grid.RowSpan="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="158.857"/>
+                                        <ColumnDefinition Width="153.714"/>
+                                        <ColumnDefinition Width="50"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ListBox x:Name="lbMean" Grid.Column="0" Margin="0,0,0,0" FontSize="18">
+                                        <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
+                                        <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
+                                        <ListBoxItem Content="# 0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
+                                    </ListBox>
+                                    <ListBox x:Name="lbStDev" Grid.Column="1" Margin="0.143,0,0,0" FontSize="18" Grid.ColumnSpan="1">
+                                        <ListBoxItem Foreground="#FF0C7304" Content="0.0"/>
+                                        <ListBoxItem Foreground="#FF0044AF" Content="0.0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
+                                        <ListBoxItem Content="0.0"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="0.0"/>
+                                    </ListBox>
+                                    <ListBox x:Name="lbUnits" Grid.Column="2" Margin="0,0,0,0" FontSize="18">
+                                        <ListBoxItem Foreground="#FF0C7304" Content="mV"/>
+                                        <ListBoxItem Foreground="#FF0044AF" Content="uA"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="mg"/>
+                                        <ListBoxItem Content="SD"/>
+                                        <ListBoxItem Foreground="#FFA12D20" Content="mV"/>
+                                    </ListBox>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <Label Content="Time slice [ms]" HorizontalAlignment="Left" Margin="1,3,0,0" VerticalAlignment="Top" Width="100"/>
+                                    <ni:NumericTextBoxDouble x:Name="numTimeSlice" HorizontalAlignment="Left" Height="23" Margin="101,8,0,0" VerticalAlignment="Top" Width="55" Range="-1, Infinity, System.Double" Value="-1"/>
+                                    <CheckBox x:Name="chkAccelLog" Content="Log accel. [mg]" Margin="163,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="103" Height="17" FontSize="12"/>
+                                    <CheckBox x:Name="chkTblUpdate" Content="Tbl Update" Margin="266,10,-0.286,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="92" Height="17" FontSize="13"/>
+                                    <Label x:Name="lbErrorStatus" Content="Error status:" Margin="1,49,0,0" Height="28" FontSize="13" Foreground="#FF7F0101" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <Label x:Name="lbHWfile" Content="" HorizontalAlignment="Left" Margin="1,29,0,0" VerticalAlignment="Top" Height="31" FontSize="13" Foreground="#FF1F7002"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
+                        <GroupBox x:Name="grpSplit" Grid.Column="3" Header=" Split Data " Margin="6,1,0,0.429" FontSize="12" BorderBrush="#FF760803" Visibility="Collapsed">
+                            <StackPanel HorizontalAlignment="Left" Height="248" VerticalAlignment="Top" Width="78" Margin="0,0,-0.857,0">
+                                <Button x:Name="btnSplit" Content="Split" Margin="10,5,10,0"  Background="#F1E6F8F6" VerticalAlignment="Top" Click="btnSplit_Click"/>
+                                <CheckBox x:Name="chkUpperSplit" Content="Upper" VerticalAlignment="Top" Margin="5,8,0,0"/>
+                                <Label Content="Threshold"/>
+                                <TextBox x:Name="tbSplitLevel" HorizontalAlignment="Left" Height="23" Margin="5,0,0,0" TextWrapping="Wrap" Text="0.02" VerticalAlignment="Top" Width="63"/>
+                                <Label Content="Cut edges"/>
+                                <TextBox x:Name="tbSplitEdges" HorizontalAlignment="Left" Height="23" Margin="5,0,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Top" Width="63"/>
+                                <Rectangle Fill="#FFE9E9E9" Height="9" Margin="2,5,3,0"/>
+                                <Button x:Name="btnExtractPart" Content="Extract Part" Margin="5,5,5,0"  Background="#F1FBF9D7" VerticalAlignment="Top" Height="22" Click="btnExtractPart_Click"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
+                </TabItem>
+
+            </TabControl>
+        </Grid>
+    </Grid>
+</UserControl>

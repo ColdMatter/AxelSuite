@@ -234,21 +234,11 @@ namespace Axel_hub
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
             if (Count == 0) return rslt;
-
-            int ti0 = indexByX(fromTime); int ti1 = indexByX(toTime);
-            if (ti0 == -1 || ti1 == -1)
-            {
-                Console.WriteLine("Index problem in TimePortion " + fromTime.ToString("G7") + " / " + toTime.ToString("G7"));
-                return rslt;
-                //throw new Exception("Index problem in TimePortion");
-            }
-            for (int i = ti0; i <= ti1; i++)
-            {
-                if (Utils.InRange(i, 0, Count - 1)) rslt.Add(new Point(this[i].X, this[i].Y));
-            }
+            foreach (Point pnt in this)
+                if (Utils.InRange(pnt.X, fromTime, toTime)) rslt.Add(new Point(pnt.X, pnt.Y));
             return rslt;
         }
-        
+
         /// <summary>
         /// Extract sub-DataStack for an index range
         /// </summary>
@@ -284,8 +274,8 @@ namespace Axel_hub
             DataStack rslt = new DataStack((int)(Depth/dg)+1);
             rslt.TimeSeriesMode = TimeSeriesMode;
             rslt.Running = Running;
-            if (Count == 0) return rslt;             
-            for (int i = 0; i < (Count-dg-1); i++)
+            if (Count == 0) return rslt;
+            /*for (int i = 0; i < (Count-dg-1); i++)
             {
                 if ((i % dg) != 0) continue;
                 Point avg = new Point(0,0);
@@ -295,6 +285,18 @@ namespace Axel_hub
                 }   
                 avg.X /= dg; avg.Y /= dg;
                 rslt.Add(avg);
+            }*/
+            int i = 0; Point avg = new Point(0, 0);
+            foreach (Point p in this)
+            {
+                if (((i % dg) == 0) && (i > 0))
+                {
+                    avg.X /= dg; avg.Y /= dg;
+                    rslt.Add(avg);
+                    avg.X = 0; avg.Y = 0;
+                }
+                avg.X += p.X; avg.Y += p.Y;
+                i++;
             }
             return rslt;
         }
@@ -363,37 +365,15 @@ namespace Axel_hub
                 double prd = (Last.X - First.X) / (Count - 1);
                 j = (int)Math.Round((X - First.X) / prd);
                 if (j < 0) j = 0;
-                for (int i = 0; i < 50; i++) // 100 steps range
+            }
+            for (int i = j - 2; i < Count; i++)
+            {
+                if (this[i].X >= X)
                 {
-                    if ((j + i + 1) < Count)
-                    {
-                        if (Utils.InRange(X, this[j + i].X, this[j + i + 1].X)) // forward
-                        {
-                            idx = j + i;
-                            break;
-                        }
-                    }
-                    if ((j - i - 1) >= 0)
-                    {
-                        if (Utils.InRange(X, this[j - i - 1].X, this[j - i].X )) // backward
-                        {
-                            idx = j - i;
-                            break;
-                        }
-                    }
+                    idx = i;
+                    break;
                 }
             }
-            if (idx == -1) 
-            {           
-                for (int i = 0; i < Count-1; i++) 
-                {
-                    if (Utils.InRange(X,this[i].X, this[i+1].X))
-                    {
-                        idx = i;
-                        break;
-                    }
-                }
-             }
             return Utils.EnsureRange(idx, -1, Count - 1);
         }
 
@@ -641,7 +621,28 @@ namespace Axel_hub
             TimeSeriesMode = !((int)Math.Round((Last.X - First.X) / Count) == 1);
             return rslt;
         }
-
+        public bool OpenPairFromAhs(string fn)
+        {
+            bool rslt = true;
+            rem = ""; Clear();
+            if (!File.Exists(fn)) throw new Exception("File <" + fn + "> does not exist.");
+            DictFileReader dlog = new DictFileReader(fn, new string[] { "XAxis", "N1", "N2", "RN1", "RN2", "NTot", "B2", "BTot", "Bg" });
+            //if (dlog.header.StartsWith("{")) grpMme = JsonConvert.DeserializeObject<MMexec>(dlog.header);
+            if (dlog.subheaders.Count > 0)
+            {
+                string sh = dlog.subheaders[0];
+                if (sh.StartsWith("Rem=")) rem = sh.Substring(4);
+            }
+            double x;
+            Dictionary<string, double> row = new Dictionary<string, double>();
+            while (dlog.doubleIterator(ref row))
+            {
+                if (row.ContainsKey("XAxis")) x = row["XAxis"];
+                else continue;
+                if (row.ContainsKey("RN2")) AddPoint(row["RN2"], x);
+            }
+            return rslt;
+        }
         /// <summary>
         /// Save tab separated x,y text file 
         /// </summary>

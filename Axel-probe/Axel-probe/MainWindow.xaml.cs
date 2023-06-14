@@ -194,7 +194,7 @@ namespace Axel_probe
         /// </summary>
         /// <param name="txt"></param>
         /// <param name="clr"></param>
-        private void log(string txt, System.Windows.Media.Color? clr = null)
+        private void log(string txt, SolidColorBrush clr = null)
         {
             if (txt.Length > 0)
                 if (txt[0].Equals("@"))
@@ -711,7 +711,6 @@ namespace Axel_probe
                 }
             }
         }
-
         /// <summary>
         /// Check the communication validity
         /// </summary>
@@ -721,15 +720,17 @@ namespace Axel_probe
         {
             chkRemoteEnabled.SetCurrentValue(CheckBox.IsCheckedProperty, true);
             if (remote.CheckConnection(true)) grpRemote.Header = "Remote - is ready <->";
-            else {
-                grpRemote.Header = "Remote - not found! ...starting it";
-                System.Diagnostics.Process.Start(File.ReadAllText(Utils.configPath + "axel-hub.bat"), "-remote:\"Axel Probe\"");
+            else 
+            {
+                string ahApp = Directory.GetParent(Utils.basePath).Parent.FullName + "\\Axel-hub\\Axel-hub\\bin\\Axel-hub.exe";
+                if (!File.Exists(ahApp)) ahApp = File.ReadAllText(Utils.configPath + "axel-hub.bat"); // if the default location is faulty
+                else log("Status:Axel-hub - not found! ...starting it", Brushes.DarkGreen);
+                System.Diagnostics.Process.Start(ahApp, "-remote:\"Axel Probe\"");
                 Thread.Sleep(1000);
                 remote.CheckConnection(true);
                 btnCommCheck.Content = "Wait for it...";
            }
         }
-
         /// <summary>
         /// Get next message
         /// </summary>
@@ -856,8 +857,7 @@ namespace Axel_probe
         /// </summary>
         bool wait4adjust = false; double xDownPos = 0, xUpPos = 0;
         private void JumboRepeat(int cycles, string groupID)
-        {
-            
+        {           
             MMexec md = new MMexec();
             md.mmexec = "";
             md.cmd = "shotData";
@@ -892,9 +892,17 @@ namespace Axel_probe
                 drift = acc / ndOrderFactor.Value; // [rad]     fringeMg2rad(
                 //-------------------------------------------------
                 wait4adjust = chkFollowPID.IsChecked.Value;
-                md.prms["iTime"] = DateTime.Now.Ticks; md.prms["iTime"] = 50* TimeSpan.TicksPerMillisecond; // 50[ms]
-                if (lastDecomposedAccel.ContainsKey("mems")) md.prms["MEMS"] = (string)(lastDecomposedAccel["mems"].ToString("G5")); // in [mg]
-                              
+                md.prms["iTime"] = DateTime.Now.Ticks; md.prms["tTime"] = 50 * TimeSpan.TicksPerMillisecond; // 50[ms]
+                md.prms["bTime"] = 0; md.prms["aTime"] = 0; // pre & post skim
+                md.prms["samplingRate"] = 200000;
+                if (lastDecomposedAccel.ContainsKey("mems"))
+                {
+                    double memsAccel = lastDecomposedAccel["mems"];
+                    md.prms["MEMS"] = (string)(memsAccel.ToString("G5")); // in [mg]
+                    double accelV = pe.accelV(memsAccel); double aSigma = pe.accelV(ndGaussNoiseX.Value);
+                    md.prms["Interferometer"] = Utils.GaussSeries(500, accelV, aSigma).ToArray();
+                }
+                
                 if (pe.contrPhase > -10) md.prms["runID"] = -1;
                 else pe.b4ConstrID = (int)md.prms["runID"];
                 logAcc += md.prms["runID"].ToString();

@@ -23,7 +23,8 @@ namespace Axel_hub
     {      
         public AxelMems axelMems = null;
         private AxelMemsTemperature axelMemsTemperature = null;
-        private scanClass ucScan; 
+        private scanClass ucScan;
+        public MMexec mm2status = null;
 
         Random rnd = new Random();
 
@@ -100,9 +101,8 @@ namespace Axel_hub
             genOptions = _genOptions;
             genOptions.OnChange += new GeneralOptions.ChangeHandler(OnOptionsChange);
             ucScan = _ucScan;
-            axelMems = new AxelMems(genOptions.MemsHw);
+            axelMems = new AxelMems(genOptions.MemsHw, "", false);
             axelMems.OnAcquire += new AxelMems.AcquireHandler(DoAcquire);
-            axelMems.OnRealSampling += new AxelMems.RealSamplingHandler(ucScan.OnRealSampling);
 
             axelMemsTemperature = new AxelMemsTemperature(genOptions.TemperatureHw);
         }
@@ -114,12 +114,16 @@ namespace Axel_hub
         /// <param name="prefix">X or Y</param>
         public void AddAxis(ref AxelAxisClass AxelAxis, string prefix)
         {
-            AxelAxis.Init(prefix, ref genOptions, ref ucScan.scanModes, ref axelMems);
+            AxelAxis.Init(prefix, ref genOptions, ref ucScan, ref axelMems);
             Add(AxelAxis);
             this[Count - 1].OnLog += new AxelAxisClass.LogHandler(LogEvent);
             this[Count - 1].strobes.OnLog += new strobesUC.LogHandler(LogEvent);
             this[Count - 1].OnSend += new AxelAxisClass.SendHandler(ucScan.SendJson);
+            this[Count - 1].SendMMexecEvent += new AxelAxisClass.SendMMexecHandler(SendMMexec);
+            this[Count - 1].OptimUC1.SendMMexecEvent += new PanelsUC.OptimUC_Class.SendMMexecHandler(SendMMexec);
+            this[Count - 1].ShowcaseUC1.OnShowcaseUCEvent += new ShowcaseClassWindow.ShowcaseEventHandler(ShowcaseReaction);
         }
+        public bool DoContinue = false;
         /// <summary>
         /// Get an axis by prefix
         /// </summary>
@@ -148,7 +152,7 @@ namespace Axel_hub
         {           
             if (genOptions.AxesChannels == 0) rCount = 1;
             else rCount = 2;
-            bool conn = Utils.isNull(ucScan.remote) ? false : ucScan.remote.Connected;
+            bool conn = Utils.isNull(ucScan.remote) ? false : (ucScan.remote.Enabled && ucScan.remote.Connected);
             for (int i = 0; i < rCount; i++)
             {
                 this[i].UpdateFromOptions(conn);
@@ -159,11 +163,18 @@ namespace Axel_hub
         /// </summary>
         /// <param name="txt"></param>
         /// <param name="clr"></param>
-        public delegate void LogHandler(string txt, Color? clr = null);
+        public delegate void LogHandler(string txt, SolidColorBrush clr = null);
         public event LogHandler OnLog;
-        protected void LogEvent(string txt, Color? clr = null)
+        protected void LogEvent(string txt, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, clr);
+        }
+        public void set2chartActive(bool start, double samplingPeriod)
+        {
+            for (int i = 0; i < rCount; i++)
+            {
+                this[i].axelChart.set2active(start, (samplingPeriod > 0) ? samplingPeriod : 1/200000.0);
+            }
         }
 
         /// <summary>
@@ -197,19 +208,18 @@ namespace Axel_hub
         /// <param name="InnerBufferSize"></param>
         public void startADC(bool down, double period, int InnerBufferSize)
         {
-            double SamplingPeriod = 1 / axelMems.RealConvRate(1 / period);
-            set2startADC24(down, SamplingPeriod, InnerBufferSize);
+            double SamplingPeriod = 1 / MEMSmodel.RealConvRate(1 / period);
+            set2startADC24(down, SamplingPeriod, InnerBufferSize); 
             if (!down) // user cancel
             {
                 axelMems.StopAcquisition();
                 if (!Utils.isNull(axelMemsTemperature))
                     if (genOptions.TemperatureEnabled && axelMemsTemperature.isDevicePlugged())
                         axelMemsTemperature.StopAcquisition();
-                LogEvent("End of series!", Brushes.Red.Color);
                 theTime.stopTime();
                 return;
             }
-            else LogEvent("Start MEMS series...", Brushes.Teal.Color);
+            else LogEvent("Start MEMS series...", Brushes.Teal);
             //nSamples = InnerBufferSize;
 
             for (int i = 0; i < rCount; i++)
@@ -245,7 +255,7 @@ namespace Axel_hub
         {
             next = ucScan.EndlessMode() && memsRunning && (axelMems.activeChannel.Equals(0) || axelMems.activeChannel.Equals(2)) &&
                 (ucScan.Running || (ucScan.remoteMode == RemoteMode.Simple_Repeat) || (ucScan.remoteMode == RemoteMode.Jumbo_Repeat));
-            bool isCombineQuantMems = genOptions.MemsInJumbo && (ucScan.remoteMode == RemoteMode.Jumbo_Repeat); // && !probeMode;
+            bool isCombineQuantMems = genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.USB9251) && (ucScan.remoteMode == RemoteMode.Jumbo_Repeat); 
 
             if (!next)
             {
@@ -255,10 +265,10 @@ namespace Axel_hub
                 for (int i = 0; i < rCount; i++) this[i].axelChart.Refresh();
                 return;
             }
-            if (genOptions.TemperatureEnabled)
+            if (genOptions.TemperatureEnabled && (ucScan.remoteMode == RemoteMode.Jumbo_Repeat))
             {
                 if (!axelMemsTemperature.isDevicePlugged()) 
-                    LogEvent("No temperature device connected !", Brushes.Red.Color);
+                    LogEvent("No temperature device connected !", Brushes.Red);
                 else
                 {
                     double[] temper = axelMemsTemperature.TakeTheTemperature();
@@ -302,7 +312,7 @@ namespace Axel_hub
         /// <summary>
         /// It should be in very limited (ideally none) use
         /// </summary>
-        private bool probeMode // simulation of MM2 with AxelProbe
+        public bool probeMode // simulation of MM2 with AxelProbe
         {
             get
             {
@@ -329,19 +339,19 @@ namespace Axel_hub
                 {
                     pref = mme.cmd.Substring(mme.cmd.Length-1);
                 }
-                if (mme.cmd.Equals("shotData")) 
+                if (mme.cmd.Equals("shotData")) // backward compatibility
                 {
                     if ((runID % 2) == 0) pref = "X";
                     else pref = "Y";
                 }
                 mme.cmd = "shot";
-                if (mme.prms.ContainsKey("iTime") && (runID == 0)) theTime.startSeqSeries = Convert.ToInt64(mme.prms["iTime"]);
+                if (mme.prms.ContainsKey("iTime") && (runID == 0) && (Convert.ToInt64(mme.prms["iTime"]) > 0)) theTime.startSeqSeries = Convert.ToInt64(mme.prms["iTime"]);
             }
             switch (mme.cmd)
             {
                 case ("shot"): // incomming MM2/probe data
                     {
-                        if (ucScan.remoteMode == RemoteMode.Ready_To_Remote) return;
+                        //if (ucScan.remoteMode == RemoteMode.Ready_To_Remote) return; // no active procedure
                         if (Utils.isNull(lastGrpExe))
                         {
                             if (MessageBox.Show("Abort sequence?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
@@ -352,12 +362,25 @@ namespace Axel_hub
                         }
                         int idx = prfIdx(pref); if (idx == -1) return;
                         this[idx].DoShot(mme, lastGrpExe); // current, group frame
+                        if (genOptions.TemperatureEnabled && genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462) && !Utils.isNull(axelMemsTemperature))
+                        {
+                            if (!axelMemsTemperature.isDevicePlugged())
+                                LogEvent("No temperature device connected !", Brushes.Red);
+                            else
+                            {
+                                double[] temper = axelMemsTemperature.TakeTheTemperature();
+                                if (!Utils.isNull(temper))
+                                {
+                                    this[0].axelChart.memsTemperature = temper[0]; this[1].axelChart.memsTemperature = temper[1];
+                                }
+                            }
+                        }
                         int li = (rCount == 2) ? 1 : 0;
                         if (mme.prms.ContainsKey("last") && (li == idx)) // after the last axis
                         {
                             if (Convert.ToInt32(mme.prms["last"]) == 1)
                             {
-                                LogEvent(">LAST SHOT", Brushes.DarkRed.Color);
+                                LogEvent(">LAST SHOT", Brushes.DarkRed);
                                 if ((ucScan.remoteMode == RemoteMode.Jumbo_Repeat) ||
                                     ((ucScan.remoteMode == RemoteMode.Jumbo_Scan) && !genOptions.JumboRepeat))
                                 {
@@ -376,41 +399,72 @@ namespace Axel_hub
                     break;
                 case ("repeat"):
                     {
-                        LogEvent(json, Brushes.Blue.Color);
+                        LogEvent(json, Brushes.Blue);
                         lastGrpExe = mme.Clone();
-                        if (!mme.sender.Equals("Axel-hub")) ucScan.remoteMode = RemoteMode.Simple_Repeat;
-                        
-                        if (genOptions.MemsInJumbo && (ucScan.remoteMode != RemoteMode.Simple_Repeat))
+                        if (!mme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) ucScan.remoteMode = RemoteMode.Simple_Repeat;
+                        // if (ucScan.remoteMode != RemoteMode.Simple_Repeat) //777
                         {
-                            ucScan.SetActivity("Data acquisition");
-                            ucScan.Running = true;
-                            axelMems.Reset(); 
-                            startADC(true, ucScan.GetSamplingPeriod(), ucScan.GetBufferSize());
+                            switch (genOptions.memsInJumbo)
+                            {
+                                case GeneralOptions.MemsInJumbo.USB9251:
+                                    ucScan.SetActivity("MEMS data acquisition from AH");
+                                    ucScan.Running = true;
+                                    axelMems.Reset(); 
+                                    startADC(true, 1/ucScan.GetSamplingFreq(true), ucScan.GetBufferSize());
+                                    break;
+                                case GeneralOptions.MemsInJumbo.PXI4462:
+                                    ucScan.SetActivity("MEMS data from MM2");
+                                    int sr = (mme.prms.ContainsKey("samplingRate")) ? Convert.ToInt32(mme.prms["samplingRate"]) : 200000;
+                                    set2chartActive(true, 1/sr);
+                                    break;
+                            }                               
                         }
-                        else
+                        /*else
                         {
                             ucScan.SetActivity("");
+                        }*/
+                        Clear(!genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.None), true, true);
+                        //777
+                        if (!theTime.isTimeRunning) theTime.startTime(true);
+
+                        for (int i = 0; i < rCount; i++)
+                        {
+                            this[i].DoPrepare(mme);
+                            this[i].resetQuantList(Utils.dataPath + Utils.timeName());
                         }
-                        Clear(genOptions.MemsInJumbo && !probeMode, true, true);
-                        for (int i = 0; i < rCount; i++) this[i].DoPrepare(mme);                       
+
                     }
                     break;
                 case ("scan"):
                     {
-                        LogEvent(json, Brushes.DarkGreen.Color);
+                        LogEvent(json, Brushes.DarkGreen);
                         lastGrpExe = mme.Clone();
                         MMscan lastScan = new MMscan();
                         if (!lastScan.FromDictionary(mme.prms))
                         {
-                            LogEvent("Error in incomming json", Brushes.Red.Color);
+                            LogEvent("Error in incomming json", Brushes.Red);
                             ucScan.Abort(true);
                             return;
                         }
-                        if (!mme.sender.Equals("Axel-hub")) ucScan.remoteMode = RemoteMode.Simple_Scan;
+                        if (!mme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) ucScan.remoteMode = RemoteMode.Simple_Scan;
                         Clear();
                         for (int i = 0; i < rCount; i++) this[i].DoPrepare(mme);
-
                     }
+                    break;
+                case ("multiscan"): // under development
+                    {
+                        LogEvent(json, Brushes.DarkGreen);
+                        lastGrpExe = mme.Clone();                       
+                        if (!mme.getWhichSender().Equals(MMexec.SenderType.AxelHub)) ucScan.remoteMode = RemoteMode.Multi_Scan;
+                        
+                        Clear();
+                        for (int i = 0; i < rCount; i++) this[i].DoPrepare(mme);
+                    }
+                    break;
+
+                case "status":
+                    //mm2status = mme.Clone();
+                    for (int i = 0; i < rCount; i++) this[i].mm2status = mme.Clone();
                     break;
                 case ("message"):
                     {
@@ -419,15 +473,15 @@ namespace Axel_hub
                         if (mme.prms.ContainsKey("error")) errCode = Convert.ToInt32(mme.prms["error"]);
                         if (txt.Contains("Error") || (errCode > -1))
                         {
-                            LogEvent("!!! " + txt, Brushes.Red.Color);
-                            if (errCode > -1) LogEvent("Error code: " + errCode.ToString(), Brushes.Red.Color);
+                            LogEvent("!!! " + txt, Brushes.Red);
+                            if (errCode > -1) LogEvent("Error code: " + errCode.ToString(), Brushes.Red);
                         }
-                        else LogEvent("! " + txt, Brushes.Coral.Color);
+                        else LogEvent("! " + txt, Brushes.Coral);
                     }
                     break;
                 case ("abort"):
                     {
-                        LogEvent(json, Brushes.Red.Color);
+                        LogEvent(json, Brushes.Red);
                         if (ucScan.remoteMode == RemoteMode.Simple_Scan || ucScan.remoteMode == RemoteMode.Simple_Repeat || 
                             ucScan.remoteMode == RemoteMode.Jumbo_Scan || ucScan.remoteMode == RemoteMode.Jumbo_Repeat)
                         {
@@ -436,6 +490,56 @@ namespace Axel_hub
                     }
                     break;
             }
+        }
+        public MMexec SendMMexec(MMexec mme)
+        {
+            if (mme.cmd.Equals("shoot")) lastGrpExe = mme.Clone(); 
+            return ucScan.remote.sendAndReply(mme, true);
+        }
+
+        public bool ShowcaseReaction(string msg) // coming from ShowcaseClassWindow
+        {
+            switch (msg)
+            {
+                case "Scan":
+                    if (!genOptions.JumboScan)
+                    {
+                        Utils.TimedMessageBox("Jumbo-scan mode is OFF. Go to Options and switch it On."); return false;
+                    }
+                    if (this[0].ShowcaseUC1.IsShowcaseShowing)
+                        this[0].ShowcaseUC1.Showcase.InitScan(this[0].jumboScan());
+                    DoJumboScan(true); // start the scan                   
+                    break;
+                case "Scan:end":
+                    this[0].btnCosFit_Click(null, null);
+                    break;
+                case "Run":
+                    if (!genOptions.JumboRepeat)
+                    {
+                        Utils.TimedMessageBox("Jumbo-repeat mode is OFF. Go to Options and switch it On."); return false;
+                    }
+                    const int depth = 100;
+                    int k0 = (int)this[0].numCycles.Value; int k1 = k0;
+                    if ((k1 < 1) || (k1 > depth)) k1 = depth;
+                    this[0].ShowcaseUC1.InitRun(k1);                   
+                    DoJumboRepeat(true, k0);
+                    break;
+                case "Stop":
+                    DoJumboRepeat(false, 0);
+                    ucScan.Abort(true);
+                    if (this[0].ShowcaseUC1.IsShowcaseShowing)
+                        this[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
+                    break;
+            }
+            if (msg.Length > 15)
+                if (msg.Substring(0,15).Equals("Accept Strobes:"))
+                {
+                    string[] strobes = msg.Substring(15).Split(',');
+                    if (!strobes.Length.Equals(2)) return false;
+                    this[0].crsUpStrobe.AxisValue = Convert.ToDouble(strobes[0]); this[0].crsDownStrobe.AxisValue = Convert.ToDouble(strobes[1]);
+                    DoContinue = true;
+                }
+            return true;
         }
 
         /// <summary>
@@ -447,91 +551,97 @@ namespace Axel_hub
             if (!down) // user jumbo cancel
             {
                 for (int i = 0; i < rCount; i++) this[i].axelChart.Running = false;
-                axelMems.StopAcquisition();
-                LogEvent("Jumbo END !", Brushes.Red.Color);
+                if (axelMems.running) axelMems.StopAcquisition();
+                LogEvent("Jumbo END !", Brushes.Red);
                 return;
             }
             lastGrpExe = new MMexec();
             if (probeMode) lastGrpExe.mmexec = "simulation";
-            else lastGrpExe.mmexec = "test_drive";
-            lastGrpExe.sender = "Axel-hub";
+            else lastGrpExe.mmexec = "real_drive";
+            lastGrpExe.setWhichSender(MMexec.SenderType.AxelHub);
 
             if (genOptions.JumboScan)
             {
                 Clear();
-                for (int i = 0; i < rCount; i++) this[i].tabLowPlots.SelectedIndex = 0; // fringes page
+                for (int i = 0; i < rCount; i++) this[i].tabLowPlots.SelectedItem = this[i].tiFringes; // fringes page
                 lastGrpExe.cmd = "scan";
                 lastGrpExe.id = rnd.Next(int.MaxValue);
-                // take params from X 
+                // take params from X for both
                 int iX = prfIdx("X");
                 this[iX].lastScan = this[iX].jumboScan();
+                lastGrpExe.prms["axis"] = (genOptions.AxesChannels.Equals(0)) ? "1" : "2";
                 this[iX].lastScan.ToDictionary(ref lastGrpExe.prms);
                 
                 string json = JsonConvert.SerializeObject(lastGrpExe);
-                LogEvent("<< " + json, Brushes.Green.Color);
+                LogEvent("<< " + json, Brushes.Green);
                 ucScan.remoteMode = RemoteMode.Jumbo_Scan;
                 ucScan.SendJson(json);
 
-                for (int i = 0; i < rCount; i++) this[i].DoPrepare(lastGrpExe);
+                for (int i = 0; i < rCount; i++) 
+                    this[i].DoPrepare(lastGrpExe);
                 if (ucScan.remoteMode == RemoteMode.Ready_To_Remote) return; // end of mission
             }
             else
             {
-                if (genOptions.Diagnostics)
+                if (!genOptions.AxesChannels.Equals(0))
                 {
-                    Utils.TimedMessageBox("Diagnostic mode!");
-                    return;
+                    Utils.TimedMessageBox("No implementation for douible channel, YET."); return;
                 }
-                Utils.TimedMessageBox("Open a fringe file, adjust the strobes and confirm.", "To be implemented !!!", 3500); //Jumbo-Repeat Requirements
-               /*  if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
-                else srsFringes.Clear();
-                if (probeMode)
-                {
-                    GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
-                    srsFringes.OpenPair(Utils.configPath+"fringes.sdt", ref gb);
-                    graphFringes.DataSource = srsFringes;
-                    lbInfoFringes.Content = srsFringes.rem;
-                    tbRemFringes.Text = srsFringes.rem;
-                    crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
-                }
-                // else btnOpenFringes_Click(null, null); MOVE to ucScan
-                if (srsFringes.Count == 0)
-                {
-                    Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
-                    ucScan.Running = false;
-                    return;
-                }
-            */
+                if (genOptions.JumboRepeat) ucScan.Running = this[0].SetJumboFringes(probeMode);
+                else ucScan.Running = false;
+                /*  if (Utils.isNull(srsFringes)) srsFringes = new DataStack();
+                  else srsFringes.Clear();
+                  if (probeMode)
+                  {
+                      GroupBox gb = null; tabLowPlots.SelectedIndex = 0;
+                      srsFringes.OpenPair(Utils.configPath+"fringes.ahf", ref gb);
+                      graphFringes.DataSource = srsFringes;
+                      lbInfoFringes.Content = srsFringes.rem;
+                      tbRemFringes.Text = srsFringes.rem;
+                      crsDownStrobe.AxisValue = 1.6; crsUpStrobe.AxisValue = 4.8;
+                  }
+                  // else btnOpenFringes_Click(null, null); MOVE to ucScan
+                  if (srsFringes.Count == 0)
+                  {
+                      Utils.TimedMessageBox("No fringes for Jumbo-repeat", "Error", 5000);
+                      ucScan.Running = false;
+                      return;
+                  }
+              */
             }
         }
 
         public void SetChartStrobes(bool enabled)
         {
             for (int i = 0; i < rCount; i++) this[i].visStrobes(enabled);
-            if (enabled) Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information");
+            if (enabled && !probeMode) Utils.TimedMessageBox("Please adjust the strobes and confirm to continue.", "Information");
         }
 
         /// <summary>
         /// When in Jumbo mode start the second part of it
         /// </summary>
         /// <param name="cycles">set the number of shots or -1 to continues measurement</param>
-        public void jumboRepeat(int cycles) // pnt.X - down; pnt.Y - up
+        public void DoJumboRepeat(bool begin, int cycles) // pnt.X - down; pnt.Y - up
         {
             //Clear(); // visual stuff
             // set jumbo-repeat conditions & format MMexec
-            if (Utils.isNull(lastGrpExe))
+            if (begin) theTime.startTime(true);
+            else
             {
-                lastGrpExe = new MMexec();
-                lastGrpExe.sender = "Axel-hub";
-                if (genOptions.Diagnostics) lastGrpExe.mmexec = "diagnostics";
+                theTime.stopTime(); return;
             }
-            lastGrpExe.cmd = "repeat";
+            if (Utils.isNull(lastGrpExe)) lastGrpExe = new MMexec();            
+            lastGrpExe.sender = "Axel-hub";
+            if (genOptions.Diagnostics) lastGrpExe.mmexec = "diagnostics";
+            lastGrpExe.cmd = "repeat"; 
             lastGrpExe.id = rnd.Next(int.MaxValue);
             lastGrpExe.prms.Clear();
             lastGrpExe.prms["groupID"] = Utils.timeName();
             lastGrpExe.prms["cycles"] = cycles;
+            lastGrpExe.prms["axis"] = (genOptions.AxesChannels.Equals(0)) ? "1" : "2";
             if (genOptions.followPID && !genOptions.Diagnostics) { lastGrpExe.prms["follow"] = 1; }
             else { lastGrpExe.prms["follow"] = 0; }
+            set2chartActive(begin, -1);
             for (int i = 0; i<rCount; i++) // loop axes
             {
                 if (genOptions.Diagnostics)
@@ -539,69 +649,81 @@ namespace Axel_hub
                     this[i].DoPrepare(lastGrpExe);
                 }
                 else
-                {           
-                    double dv = Convert.ToDouble(this[i].crsDownStrobe.AxisValue);
-                    this[i].strobes.Down.X = Utils.formatDouble(dv,"G4");
-                    lastGrpExe.prms["downStrobe." + this[i].prefix] = this[i].strobes.Down.X;
-                    int di = -1; int j = 0;
-                    while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * dv, 1.01 * dv) && j < this[i].srsFringes.Count) j++;
-                    if (j < this[i].srsFringes.Count)
+                {                     
+                    if (this[i].srsFringes.Count > 0) // update strobes from fringes
                     {
-                        di = j;
-                        this[i].strobes.Down.Y = this[i].srsFringes[di].Y;
-                    }
-                    double uv = Convert.ToDouble(this[i].crsUpStrobe.AxisValue);
-                    this[i].strobes.Up.X = Utils.formatDouble(uv,"G4");                
-                    lastGrpExe.prms["upStrobe." + this[i].prefix] = uv;
-                    int ui = -1; j = 0;
-                    while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * uv, 1.01 * uv) && j < this[i].srsFringes.Count) j++;
-                    if (j < this[i].srsFringes.Count)
-                    {
-                        ui = j;
-                        this[i].strobes.Down.Y = this[i].srsFringes[ui].Y;
-                    }
-                    double mv = Double.NaN;
-                    if (di > -1 && ui > -1)
-                    {
-                        int mi = (int)((di + ui) / 2 + 0.5);                 
-                        mv = this[i].srsFringes[mi].Y;
-                    }
-                    
-                    this[i].DoPrepare(lastGrpExe);             
-                    this[i].strobes.OnJumboRepeat(this[i].numKcoeff.Value, this[i].numPhi0.Value, lastGrpExe, mv);                
+                        double dv = Convert.ToDouble(this[i].crsDownStrobe.AxisValue);
+                        this[i].strobes.Down.X = Utils.formatDouble(dv,"G4");
+                        lastGrpExe.prms["downStrobe." + this[i].prefix] = this[i].strobes.Down.X;
+                        int di = -1; int j = 0;
+                        while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * dv, 1.01 * dv) && j < this[i].srsFringes.Count) j++;
+                        if (j < this[i].srsFringes.Count)
+                        {
+                            di = j;
+                            this[i].strobes.Down.Y = this[i].srsFringes[di].Y;
+                        }
+                        double uv = Convert.ToDouble(this[i].crsUpStrobe.AxisValue);
+                        this[i].strobes.Up.X = Utils.formatDouble(uv,"G4");                
+                        lastGrpExe.prms["upStrobe." + this[i].prefix] = uv;
+                        int ui = -1; j = 0;
+                        while (!Utils.InRange(this[i].srsFringes[j].X, 0.99 * uv, 1.01 * uv) && j < this[i].srsFringes.Count) j++;
+                        if (j < this[i].srsFringes.Count)
+                        {
+                            ui = j;
+                            this[i].strobes.Down.Y = this[i].srsFringes[ui].Y;
+                        }
+                        double mv = Double.NaN;
+                        if (di > -1 && ui > -1)
+                        {
+                            int mi = (int)((di + ui) / 2 + 0.5);                 
+                            mv = this[i].srsFringes[mi].Y;
+                        }                                        
+                        this[i].DoPrepare(lastGrpExe);             
+                        this[i].strobes.OnJumboRepeat(this[i].numKcoeff.Value, this[i].numPhi0.Value, lastGrpExe, mv);       
+                    }         
                 }
             }
             string jsonR = JsonConvert.SerializeObject(lastGrpExe);
-            LogEvent("<< " + jsonR, Brushes.Blue.Color);
+            LogEvent("<< " + jsonR, Brushes.Blue);
             ucScan.remoteMode = RemoteMode.Jumbo_Repeat;
 
             // set ADC24 and corr. visuals
-            if (genOptions.JumboRepeat && genOptions.MemsInJumbo)
-            {
-                if (genOptions.followPID) ucScan.SetActivity("Data acquis. with PID feedback");
-                else ucScan.SetActivity("Data acquis.(no PID feedback)");
-                if (genOptions.Diagnostics) ucScan.SetActivity("Data acquis.(diagnostics)");
-                ucScan.Running = true;
-                axelMems.Reset();
-                //if (!probeMode) 
-                startADC(true, ucScan.GetSamplingPeriod(), ucScan.GetBufferSize());
-                for (int i = 0; i < rCount; i++)
+            if (genOptions.JumboRepeat)
+                switch (genOptions.memsInJumbo)
                 {
-                    this[i].axelChart.Waveform.TimeSeriesMode = true;
-                    //plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
-                    this[i].timeStack.Clear();
-                    if (probeMode && !genOptions.MemsInJumbo) this[i].axelChart.SetInfo("Axel-Probe feeds the MEMS");
-                    Thread.Sleep(500); Utils.DoEvents();
+                    case GeneralOptions.MemsInJumbo.USB9251:
+                        if (genOptions.followPID) ucScan.SetActivity("Data acquis. with PID feedback");
+                        else ucScan.SetActivity("Data acquis.(no PID feedback)");
+                        if (genOptions.Diagnostics) ucScan.SetActivity("Data acquis.(diagnostics)");
+                        ucScan.Running = true;
+                        axelMems.Reset();
+                        //if (!probeMode) 
+                        startADC(true, 1 / ucScan.GetSamplingFreq(true), ucScan.GetBufferSize());
+                        for (int i = 0; i < rCount; i++)
+                        {
+                            this[i].axelChart.Waveform.TimeSeriesMode = true;
+                            //plotcursorAccel.Visibility = System.Windows.Visibility.Collapsed;
+                            this[i].timeStack.Clear();
+                            if (genOptions.memsInJumbo.Equals(GeneralOptions.MemsInJumbo.PXI4462)) this[i].axelChart.SetInfo("Remote data source for MEMS");
+                            Thread.Sleep(500); Utils.DoEvents();
+                        }
+                        break;
+                    case GeneralOptions.MemsInJumbo.PXI4462:
+                        if (genOptions.TemperatureEnabled && !Utils.isNull(axelMemsTemperature))
+                        {                           
+                            if (axelMemsTemperature.isDevicePlugged())
+                               axelMemsTemperature.StartAcquisition();
+                        }
+                        break;
                 }
-             }
-             ucScan.SendJson(jsonR);
-                         
+             ucScan.SendJson(jsonR);                         
              for (int i = 0; i < rCount; i++)
              {
-                 this[i].tabLowPlots.SelectedIndex = 1;
+                 this[i].tabLowPlots.SelectedItem = this[i].tiAccelTrend;
                  this[i].resetQuantList(Utils.dataPath+Utils.timeName());
              }
         }
+        public bool closeRequest = false;
         /// <summary>
         /// Not destroying anything, just preparing for closing
         /// </summary>
@@ -609,6 +731,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         public void Closing(object sender, System.ComponentModel.CancelEventArgs e)  
         {
+            closeRequest = true;
             axelMems.StopAcquisition(); Thread.Sleep(200);
             for (int i = 0; i < rCount; i++) this[i].Closing(sender, e);
         }

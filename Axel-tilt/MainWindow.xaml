@@ -24,7 +24,7 @@
                     <Label Content="Step [% from a period]" HorizontalAlignment="Left" Margin="10,142,0,0" VerticalAlignment="Top" Height="27"/>
                     <ni:NumericTextBoxDouble x:Name="ndStepPer" HorizontalAlignment="Left" Height="23" Margin="144,146,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="2" Interval="0.1" Range="0.1, Infinity, System.Double"/>
                     <Label Content="Period duration [s]" HorizontalAlignment="Left" Margin="12,112,0,0" VerticalAlignment="Top" Height="27"/>
-                    <ni:NumericTextBoxDouble x:Name="ndPeriodDur" HorizontalAlignment="Left" Height="23" Margin="144,114,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="80" Range="0, Infinity, System.Double" Interval="10"/>
+                    <ni:NumericTextBoxDouble x:Name="ndPeriodDur" HorizontalAlignment="Left" Height="23" Margin="144,114,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="40" Range="0, Infinity, System.Double" Interval="10"/>
                     <Label Content="Periods Shown" HorizontalAlignment="Left" Margin="10,172,0,0" VerticalAlignment="Top" Height="27"/>
                     <ni:NumericTextBoxDouble x:Name="ndShownPer" HorizontalAlignment="Left" Height="23" Margin="144,176,0,0" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.501,-0.217" Value="3" Range="1, Infinity, System.Double"/>
                     <ComboBox x:Name="cbFinite" HorizontalAlignment="Left" Margin="10,0,0,16" VerticalAlignment="Bottom" Width="99" SelectedIndex="1" Background="#FFFBF3C4" BorderBrush="#FFF82121" SelectionChanged="cbFinite_SelectionChanged">
@@ -45,8 +45,8 @@
             <TextBox x:Name="tbLog" Margin="0,4.714,0,0" Grid.Row="2" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
             <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0">
                 <ni:LED x:Name="ledAxelShow" Content="LED" FalseContent="Off" HorizontalAlignment="Left" Height="23" Margin="5,5,0,4" TrueContent="On" Width="23" VerticalAlignment="Center" />
-                <CheckBox x:Name="chkAxelShow" Content="Axel Show" HorizontalAlignment="Left" Margin="9,9.857,0,0" VerticalAlignment="Top" Checked="chkAxelShow_Checked" Unchecked="chkAxelShow_Checked"/>
-                <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="15,0,0,0" VerticalAlignment="Center" IsChecked="True"/>
+                <CheckBox x:Name="chkAxelShow" Content="Tilt Synchro (MM2)" HorizontalAlignment="Left" Margin="9,9.857,0,0" VerticalAlignment="Top" Checked="chkAxelShow_Checked" Unchecked="chkAxelShow_Checked"/>
+                <CheckBox x:Name="chkLog" Content="Log" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" IsChecked="True"/>
 
             </StackPanel>
             <GroupBox x:Name="gbDirectControl" Header="Direct control " Margin="0,0,0,0" Grid.Row="0" FontSize="14" BorderBrush="#FF8A3131">
@@ -76,7 +76,7 @@
                     </ni:ArrowButton>
                     <ni:NumericTextBoxDouble x:Name="ndStepMg" HorizontalAlignment="Left" Height="23" Margin="77,50,0,0" VerticalAlignment="Top" Width="57" Interval="0.01" Range="0.001, 10, System.Double" Value="0.1"/>
                     <Button x:Name="btnHomeAndHoriz" Content="Go Home &amp; Horiz" HorizontalAlignment="Left" Margin="8,8,0,0" VerticalAlignment="Top" Width="141" Background="#FFF9E6C7" FontSize="13" Foreground="#FF750500" Click="btnHomeAndHoriz_Click" Height="28"/>
-                    <Image x:Name="imgAbout" HorizontalAlignment="Right" Height="35" Margin="0,3,8,0" VerticalAlignment="Top" Width="35" Source="Tilt2.png" MouseDown="imgAbout_MouseDown"/>
+                    <Image x:Name="imgAbout" HorizontalAlignment="Right" Height="35" Margin="0,3,8,0" VerticalAlignment="Top" Width="35" Source="Properties/Tilt2.png" MouseDown="imgAbout_MouseDown"/>
                 </Grid>
             </GroupBox>
         </Grid>

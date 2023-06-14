@@ -166,7 +166,7 @@ namespace Axel_tilt
         private void Axel_tilt_Loaded(object sender, RoutedEventArgs e)
         {
             remoteShow = new RemoteMessaging();
-            remoteShow.Connect("Axel Show", 668);
+            remoteShow.Connect("MOTMaster2", 668);
             remoteShow.Enabled = false;
             remoteShow.OnReceive += new RemoteMessaging.ReceiveHandler(OnShowReceive);
             remoteShow.OnActiveComm += new RemoteMessaging.ActiveCommHandler(OnShowActiveComm);
@@ -192,8 +192,7 @@ namespace Axel_tilt
         /// <param name="e"></param>
         private void imgAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            string ver = Utils.getRunningVersion(); //System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion.ToString();
-            MessageBox.Show("           Axel Tilt v"+ver+"\n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
+            MessageBox.Show("           Axel Tilt v"+Utils.getAppFileVersion+"\n\n         by Teodor Krastev \n\nfor Imperial College, London, UK\n\n   visit: http://axelsuite.com", "About");
         }
 
         /// <summary>
@@ -425,6 +424,10 @@ namespace Axel_tilt
                         dq.Add(pnt);
                         graphTilt.Data[1] = dq;
                         log("Move to " + pnt.Y.ToString("G5") + " at "+  pnt.X.ToString("G5"), true);
+                        if (!Utils.isNull(remoteShow))
+                        {
+                            if (remoteShow.Enabled && remoteShow.Connected) remoteShow.sendCommand(dq.Count.ToString());
+                        }
                     })); 
         }
 
@@ -478,6 +481,11 @@ namespace Axel_tilt
                             if(chkSetZero.IsChecked.Value) tilt.MoveAccel(0); ShowAccel(tilt.GetAccel());
                             btnRun.Value = false;
                             log("user canceled the scan.");
+                            if (!Utils.isNull(remoteShow))
+                            {
+                                if (remoteShow.Enabled && remoteShow.Connected) remoteShow.sendCommand("100");
+                            }
+
                         }
                         else
                         {

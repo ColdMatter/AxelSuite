@@ -40,11 +40,13 @@ using System.Windows.Markup;
 using UtilsNS;
 using OptionsNS;
 
+// for simulation with Axel Probe put in command line  -remote:"Axel Probe"
+
 namespace Axel_hub
 {
     public delegate void StartDelegate();
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml -> test 2
     /// command line arguments (space separated): -remote:<c>partner</c>  -hw:<c>config.file</c>
     /// where <c>partner</c> is remote partner name <c>title</c>; hw<c>hardware</c>, <c>config.file.hw</c> is in Config folder
     /// </summary>
@@ -52,8 +54,7 @@ namespace Axel_hub
     {
         scanClass ucScan;
         AxelAxesClass axes;
-        const bool debugMode = true;
-        
+        const bool debugMode = true;       
         
         List<Point> quantList = new List<Point>();
         List<string> errList = new List<string>();
@@ -69,10 +70,12 @@ namespace Axel_hub
         public MainWindow()
         {
             InitializeComponent();
-            
+
+            Utils.extendedDataPath = true; // AH monthly data
+            if (!Directory.Exists(Utils.dataPath)) Directory.CreateDirectory(Utils.dataPath);
             ucScan = new scanClass();
             gridLeft.Children.Add(ucScan);
-            ucScan.Height = 266;
+            ucScan.Height = 285;
             ucScan.VerticalAlignment = System.Windows.VerticalAlignment.Top; ucScan.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
             ucScan.OnStart += new scanClass.StartHandler(DoStart);
             ucScan.OnRemoteMode += new scanClass.RemoteModeHandler(RemoteModeEvent);
@@ -133,7 +136,7 @@ namespace Axel_hub
         /// </summary>
         /// <param name="txt">text to log</param>
         /// <param name="clr"></param>
-        private void log(string txt, Color? clr = null)
+        private void log(string txt, SolidColorBrush clr = null)
         {
             if (!chkLog.IsChecked.Value) return;
             string printOut;
@@ -141,8 +144,7 @@ namespace Axel_hub
             else printOut = txt.Substring(0, 80) + "..."; //           
             Utils.log(tbLog, txt, clr);
         }
-
-        bool DoContinue = false;       
+             
         /// <summary>
         /// Shows/Hide continue arrow button and wait 5 min for a click
         /// </summary>
@@ -150,21 +152,24 @@ namespace Axel_hub
         /// <returns>ok -> true; timeout -> false</returns>
         public bool continueJumboRepeat(bool toggle)
         {
-            if (toggle)
-            {
+            if (toggle) //axes[0].ShowcaseUC1.IsShowcaseShowing
+            {               
+                axes.SetChartStrobes(true);
+                if (axes[0].ShowcaseUC1.IsShowcaseShowing) axes.ShowcaseReaction("Scan:end");
                 int k = 0;
                 rowContinueJumbo.Height = new GridLength(30);
-                while (!DoContinue && (k < 3000) && (rowContinueJumbo.Height.Value == 30)) // 5min
+                while (!axes.DoContinue && (k < 3000) && (rowContinueJumbo.Height.Value == 30) && !axes.closeRequest) // 5min
                 {
                     Thread.Sleep(100); Utils.DoEvents(); k++;
                 }
-                if (k > 2990) log("Time out (5 min) !!!", Brushes.Red.Color);
+                if (k > 2990) log("Time out (5 min) !!!", Brushes.Red);
                 rowContinueJumbo.Height = new GridLength(0);
-                DoContinue = false;
+                axes.DoContinue = false;
                 return (k < 2990);
             }
             else
             {
+                axes.SetChartStrobes(false);
                 rowContinueJumbo.Height = new GridLength(0);
                 return true;
             }
@@ -176,7 +181,7 @@ namespace Axel_hub
         /// <param name="e"></param>
         private void abtnContinueJumbo_Click(object sender, RoutedEventArgs e)
         {
-            DoContinue = true;
+            axes.DoContinue = true;
         }
         /// <summary>
         /// Some action when remode mode of ucScan has been changed
@@ -188,15 +193,22 @@ namespace Axel_hub
             if (oldMode.Equals(RemoteMode.Jumbo_Scan) && newMode.Equals(RemoteMode.Ready_To_Remote))
             {
                 if (!Options.genOptions.JumboRepeat) return; 
-                if (Utils.TheosComputer()) axes.SetChartStrobes(true);
+                //if (axes.probeMode) axes.SetChartStrobes(true); //Utils.TheosComputer()
 
                 // wait for user confirmation
                 if (!Options.genOptions.Diagnostics)
-                {
+                {                    
                     if (!continueJumboRepeat(true)) return; // main call, out - if timeout
                     axes.SetChartStrobes(false);
                 }
-                axes.jumboRepeat(axes[0].numCycles.Value);
+                axes.DoJumboRepeat(ucScan.bbtnStart.Value, axes[0].numCycles.Value);
+                if (axes[0].ShowcaseUC1.IsShowcaseShowing)
+                    axes[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
+            }
+            if (oldMode.Equals(RemoteMode.Jumbo_Repeat) && newMode.Equals(RemoteMode.Ready_To_Remote))
+            {
+                if (axes[0].ShowcaseUC1.IsShowcaseShowing)
+                    axes[0].ShowcaseUC1.showcaseState = Showcase.ShowcaseClass.ShowcaseStates.idle;
             }
         }
 
@@ -209,18 +221,20 @@ namespace Axel_hub
         /// <param name="sizeLimit">data buffer length</param>
         public void DoStart(bool jumbo, bool down, double period, int sizeLimit)
         {
-            if (jumbo)
+            if (jumbo)               
             {
-                if (Options.genOptions.Diagnostics)
+                if (down) axes.SendMMexec(new MMexec("", "Axel-hub", "status"));
+                axes.DoJumboScan(down); // get back fringes no matter scan or not
+                if (Options.genOptions.JumboRepeat && !Options.genOptions.JumboScan)
                 {
-                    if (down) theTime.startTime(false);
+                    if (!Options.genOptions.Diagnostics && down)
+                    {
 
-                    if (down) axes.jumboRepeat(axes[0].numCycles.Value);
-                    else axes.DoJumboScan(down);
-
-                    if (!down) theTime.stopTime();
-                }
-                else axes.DoJumboScan(down);                                                             
+                        if (!continueJumboRepeat(true)) return; // main call, out - if timeout
+                        axes.SetChartStrobes(false);
+                    }
+                    axes.DoJumboRepeat(down, axes[0].numCycles.Value);
+                }                                  
             }
             else
             {
@@ -229,8 +243,8 @@ namespace Axel_hub
                 if (sizeLimit > -1) buffSize = sizeLimit;
                 axes.startADC(down, period, buffSize);
             } 
-        }
- 
+            if (!down) log("End of series!", Brushes.Red);
+        } 
         private void splitDown_MouseDoubleClick(object sender, MouseButtonEventArgs e) // !!! to AA
         {
             frmAxelHub.Top = 0;
@@ -238,10 +252,9 @@ namespace Axel_hub
             frmAxelHub.Left = SystemParameters.WorkArea.Width * 0.3;
             frmAxelHub.Width = SystemParameters.WorkArea.Width * 0.7;
         }
-
         private void btnLogClear_Click(object sender, RoutedEventArgs e)
         {
-            tbLog.Document.Blocks.Clear();
+            tbLog.Document.Blocks.Clear();           
         }
         /// <summary>
         /// set the axes visual layout
@@ -361,7 +374,10 @@ namespace Axel_hub
             {
                 scanModes.Save(); axes.SaveDefaultModes();
             }
-            if (!Utils.isNull(Options)) Options.Close();
+            if (!Utils.isNull(Options))
+            {
+                Options.keepOpen = false; Options.Close();
+            }
         }
         #endregion
 

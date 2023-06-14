@@ -27,9 +27,11 @@ namespace OptionsNS
         Jumbo_Scan,    // scan as part of Jumbo Run
         Jumbo_Repeat,  // repeat as part of Jumbo Run
         Simple_Scan,   // scan initiated by MM
+        Multi_Scan,   // multi-scan initiated by MM
         Simple_Repeat, // repeat initiated by MM
         Ready_To_Remote //neutral connected state       
     }
+
 
     /// <summary>
     /// general options from Options dialog window accesable everywhere
@@ -37,7 +39,8 @@ namespace OptionsNS
     public class GeneralOptions
     {
         public enum SaveModes { save, ask, nosave }
-
+        public enum MemsInJumbo  { None, USB9251, PXI4462 }
+        
         // General
         public int AxesChannels { get; set; } // X -> 0; Y -> 1; X/Y -> 2
 
@@ -62,11 +65,14 @@ namespace OptionsNS
         public SaveModes saveModes;
 
         // MEMS options
-        public bool MemsInJumbo { get; set; }
+        public MemsInJumbo memsInJumbo;
         public bool ShowMemsIfRunning { get; set; }
 
         public double Mems2SignDelay { get; set; }
         public double Mems2SignLen { get; set; }
+        public int Mems2SignLenMult { get; set; }
+        public double Mems2ExtInfCap { get; set; }
+        public int MemsAverOver { get; set; }
 
         public bool TemperatureEnabled { get; set; }
         public bool TemperatureCompensation { get; set; }
@@ -86,7 +92,6 @@ namespace OptionsNS
         {
             if (OnChange != null) OnChange(opts);
         }
-
     }
     /// <summary>
     /// visuals for the app, MEMS aqcuisition params and scan modes
@@ -102,8 +107,7 @@ namespace OptionsNS
         // scanUC
         public int SamplingFreq { get; set; } // in Hz
         public bool TimeLimitMode { get; set; } // false - finite; true - cont.
-        public int TimeLimit { get; set; } // in sec
-        public bool SizeLimitMode { get; set; } // false - finite; true - cont.
+        public double TimeLimit { get; set; } // in sec
         public int SizeLimit { get; set; } // in points
 
         // working modes (not to load back)
@@ -136,7 +140,6 @@ namespace OptionsNS
         // Middle
         public double MiddleFrame { get; set; }
         public bool AutoScaleMiddle { get; set; }
-        public bool Background { get; set; }
         public bool DarkCurrent { get; set; }
         public bool StdDev { get; set; }
         public bool N1 { get; set; }
@@ -144,6 +147,8 @@ namespace OptionsNS
         public bool RN1 { get; set; }
         public bool RN2 { get; set; }
         public bool Ntot { get; set; }
+        public bool B2 { get; set; }
+        public bool Btot { get; set; }
         public bool RsltTblUpdate { get; set; }
         public bool RsltChrtUpdate { get; set; }
         public bool SignalLog { get; set; }

@@ -32,10 +32,10 @@ namespace Axel_data
 
         }
 
-        public delegate void LogHandler(string txt, bool detail = false, Color? clr = null);
+        public delegate void LogHandler(string txt, bool detail = false, SolidColorBrush clr = null);
         public event LogHandler OnLog;
 
-        protected void LogEvent(string txt, bool detail = false, Color? clr = null)
+        protected void LogEvent(string txt, bool detail = false, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, detail, clr);
         }
@@ -50,6 +50,7 @@ namespace Axel_data
 
         #region Scan timing of MEMS vs quant. Delay
         ShotList shotListDly;
+        bool rawData;
         private const int dataLength = 10000; // default length of data kept in
         /// <summary>
         /// Open joint log file
@@ -59,29 +60,67 @@ namespace Axel_data
         private void btnOpenJLog_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.InitialDirectory = Utils.dataPath;
             dlg.FileName = ""; // Default file name
-            dlg.DefaultExt = ".jlg"; // Default file extension
-            dlg.Filter = "Join Log File (.jlg)|*.jlg"; // Filter files by extension
-
+            //dlg.DefaultExt = ".jlg"; // Default file extension
+            dlg.Filter = "Join Log File |*.jlg;*.jdt"; // Filter files by extension
+            shotListDly = null; btnJDlyScan.IsEnabled = false; btnDlyScan.IsEnabled = false;
             Nullable<bool> result = dlg.ShowDialog();
             if (result == true)
             {
                 lbJoinLogInfo.Content = "File: " + dlg.FileName;
-                shotListDly = new ShotList(false, dlg.FileName);
+                rawData = dlg.FileName.IndexOf(".jdt") > -1;
+                shotListDly = new ShotList(false, dlg.FileName, "", rawData);
             }
+            if (Utils.isNull(shotListDly)) return;
             btnJDlyScan.IsEnabled = File.Exists(shotListDly.filename) && !shotListDly.savingMode;
+            btnDlyScan.IsEnabled = btnJDlyScan.IsEnabled;
 
             if (btnJDlyScan.IsEnabled)
             {
-                LogEvent("Opened: " + shotListDly.filename);               
+                LogEvent("Opened: " + shotListDly.filename);
+                shotListDly.resetScan();
+                lbInfo.Text = System.IO.Path.GetFileName(shotListDly.filename) + " : " + shotListDly.Count.ToString() + " shots";
+                if (shotListDly.Count == 0) LogEvent("Error: The file is too big or wrong format");
+                numShotIndex.Value = 0;
             }
             //shotList = new ShotList(true, false, fn);
             //shotList.enabled = true;
             //setConditions(ref shotList.conditions);
-            }
+        }
 
-        DataStack srsMdiffQ = new DataStack(); //ShotList shotList;
+        DataStack srsMdiffQ = new DataStack(); // ShotList shotList;
         public DataStack srsFringes = null; DataStack srsMotAccel = null; DataStack srsCorr = null; DataStack srsMems = null; DataStack srsAccel = null;
+
+        public void chartShot(SingleShot ss)
+        {
+            graphJoinOptim.Data[0] = ss.mems;
+        }
+
+        public Dictionary<string, double> statShot(SingleShot ss)
+        {
+            Dictionary<string, double> stat = new Dictionary<string, double>();
+            stat["n.pnts"] = ss.mems.Count;
+            if (ss.mems.Count > 0)
+            {
+                stat["mems.0"] = ss.mems[0].X; stat["mems.1"] = ss.mems[ss.mems.Count - 1].X;
+            }
+            stat["quant.X"] = ss.quant.X; stat["quant.Y"] = ss.quant.Y; stat["quant.Dur"] = ss.quant.Z;
+            
+            Utils.dict2ListBox(Utils.dictDouble2String(stat, "G5"), lboxStats);
+            return stat;
+        }
+        private void numShotIndex_ValueChanged(object sender, NationalInstruments.Controls.ValueChangedEventArgs<int> e)
+        {
+            if (Utils.isNull(shotListDly)) return;            
+            int idx = numShotIndex.Value;
+            if (!Utils.InRange(idx, 0, shotListDly.Count - 1))
+            {
+                LogEvent("Wrong shot index"); return;
+            }
+            chartShot(shotListDly[idx]);
+            statShot(shotListDly[idx]);
+        }
 
         /// <summary>
         /// Scan delay between MOT accel data point and MEMS accel array  
@@ -106,13 +145,13 @@ namespace Axel_data
             shotListDly.resetScan();
             if (!shotListDly.conditions.Count.Equals(0))
             {
-                OnLog(">> processing conditions:", true, Brushes.DarkSlateGray.Color);
+                OnLog(">> processing conditions:", true, Brushes.DarkSlateGray);
                 foreach (KeyValuePair<string, double> pair in shotListDly.conditions)
                 {
-                    OnLog(pair.Key + " = " + pair.Value, true, Brushes.Teal.Color);
+                    OnLog(pair.Key + " = " + pair.Value, true, Brushes.Teal);
                 }
             }
-            if (shotListDly.archiveMode == false) OnLog("The file is loaded in memory -> " + shotListDly.Count.ToString() + " shots.", false, Brushes.DarkSlateGray.Color);
+            if (shotListDly.archiveMode == false) OnLog("The file is loaded in memory -> " + shotListDly.Count.ToString() + " shots.", false, Brushes.DarkSlateGray);
             while ((wd <= (numJTo.Value / 1000.0)) && btnJDlyScan.Value)
             {
                 srsMotAccel.Clear(); srsCorr.Clear(); srsMems.Clear(); srsAccel.Clear();
@@ -171,5 +210,57 @@ namespace Axel_data
             else plotAccel.Visibility = System.Windows.Visibility.Hidden;
         }
 
+        private void btnScrollLeft_Click(object sender, RoutedEventArgs e)
+        {
+            numShotIndex.Value -= 1;
+        }
+
+        private void btnScrollRight_Click(object sender, RoutedEventArgs e)
+        {
+            numShotIndex.Value += 1;
+        }
+
+        private Point ThresholdDetect(List<Point> sp, double level, bool rising = true)
+        {
+            int toler = 2;
+            Point pnt = new Point(-1, -1);
+            for (int i = 0; i < sp.Count; i++)
+            {
+                if (rising)
+                {
+                    if (sp[i].Y > level) 
+                        if ((i - toler) > -1)
+                        {
+                            pnt = sp[i-toler]; break;
+                        }   
+                        
+                }
+                else
+                {
+                    if (sp[i].Y < level) 
+                        if ((i + toler) < sp.Count)
+                        {
+                            pnt = sp[i+toler]; break;
+                        }                        
+                }
+            }
+            return new Point(pnt.X - sp[0].X, pnt.Y);
+        }
+
+        private void btnDlyScan_Click(object sender, RoutedEventArgs e)
+        {
+            if (Utils.isNull(srsMems)) srsMems = new DataStack();
+            else srsMems.Clear();
+            if (!btnDlyScan.IsEnabled) return;
+            btnDlyScan.Value = !btnDlyScan.Value;
+            for (int i = 0; i< shotListDly.Count; i++)
+            {
+                Point pnt = ThresholdDetect(shotListDly[i].mems, 2);
+                srsMems.Add(new Point(i, pnt.X));
+                if (!btnDlyScan.Value) break;
+            }
+            graphAccelTrend.Data[0] = srsMems;
+            btnDlyScan.Value = false;
+        }
     }
 }

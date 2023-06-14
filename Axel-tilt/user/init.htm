@@ -1,0 +1,71 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="description" content="Axel Suite - set of applications for Navigator project at Imperial College London">
+<meta name="keywords" content="freeware, science, cold atoms, spectroscopy, visualization">
+<meta name="author" content="Teodor Krastev">
+<meta name="copyright" content="This page and all its contents are copyright 2017-2019 of Teodor Krastev. All Rights Reserved.">
+<!--Copyright(c)2017-2020 Teodor Krastev-->
+<title>Axel Suite software</title>
+<link rel="stylesheet" type="text/css" href="../../images/AxelSuite.css">
+</head>
+
+<body>
+
+<table border="0" width="100%" cellpadding="25" style="border-collapse: collapse">
+	<tr>
+		<td width="46%" valign="top">
+		<h5>Motors A/B</h5>
+		<p>Two identical groups A 
+		and B represent two motors moving (tilting) the platform. </p>
+		<p>First button (<b>Initialize</b>) will move the motor to home position 
+		(hardware fixed) and then assign 0 to this position. That way the system 
+		can have reproducible initial position position. </p>
+		<p>Next button (<b>Move [mm]</b>) and the numeric field after are for move the 
+		respective motor to some position. The idea here is to motors to a 
+		horizontal position of the platform. The horizontality is measured by 
+		crossed level-meter. There are different types of such level-meters, but 
+		even bubble one will do the job. These two positions (for horizontal 
+		state) will be saved and after restart retrieved. </p>
+		<p><b>Status</b> button will print in the log the status of the respective 
+		motor taken from the controller. </p>
+		<p>The last button (<b>[mm]</b>) will execute going home and move to retrieved 
+		position in one click. When the system starts pressing both (in 
+		sequence) buttons will recover the horizontal position.<br>
+&nbsp;</p>
+		<h5>Tilt</h5>
+		<p>First button (<b>Initialize</b>) will execute initialization for motors A/B. Next button 
+		(Move to preset...) will tilt the platform to&nbsp; the retrieved 
+		positions (A/B) and then will assign 0 tilt to this tilt position. </p>
+		<p><b>Move [mm]</b> button will move the platform to required tilt measured in 
+		vertical displacement. Second (<b>Move [rad]</b>) will move the platform to 
+		required tilt measured in radians. </p>
+		<p><b>Stop</b> button is for emergency stop, if some dangerous actions are in 
+		progress.&nbsp;&nbsp; <br>
+&nbsp;</p>
+		<h5>Options</h5>
+		<p><b>Speed [mm/s] </b>allows to define the movement speed. 
+		Usually following the manufacturer recommendations. 
+		<p><b>Blacklash compensation</b> is integrated procedure to compensate the 
+		backlash making any approach to a position only from one side. That 
+		means if the default approach is up and the user moves down the 
+		controller will move down pass the position with some predefine distance 
+		and then move up in order to approach the position from up.&nbsp; 
+		<p><b>MEMS correction</b> will switch On/Off the offset dodging parameter which 
+		allows to make a final adjustment of the horizontality using the 
+		electric signals for the MEMS.</td>
+		<td valign="top">
+		<h3 align="right">Axel-tilt&nbsp;
+		<img border="0" src="Tilt2.png" width="25" ></h3>
+		<p><img border="0" src="AxelTilt-2.png" width="700"></td>
+	</tr>
+	<tr>
+		<td width="46%" valign="top">&nbsp;</td>
+		<td>&nbsp;</td>
+	</tr>
+</table>
+
+</body>
+
+</html>

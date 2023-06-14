@@ -27,10 +27,10 @@
             </Grid.ColumnDefinitions>
             <Grid Margin="0" Grid.Column="0" >
                 <Button x:Name="btnOpenJLog" Content="Load Join Data..." Margin="10,6,0,0" Background="#FFF6F6F6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Click="btnOpenJLog_Click" Height="32" Foreground="#FF016304" FontWeight="Bold" />
-                <Label Content="Section" HorizontalAlignment="Left" Margin="4,56,0,0" VerticalAlignment="Top" FontSize="13" RenderTransformOrigin="0.453,-1.529" Width="55"/>
-                <ni:RadixNumericTextBoxInt32 x:Name="numSectionSize" HorizontalAlignment="Left" Height="24" Margin="60,57,0,0" VerticalAlignment="Top" Width="59" Interval="10" Value="100" RadixVisibility="Collapsed" Range="10, 1000000, System.Int32" SelectOnFocus="True" FontSize="13" ValueChanged="numSectionSize_ValueChanged"/>
+                <Label Content="Sect. size" HorizontalAlignment="Left" Margin="4,56,0,0" VerticalAlignment="Top" FontSize="13" Width="62"/>
+                <ni:RadixNumericTextBoxInt32 x:Name="numSectionSize" HorizontalAlignment="Left" Height="24" Margin="71,57,0,0" VerticalAlignment="Top" Width="52" Interval="10" Value="100" RadixVisibility="Collapsed" Range="10, 1000000, System.Int32" SelectOnFocus="True" FontSize="13" ValueChanged="numSectionSize_ValueChanged"/>
                 <ni:BooleanContentButton x:Name="btnScan" Content="Test Axel Show" HorizontalAlignment="Center" Margin="0,0,0,7" VerticalAlignment="Bottom" Width="116" Background="White" Height="33" Click="btnJFitScan_Click" FalseBrush="#FFCAFA8D" TrueBrush="#FFF79C67" BorderThickness="7,5" FalseContent="Run Scan" TrueContent="Stop Scan" FontWeight="Bold"/>
-                <GroupBox x:Name="gbSectScroll" Header="Sect.Scroll" Margin="0,90,0,0" VerticalAlignment="Top" Height="55" FontSize="13">
+                <GroupBox x:Name="gbSectScroll" Header="Section Scroll" Margin="0,90,0,0" VerticalAlignment="Top" Height="55" FontSize="13">
                     <Grid>
                         <ni:ArrowButton x:Name="btnScrollLeft" Content="-" HorizontalAlignment="Left" Margin="0,4,0,3" VerticalAlignment="Top" Width="55" Direction="Left" FontSize="18" FontWeight="Bold" Click="btnScrollRight_Click" FontFamily="Gill Sans Ultra Bold" Foreground="#FF02549D"/>
                         <ni:ArrowButton x:Name="btnScrollRight" Content="+" HorizontalAlignment="Right" Margin="0,4,0,3" VerticalAlignment="Top" Width="55" FontSize="18" FontWeight="Bold" Click="btnScrollRight_Click" Foreground="#FFD10000" FontFamily="Stencil Std"/>
@@ -85,7 +85,7 @@
                         </ni:AxisDouble.MajorGridLines>
                     </ni:AxisDouble>
                 </ni:Graph.Axes>
-                 <ni:Graph.Plots>
+                <ni:Graph.Plots>
                     <ni:Plot x:Name="plotPeriod" Label="Period">
                         <ni:PlotRendererGroup>
                             <ni:LinePlotRenderer Stroke="#FF0A14C1" StrokeThickness="1.5"/>

@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Windows.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-
+using System.Windows.Threading;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Media;
@@ -220,9 +219,9 @@ namespace Axel_probe
             busy = false;
         }
 
-        public delegate void LogHandler(string txt, Color? clr = null); // ...and general message up; commands with @ 
+        public delegate void LogHandler(string txt, SolidColorBrush clr = null); // ...and general message up; commands with @ 
         public event LogHandler OnLog;
-        public void LogEvent(string txt, Color? clr = null)
+        public void LogEvent(string txt, SolidColorBrush clr = null)
         {
             if (OnLog != null) OnLog(txt, clr);
         }
@@ -256,6 +255,11 @@ namespace Axel_probe
             double r = Remainder(stopWatch.Elapsed.TotalSeconds,period);
             if (percent) return 100 * (r / period);
             return r;
+        }
+        public double accelV(double accelMg) // in mg; out Volts
+        {
+            double cK0 = 486.0; double cK1 = 1.295046; double rAccel = 6000; // example values
+            return ((accelMg - cK0 / 1000) * rAccel) / (1e6 * cK1);
         }
 
         /// <summary>
@@ -357,16 +361,6 @@ namespace Axel_probe
             }
             return -1;
         } 
-
-        /* 
-           
-            
-										
-           			
-           		
-										
-            			
-            	*/
         public double contrPhase = -11; public int b4ConstrID = 0;
         /// <summary>
         /// Generates the simulated to photo diode signal to be send to Axel-hub 
@@ -483,12 +477,17 @@ namespace Axel_probe
             {
                 if (bpps.ContainsKey("TimeGap")) Thread.Sleep((int)bpps["TimeGap"]);
                 Utils.DoEvents();
-                n2 = -Math.Cos(ph) + 2;  // n2 = 1 .. 3
+                double noise = 0;
+                if (Convert.ToBoolean(dps["YnoiseIO"]))
+                {
+                    noise = Utils.Gauss01() * Convert.ToDouble(dps["Ynoise"]) / 100;
+                }
+                n2 = - Math.Cos(ph) + 2 + noise;  // n2 = 1 .. 3
                 A = ((ntot - btot) - 2 * (n2 - b2)) / (ntot - btot);
                 srsFringes.Add(new Point(ph, A));
 
-                LogEvent(" Ph/Amp= " + ph.ToString("G4") + " / " + A.ToString("G5"), Brushes.DarkGreen.Color);
-                if (Utils.InRange(ph, mms.sTo - 0.99 * mms.sBy, mms.sTo + 0.99 * mms.sBy) || cancelScan)
+                LogEvent(" Ph/Amp= " + ph.ToString("G4") + " / " + A.ToString("G5"), Brushes.DarkGreen);
+                if (Utils.InRange(ph, mms.sTo - 0.9 * mms.sBy, mms.sTo + 0.9 * mms.sBy) || cancelScan)
                 {
                     md.prms["last"] = 1;
                 }
@@ -536,7 +535,7 @@ namespace Axel_probe
                 srsFringes.Add(new Point(j, A));
                 //drift = calcAtPos(jumbo, A, (j % 2) == 1);
                 md.prms["runID"] = j; frAmpl = A;
-                LogEvent(" #/A= " + j.ToString() + " / " + A.ToString("G5"), Brushes.Navy.Color);
+                LogEvent(" #/A= " + j.ToString() + " / " + A.ToString("G5"), Brushes.Navy);
                 if (!SingleShot(frAmpl, axis, ref md)) break;
 
                 if (cancelRepeat) break; 
